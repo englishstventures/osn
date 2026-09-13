@@ -14,7 +14,7 @@ related:
   - "[[observability/metrics]]"
   - "[[conventions/review-findings]]"
   - "[[conventions/stacked-prs]]"
-last-reviewed: 2026-09-10
+last-reviewed: 2026-09-11
 ---
 
 # Session Metrics
@@ -87,15 +87,24 @@ join: this repository runs one worktree and one branch per task, so a branch
 name maps to exactly one pull request. For delegated work it is not enough —
 see [[#Attributing subagent spend]].
 
-Three traps the collector handles and any reimplementation must:
+Five traps the collector handles and any reimplementation must:
 
 - **Subagent spend is in a sibling directory**, `<session-id>/subagents/*.jsonl`,
   not in the main transcript. Missing it under-reports every delegated task, and
   on orchestrated work that is most of the cost.
 - **One conversation is sometimes written into two session files.** 615 assistant
   records on this machine — 5.2% of session spend — appear in both, and reading
-  them twice doubles the branch's cost. `readRecordsForBranch` keys on
-  `requestId` and returns each once.
+  them twice doubles the branch's cost. A duplicate repeats the record's `uuid`,
+  so that is what `readRecordsForBranch` keys on, returning each once.
+- **One API response is several records.** A thinking block, a text block and one
+  per `tool_use` all reach the transcript separately, sharing a `requestId` and
+  repeating that response's `message.usage` verbatim. The two phenomena pull
+  opposite ways and must not share a key: keying the record dedupe on `requestId`
+  keeps the first block of every response and throws the rest away, which is
+  every tool call the response made bar one. So records dedupe on `uuid`, and
+  every reader of `message.usage` — `aggregateSpend`, and the exploration sum in
+  `aggregateInteraction` — counts a `requestId` once instead, or a response's
+  cost is multiplied by the number of blocks it was split across.
 - **Most `role: "user"` records are machinery** — tool results, hook output,
   system reminders, slash-command envelopes. Counting them destroys `user_turns`
   as a measure of steering.
@@ -202,7 +211,8 @@ One thing does need care: a remote container is destroyed when the session ends
 and takes its transcripts with it, and a card that was never written is gone for
 good. So a **`SessionEnd` hook in `.claude/settings.json`** writes the card at
 the end of every session, in every environment, whether or not anyone reached
-`prep-pr`. It is idempotent — it rewrites the same file — it already refuses
+`prep-pr`. It is idempotent — it writes the same file, and leaves it untouched
+when the only field that would change is `generated_at` — it already refuses
 `main`, and it ends in `|| true` so it can never fail a session. The settings
 file is committed, so remote sessions pick it up with no per-machine setup.
 
@@ -306,6 +316,29 @@ the datalake, and it would drag every average it touches toward nothing.
 Ratings are transcribed, never invented: a backfilled card carries whatever the
 issue's `complexity:` label says, and `rate-complexity`'s backfill mode marks
 anything it adds `complexity:unconfirmed`.
+
+The issue is the pull request's **first-listed** linked issue —
+`closingIssuesReferences[0]`, an ordering GitHub controls, not this tool. A
+pull request closing several issues is attributed to whichever one GitHub
+lists first.
+
+**Only when that issue lives in this same repository.** Most of this
+repository's pull requests close a finding in the private
+`xchromo/osn-tracker` repo instead, and that issue's labels are never fetched
+at all — its `severity:`/`area:` pair must not reach a card committed here
+(see `CLAUDE.md` §Comments on not linking a finding from a public file).
+Such a card writes `complexity.method: "not-fetched"`, not `"none"`: a rating
+may well exist on that issue, nobody checked. `xchromo/osn#1012` tracks
+whether and how to surface it safely later.
+
+`complexity.method` can therefore read five ways: `"confirmed"` /
+`"unconfirmed"` (a rating was found, on an issue in this repository),
+`"none"` (no linked issue, or a linked issue here with no `complexity:`
+label), `"not-fetched"` (the linked issue is in another repository), or
+`"lookup-failed"` (a fetch was attempted and did not resolve — a transport
+error, or the issue vanished between merge and backfill). Only `"confirmed"`
+is a rating to act on; the rest are all a null `complexity.declared`, for
+different reasons.
 
 ## The two fields that name a cause
 
