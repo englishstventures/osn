@@ -1484,6 +1484,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "refunded_amount_minor": {
+          "name": "refunded_amount_minor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "stripe_checkout_session_id": {
           "name": "stripe_checkout_session_id",
           "type": "text",
@@ -1856,6 +1863,13 @@
         "stripe_account_updated_at": {
           "name": "stripe_account_updated_at",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "stripe_default_currency": {
+          "name": "stripe_default_currency",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

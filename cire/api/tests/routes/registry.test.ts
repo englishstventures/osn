@@ -339,6 +339,35 @@ describe("registry routes (entitled)", () => {
     expect(snap.settings.cashGiftsEnabled).toBe(false);
   });
 
+  it("refuses cash gifts priced in a currency Stripe would not settle", async () => {
+    const app = buildApp({
+      grantRegistry: true,
+      seed: (db) => {
+        const now = new Date();
+        // The account takes charges, but Stripe settles it in US dollars while
+        // the wedding prices everything in Australian ones. Checkout would
+        // convert on Stripe's terms or refuse, in front of a guest.
+        db.insert(registrySettings)
+          .values({
+            weddingId: BOOTSTRAP_WEDDING_ID,
+            stripeAccountId: "acct_live",
+            stripeChargesEnabled: true,
+            stripeDefaultCurrency: "USD",
+            createdAt: now,
+            updatedAt: now,
+          })
+          .run();
+      },
+    });
+
+    const cash = await req(app, "PUT", `${base}/settings`, EDITOR, { cashGiftsEnabled: true });
+    expect(cash.status).toBe(409);
+    expect(((await cash.json()) as { error: string }).error).toBe("currency_mismatch");
+
+    const snap = (await (await req(app, "GET", base, OWNER)).json()) as RegistrySnapshot;
+    expect(snap.settings.cashGiftsEnabled).toBe(false);
+  });
+
   it("400s an image key that names another wedding's upload", async () => {
     // The schema pins the SHAPE (`assets/<segment>/registry-<name>`), so only the
     // service can tell whose upload it is. A distinct code, not the generic 400,

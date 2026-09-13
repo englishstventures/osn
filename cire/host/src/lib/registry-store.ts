@@ -114,10 +114,16 @@ export interface RegistrySnapshot {
   giftSummary: GiftSummary | null;
   /** The wedding's primary currency — what every authored figure is in. */
   currency: string;
-  /** Succeeded contributions summed in the primary currency. APPROXIMATE by
-   *  construction (each foreign row converted at its own snapshotted rate), so
-   *  the view must label it as such. */
+  /** Succeeded contributions that are IN the primary currency, summed. A gift
+   *  in some other currency that carries no conversion is left out and counted
+   *  by `contributionsOtherCurrencyCount` instead, because a sum across
+   *  currencies is not an amount of money. APPROXIMATE even so: a row that does
+   *  carry a conversion was converted at its own snapshotted rate, so the view
+   *  must label it as such. */
   contributionsPrimaryMinor: number;
+  /** How many succeeded gifts the total above leaves out. Non-zero means it is
+   *  not the whole of the money and the view has to say so. */
+  contributionsOtherCurrencyCount: number;
 }
 
 interface CacheEntry {

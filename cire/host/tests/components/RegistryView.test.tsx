@@ -100,6 +100,7 @@ const snapshot = (over: Partial<RegistrySnapshot> = {}): RegistrySnapshot => ({
   giftSummary: null,
   currency: "AUD",
   contributionsPrimaryMinor: 0,
+  contributionsOtherCurrencyCount: 0,
   ...over,
 });
 
@@ -536,6 +537,30 @@ describe("RegistryView — gifts received", () => {
     ));
     expect(await screen.findByText(/Approximate/)).toBeInTheDocument();
     expect(screen.getByText(/250[.,]00/)).toBeInTheDocument();
+  });
+
+  it("says how many gifts the cash total leaves out", async () => {
+    // The total is one currency's worth. Showing it alone would read as all the
+    // money that arrived, which it is not.
+    setCachedRegistry(
+      "wed_1",
+      snapshot({ contributionsPrimaryMinor: 250_00, contributionsOtherCurrencyCount: 2 }),
+    );
+    render(() => (
+      <RegistryView weddingId="wed_1" weddingSlug="wed-1" view="gifts" canEdit={true} />
+    ));
+    expect(
+      await screen.findByText(/2 more gifts are held in other currencies/),
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing about other currencies when every gift is in the couple's", async () => {
+    setCachedRegistry("wed_1", snapshot({ contributionsPrimaryMinor: 250_00 }));
+    render(() => (
+      <RegistryView weddingId="wed_1" weddingSlug="wed-1" view="gifts" canEdit={true} />
+    ));
+    await screen.findByText(/Approximate/);
+    expect(screen.queryByText(/other currencies/)).not.toBeInTheDocument();
   });
 
   it("toggles a thank-you and POSTs the new state", async () => {

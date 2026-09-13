@@ -863,7 +863,11 @@ export default function RegistryView(props: RegistryViewProps) {
         </Show>
         <Show when={snapshot()}>
           {(snap) => (
-            <Show when={snap().contributionsPrimaryMinor > 0}>
+            <Show
+              when={
+                snap().contributionsPrimaryMinor > 0 || snap().contributionsOtherCurrencyCount > 0
+              }
+            >
               <div class="border-border bg-surface/20 flex flex-col gap-1 rounded-sm border p-4">
                 <span class="text-gold-dim font-body text-[0.7rem] tracking-[0.18em] uppercase">
                   Cash gifts
@@ -871,13 +875,24 @@ export default function RegistryView(props: RegistryViewProps) {
                 <span class="text-text text-[1.05rem]">
                   {formatMinor(snap().contributionsPrimaryMinor, snap().currency)}
                 </span>
-                {/* Each foreign-currency gift was converted at the rate on the
-                    day it arrived, so this is a sum of historical conversions,
-                    not a live valuation. Labelled, never presented as exact. */}
+                {/* A gift converted to the couple's currency was converted at the
+                    rate on the day it arrived, so this is a sum of historical
+                    conversions, not a live valuation. Labelled, never exact. */}
                 <span class="text-text-muted text-[0.75rem]">
-                  Approximate — every gift given in another currency is counted at the rate on the
-                  day it arrived.
+                  Approximate — a gift given in another currency is counted at the rate on the day
+                  it arrived.
                 </span>
+                {/* Adding two currencies together gives a number that is not an
+                    amount of anything, so gifts left in their own currency are
+                    counted here instead of being folded into the figure above. */}
+                <Show when={snap().contributionsOtherCurrencyCount > 0}>
+                  <span class="text-text-muted text-[0.75rem]">
+                    {snap().contributionsOtherCurrencyCount === 1
+                      ? "One more gift is held in another currency and is not in this total."
+                      : `${snap().contributionsOtherCurrencyCount} more gifts are held in other currencies and are not in this total.`}{" "}
+                    The gift log below shows each one as it was given.
+                  </span>
+                </Show>
               </div>
             </Show>
           )}

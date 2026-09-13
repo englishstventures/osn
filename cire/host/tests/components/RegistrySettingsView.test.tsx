@@ -2,14 +2,14 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import RegistrySettingsView from "../../src/components/RegistrySettingsView";
 import {
   __resetRegistryCache,
   peekCachedRegistry,
   type RegistryItem,
   type RegistrySnapshot,
   setCachedRegistry,
-} from "../lib/registry-store";
-import RegistrySettingsView from "./RegistrySettingsView";
+} from "../../src/lib/registry-store";
 
 /**
  * The registry's settings panel.
@@ -80,6 +80,7 @@ const snapshot = (over: Partial<RegistrySnapshot> = {}): RegistrySnapshot =>
     giftSummary: null,
     currency: "AUD",
     contributionsPrimaryMinor: 0,
+    contributionsOtherCurrencyCount: 0,
   }) as RegistrySnapshot;
 
 function json(body: unknown, status = 200): Response {
@@ -369,5 +370,143 @@ describe("the live Stripe read", () => {
     renderPanel();
     await screen.findByTestId("registry-publish");
     expect(authFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("what the panel says about the account", () => {
+  it("asks a couple with no account to connect one, and offers nothing to re-check", async () => {
+    setCachedRegistry("wed_1", snapshot({ items: [item()] }));
+    renderPanel();
+
+    expect((await screen.findByTestId("stripe-status")).textContent).toMatch(
+      /connect a Stripe account/i,
+    );
+    expect(screen.getByRole("button", { name: /Connect an account/i })).toBeTruthy();
+    // Nothing to check on yet, so the button that checks is not there to press.
+    expect(screen.queryByRole("button", { name: /Check again/i })).toBeNull();
+  });
+
+  it("tells a couple mid-onboarding that Stripe is still waiting on them", async () => {
+    setCachedRegistry(
+      "wed_1",
+      snapshot({
+        items: [item()],
+        settings: { stripeAccountId: "acct_1", stripeChargesEnabled: false } as never,
+      }),
+    );
+    // The mount read finds nothing has changed, so the panel stays where it was.
+    authFetch.mockResolvedValue(json({ chargesEnabled: false, payoutsEnabled: false }));
+    renderPanel();
+
+    expect((await screen.findByTestId("stripe-status")).textContent).toMatch(
+      /still wants something/i,
+    );
+    // Not "connect an account" — they have one, and sending them back to the
+    // start would read as though the work they already did was lost.
+    expect(screen.getByRole("button", { name: /Continue on Stripe/i })).toBeTruthy();
+    // Awaited: the mount read is in flight on first paint, and the button reads
+    // "Checking…" until it lands.
+    expect(await screen.findByRole("button", { name: /Check again/i })).toBeTruthy();
+  });
+
+  it("tells a ready couple the money reaches them directly", async () => {
+    setCachedRegistry(
+      "wed_1",
+      snapshot({
+        items: [item()],
+        settings: { stripeAccountId: "acct_1", stripeChargesEnabled: true } as never,
+      }),
+    );
+    renderPanel();
+
+    const status = await screen.findByTestId("stripe-status");
+    expect(status.textContent).toMatch(/connected and can take payments/i);
+    expect(status.textContent).toMatch(/never hold the money/i);
+    expect(screen.getByRole("button", { name: /Continue on Stripe/i })).toBeTruthy();
+  });
+});
+
+describe("checking on Stripe by hand", () => {
+  it("says so when Stripe cannot be reached, and changes nothing", async () => {
+    setCachedRegistry(
+      "wed_1",
+      snapshot({
+        items: [item()],
+        settings: { stripeAccountId: "acct_1", stripeChargesEnabled: true } as never,
+      }),
+    );
+    authFetch.mockResolvedValue(json({ error: "stripe_unavailable" }, 502));
+    renderPanel();
+
+    fireEvent.click(await screen.findByRole("button", { name: /Check again/i }));
+
+    await waitFor(() => expect(toastError).toHaveBeenCalled());
+    expect(String(toastError.mock.calls[0]?.[0])).toMatch(/Couldn’t reach Stripe just now/);
+    // An outage is not news about the account: the panel keeps saying what it
+    // last knew rather than demoting a couple who can in fact take payments.
+    expect(screen.getByTestId("stripe-status").textContent).toMatch(
+      /connected and can take payments/i,
+    );
+    expect((screen.getByTestId("cash-gifts") as HTMLInputElement).disabled).toBe(false);
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("re-reads Stripe after a save it refused, without a second complaint", async () => {
+    setCachedRegistry(
+      "wed_1",
+      snapshot({
+        items: [item()],
+        settings: { stripeAccountId: "acct_1", stripeChargesEnabled: true } as never,
+      }),
+    );
+    authFetch.mockImplementation((url: string) =>
+      Promise.resolve(
+        String(url).includes("/registry/stripe/refresh")
+          ? json({ chargesEnabled: false, payoutsEnabled: false })
+          : json({ error: "stripe_not_ready" }, 409),
+      ),
+    );
+    const { container } = renderPanel();
+
+    fireEvent.click(await screen.findByTestId("cash-gifts"));
+    fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+
+    // The 409 says the page is out of date about Stripe, so the panel goes and
+    // finds out rather than waiting for the couple to press anything.
+    await waitFor(() => {
+      const urls = authFetch.mock.calls.map((c) => String(c[0]));
+      expect(urls.some((u) => u.includes("/registry/stripe/refresh"))).toBe(true);
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId("stripe-status").textContent).toMatch(/still wants something/i),
+    );
+    // One complaint, about the save. The read behind it is quiet: a second
+    // toast saying Stripe is not ready tells them nothing they were not just
+    // told, and a success toast would contradict the first.
+    expect(toastError).toHaveBeenCalledTimes(1);
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+});
+
+describe("the one-shot live read", () => {
+  it("is spent for good, so a couple switching tabs does not re-ask Stripe", async () => {
+    setCachedRegistry(
+      "wed_1",
+      snapshot({
+        items: [item()],
+        settings: { stripeAccountId: "acct_1", stripeChargesEnabled: false } as never,
+      }),
+    );
+    // Still not ready, so nothing about the wedding has changed between the two
+    // mounts: only the spent token stops the second read.
+    authFetch.mockResolvedValue(json({ chargesEnabled: false, payoutsEnabled: false }));
+
+    renderPanel();
+    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(1));
+
+    cleanup();
+    renderPanel();
+    await screen.findByTestId("registry-publish");
+    expect(authFetch).toHaveBeenCalledTimes(1);
   });
 });

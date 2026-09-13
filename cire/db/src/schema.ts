@@ -606,6 +606,14 @@ export const registrySettings = sqliteTable("registry_settings", {
     .notNull()
     .default(false),
   stripeAccountUpdatedAt: integer("stripe_account_updated_at", { mode: "timestamp" }),
+  // The connected account's own settlement currency, cached from the same
+  // webhook as the flags above. Under direct charges the couple is the merchant
+  // of record, so THIS — not the wedding's own currency — is what a Checkout
+  // Session has to be priced in: Stripe settles a charge in the account's
+  // currency, and a session priced in anything else either converts on Stripe's
+  // terms or is refused outright. NULL until Stripe first says, which is why the
+  // settings route treats a NULL as "not known yet" rather than as a mismatch.
+  stripeDefaultCurrency: text("stripe_default_currency"),
   // A couple can revoke cire's access from their own Stripe dashboard, and
   // Stripe says so once, in `account.application.deauthorized`. When that
   // arrives `stripe_account_id` is cleared — the platform can no longer act on
@@ -792,13 +800,21 @@ export const registryContributions = sqliteTable(
     // display and audit, and binary float would round it on the way in.
     fxRate: text("fx_rate"),
     fxRateAt: integer("fx_rate_at", { mode: "timestamp" }),
+    // What Stripe sent back, in the charge's own currency — the one
+    // `coalesce(primary_currency, currency)` names, because a refund is always
+    // denominated in what the account settled. NULL until a refund is seen. A
+    // PARTIAL refund records the amount and leaves the status at `succeeded`,
+    // because the couple did keep the rest; a full refund records the whole
+    // amount and moves the status too, so the two columns never disagree about
+    // how much of the gift survived.
+    refundedAmountMinor: integer("refunded_amount_minor"),
     // The webhook idempotency anchor — the same role `provider_ref` plays for
     // entitlement grants. A replayed `checkout.session.completed` conflicts here
     // instead of writing a second gift.
     //
     // NULLABLE, because the row is written BEFORE Stripe is asked for a page
-    // (0060): a NULL here is an attempt that never got a session, which the
-    // reuse lookup skips and the failure path closes. The UNIQUE is plain and
+    // (migration 0058): a NULL here is an attempt that never got a session, which
+    // the reuse lookup skips and the failure path closes. The UNIQUE is plain and
     // not partial on purpose — SQLite counts NULLs as distinct, so every real
     // session id is still claimed by exactly one row.
     stripeCheckoutSessionId: text("stripe_checkout_session_id").unique(),

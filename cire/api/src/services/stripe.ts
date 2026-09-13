@@ -69,6 +69,16 @@ export interface StripeAccount {
   payoutsEnabled: boolean;
   /** Onboarding is finished and Stripe wants nothing more right now. */
   detailsSubmitted: boolean;
+  /**
+   * The currency Stripe settles this account's charges in, upper-case ISO.
+   *
+   * Null when Stripe has not said — an account can exist before it has one.
+   * Under direct charges the connected account is the merchant of record, so a
+   * Checkout Session priced in anything else is either converted on Stripe's
+   * terms or refused, which is why the settings route compares this against the
+   * wedding's own currency before it lets cash gifts be turned on.
+   */
+  defaultCurrency: string | null;
 }
 
 /** A one-time hosted onboarding URL. Short-lived by design — minutes, not days. */
@@ -210,6 +220,7 @@ function toAccount(raw: unknown): StripeAccount | null {
     charges_enabled?: unknown;
     payouts_enabled?: unknown;
     details_submitted?: unknown;
+    default_currency?: unknown;
   };
   if (typeof account?.id !== "string") return null;
   return {
@@ -217,6 +228,12 @@ function toAccount(raw: unknown): StripeAccount | null {
     chargesEnabled: account.charges_enabled === true,
     payoutsEnabled: account.payouts_enabled === true,
     detailsSubmitted: account.details_submitted === true,
+    // Stripe sends this lower-case; every currency in this product is compared
+    // and stored upper-case, so it is normalised once, here, at the boundary.
+    defaultCurrency:
+      typeof account.default_currency === "string" && account.default_currency.length > 0
+        ? account.default_currency.toUpperCase()
+        : null,
   };
 }
 

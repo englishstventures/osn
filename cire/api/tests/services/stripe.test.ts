@@ -46,6 +46,7 @@ const ACCOUNT = {
   charges_enabled: true,
   payouts_enabled: false,
   details_submitted: true,
+  default_currency: "aud",
 };
 
 async function hmacHex(secret: string, payload: string): Promise<string> {
@@ -105,6 +106,9 @@ describe("createStripeClient", () => {
       chargesEnabled: true,
       payoutsEnabled: false,
       detailsSubmitted: true,
+      // Stripe sends the settlement currency lower-case; every currency this
+      // product compares or stores is upper-case, so the boundary normalises it.
+      defaultCurrency: "AUD",
     });
     const call = calls[0];
     expect(call?.url).toBe("https://stripe.test/v1/accounts");
@@ -117,6 +121,23 @@ describe("createStripeClient", () => {
     expect(String(call?.init.body)).toContain(
       "capabilities%5Bcard_payments%5D%5Brequested%5D=true",
     );
+  });
+
+  it("reports no settlement currency rather than guessing one", async () => {
+    const { impl } = stubFetch(() =>
+      json({ id: "acct_123", charges_enabled: false, payouts_enabled: false }),
+    );
+    const client = createStripeClient({
+      secretKey: "sk_test",
+      apiBase: "https://stripe.test",
+      fetchImpl: impl,
+    });
+
+    const account = await Effect.runPromise(client.retrieveAccount("acct_123"));
+
+    // A brand-new account has no settlement currency yet. Null is the honest
+    // answer: the settings route reads it as "not known", not as a mismatch.
+    expect(account.defaultCurrency).toBeNull();
   });
 
   it("returns Stripe's code and never its message", async () => {

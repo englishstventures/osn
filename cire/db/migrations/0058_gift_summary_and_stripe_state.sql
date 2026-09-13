@@ -10,6 +10,12 @@
 --  * `gift_summary_json` + `gift_summary_at` — what survives the 1-year sweep.
 --  * `stripe_deauthorized_at` + `stripe_deauthorized_account_id` — what a
 --    couple revoking cire's access leaves behind once the account id is cleared.
+--  * `refunded_amount_minor` on the rebuilt table — what went back. A partial
+--    refund leaves the status at `succeeded` and records the amount here, so the
+--    row stops claiming the couple kept the whole gift.
+--  * `stripe_default_currency` — the connected account's own settlement currency.
+--    Under direct charges the couple is the merchant of record, so that is the
+--    currency a Checkout Session has to be priced in.
 PRAGMA foreign_keys=OFF;--> statement-breakpoint
 CREATE TABLE `__new_registry_contributions` (
 	`id` text PRIMARY KEY NOT NULL,
@@ -23,6 +29,7 @@ CREATE TABLE `__new_registry_contributions` (
 	`primary_currency` text,
 	`fx_rate` text,
 	`fx_rate_at` integer,
+	`refunded_amount_minor` integer,
 	`stripe_checkout_session_id` text,
 	`stripe_payment_intent_id` text,
 	`message` text,
@@ -47,4 +54,5 @@ CREATE INDEX `registry_contributions_payment_intent_idx` ON `registry_contributi
 ALTER TABLE `registry_settings` ADD `stripe_deauthorized_at` integer;--> statement-breakpoint
 ALTER TABLE `registry_settings` ADD `stripe_deauthorized_account_id` text;--> statement-breakpoint
 ALTER TABLE `registry_settings` ADD `gift_summary_json` text;--> statement-breakpoint
-ALTER TABLE `registry_settings` ADD `gift_summary_at` integer;
+ALTER TABLE `registry_settings` ADD `gift_summary_at` integer;--> statement-breakpoint
+ALTER TABLE `registry_settings` ADD `stripe_default_currency` text;

@@ -15,6 +15,7 @@ import { Effect, Exit } from "effect";
 import { DbService } from "../../src/db";
 import { createDb, seedDb } from "../../src/db/setup";
 import {
+  CurrencyMismatch,
   FamilyNotInWedding,
   GiftNotInWedding,
   ImageKeyNotInWedding,
@@ -87,9 +88,10 @@ function seedContribution(
     currency: string;
     primaryAmountMinor: number | null;
     primaryCurrency: string | null;
+    refundedAmountMinor: number | null;
     status: "pending" | "succeeded" | "failed" | "refunded" | "disputed";
     familyId: string;
-    /** Explicit `null` is meaningful: an attempt that never got a page (0060). */
+    /** Explicit `null` is meaningful: an attempt that never got a page. */
     sessionId: string | null;
     paymentIntentId: string | null;
     createdAt: Date;
@@ -111,6 +113,7 @@ function seedContribution(
       primaryCurrency: over.primaryCurrency ?? null,
       fxRate: null,
       fxRateAt: null,
+      refundedAmountMinor: over.refundedAmountMinor ?? null,
       stripeCheckoutSessionId:
         over.sessionId === undefined ? `cs_${crypto.randomUUID()}` : over.sessionId,
       stripePaymentIntentId: over.paymentIntentId ?? null,
@@ -588,11 +591,39 @@ describe("gift log", () => {
 
     const snap = await ok(db, registryService.get(BOOTSTRAP_WEDDING_ID));
     expect(snap.contributionsPrimaryMinor).toBe(10_000 + 9_700);
+    // Both rows land in AUD once the snapshot is taken into account, so nothing
+    // is left out of the figure.
+    expect(snap.contributionsOtherCurrencyCount).toBe(0);
 
     const foreign = snap.gifts.find((g) => g.currency === "GBP")!;
     expect(foreign.amountMinor).toBe(5_000);
     expect(foreign.primaryAmountMinor).toBe(9_700);
     expect(foreign.primaryCurrency).toBe("AUD");
+  });
+
+  it("counts an unconverted foreign gift instead of adding it to the total", async () => {
+    const db = db0();
+    seedContribution(db, { amountMinor: 10_000, currency: "AUD" });
+    // No primary snapshot, so there is no honest way to add this to an AUD
+    // total. Adding yen to dollars produces a number that is not money.
+    seedContribution(db, { amountMinor: 300_000, currency: "JPY" });
+    seedContribution(db, { amountMinor: 4_000, currency: "USD" });
+
+    const snap = await ok(db, registryService.get(BOOTSTRAP_WEDDING_ID));
+    expect(snap.contributionsPrimaryMinor).toBe(10_000);
+    expect(snap.contributionsOtherCurrencyCount).toBe(2);
+  });
+
+  it("does not split one currency in two over the case Stripe writes it in", async () => {
+    const db = db0();
+    // Authored rows are upper case; the settle path writes whatever Stripe sent,
+    // which is lower case. Both are the wedding's own currency.
+    seedContribution(db, { amountMinor: 10_000, currency: "AUD" });
+    seedContribution(db, { amountMinor: 2_500, currency: "aud" });
+
+    const snap = await ok(db, registryService.get(BOOTSTRAP_WEDDING_ID));
+    expect(snap.contributionsPrimaryMinor).toBe(12_500);
+    expect(snap.contributionsOtherCurrencyCount).toBe(0);
   });
 
   it("keeps a contribution after its item is deleted", async () => {
@@ -964,6 +995,54 @@ describe("registry ownership + range guards", () => {
     expect(enabled.cashGiftsEnabled).toBe(true);
   });
 
+  it("refuses cash gifts when Stripe would settle in another currency", async () => {
+    const db = db0();
+    await ok(db, registryService.updateSettings(BOOTSTRAP_WEDDING_ID, { published: true }));
+    // Charges work, but the account settles in dollars while the wedding prices
+    // everything in Australian dollars. Checkout would convert or refuse.
+    db.update(registrySettings)
+      .set({ stripeChargesEnabled: true, stripeDefaultCurrency: "USD" })
+      .where(eq(registrySettings.weddingId, BOOTSTRAP_WEDDING_ID))
+      .run();
+
+    const blocked = await run(
+      db,
+      registryService.updateSettings(BOOTSTRAP_WEDDING_ID, { cashGiftsEnabled: true }),
+    );
+    expect(Exit.isFailure(blocked)).toBe(true);
+    if (Exit.isFailure(blocked)) {
+      expect(blocked.cause.toString()).toContain(new CurrencyMismatch()._tag);
+    }
+    const refused = await ok(db, registryService.get(BOOTSTRAP_WEDDING_ID));
+    expect(refused.settings.cashGiftsEnabled).toBe(false);
+
+    // The same patch goes through once the two agree.
+    db.update(registrySettings)
+      .set({ stripeDefaultCurrency: "AUD" })
+      .where(eq(registrySettings.weddingId, BOOTSTRAP_WEDDING_ID))
+      .run();
+    const enabled = await ok(
+      db,
+      registryService.updateSettings(BOOTSTRAP_WEDDING_ID, { cashGiftsEnabled: true }),
+    );
+    expect(enabled.cashGiftsEnabled).toBe(true);
+  });
+
+  it("treats a settlement currency Stripe has not named as unknown, not as a mismatch", async () => {
+    const db = db0();
+    await ok(db, registryService.updateSettings(BOOTSTRAP_WEDDING_ID, { published: true }));
+    db.update(registrySettings)
+      .set({ stripeChargesEnabled: true, stripeDefaultCurrency: null })
+      .where(eq(registrySettings.weddingId, BOOTSTRAP_WEDDING_ID))
+      .run();
+
+    const enabled = await ok(
+      db,
+      registryService.updateSettings(BOOTSTRAP_WEDDING_ID, { cashGiftsEnabled: true }),
+    );
+    expect(enabled.cashGiftsEnabled).toBe(true);
+  });
+
   it("stops a wedding adding items past the ceiling", async () => {
     const db = db0();
     const now = new Date();
@@ -1022,6 +1101,7 @@ const ACCOUNT = "acct_connected";
 function contribution(db: Db0, id: string) {
   return db.select().from(registryContributions).where(eq(registryContributions.id, id)).get() as {
     status: string;
+    refundedAmountMinor: number | null;
     stripeCheckoutSessionId: string | null;
     stripePaymentIntentId: string | null;
   };
@@ -1132,7 +1212,12 @@ describe("refundContribution", () => {
 
     const outcome = await ok(
       db,
-      registryService.refundContribution({ paymentIntentId: "pi_1", stripeAccountId: ACCOUNT }),
+      registryService.refundContribution({
+        paymentIntentId: "pi_1",
+        stripeAccountId: ACCOUNT,
+        refundedAmountMinor: 10_000,
+        fullyRefunded: true,
+      }),
     );
 
     expect(outcome).toBe("refunded");
@@ -1149,6 +1234,8 @@ describe("refundContribution", () => {
       registryService.refundContribution({
         paymentIntentId: "pi_1",
         stripeAccountId: "acct_someone_else",
+        refundedAmountMinor: 10_000,
+        fullyRefunded: true,
       }),
     );
 
@@ -1163,7 +1250,12 @@ describe("refundContribution", () => {
 
     const outcome = await ok(
       db,
-      registryService.refundContribution({ paymentIntentId: "pi_1", stripeAccountId: ACCOUNT }),
+      registryService.refundContribution({
+        paymentIntentId: "pi_1",
+        stripeAccountId: ACCOUNT,
+        refundedAmountMinor: 10_000,
+        fullyRefunded: true,
+      }),
     );
 
     expect(outcome).toBe("ignored");
@@ -1179,7 +1271,12 @@ describe("refundContribution", () => {
 
     const outcome = await ok(
       db,
-      registryService.refundContribution({ paymentIntentId: "pi_1", stripeAccountId: ACCOUNT }),
+      registryService.refundContribution({
+        paymentIntentId: "pi_1",
+        stripeAccountId: ACCOUNT,
+        refundedAmountMinor: 10_000,
+        fullyRefunded: true,
+      }),
     );
 
     expect(outcome).toBe("unknown");
@@ -1197,7 +1294,12 @@ describe("refundContribution", () => {
 
     const outcome = await ok(
       db,
-      registryService.refundContribution({ paymentIntentId: "pi_1", stripeAccountId: ACCOUNT }),
+      registryService.refundContribution({
+        paymentIntentId: "pi_1",
+        stripeAccountId: ACCOUNT,
+        refundedAmountMinor: 10_000,
+        fullyRefunded: true,
+      }),
     );
 
     expect(outcome).toBe("ambiguous");
@@ -1292,11 +1394,172 @@ describe("refundContribution", () => {
 
     await ok(
       db,
-      registryService.refundContribution({ paymentIntentId: "pi_1", stripeAccountId: ACCOUNT }),
+      registryService.refundContribution({
+        paymentIntentId: "pi_1",
+        stripeAccountId: ACCOUNT,
+        refundedAmountMinor: 4_000,
+        fullyRefunded: true,
+      }),
     );
 
     const snap = await ok(db, registryService.get(BOOTSTRAP_WEDDING_ID));
     expect(snap.contributionsPrimaryMinor).toBe(10_000);
+  });
+
+  it("records what went back on a partial refund and leaves the gift standing", async () => {
+    const db = db0();
+    ownAccount(db, ACCOUNT);
+    const id = seedContribution(db, {
+      amountMinor: 10_000,
+      status: "succeeded",
+      paymentIntentId: "pi_1",
+    });
+
+    const outcome = await ok(
+      db,
+      registryService.refundContribution({
+        paymentIntentId: "pi_1",
+        stripeAccountId: ACCOUNT,
+        refundedAmountMinor: 2_500,
+        fullyRefunded: false,
+      }),
+    );
+
+    expect(outcome).toBe("partial");
+    const row = contribution(db, id);
+    // The couple kept the rest, so the gift is still a gift — but the row no
+    // longer claims the whole amount survived.
+    expect(row.status).toBe("succeeded");
+    expect(row.refundedAmountMinor).toBe(2_500);
+  });
+
+  it("records the amount on a full refund as well as moving the status", async () => {
+    const db = db0();
+    ownAccount(db, ACCOUNT);
+    const id = seedContribution(db, {
+      amountMinor: 10_000,
+      status: "succeeded",
+      paymentIntentId: "pi_1",
+    });
+
+    const outcome = await ok(
+      db,
+      registryService.refundContribution({
+        paymentIntentId: "pi_1",
+        stripeAccountId: ACCOUNT,
+        refundedAmountMinor: 10_000,
+        fullyRefunded: true,
+      }),
+    );
+
+    expect(outcome).toBe("refunded");
+    const row = contribution(db, id);
+    expect(row.status).toBe("refunded");
+    expect(row.refundedAmountMinor).toBe(10_000);
+  });
+
+  it("keeps the recorded amount when a stale delivery reports less", async () => {
+    const db = db0();
+    ownAccount(db, ACCOUNT);
+    const id = seedContribution(db, {
+      amountMinor: 10_000,
+      status: "succeeded",
+      paymentIntentId: "pi_1",
+      refundedAmountMinor: 4_000,
+    });
+
+    // Stripe's `amount_refunded` is the running total across every refund on the
+    // charge, and deliveries can arrive out of order, so a smaller figure is an
+    // older event and not news.
+    const outcome = await ok(
+      db,
+      registryService.refundContribution({
+        paymentIntentId: "pi_1",
+        stripeAccountId: ACCOUNT,
+        refundedAmountMinor: 1_000,
+        fullyRefunded: false,
+      }),
+    );
+
+    expect(outcome).toBe("partial");
+    expect(contribution(db, id).refundedAmountMinor).toBe(4_000);
+  });
+
+  it("writes nothing when a partial refund carries no usable amount", async () => {
+    const db = db0();
+    ownAccount(db, ACCOUNT);
+    const id = seedContribution(db, {
+      amountMinor: 10_000,
+      status: "succeeded",
+      paymentIntentId: "pi_1",
+    });
+
+    const outcome = await ok(
+      db,
+      registryService.refundContribution({
+        paymentIntentId: "pi_1",
+        stripeAccountId: ACCOUNT,
+        refundedAmountMinor: null,
+        fullyRefunded: false,
+      }),
+    );
+
+    expect(outcome).toBe("partial");
+    const row = contribution(db, id);
+    expect(row.status).toBe("succeeded");
+    // NULL reads as "not recorded", which is the truth — falling back to the
+    // row's own amount would invent a figure Stripe never sent.
+    expect(row.refundedAmountMinor).toBeNull();
+  });
+
+  it("refuses a partial refund from an account the wedding does not own", async () => {
+    const db = db0();
+    ownAccount(db, ACCOUNT);
+    const id = seedContribution(db, {
+      amountMinor: 10_000,
+      status: "succeeded",
+      paymentIntentId: "pi_1",
+    });
+
+    const outcome = await ok(
+      db,
+      registryService.refundContribution({
+        paymentIntentId: "pi_1",
+        stripeAccountId: "acct_someone_else",
+        refundedAmountMinor: 2_500,
+        fullyRefunded: false,
+      }),
+    );
+
+    expect(outcome).toBe("rejected");
+    const row = contribution(db, id);
+    expect(row.status).toBe("succeeded");
+    expect(row.refundedAmountMinor).toBeNull();
+  });
+
+  it("moves a full refund that carried no amount, and records nothing", async () => {
+    const db = db0();
+    ownAccount(db, ACCOUNT);
+    const id = seedContribution(db, {
+      amountMinor: 10_000,
+      status: "succeeded",
+      paymentIntentId: "pi_1",
+    });
+
+    const outcome = await ok(
+      db,
+      registryService.refundContribution({
+        paymentIntentId: "pi_1",
+        stripeAccountId: ACCOUNT,
+        refundedAmountMinor: null,
+        fullyRefunded: true,
+      }),
+    );
+
+    expect(outcome).toBe("refunded");
+    const row = contribution(db, id);
+    expect(row.status).toBe("refunded");
+    expect(row.refundedAmountMinor).toBeNull();
   });
 });
 

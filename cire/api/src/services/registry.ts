@@ -60,6 +60,11 @@ export class FamilyNotInWedding extends Data.TaggedError("FamilyNotInWedding") {
 export class ImageKeyNotInWedding extends Data.TaggedError("ImageKeyNotInWedding") {}
 /** Cash gifts asked for without a Stripe account that can take charges. 409-class. */
 export class StripeNotReady extends Data.TaggedError("StripeNotReady") {}
+/**
+ * Cash gifts asked for in a currency the connected account cannot settle.
+ * 409-class.
+ */
+export class CurrencyMismatch extends Data.TaggedError("CurrencyMismatch") {}
 /** A guest asked to give money to a couple who are not taking it. 409-class. */
 export class CashGiftsUnavailable extends Data.TaggedError("CashGiftsUnavailable") {}
 /** The wedding is at its item ceiling. 409-class. */
@@ -228,12 +233,23 @@ export interface RegistrySnapshot {
   /** The wedding's primary currency — what every authored figure is in. */
   currency: string;
   /**
-   * Sum of succeeded contributions expressed in the primary currency. APPROXIMATE
-   * by construction: each foreign-currency row was converted at its own
-   * snapshotted rate, so this is a sum of historical conversions, not a live
-   * valuation. The portal must label it as such.
+   * Sum of the succeeded contributions that are IN the primary currency, and
+   * only those. A row that arrived in some other currency and carries no
+   * conversion is counted by `contributionsOtherCurrencyCount` instead of being
+   * added in, because a sum across currencies is not an amount of money.
+   *
+   * Still APPROXIMATE where a row does carry a conversion: that row was
+   * converted at its own snapshotted rate, so this is a sum of historical
+   * conversions, not a live valuation. The portal must label it as such.
    */
   contributionsPrimaryMinor: number;
+  /**
+   * How many succeeded contributions this total leaves out — rows whose
+   * currency, after the primary-currency snapshot is taken into account, is not
+   * the wedding's. Non-zero means the figure above is not the whole of the
+   * money, and the portal has to say so rather than showing one total.
+   */
+  contributionsOtherCurrencyCount: number;
 }
 
 export interface UpdateRegistrySettingsPatch {
@@ -492,24 +508,46 @@ function claimedByItem(weddingId: string): Effect.Effect<Map<string, number>, ne
   });
 }
 
+/** One currency's worth of settled gift money. */
+interface CurrencyTotal {
+  /** Upper-case ISO code, as `RegistrySnapshot.currency` is. */
+  currency: string;
+  totalMinor: number;
+  count: number;
+}
+
 /**
- * Sum of succeeded contributions in the primary currency, computed IN SQL.
+ * Succeeded contributions totalled PER CURRENCY, computed IN SQL.
  *
  * It used to be a JS loop over the gift log, which quietly made the total a
  * function of how many rows the log happened to return — so paginating the log
- * would have started under-reporting the money. One row out of the database,
- * whatever the page size.
+ * would have started under-reporting the money. One query, whatever the page
+ * size.
  *
  * A same-currency row has no primary snapshot (the FX columns are NULL) and so
  * contributes its as-given amount; that is the `coalesce` pair.
+ *
+ * GROUPED, because adding two currencies together produces a number that is not
+ * an amount of anything. The caller takes the wedding's own currency out of this
+ * and reports the rest as a count. `retention.ts` groups the same way for the
+ * same reason.
+ *
+ * The key is upper-cased: authored currencies are upper case and the ones the
+ * settle path writes come from Stripe in lower case, so the raw column values
+ * would split one currency across two groups.
  */
-function contributionsPrimaryTotal(weddingId: string): Effect.Effect<number, never, DbService> {
+function contributionsByCurrency(
+  weddingId: string,
+): Effect.Effect<CurrencyTotal[], never, DbService> {
   return Effect.gen(function* () {
     const db = yield* DbService;
-    const [row] = yield* dbQuery(() =>
+    const key = sql<string>`upper(coalesce(${registryContributions.primaryCurrency}, ${registryContributions.currency}))`;
+    const rows = yield* dbQuery(() =>
       db
         .select({
-          total: sql<number>`coalesce(sum(coalesce(${registryContributions.primaryAmountMinor}, ${registryContributions.amountMinor})), 0)`,
+          currency: key,
+          totalMinor: sql<number>`coalesce(sum(coalesce(${registryContributions.primaryAmountMinor}, ${registryContributions.amountMinor})), 0)`,
+          count: sql<number>`count(*)`,
         })
         .from(registryContributions)
         .where(
@@ -518,9 +556,14 @@ function contributionsPrimaryTotal(weddingId: string): Effect.Effect<number, nev
             eq(registryContributions.status, "succeeded"),
           ),
         )
+        .groupBy(key)
         .all(),
     );
-    return Number((row as { total: number } | undefined)?.total ?? 0) || 0;
+    return (rows as CurrencyTotal[]).map((row) => ({
+      currency: String(row.currency ?? "").toUpperCase(),
+      totalMinor: Number(row.totalMinor ?? 0) || 0,
+      count: Number(row.count ?? 0) || 0,
+    }));
   });
 }
 
@@ -603,6 +646,12 @@ interface WebhookContributionRow {
   /** What the guest was shown and agreed to, for the settle-time check (S-L1). */
   amountMinor: number;
   currency: string;
+  /**
+   * What Stripe has sent back so far, or NULL where no refund has been seen.
+   * Read so a refund write can be monotonic: Stripe's `amount_refunded` is
+   * cumulative, and two deliveries can arrive out of order.
+   */
+  refundedAmountMinor: number | null;
   /** Non-null exactly when the row's wedding owns the account the event came on. */
   ownedAccountId: string | null;
 }
@@ -622,6 +671,7 @@ function contributionsOnAccount(
           sessionId: registryContributions.stripeCheckoutSessionId,
           amountMinor: registryContributions.amountMinor,
           currency: registryContributions.currency,
+          refundedAmountMinor: registryContributions.refundedAmountMinor,
           ownedAccountId: registrySettings.stripeAccountId,
         })
         .from(registryContributions)
@@ -641,6 +691,21 @@ function contributionsOnAccount(
 }
 
 /**
+ * The columns a Stripe account-state write touches.
+ *
+ * `stripeDefaultCurrency` is optional because a caller that read a payload
+ * which never mentioned the settlement currency must leave the stored value
+ * alone rather than write null over what Stripe told us earlier.
+ */
+interface StripeAccountStatePatch {
+  stripeChargesEnabled: boolean;
+  stripePayoutsEnabled: boolean;
+  stripeDefaultCurrency?: string | null;
+  stripeAccountUpdatedAt: Date;
+  updatedAt: Date;
+}
+
+/**
  * The columns a settle or an expiry writes.
  *
  * `stripeCheckoutSessionId` is optional because it is written ONLY while
@@ -653,6 +718,34 @@ interface ContributionPatch {
   updatedAt: Date;
   stripeCheckoutSessionId?: string;
   stripePaymentIntentId?: string | null;
+  // The four currency columns, which move together or not at all: a row either
+  // carries a complete primary-currency snapshot or none of one. They are
+  // optional for the same reason the session id is — a settle that has nothing
+  // to say about currency must not name them in the UPDATE and overwrite a
+  // snapshot some earlier event wrote.
+  primaryAmountMinor?: number;
+  primaryCurrency?: string;
+  fxRate?: string;
+  fxRateAt?: Date;
+}
+
+/** The columns a refund writes. Both are optional: a refund may move only one. */
+interface RefundPatch {
+  updatedAt: Date;
+  status?: RegistryContributionStatus;
+  refundedAmountMinor?: number;
+}
+
+/**
+ * A refunded amount worth writing, or `null`.
+ *
+ * Stripe sends whole minor units, so anything fractional, negative, absent or
+ * not a number at all is an event this product cannot honestly record. Zero is
+ * excluded too: it is what a charge with no refund on it reports, and writing
+ * it would turn "nothing went back" into a recorded refund of nothing.
+ */
+function refundedAmountOf(value: number | null): number | null {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : null;
 }
 
 /**
@@ -726,7 +819,7 @@ export const registryService = {
       // latency instead of stacking it — the same shape claimService.get uses.
       // On bun:sqlite the concurrency is a no-op; on D1 it is most of the
       // endpoint's wall clock.
-      const { claimed, contributionsPrimaryMinor, currency, gifts, itemRows, settingsRows } =
+      const { claimed, contributionTotals, currency, gifts, itemRows, settingsRows } =
         yield* Effect.all(
           {
             settingsRows: dbQuery(() =>
@@ -747,11 +840,22 @@ export const registryService = {
             claimed: claimedByItem(weddingId),
             gifts: registryService.giftLog(weddingId, { offset: options?.giftsOffset }),
             currency: primaryCurrency(weddingId),
-            contributionsPrimaryMinor: contributionsPrimaryTotal(weddingId),
+            contributionTotals: contributionsByCurrency(weddingId),
           },
           { concurrency: "unbounded" },
         );
       const settingsRow = settingsRows[0] as SettingsRow | undefined;
+      // Split here rather than in SQL: the wedding's currency comes from its own
+      // read, and the two run together above. Passing one into the other would
+      // serialise two D1 round trips that currently overlap, to save a filter
+      // over at most a handful of rows.
+      const primary = currency.toUpperCase();
+      const contributionsPrimaryMinor =
+        contributionTotals.find((total) => total.currency === primary)?.totalMinor ?? 0;
+      const contributionsOtherCurrencyCount = contributionTotals.reduce(
+        (count, total) => (total.currency === primary ? count : count + total.count),
+        0,
+      );
 
       return {
         settings: settingsRow ? toSettingsDto(settingsRow) : defaultSettings(weddingId),
@@ -766,6 +870,7 @@ export const registryService = {
           : null,
         currency,
         contributionsPrimaryMinor,
+        contributionsOtherCurrencyCount,
       };
     }).pipe(Effect.withSpan("cire.registry.get"));
   },
@@ -958,11 +1063,17 @@ export const registryService = {
    * charge. Enforcing it here rather than in the route means every caller gets
    * it — a guest paying into an account that cannot receive money is a refund
    * and a support case, not a validation nit.
+   *
+   * The same switch also owns the currency invariant. Charges are taken on the
+   * connected account, so Stripe settles them in THAT account's currency, and a
+   * session priced in anything else is converted on Stripe's terms or refused
+   * outright. Turning cash gifts on while the two disagree would look fine in
+   * the portal and then fail at Checkout, in front of a guest.
    */
   updateSettings(
     weddingId: string,
     patch: UpdateRegistrySettingsPatch,
-  ): Effect.Effect<RegistrySettingsDto, StripeNotReady, DbService> {
+  ): Effect.Effect<RegistrySettingsDto, StripeNotReady | CurrencyMismatch, DbService> {
     return Effect.gen(function* () {
       const db = yield* DbService;
       const now = new Date();
@@ -972,13 +1083,28 @@ export const registryService = {
         // row means the registry was never opened, so certainly no Stripe.
         const [existing] = yield* dbQuery(() =>
           db
-            .select({ chargesEnabled: registrySettings.stripeChargesEnabled })
+            .select({
+              chargesEnabled: registrySettings.stripeChargesEnabled,
+              defaultCurrency: registrySettings.stripeDefaultCurrency,
+            })
             .from(registrySettings)
             .where(eq(registrySettings.weddingId, weddingId))
             .all(),
         );
-        if (!(existing as { chargesEnabled: boolean } | undefined)?.chargesEnabled) {
+        const stripe = existing as
+          | { chargesEnabled: boolean; defaultCurrency: string | null }
+          | undefined;
+        if (!stripe?.chargesEnabled) {
           return yield* Effect.fail(new StripeNotReady());
+        }
+        // A null settlement currency means Stripe has not said yet, not that it
+        // disagrees — an account can take charges before Stripe settles on one.
+        // Only two known, different currencies are a refusal.
+        if (stripe.defaultCurrency) {
+          const wedding = yield* primaryCurrency(weddingId);
+          if (stripe.defaultCurrency.toUpperCase() !== wedding.toUpperCase()) {
+            return yield* Effect.fail(new CurrencyMismatch());
+          }
         }
       }
 
@@ -1049,7 +1175,13 @@ export const registryService = {
    */
   attachStripeAccount(
     weddingId: string,
-    account: { id: string; chargesEnabled: boolean; payoutsEnabled: boolean },
+    account: {
+      id: string;
+      chargesEnabled: boolean;
+      payoutsEnabled: boolean;
+      /** Upper-case ISO, or null when Stripe has not settled on one yet. */
+      defaultCurrency?: string | null;
+    },
   ): Effect.Effect<RegistrySettingsDto, never, DbService> {
     return Effect.gen(function* () {
       const db = yield* DbService;
@@ -1062,6 +1194,7 @@ export const registryService = {
             stripeAccountId: account.id,
             stripeChargesEnabled: account.chargesEnabled,
             stripePayoutsEnabled: account.payoutsEnabled,
+            stripeDefaultCurrency: account.defaultCurrency ?? null,
             stripeAccountUpdatedAt: now,
             createdAt: now,
             updatedAt: now,
@@ -1079,6 +1212,9 @@ export const registryService = {
               // cannot be relied on to repeat it.
               stripeChargesEnabled: sql`case when ${registrySettings.stripeAccountId} is null then ${account.chargesEnabled} else ${registrySettings.stripeChargesEnabled} end`,
               stripePayoutsEnabled: sql`case when ${registrySettings.stripeAccountId} is null then ${account.payoutsEnabled} else ${registrySettings.stripePayoutsEnabled} end`,
+              // And so does the settlement currency, for the same reason: it
+              // describes the account the id names, and the two have to agree.
+              stripeDefaultCurrency: sql`case when ${registrySettings.stripeAccountId} is null then ${account.defaultCurrency ?? null} else ${registrySettings.stripeDefaultCurrency} end`,
               stripeAccountUpdatedAt: now,
               updatedAt: now,
             },
@@ -1111,6 +1247,13 @@ export const registryService = {
     chargesEnabled: boolean;
     payoutsEnabled: boolean;
     /**
+     * The currency Stripe settles this account in, upper-case ISO, or null when
+     * Stripe has not decided one yet. `undefined` means the caller read a
+     * payload that did not mention it at all, and the stored value is left
+     * exactly as it is.
+     */
+    defaultCurrency?: string | null;
+    /**
      * When STRIPE said it, in seconds — the event's own `created`, never our
      * clock. Absent only for the live `…/stripe/refresh` read, which is by
      * definition current.
@@ -1121,15 +1264,22 @@ export const registryService = {
       const db = yield* DbService;
       const now = new Date();
       const observed = account.observedAt === undefined ? now : new Date(account.observedAt * 1000);
+      const patch: StripeAccountStatePatch = {
+        stripeChargesEnabled: account.chargesEnabled,
+        stripePayoutsEnabled: account.payoutsEnabled,
+        stripeAccountUpdatedAt: observed,
+        updatedAt: now,
+      };
+      // Named only when the caller actually read a settlement currency off the
+      // payload. A caller that saw no such field says nothing here rather than
+      // writing null over what Stripe told us earlier.
+      if (account.defaultCurrency !== undefined) {
+        patch.stripeDefaultCurrency = account.defaultCurrency;
+      }
       const rows = yield* dbQuery(() =>
         db
           .update(registrySettings)
-          .set({
-            stripeChargesEnabled: account.chargesEnabled,
-            stripePayoutsEnabled: account.payoutsEnabled,
-            stripeAccountUpdatedAt: observed,
-            updatedAt: now,
-          })
+          .set(patch)
           .where(
             and(
               eq(registrySettings.stripeAccountId, account.id),
@@ -1748,12 +1898,12 @@ export const registryService = {
   },
 
   /**
-   * Mark a gift that went back (S-M2).
+   * Record money that went back (S-M2).
    *
    * FOUND BY PAYMENT INTENT, because that is all a refund event carries. Stripe
    * does not thread the checkout session through to `charge.refunded`, and the
    * connected account's own metadata is not evidence of anything — so the
-   * payment intent the settle path wrote is the link, and migration 0059 is the
+   * payment intent the settle path wrote is the link, and migration 0058 is the
    * index that keeps this read off a full scan.
    *
    * ONLY A SUCCEEDED ROW MOVES: a refund of something never settled is either a
@@ -1761,27 +1911,45 @@ export const registryService = {
    * neither should write.
    *
    * AND ONLY WHEN THERE IS EXACTLY ONE (osn-tracker #527). The intent column is
-   * indexed, not unique — 0059 argues why, and the argument holds: a UNIQUE
+   * indexed, not unique — 0058 argues why, and the argument holds: a UNIQUE
    * would turn a future basket or a retried intent into an insert that fails at
    * 2 a.m. inside a webhook, on a gift that was actually paid. What that leaves
    * is a read that can come back with two rows, and this one refuses them:
    * `ambiguous`, an error in the log naming both ids, and nothing written.
    *
-   * PARTIAL REFUNDS DO NOT LAND HERE — the route checks the charge's own
-   * `refunded` flag and never calls this for a partial one. A couple who returned half of a gift
-   * still received the other half, and a log that called the whole thing
-   * refunded would be telling them a gift never arrived. The amount is left as
-   * given for the same reason: it is what the guest gave, and re-writing it to
-   * the net would quietly rewrite history in the couple's own record.
+   * PARTIAL AND FULL REFUNDS BOTH LAND HERE, and they part company only at the
+   * status. A full refund moves the row to `refunded`, which is what takes it
+   * out of the settled total. A partial one leaves the status at `succeeded`,
+   * because the couple did receive the rest — but it still records
+   * `refunded_amount_minor`, so the row stops claiming the whole gift survived.
+   * Routing both through one lookup is also what gives a partial refund the
+   * ownership and ambiguity checks.
    *
-   * The status is the only thing that changes, which is enough to take the gift
-   * out of the primary-currency total: that sum filters on `succeeded`.
+   * `amount_minor` is never rewritten, either way: it is what the guest gave,
+   * and netting it off would rewrite history in the couple's own record.
+   *
+   * THE RECORDED AMOUNT ONLY EVER GROWS. Stripe's `amount_refunded` is the
+   * running total across every refund on the charge, and two deliveries can
+   * arrive out of order, so a figure at or below what the row already holds is
+   * an older event and is not written.
+   *
+   * An event carrying no usable amount still moves the status on a full refund;
+   * the column stays NULL, which reads as "not recorded" rather than as zero.
    */
   refundContribution(input: {
     paymentIntentId: string;
     stripeAccountId: string;
+    /**
+     * Stripe's `charge.amount_refunded`, in the charge's own currency — the one
+     * `coalesce(primary_currency, currency)` names, since a refund is always
+     * denominated in what the account settled. `null` where the event carried
+     * no usable number.
+     */
+    refundedAmountMinor: number | null;
+    /** Stripe's `charge.refunded`: the whole charge went back, not part of it. */
+    fullyRefunded: boolean;
   }): Effect.Effect<
-    "refunded" | "ignored" | "unknown" | "rejected" | "ambiguous",
+    "refunded" | "partial" | "ignored" | "unknown" | "rejected" | "ambiguous",
     never,
     DbService
   > {
@@ -1801,7 +1969,7 @@ export const registryService = {
       );
       if (rows.length > 1) {
         // The column is indexed, not unique, and deliberately so — see
-        // migration 0059. So the read has to carry the check the constraint
+        // migration 0058. So the read has to carry the check the constraint
         // does not: more than one gift on this intent means the refund names a
         // row we cannot pick, and picking the first would move somebody's gift
         // to `refunded` on the strength of an ORDER BY nobody wrote.
@@ -1821,14 +1989,32 @@ export const registryService = {
       if (!row.ownedAccountId) return "rejected";
       if (row.status !== "succeeded") return "ignored";
 
+      const refunded = refundedAmountOf(input.refundedAmountMinor);
+      // Cumulative and monotonic: anything at or below what the row already
+      // holds is an older delivery of a total already recorded.
+      const advances = refunded !== null && refunded > (row.refundedAmountMinor ?? 0);
+      if (!input.fullyRefunded && !advances) {
+        yield* Effect.logWarning("partial refund carried no new amount", {
+          paymentIntentId: input.paymentIntentId,
+          stripeAccountId: input.stripeAccountId,
+          contributionId: row.id,
+          recordedAmountMinor: row.refundedAmountMinor,
+        });
+        return "partial";
+      }
+
+      const patch: RefundPatch = { updatedAt: new Date() };
+      if (advances) patch.refundedAmountMinor = refunded;
+      if (input.fullyRefunded) patch.status = "refunded";
+
       yield* dbQuery(() =>
         db
           .update(registryContributions)
-          .set({ status: "refunded", updatedAt: new Date() })
+          .set(patch)
           .where(eq(registryContributions.id, row.id))
           .run(),
       );
-      return "refunded";
+      return input.fullyRefunded ? "refunded" : "partial";
     }).pipe(Effect.withSpan("cire.registry.refundContribution"));
   },
 

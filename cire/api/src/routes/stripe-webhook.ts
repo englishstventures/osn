@@ -148,7 +148,7 @@ const CHECKOUT_ASYNC_FAILED = "checkout.session.async_payment_failed";
 const CHECKOUT_EXPIRED = "checkout.session.expired";
 /**
  * Money went back. Carries a CHARGE, not a session — which is why the refund
- * path finds its row by payment intent (migration 0059 indexes that column).
+ * path finds its row by payment intent (migration 0058 indexes that column).
  */
 const CHARGE_REFUNDED = "charge.refunded";
 /**
@@ -196,8 +196,8 @@ interface CheckoutSessionObject {
   amount_total?: unknown;
   currency?: unknown;
   /**
-   * Our own gift id, set when the session was created (0060). Stripe echoes it
-   * back untouched and the connected account has no way to write it, unlike
+   * Our own gift id, set when the session was created. Stripe echoes it back
+   * untouched and the connected account has no way to write it, unlike
    * `metadata` — so it is read first and `metadata` is only the fallback for
    * sessions created before the field was sent.
    */
@@ -210,11 +210,17 @@ interface CheckoutSessionObject {
  *
  * `refunded` is Stripe's own "the whole thing went back" flag — true only when
  * the refunded amount equals the charge. A partial refund leaves it false, and
- * the handler leaves the gift alone.
+ * both kinds reach the service, which records the amount either way and moves
+ * the status only on a full one.
+ *
+ * `amount_refunded` is the RUNNING TOTAL over every refund on the charge, in
+ * the charge's own currency, so the service treats it as monotonic rather than
+ * as this refund's own figure.
  */
 interface ChargeObject {
   payment_intent?: unknown;
   refunded?: unknown;
+  amount_refunded?: unknown;
 }
 
 /**
@@ -250,7 +256,7 @@ function metaString(value: unknown): string | null {
  * The gift a session names. `client_reference_id` is the trustworthy field —
  * the platform sets it at creation and nothing on the connected account's side
  * can rewrite it — so it wins; `metadata.contributionId` still answers for
- * sessions created before 0060 shipped.
+ * sessions created before the field was sent.
  */
 function contributionIdOf(session: CheckoutSessionObject | undefined): string | null {
   return metaString(session?.client_reference_id) ?? metaString(session?.metadata?.contributionId);
@@ -298,6 +304,7 @@ export const createStripeWebhookRoutes = (db: Db, deps: StripeWebhookDeps) =>
               id?: unknown;
               charges_enabled?: unknown;
               payouts_enabled?: unknown;
+              default_currency?: unknown;
             };
             if (typeof account?.id !== "string") {
               // Signed by Stripe but not shaped like an account. Nothing to
@@ -308,6 +315,14 @@ export const createStripeWebhookRoutes = (db: Db, deps: StripeWebhookDeps) =>
               id: account.id,
               chargesEnabled: account.charges_enabled === true,
               payoutsEnabled: account.payouts_enabled === true,
+              // Upper-case at the boundary, as every other currency in this
+              // product is. `undefined` when the event said nothing about a
+              // settlement currency, which leaves the stored one alone rather
+              // than writing a null over it.
+              defaultCurrency:
+                typeof account.default_currency === "string" && account.default_currency.length > 0
+                  ? account.default_currency.toUpperCase()
+                  : undefined,
               // Stripe's own timestamp, never ours: deliveries are unordered
               // and retried for days, and the service refuses anything older
               // than what the row already holds. Without it an old
@@ -376,16 +391,17 @@ export const createStripeWebhookRoutes = (db: Db, deps: StripeWebhookDeps) =>
               // charge, and nothing here knows what it is.
               return { received: true, outcome: "unknown" };
             }
-            if (charge?.refunded !== true) {
-              // PARTIAL. The charge is still, in part, a gift the couple
-              // received — calling the whole thing refunded would tell them
-              // otherwise. Acknowledged and left alone.
-              return { received: true, outcome: "partial" };
-            }
-
+            // A partial refund goes down the same path as a full one. It is
+            // still money the couple did not keep, so the amount is recorded;
+            // what it does not do is move the status, because the rest of the
+            // gift did arrive. Sending both through one call is also what gives
+            // a partial refund the ownership and ambiguity checks.
             const outcome = yield* registryService.refundContribution({
               paymentIntentId,
               stripeAccountId,
+              refundedAmountMinor:
+                typeof charge?.amount_refunded === "number" ? charge.amount_refunded : null,
+              fullyRefunded: charge?.refunded === true,
             });
             return { received: true, outcome };
           }

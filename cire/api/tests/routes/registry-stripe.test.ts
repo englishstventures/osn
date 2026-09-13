@@ -45,6 +45,7 @@ const ACCOUNT: StripeAccount = {
   chargesEnabled: false,
   payoutsEnabled: false,
   detailsSubmitted: false,
+  defaultCurrency: null,
 };
 
 /** A Stripe that records what it was asked, and can be told to refuse. */
@@ -316,6 +317,7 @@ describe("refreshing what Stripe says", () => {
         chargesEnabled: true,
         payoutsEnabled: true,
         detailsSubmitted: true,
+        defaultCurrency: "AUD",
       },
     });
     const { app, db } = buildApp({ stripe: stripe.client });
