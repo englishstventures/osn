@@ -1,5 +1,87 @@
 # @osn/ui
 
+## 1.11.3
+
+### Patch Changes
+
+- 98fd9ee: Take the patch-tier dependency upgrades from the 2026-09-11 review: `jose`
+  6.2.10 → 6.2.12 (refactors and performance work on the JWS/JWE cores and the
+  JWKS key-import path, no semantic change to any acceptance check),
+  `@elysiajs/openapi` 1.4.15 → 1.4.16 (additive — OpenAPI 3.1, regex path scopes,
+  `withHeaders` headers), `@kobalte/core` 0.13.13 → 0.13.14 (three bug fixes,
+  including `aria-hidden` preserved during modal handoff) and `@upstash/redis`
+  1.38.3 → 1.38.4.
+
+  The `@upstash/redis` release is a read-your-writes fix, not the CI-only change
+  its commit range suggests: 1.38.3 wrote the `upstash-sync-token` header onto the
+  client _after_ the request headers were merged, so the token only reached
+  Upstash on the following call and every read was one request behind on replica
+  consistency. `readYourWrites` defaults on and `shared/redis/src/upstash.ts` does
+  not disable it, so this covers the rate-limit counters and the ceremony stores.
+
+  `@elysiajs/openapi` 1.4.16 also changes what the generator emits, which the
+  OpenAPI freshness job catches: nullable schemas now carry `nullable: true`
+  beside a type array rather than beside an `anyOf`, and
+  `stripRedundantNullable` only recognised the `anyOf` spelling. It now accepts
+  either, so the shipped documents stay free of a keyword OpenAPI 3.1 does not
+  have. `shared/openapi/*.json` are regenerated: 3.1.2 rather than 3.1.0 (the
+  plugin sets the version itself now, so the hard-coded value in each app's
+  `documentation` block is dropped), and one `anyOf` of consts is emitted as an
+  `enum`. The Swift package builds against both regenerated documents.
+
+## 1.11.2
+
+### Patch Changes
+
+- f9cffd9: The post-recovery passkey-enrolment screen now gets the whole fifteen minutes the
+  restricted session grants, instead of dying after five.
+
+  Two deadlines were in play and only the shorter reached the browser. The session
+  row lives `RECOVERY_SESSION_TTL_SEC` (900 s); the access token in the same
+  response was signed with `accessTokenTtl` (300 s). `<RecoveryLoginForm>` holds
+  that session without adopting it — it must, because `@musubi/social` unmounts the
+  flow the moment a session is published, and a `aud: "osn-recovery"` token is one
+  every ordinary route rejects. Holding it also puts the flow outside `authFetch`,
+  where silent refresh lives. So a user who read the screen for six minutes and
+  pressed "Add a passkey" sent a dead bearer and got a 401, with ten minutes of
+  their window unspent.
+
+  `@osn/client` gains `refreshHeldSession`: a `/token` grant that returns a fresh
+  token set **without adopting it**. It reuses the existing single-flight grant, so
+  a held-session refresh and a cold-start bootstrap still produce one request —
+  two would replay a rotated cookie, which is what revokes a session family.
+  `<RecoveryLoginForm>` refreshes 30 s before each token expires.
+
+  `refreshHeldSession` resolves to a new exported `HeldSession` — `{ held: true;
+session: Session }` — rather than a bare `Session`. `adoptSession` and
+  `setSession` still take a plain `Session`, so a caller cannot write
+  `adoptSession(await refreshHeldSession())`: that is precisely the mistake
+  holding rather than adopting exists to rule out, and it is now a compile error
+  instead of a token minted for the recovery audience getting published as an
+  ordinary session. Every caller unwraps `.session` once it has decided to keep
+  holding it.
+
+  `@osn/api` caps a restricted session's access token at the life its own row has
+  left, at both issuance sites. Rotation carries the absolute deadline forward
+  rather than extending it, so without the cap a grant late in the window minted a
+  full-length token outliving the row behind it. Nothing was granted by such a
+  token — the enrolment bypass tests the row, not the token — but the browser was
+  told a deadline the server would not honour, and the screen showed a live button
+  that every request refused. Capped, the last token of the window expires exactly
+  when the row does, so the timed-out screen and the session's death coincide and
+  the client needs no copy of the fifteen minutes. An ordinary session is
+  untouched: the cap only ever applies where `restricted_until` is set.
+
+  The refresh loop is bounded by the server rather than by a client-side constant:
+  once a token arrives with less than the refresh lead on it, that token is the
+  deadline and the screen waits it out. A refused grant is retried on a halving
+  gap first, because `@osn/client` reports a transient 5xx exactly like a dead
+  cookie and giving up on the first refusal would cost the user the window this
+  change exists to return.
+
+- Updated dependencies [f9cffd9]
+  - @osn/client@2.18.0
+
 ## 1.11.1
 
 ### Patch Changes

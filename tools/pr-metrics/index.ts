@@ -442,6 +442,30 @@ export function skillCommandsIn(record: SessionRecord): string[] {
   return found;
 }
 
+/**
+ * Whether this record is the first of its API response to be seen, recording
+ * it as seen if so.
+ *
+ * `message.usage` on a split response is the whole response's usage, repeated
+ * verbatim on every record that carries a block of it. Summing it per record
+ * would multiply a response's cost by the number of blocks it was split
+ * across. Every reader of `message.usage` needs this guard; the tool counts
+ * next to it do not, because those are per record and each block holds its own.
+ *
+ * A record with no `requestId` is always counted. Two of them from one
+ * response would double-count, which is the lesser of the two errors and the
+ * one this tool has always preferred.
+ */
+function firstOfResponse(record: SessionRecord, seen: Set<string>): boolean {
+  const id = record.requestId;
+  if (typeof id !== "string") return true;
+  if (seen.has(id)) return false;
+
+  seen.add(id);
+
+  return true;
+}
+
 export interface SpendSummary {
   usd_equivalent: number;
   tokens: TokenTotals;
@@ -457,10 +481,15 @@ export function aggregateSpend(records: SessionRecord[]): SpendSummary {
   const byActor = { main: emptyBucket(), subagent: emptyBucket() };
   const effort: Record<string, number> = {};
   const unpriced = new Set<string>();
+  const countedResponses = new Set<string>();
   let usd = 0;
 
   for (const record of records) {
     if (record.type !== "assistant") continue;
+    // A later block of a response the loop has already priced. It repeats that
+    // response's usage, so counting it again would inflate both the cost and
+    // the message count — `messages` counts responses, not records.
+    if (!firstOfResponse(record, countedResponses)) continue;
 
     const model = record.message?.model ?? "unknown";
     const tokens = readUsage(record.message?.usage);
@@ -606,6 +635,7 @@ export function aggregateInteraction(records: SessionRecord[]): InteractionSumma
   // "we did not observe the boundary" and "every token was exploration" are
   // very different claims, and only one of them is true.
   const pendingBySession = new Map<string, number>();
+  const countedResponses = new Set<string>();
   let tokensBeforeFirstEdit = 0;
   let sessionsWithObservedEdit = 0;
 
@@ -658,7 +688,14 @@ export function aggregateInteraction(records: SessionRecord[]): InteractionSumma
     const uses = toolUses(record);
     if (uses.length > 0) sessionsWithWork.add(session);
 
-    if (!record.isSidechain && !sessionsPastFirstEdit.has(session)) {
+    // The same guard `aggregateSpend` uses, and for the same reason: this sum
+    // reads `message.usage`, which a split response repeats on every block.
+    // The tool counting below is per record and needs no guard.
+    if (
+      firstOfResponse(record, countedResponses) &&
+      !sessionsPastFirstEdit.has(session) &&
+      !record.isSidechain
+    ) {
       const tokens = readUsage(record.message?.usage);
       const spent =
         tokens.input +
@@ -920,6 +957,27 @@ export function buildCard(records: SessionRecord[], diff: DiffSummary, context: 
     diff,
     interaction: aggregateInteraction(records),
   };
+}
+
+/**
+ * Whether a freshly built card says anything the one on disk does not.
+ *
+ * `generated_at` records when a run happened, not a fact about the pull
+ * request, so on settled work it is the one field a re-run changes. Stamping it
+ * unconditionally made the tool non-idempotent in git terms: a backfill over 25
+ * pull requests rewrote 15 cards with a one-line timestamp diff and no data
+ * change. Comparing the new card against the old timestamp substituted in
+ * separates the two, so an unchanged card is left alone and the date on it goes
+ * on meaning the run that last learned something.
+ *
+ * `buildCard` fixes key order and both sides come from it, so comparing the
+ * serialised form is sound here. A hand-edited card with the same fields in a
+ * different order reads as changed and is rewritten — the safe way round.
+ */
+export function sameApartFromGeneratedAt(existing: Card, next: Card): boolean {
+  const rebased: Card = { ...next, pr: { ...next.pr, generated_at: existing.pr.generated_at } };
+
+  return JSON.stringify(existing) === JSON.stringify(rebased);
 }
 
 // ---------------------------------------------------------------------------
@@ -1355,10 +1413,26 @@ function ownedByRepo(sessionsDir: string, file: string, prefixes: string[] | und
   return prefixes.some((prefix) => project === prefix || project.startsWith(`${prefix}-`));
 }
 
-/** `requestId` where there is one, else the record's own uuid. A record with
- * neither is always kept: dropping it would be worse than counting it twice. */
+/**
+ * The record's own uuid, which is what a cross-file duplicate repeats.
+ *
+ * This keys the *record* dedupe, and it deliberately does not fall back to
+ * `requestId`. One API response reaches the transcript as several records — a
+ * thinking block, a text block, one per `tool_use` — all sharing a
+ * `requestId`, so keying on that kept the first block of every response and
+ * threw the rest away. On one branch here that dropped 167 of 973 records,
+ * including all three `Agent` dispatches and 101 of 161 `Bash` calls, and the
+ * card then stated the session used no subagents.
+ *
+ * The two phenomena separate cleanly: duplicate records repeat a `uuid`,
+ * duplicate *usage* repeats a `requestId`. So records dedupe here and usage
+ * deduped where it is read — `firstOfResponse`, in the two aggregators.
+ *
+ * A record with no uuid is always kept: dropping it would be worse than
+ * counting it twice, and the usage guard stops the one cost that would follow.
+ */
 function dedupeKey(record: SessionRecord): string | null {
-  return record.requestId ?? record.uuid ?? null;
+  return record.uuid ?? null;
 }
 
 /**
@@ -1578,8 +1652,21 @@ if (import.meta.main) {
 
   const outDir = flag("out-dir") ?? defaultMetricsDir();
   const outPath = `${outDir}/${branchSlug(branch)}.json`;
-  require("node:fs").mkdirSync(outDir, { recursive: true });
-  require("node:fs").writeFileSync(outPath, `${JSON.stringify(card, null, 2)}\n`);
+
+  // A re-run on the same branch is common — `prep-pr` writes the card, then the
+  // review adds a commit and it is written again. Where nothing but the
+  // timestamp moved, leave the file as it stands.
+  let existingCard: Card | null = null;
+  try {
+    existingCard = JSON.parse(require("node:fs").readFileSync(outPath, "utf8") as string) as Card;
+  } catch {
+    existingCard = null;
+  }
+
+  if (existingCard === null || !sameApartFromGeneratedAt(existingCard, card)) {
+    require("node:fs").mkdirSync(outDir, { recursive: true });
+    require("node:fs").writeFileSync(outPath, `${JSON.stringify(card, null, 2)}\n`);
+  }
 
   if (records.length === 0) {
     console.warn(

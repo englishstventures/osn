@@ -1,5 +1,139 @@
 # @osn/osn
 
+## 3.27.2
+
+### Patch Changes
+
+- 8734a58: Stop the same-second passkey-provenance test from depending on the wall clock. It enrolled two credentials back to back and asserted they shared a unix second; when the second turned over between them the precondition failed in the test's own setup, before the guard it exists to check ever ran. Both rows are now stamped onto one named second.
+
+## 3.27.1
+
+### Patch Changes
+
+- 98fd9ee: Take the patch-tier dependency upgrades from the 2026-09-11 review: `jose`
+  6.2.10 → 6.2.12 (refactors and performance work on the JWS/JWE cores and the
+  JWKS key-import path, no semantic change to any acceptance check),
+  `@elysiajs/openapi` 1.4.15 → 1.4.16 (additive — OpenAPI 3.1, regex path scopes,
+  `withHeaders` headers), `@kobalte/core` 0.13.13 → 0.13.14 (three bug fixes,
+  including `aria-hidden` preserved during modal handoff) and `@upstash/redis`
+  1.38.3 → 1.38.4.
+
+  The `@upstash/redis` release is a read-your-writes fix, not the CI-only change
+  its commit range suggests: 1.38.3 wrote the `upstash-sync-token` header onto the
+  client _after_ the request headers were merged, so the token only reached
+  Upstash on the following call and every read was one request behind on replica
+  consistency. `readYourWrites` defaults on and `shared/redis/src/upstash.ts` does
+  not disable it, so this covers the rate-limit counters and the ceremony stores.
+
+  `@elysiajs/openapi` 1.4.16 also changes what the generator emits, which the
+  OpenAPI freshness job catches: nullable schemas now carry `nullable: true`
+  beside a type array rather than beside an `anyOf`, and
+  `stripRedundantNullable` only recognised the `anyOf` spelling. It now accepts
+  either, so the shipped documents stay free of a keyword OpenAPI 3.1 does not
+  have. `shared/openapi/*.json` are regenerated: 3.1.2 rather than 3.1.0 (the
+  plugin sets the version itself now, so the hard-coded value in each app's
+  `documentation` block is dropped), and one `anyOf` of consts is emitted as an
+  `enum`. The Swift package builds against both regenerated documents.
+
+- Updated dependencies [98fd9ee]
+  - @shared/crypto@0.13.6
+  - @shared/openapi-tools@0.1.3
+  - @shared/redis@0.8.1
+
+## 3.27.0
+
+### Minor Changes
+
+- 73a8454: `OSN_TOTP_ENCRYPTION_KEY` can now be rotated without every enrolled user
+  re-enrolling their authenticator.
+
+  osn-api holds the key as a version-to-key ring built from `OSN_TOTP_ENCRYPTION_KEY`
+  and a new optional `OSN_TOTP_ENCRYPTION_KEY_PREVIOUS`. New ciphertext is written
+  under the highest version present, and each successful code check re-encrypts its
+  own row under the current key — inside the same conditional UPDATE that consumes
+  the RFC 6238 step, so single use is unchanged and no read-then-write is
+  introduced. The outgoing key drains as people use their second factor: no bulk
+  job, no downtime. A re-encryption that fails never fails the verify; the row
+  stays where it is and the next check tries again.
+
+  A row's `key_version` is a hint rather than a lookup key. Decryption tries every
+  configured key and takes whichever opens the row, because a rotation stages its
+  two Worker secrets some time apart and in that window a row's stamp and the key
+  it is really under disagree — selecting on the stamp would refuse those rows, and
+  a row rewritten during the disagreement could never be opened again. Trial
+  decryption is sound because AES-GCM authenticates, and the accountId is still
+  bound in as additional authenticated data on every attempt, so a row copied onto
+  another account opens under nothing.
+
+  A credential no configured key can open is now the same generic failure as a
+  wrong code rather than a 500, closing an oracle that told an unauthenticated
+  caller at `POST /login/recovery/totp/complete` whether an account had a second
+  factor at all. It is counted as `osn.auth.totp.verified{result="unreadable"}`,
+  alongside a new `osn.auth.totp.rekeyed{result}` counter for the drain.
+
+  Booting with only `OSN_TOTP_ENCRYPTION_KEY` set behaves exactly as before. The
+  previous-key secret is optional in every tier, but not lenient: present and
+  malformed fails the boot, as the current key does.
+
+### Patch Changes
+
+- Updated dependencies [73a8454]
+  - @shared/observability@0.18.1
+  - @osn/db@0.24.1
+  - @shared/crypto@0.13.5
+  - @shared/email@0.8.2
+  - @shared/turnstile@0.2.24
+
+## 3.26.1
+
+### Patch Changes
+
+- f9cffd9: The post-recovery passkey-enrolment screen now gets the whole fifteen minutes the
+  restricted session grants, instead of dying after five.
+
+  Two deadlines were in play and only the shorter reached the browser. The session
+  row lives `RECOVERY_SESSION_TTL_SEC` (900 s); the access token in the same
+  response was signed with `accessTokenTtl` (300 s). `<RecoveryLoginForm>` holds
+  that session without adopting it — it must, because `@musubi/social` unmounts the
+  flow the moment a session is published, and a `aud: "osn-recovery"` token is one
+  every ordinary route rejects. Holding it also puts the flow outside `authFetch`,
+  where silent refresh lives. So a user who read the screen for six minutes and
+  pressed "Add a passkey" sent a dead bearer and got a 401, with ten minutes of
+  their window unspent.
+
+  `@osn/client` gains `refreshHeldSession`: a `/token` grant that returns a fresh
+  token set **without adopting it**. It reuses the existing single-flight grant, so
+  a held-session refresh and a cold-start bootstrap still produce one request —
+  two would replay a rotated cookie, which is what revokes a session family.
+  `<RecoveryLoginForm>` refreshes 30 s before each token expires.
+
+  `refreshHeldSession` resolves to a new exported `HeldSession` — `{ held: true;
+session: Session }` — rather than a bare `Session`. `adoptSession` and
+  `setSession` still take a plain `Session`, so a caller cannot write
+  `adoptSession(await refreshHeldSession())`: that is precisely the mistake
+  holding rather than adopting exists to rule out, and it is now a compile error
+  instead of a token minted for the recovery audience getting published as an
+  ordinary session. Every caller unwraps `.session` once it has decided to keep
+  holding it.
+
+  `@osn/api` caps a restricted session's access token at the life its own row has
+  left, at both issuance sites. Rotation carries the absolute deadline forward
+  rather than extending it, so without the cap a grant late in the window minted a
+  full-length token outliving the row behind it. Nothing was granted by such a
+  token — the enrolment bypass tests the row, not the token — but the browser was
+  told a deadline the server would not honour, and the screen showed a live button
+  that every request refused. Capped, the last token of the window expires exactly
+  when the row does, so the timed-out screen and the session's death coincide and
+  the client needs no copy of the fifteen minutes. An ordinary session is
+  untouched: the cap only ever applies where `restricted_until` is set.
+
+  The refresh loop is bounded by the server rather than by a client-side constant:
+  once a token arrives with less than the refresh lead on it, that token is the
+  deadline and the screen waits it out. A refused grant is retried on a halving
+  gap first, because `@osn/client` reports a transient 5xx exactly like a dead
+  cookie and giving up on the first refusal would cost the user the window this
+  change exists to return.
+
 ## 3.26.0
 
 ### Minor Changes

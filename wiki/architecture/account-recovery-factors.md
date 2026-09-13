@@ -81,6 +81,23 @@ The restriction is a **distinct token audience**, not a flag:
   outlive the window in which that purpose is plausible, and a 30-day sliding
   session that can do nothing is a dead end that also consumes a slot against
   `MAX_SESSIONS_PER_ACCOUNT`.
+- **The access token is capped to what the row has left**, at both issuance
+  sites (`sessionBoundTtl` in `osn/api/src/services/auth/tokens.ts`). The row's
+  deadline is absolute and rotation copies it forward, so an uncapped grant late
+  in the window would mint a full-length token outliving the session behind it.
+  Nothing is granted by such a token — `recoverySessionAdmitsEnrolment` tests
+  the row, not the token — but the browser is told a deadline the server will
+  not honour, and the enrolment screen is built on that promise. Capping makes
+  the token's expiry the honest end of the window, which is what lets the client
+  hold no copy of the fifteen minutes. It bounds the token rather than the
+  session: `verifyJwt` allows 30 s of clock skew, so a capped token still
+  verifies briefly after its row is gone, granting nothing.
+- **The enrolment screen refreshes rather than expiring at five minutes.** The
+  flow holds the session instead of adopting it, which puts it outside
+  `authFetch` and its silent refresh, so `@osn/client` exposes
+  `refreshHeldSession` — a `/token` grant returning a fresh token set without
+  adopting it. Rotation cannot extend the deadline, so this renews the token and
+  never the window. See [[passkey-primary]].
 - `/login/recovery/email/complete` sets the session cookie exactly as
   `/login/recovery/complete` does, or `completePasskeyRegistration`'s
   other-session sweep cannot resolve the caller and returns `session_stale`.
@@ -366,9 +383,12 @@ are hashed and IPs are HMAC-peppered, and a dump would yield a working step-up
 factor for every enrolled account.
 
 So: a new Worker secret `OSN_TOTP_ENCRYPTION_KEY` (32 random bytes, base64),
-per environment, imported once in `build-deps.ts` as an AES-GCM `CryptoKey` and
-carried on `AuthConfig` — exactly the shape `OSN_SESSION_IP_PEPPER` already
-uses, including **failing closed at boot** in non-local tiers when absent. The
+per environment, imported in `build-deps.ts` and carried on `AuthConfig` —
+exactly the shape `OSN_SESSION_IP_PEPPER` already uses, including **failing
+closed at boot** in non-local tiers when absent. It is carried as a version-to-key
+**ring** rather than a lone `CryptoKey`, so the key can be rotated without every
+enrolled user re-enrolling; the optional `OSN_TOTP_ENCRYPTION_KEY_PREVIOUS`
+holds the outgoing key while a rotation drains. See [[totp#Rotating the encryption key]]. The
 Worker's secrets and its database are separate trust domains. The pending,
 not-yet-confirmed secret during enrolment lives in a `CeremonyStores` entry
 with a Redis variant, never in D1.
