@@ -230,7 +230,7 @@ const defaultRegistryGuestLimiter = createRateLimiter({ maxRequests: 20, windowM
 const defaultRegistryStripeLimiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
 // Per-IP, like the claim limiter, and sized the same way for the same reason:
 // a NAT'd venue or hotel wifi is ONE address for a whole reception, and the
-// budget has to cover the room rather than a household (P-W2). Five would have
+// budget has to cover the room rather than a household. Five would have
 // the sixth guest of an evening meet a 429 on their way to paying, which is the
 // highest-value action in the product. `sessionAuth` runs first, so only
 // claimed guests ever reach this at all.

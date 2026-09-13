@@ -319,7 +319,7 @@ export const createRegistryContributeRoutes = (db: Db, deps: RegistryContributeD
             const itemId = context.itemId;
 
             // The attempt this guest already has open, if they have one. This
-            // is the idempotency that has no edges (S-M1): the time bucket
+            // is the idempotency that has no edges: the time bucket
             // below can put two presses either side of a boundary, but a row
             // we already wrote is a row either press can find.
             const openAttempt = yield* registryService.findReusableContribution({
@@ -377,7 +377,7 @@ export const createRegistryContributeRoutes = (db: Db, deps: RegistryContributeD
                 productName: "Wedding gift",
                 successUrl: `${giftUrl}?gift=thanks`,
                 cancelUrl: `${giftUrl}?gift=cancelled`,
-                // One opaque id, and nothing else (C-H2). The guest's note and
+                // One opaque id, and nothing else. The guest's note and
                 // the name they chose stay in D1 under a basis we have declared;
                 // Stripe needs neither to take a payment.
                 metadata: { contributionId },
@@ -386,7 +386,7 @@ export const createRegistryContributeRoutes = (db: Db, deps: RegistryContributeD
                 // the settle path can read it before it reads any metadata.
                 clientReferenceId: contributionId,
                 // Keyed on WHAT is being given and WHEN, to the nearest few
-                // minutes (S-H1). SECOND belt now, behind the reuse read above:
+                // minutes. SECOND belt now, behind the reuse read above:
                 // it covers the simultaneous double-tap, where neither request
                 // has written a row for the other to find.
                 // The previous key folded the note down to its

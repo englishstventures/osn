@@ -298,7 +298,7 @@ export async function contributeGift(
     // is worse than both. The destination of this hand-off is a fixed, known
     // origin, so it is asserted rather than assumed: one bad response body
     // otherwise turns "Continue to payment" into an open redirect, which is the
-    // single worst place for one (S-L1).
+    // single worst place for one.
     return typeof payload?.url === "string" && isStripeCheckoutUrl(payload.url)
       ? { kind: "ok", url: payload.url }
       : { kind: "error" };

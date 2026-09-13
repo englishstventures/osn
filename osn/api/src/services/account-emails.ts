@@ -18,7 +18,7 @@ import { Data, Effect } from "effect";
  * the pairs it CAN answer for, and says nothing at all about the rest:
  *
  *   - profile id unknown            → omitted
- *   - account soft-deleted (S-H4)   → omitted
+ *   - account soft-deleted   → omitted
  *   - joined row has no address     → omitted
  *
  * All three look identical to the caller, so the route is not an enumeration
@@ -68,7 +68,7 @@ export const lookupProfileEmails = (
           .where(
             and(
               inArray(users.id, ids),
-              // S-H4: a tombstoned account is mid-erasure. Mailing it would be
+              // A tombstoned account is mid-erasure. Mailing it would be
               // the erasure undone, and answering for it would leak that it
               // once existed.
               isNull(accounts.deletedAt),

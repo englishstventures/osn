@@ -84,7 +84,7 @@ import { verifyStripeWebhook } from "../services/stripe";
  * `content-length` costs one map lookup and happens before a single byte is
  * buffered into isolate memory; the same bound is then enforced *as the body
  * arrives*, because `Content-Length` is theirs to lie about. Stripe's own
- * events run to a few KB (S-M2, S-H1).
+ * events run to a few KB.
  */
 const MAX_EVENT_BYTES = 64 * 1024;
 
@@ -92,7 +92,7 @@ const MAX_EVENT_BYTES = 64 * 1024;
  * Read at most `max` BYTES of the body, or give up.
  *
  * Two things the obvious `await request.text()` gets wrong on a public,
- * pre-authentication endpoint (S-H1):
+ * pre-authentication endpoint:
  *
  *  - **It buffers everything first.** A checked length after the await is a
  *    check on memory already spent: a lying `Content-Length` — or none at all,
@@ -192,7 +192,7 @@ interface CheckoutSessionObject {
   id?: unknown;
   payment_intent?: unknown;
   payment_status?: unknown;
-  /** What Stripe actually charged, reconciled against the row at settle (S-L1). */
+  /** What Stripe actually charged, reconciled against the row at settle. */
   amount_total?: unknown;
   currency?: unknown;
   /**

@@ -394,7 +394,7 @@ export const createOrganiserExportRoutes = (
         // Gift-log CSV export — one row per gift, claims and cash together,
         // newest first: the same log the registry tab pages through, whole.
         // This is the couple's copy of a record we delete a year after the
-        // wedding (C-L1), so it carries the detail the year-end summary cannot:
+        // wedding, so it carries the detail the year-end summary cannot:
         // who gave what, in which currency, and what they wrote. Same
         // weddingMember() gate + attachment/no-store contract as the exports
         // above.

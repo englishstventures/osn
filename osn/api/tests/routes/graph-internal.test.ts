@@ -1279,7 +1279,7 @@ describe("internal graph routes (ARC-protected)", () => {
     });
 
     it("accepts account:email-read scope (needed for cire-api's retention sweep)", async () => {
-      // T-R2: without this scope in PERMITTED_SCOPES the registration curl in the
+      // Without this scope in PERMITTED_SCOPES the registration curl in the
       // deploy runbook is rejected, and cire-api can never obtain a key that
       // reaches POST /internal/accounts/emails — the year-end gift summary then
       // has no address to send to and fails silently in production.

@@ -317,7 +317,7 @@ export const retentionService = {
           Effect.timeout("30 seconds"),
           Effect.catchCause((cause) =>
             Effect.logWarning("gift summary notices not delivered").pipe(
-              // Fixed strings, never `String(cause)` (S-L1). `notify` is a
+              // Fixed strings, never `String(cause)`. `notify` is a
               // caller-supplied function type: whatever a future notifier puts
               // in an error message would land in this log line, and the thing
               // it is holding is an organiser's email address. The two shapes

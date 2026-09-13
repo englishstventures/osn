@@ -50,13 +50,13 @@ function stripeStub(
     /**
      * Runs while the route is still inside `createCheckoutSession` — the only
      * vantage point from which "the row exists BEFORE Stripe is asked" can be
-     * observed rather than inferred from the end state (osn-tracker #528).
+     * observed rather than inferred from the end state.
      */
     onCreate?: () => void;
   } = {},
 ) {
   const sessions: CreateCheckoutSessionInput[] = [];
-  /** Session ids the route asked Stripe to read back (the S-M1 reuse path). */
+  /** Session ids the route asked Stripe to read back on the reuse path. */
   const retrieved: string[] = [];
   let minted = 0;
   const client: StripeClient = {
@@ -280,10 +280,10 @@ describe("what reaches Stripe, and what does not", () => {
   });
 
   /**
-   * C-H2. The guest's note and the name they chose stay in D1 under a basis we
+   * The guest's note and the name they chose stay in D1 under a basis we
    * have declared; Stripe is told an opaque id and the money, which is all it
    * needs to take a payment. It also means nothing a connected account can type
-   * into its own session's metadata can settle a gift here (S-M1).
+   * into its own session's metadata can settle a gift here.
    */
   it("sends Stripe one opaque id and nothing about the guest", async () => {
     const stripe = stripeStub();
@@ -312,7 +312,7 @@ describe("what reaches Stripe, and what does not", () => {
   it("writes the gift as pending BEFORE Stripe is asked for a page", async () => {
     // A payment with no record is the one outcome there is no way back from,
     // so the row has to be on disk while Stripe is still being asked — not
-    // once it has answered (osn-tracker #528).
+    // once it has answered.
     let duringCreate: Array<{ id: string; status: string; sessionId: string | null }> = [];
     const stripe = stripeStub({
       onCreate: () => {
@@ -364,15 +364,15 @@ describe("what reaches Stripe, and what does not", () => {
   });
 
   /**
-   * S-H1. The old key folded the note down to its LENGTH, which had both
-   * failure modes an idempotency key exists to avoid: two different gifts of
-   * the same amount collided, so the second silently never charged; and a retry
-   * with different words hit Stripe's `idempotency_error` permanently, because
-   * the key never changed.
+   * The key carries the note itself, not a digest of it. A key that folded the
+   * note down to its LENGTH would have both failure modes an idempotency key
+   * exists to avoid: two different gifts of the same amount collide, so the
+   * second silently never charges; and a retry with different words hits
+   * Stripe's `idempotency_error` permanently, because the key never changes.
    *
-   * `reusable: false` here is doing a job: it takes the S-M1 reuse read out of
-   * the way — every press is spent on arrival — so what reaches Stripe is the
-   * key alone, which is the belt this test is about.
+   * `reusable: false` here is doing a job: it takes the reuse read out of the
+   * way — every press is spent on arrival — so what reaches Stripe is the key
+   * alone, which is the belt this test is about.
    */
   it("collapses a double-tap and separates everything else", async () => {
     const stripe = stripeStub({ reusable: false });
@@ -410,9 +410,9 @@ describe("what reaches Stripe, and what does not", () => {
   });
 
   /**
-   * osn-tracker #528. Two presses of the same button used to be able to leave
-   * two rows and two sessions. The reuse read (S-M1) collapses the second press
-   * onto the page the first one got, so there is one gift and one session.
+   * The reuse read collapses the second press of the same button onto the page
+   * the first one got, so two presses leave one gift and one session rather
+   * than two of each.
    */
   it("gives a double-tap one payment page and one gift", async () => {
     const stripe = stripeStub();
@@ -435,7 +435,7 @@ describe("what reaches Stripe, and what does not", () => {
   });
 
   /**
-   * osn-tracker #528. A row with a NULL session is an attempt the Worker never
+   * A row with a NULL session is an attempt the Worker never
    * finished — it was evicted between writing the gift and hearing back from
    * Stripe. There is no page to send anyone back to, so the reuse read must
    * skip it and mint a fresh one, rather than handing the guest a `null` URL.

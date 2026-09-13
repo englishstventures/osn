@@ -1585,7 +1585,7 @@ describe("what the couple sees of a gift that failed", () => {
 
 /**
  * The gift row now exists BEFORE Stripe is asked for a payment page, so its
- * session id starts NULL and is attached afterwards (osn-tracker #528). What
+ * session id starts NULL and is attached afterwards. What
  * follows is every way that window can end: the page arrives and is attached,
  * the same page arrives twice, two rows race for one page, and the row is gone.
  */
@@ -1749,7 +1749,7 @@ describe("findReusableContribution", () => {
   });
 
   /**
-   * osn-tracker #528. A NULL session is an attempt that never reached Stripe —
+   * A NULL session is an attempt that never reached Stripe —
    * there is no page to send anyone back to, so reuse must skip it. Returning
    * it would hand the guest a `null` URL.
    */

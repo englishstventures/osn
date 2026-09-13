@@ -17,7 +17,7 @@ import { minorToDecimal } from "../lib/money";
  * portability answer that quietly drops rows is worse than no answer at all.
  *
  * The number comes from the CPU budget, NOT from how many gifts a wedding
- * plausibly has (P-C1). Cloudflare Workers Free allows 10 ms of CPU per
+ * plausibly has. Cloudflare Workers Free allows 10 ms of CPU per
  * invocation (`wiki/runbooks/free-tier-limits.md`), and building this file is
  * dominated by `serialiseCsv`, which trims, scans and quotes every one of the
  * fourteen cells in a row: measured at roughly 6 ms for 2,000 rows and 11 ms
@@ -49,18 +49,18 @@ const iso = (at: Date | null): string => (at ? at.toISOString() : "");
 
 /**
  * The couple's gift log as a CSV download — the third organiser export, and the
- * one that answers a data-portability request (C-L1). The portal shows this log
+ * one that answers a data-portability request. The portal shows this log
  * a page at a time and keeps it for a year; the export is how the couple take
  * the detail with them before the retention sweep folds it into totals.
  *
  * Reads the same two tables as `registryService.giftLog`, with the same shape
- * deliberately: the same `failed`-contributions exclusion (S-M2 — money that
- * never moved is not a gift, while a `refunded` gift did happen and stays
+ * deliberately: the same `failed`-contributions exclusion (money that never
+ * moved is not a gift, while a `refunded` gift did happen and stays
  * visible), the same LEFT join for cash gifts that have no item, and NO
  * host-family exclusion, because the export must contain exactly what the
  * portal shows and nothing else.
  *
- * A household is named, never coded (S-M1). `families.public_id` is the claim
+ * A household is named, never coded. `families.public_id` is the claim
  * code — a bearer credential that opens that household's invite on its own —
  * and the portal's gift log does not return it, so neither does the file. The
  * household name plus the giver's chosen display name is what a thank-you list
@@ -81,7 +81,7 @@ export const giftExportService = {
       const readAhead = MAX_GIFT_EXPORT_ROWS + 1;
 
       // The two reads are independently wedding-scoped — collapse them to one
-      // D1 round-trip (RT-P-I1; matches the parallel shape in table-export.ts).
+      // D1 round-trip; matches the parallel shape in table-export.ts.
       const [claimRows, contributionRows] = yield* Effect.all(
         [
           dbQuery(() =>

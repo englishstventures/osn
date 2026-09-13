@@ -413,7 +413,7 @@ export function GiftRegistryPage(props: GiftRegistryPageProps) {
           <Match when={registry()}>
             {/* Back from Stripe. NOTHING here is evidence of a payment — the
                 parameter is one anybody can type, and the row is the webhook's
-                to write (S-L2). So the copy is conditional rather than a
+                to write. So the copy is conditional rather than a
                 confirmation: it thanks them for what they did, without
                 asserting on the page that money moved. */}
             <Show when={payment()}>

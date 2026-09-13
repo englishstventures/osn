@@ -30,7 +30,7 @@
  * surface rather than a broken one. Unlike the account-linking flag, the portal
  * does NOT probe: nothing in `@cire/host` reads a capability, the Money-gifts
  * panel renders on every tier, and a keyless deployment surfaces itself as the
- * 404 this route's absence produces when a couple presses Connect (C-L1).
+ * 404 this route's absence produces when a couple presses Connect.
  */
 
 import type { RateLimiterBackend } from "@shared/rate-limit";
@@ -52,7 +52,7 @@ import type { StripeClient, StripeError } from "../services/stripe";
  * Stripe would not play. 502, and a log line naming WHICH — a revoked key, a
  * withdrawn Connect capability and a Stripe outage otherwise produce an
  * identical bare 502 with nothing to tell them apart, on the surface that
- * decides where a couple's gift money lands (S-L1).
+ * decides where a couple's gift money lands.
  *
  * `status` and `code` only. `StripeError` carries no message precisely because
  * Stripe's is written for a developer's console and quotes the request into it.
@@ -98,7 +98,7 @@ export interface RegistryStripeDeps {
    * which is the shape the link-preview route already carries one for: an owner
    * holding the button, or a portal bug polling `refresh`, would otherwise burn
    * the PLATFORM's Stripe quota — a cross-tenant denial of service reached from
-   * one tenant's credentials (S-M1).
+   * one tenant's credentials.
    */
   readonly limiter: RateLimiterBackend;
   /** Portal origin, for the two URLs Stripe sends the couple back to. */
@@ -147,7 +147,7 @@ export const createRegistryStripeRoutes = (
                   country: deps.defaultCountry ?? "AU",
                   weddingId,
                 });
-                // S-L3: if this write fails the account still exists at Stripe
+                // If this write fails the account still exists at Stripe
                 // and nothing records its id — and Stripe's idempotency key
                 // expires after 24h, so a later retry would mint a SECOND
                 // account for this couple. Logging the id at the one moment it

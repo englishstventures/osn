@@ -1447,7 +1447,7 @@ describe("GET /api/organiser/weddings/:weddingId/gifts.csv", () => {
     expect(header).toContain("Kind");
     expect(header).toContain("Amount In Your Currency");
     // The household's claim code is a bearer credential, so the file names the
-    // household and never codes it (S-M1).
+    // household and never codes it.
     expect(header).not.toContain("Household Code");
     expect(body).not.toContain("GIFT-AAA-0001");
 

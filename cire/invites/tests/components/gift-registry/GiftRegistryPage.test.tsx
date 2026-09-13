@@ -309,7 +309,7 @@ describe("the money panel", () => {
 describe("coming back from Stripe", () => {
   it("thanks a guest without asserting that money moved", async () => {
     // The parameter is one anybody can type and the row is the webhook's to
-    // write, so the copy is conditional rather than a confirmation (S-L2).
+    // write, so the copy is conditional rather than a confirmation.
     window.history.replaceState({}, "", "/anita-and-ben/registry?gift=thanks");
     routedFetch({});
     const { container } = renderPage();

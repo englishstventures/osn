@@ -213,7 +213,7 @@ describe("account.updated", () => {
   });
 
   /**
-   * S-H1. Stripe does not guarantee delivery order and retries a failed
+   * Stripe does not guarantee delivery order and retries a failed
    * delivery for three days, so an older event carrying `charges_enabled: true`
    * can arrive AFTER Stripe has disabled the account. This column is the only
    * gate on whether a couple may show guests a contribute button, so applying
@@ -358,7 +358,7 @@ describe("checkout.session.completed — settling the row, never inventing one",
     expect(gift?.status).toBe("succeeded");
     expect(gift?.stripePaymentIntentId).toBe("pi_1");
     // The note and the name were never in Stripe's metadata — they are on the
-    // row because we put them there (C-H2).
+    // row because we put them there.
     expect(gift?.message).toBe("Enjoy Japan");
     expect(gift?.displayName).toBe("The Ashworths");
     // FX stays null: the primary-currency equivalent comes from the balance
@@ -386,7 +386,7 @@ describe("checkout.session.completed — settling the row, never inventing one",
   });
 
   /**
-   * S-L1. Nothing in the checkout cire builds can charge an amount other than
+   * Nothing in the checkout cire builds can charge an amount other than
    * the one on the row — one fixed line item, no promotion codes, no adjustable
    * quantity — so a disagreement means something we do not model. The gift
    * still settles, because the money moved; the log warns, and the as-given
@@ -424,7 +424,7 @@ describe("checkout.session.completed — settling the row, never inventing one",
   });
 
   /**
-   * THE FORGERY CASE (S-M1). This endpoint also hears about sessions a
+   * THE FORGERY CASE. This endpoint also hears about sessions a
    * connected account created for ITSELF, where every metadata field is
    * whatever its owner typed. Settling against a row we wrote is what makes
    * that worthless: there is no row, and one cannot be conjured from the event.
@@ -458,7 +458,7 @@ describe("checkout.session.completed — settling the row, never inventing one",
   });
 
   /**
-   * osn-tracker #528. `client_reference_id` is set by the platform when the
+   * `client_reference_id` is set by the platform when the
    * session is created and the connected account has no way to rewrite it, so
    * it is the field the settle path reads FIRST. Metadata is only the fallback
    * for sessions created before it was sent.
@@ -1008,7 +1008,7 @@ describe("charge.dispute — money held while the bank decides", () => {
 });
 
 /**
- * How much body it will read (S-H1).
+ * How much body it will read.
  *
  * The route is public and unauthenticated — the signature is the authentication,
  * and it cannot run until the body has been read. So the body is the one thing
@@ -1069,9 +1069,9 @@ describe("the body is bounded as it arrives", () => {
 
   it("counts bytes, not UTF-16 code units", async () => {
     // 30k three-byte characters: 90KB on the wire, but `String.length` is 30k,
-    // comfortably under a 64KB bound expressed in `payload.length`. That was the
-    // second half of S-H1 — a bound in the wrong unit is no bound for anyone
-    // writing in a non-Latin script.
+    // comfortably under a 64KB bound expressed in `payload.length`. The bound is
+    // measured in bytes, because a bound in the wrong unit is no bound for
+    // anyone writing in a non-Latin script.
     const { app } = buildApp();
     const payload = JSON.stringify({
       id: "evt_wide",

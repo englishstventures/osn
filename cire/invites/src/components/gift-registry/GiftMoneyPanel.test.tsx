@@ -108,7 +108,7 @@ describe("the hand-off", () => {
   });
 
   /**
-   * S-L1. A full-page navigation out of a payment flow, to a string the server
+   * A full-page navigation out of a payment flow, to a string the server
    * chose. One bad response body — a compromised or misconfigured API origin, a
    * future proxy — would otherwise make "Continue to payment" an open redirect.
    */

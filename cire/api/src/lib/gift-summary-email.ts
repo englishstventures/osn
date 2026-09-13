@@ -25,7 +25,7 @@ export type OrganiserEmailLookup = (
 ) => Promise<ReadonlyMap<string, string>>;
 
 /**
- * One formatter per currency, kept for the life of the module (P-I1).
+ * One formatter per currency, kept for the life of the module.
  * Constructing an `Intl.NumberFormat` is the expensive part, and a cohort is
  * usually one currency repeated, so building it per wedding is waste. Only
  * successful constructions are cached: a malformed code must keep throwing on

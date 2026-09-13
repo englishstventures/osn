@@ -355,7 +355,7 @@ describe("refreshing what Stripe says", () => {
 describe("the outbound-call budget", () => {
   it("throttles onboarding, because every press spends a Stripe call", async () => {
     // Owner-auth caps the blast radius to one wedding; it does not cap the
-    // RATE, and the quota being spent is the platform's (S-M1).
+    // RATE, and the quota being spent is the platform's.
     const { app } = buildApp({ limiter: createRateLimiter({ maxRequests: 1, windowMs: 60_000 }) });
     expect((await req(app, `${base}/session`, OWNER)).status).toBe(200);
     expect((await req(app, `${base}/session`, OWNER)).status).toBe(429);

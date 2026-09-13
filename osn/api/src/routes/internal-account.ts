@@ -25,7 +25,7 @@ const SCOPE_APP_ENROLLMENT_WRITE = "app-enrollment:write";
 const SCOPE_ACCOUNT_EMAIL_READ = "account:email-read";
 
 /**
- * The one service allowed to use that scope (S-M2).
+ * The one service allowed to use that scope.
  *
  * `PERMITTED_SCOPES` in graph-internal.ts is a single flat allowlist governing
  * what /graph/internal/register-service will grant to ANY service, so holding

@@ -111,7 +111,7 @@ export type RegistryClaimStatus = "reserved" | "purchased" | "released";
  * A contribution's lifecycle, mirroring `registry_contributions.status`.
  *
  * Every one of the five is written, and each by exactly one kind of Stripe
- * event (S-M2):
+ * event:
  *
  *  - `pending` — the row the guest's own request writes, before they are handed
  *    a payment page. Also where a completed session whose money has not moved
@@ -621,7 +621,7 @@ function itemInWedding(
 
 /**
  * The row a Stripe event names, and whether the account it arrived on may move
- * it — in ONE read (P-I1).
+ * it — in ONE read.
  *
  * Every webhook path needs the same two facts, and asking for them separately
  * cost two serial D1 round trips inside a handler Stripe times out at 20
@@ -639,11 +639,11 @@ interface WebhookContributionRow {
   status: RegistryContributionStatus;
   /**
    * NULL while the row exists but Stripe has not answered yet — the window the
-   * route opens deliberately (osn-tracker #528). A webhook that names such a
+   * route opens deliberately. A webhook that names such a
    * row by `client_reference_id` is the first news of which session it was.
    */
   sessionId: string | null;
-  /** What the guest was shown and agreed to, for the settle-time check (S-L1). */
+  /** What the guest was shown and agreed to, for the settle-time check. */
   amountMinor: number;
   currency: string;
   /**
@@ -955,7 +955,7 @@ export const registryService = {
           .where(
             and(
               eq(registryContributions.weddingId, weddingId),
-              // A gift whose money never moved is not a gift (S-M2). A bounced
+              // A gift whose money never moved is not a gift. A bounced
               // bank debit or a session the guest abandoned leaves a `failed`
               // row, which is kept for the audit trail and the idempotency
               // anchor — but showing it to the couple would be telling them
@@ -1148,9 +1148,8 @@ export const registryService = {
    * is no row.
    *
    * `get` returns the whole snapshot: every item, a page of the gift log, the
-   * currency. Reading that to look at two Stripe booleans is the shape P-C2
-   * already caught once on the settings write. A caller that only needs the
-   * settings asks for the settings.
+   * currency. Reading all of that to look at two Stripe booleans is the waste
+   * this avoids — a caller that only needs the settings asks for the settings.
    */
   settingsOnly(weddingId: string): Effect.Effect<RegistrySettingsDto, never, DbService> {
     return Effect.gen(function* () {
@@ -1205,7 +1204,7 @@ export const registryService = {
               // `coalesce` on the EXISTING value, so a second create can only
               // ever fill a null — never repoint a couple's payouts.
               stripeAccountId: sql`coalesce(${registrySettings.stripeAccountId}, ${account.id})`,
-              // And the capabilities follow the id (S-L2). Writing them
+              // And the capabilities follow the id. Writing them
               // unconditionally would leave a row describing account A's id
               // beside account B's capabilities — the invariant that saves that
               // today lives in the caller, and a caller that does not exist yet
@@ -1283,7 +1282,7 @@ export const registryService = {
           .where(
             and(
               eq(registrySettings.stripeAccountId, account.id),
-              // MONOTONIC, and this is the whole point (S-H1). Stripe does not
+              // MONOTONIC, and this is the whole point. Stripe does not
               // guarantee order and retries a failed delivery for three days,
               // so an older event carrying `charges_enabled: true` can arrive
               // after Stripe has disabled the account — and this column is the
@@ -1390,7 +1389,7 @@ export const registryService = {
      * The line the guest aimed the money at, if they picked one. Checked here
      * rather than by the caller so it rides along with the family check instead
      * of costing a round trip of its own; an id that is not this wedding's
-     * comes back as `null` rather than as a refusal (P-I2).
+     * comes back as `null` rather than as a refusal.
      */
     itemId?: string | null;
   }): Effect.Effect<
@@ -1470,7 +1469,7 @@ export const registryService = {
   /**
    * The gift this guest already has a payment page open for, if there is one.
    *
-   * WHY THIS EXISTS, and why a time bucket was not enough (S-M1). The Stripe
+   * WHY THIS EXISTS, and why a time bucket was not enough. The Stripe
    * idempotency key is derived from the request plus a coarse wall-clock
    * bucket, and a bucket has edges: two presses a second apart can land either
    * side of one, get different keys, and become two sessions and two charges
@@ -1517,7 +1516,7 @@ export const registryService = {
               gte(registryContributions.createdAt, input.since),
               // A row whose session id is still NULL is an attempt that never
               // reached Stripe — there is no payment page to send anyone back
-              // to, so it cannot be reused (osn-tracker #528).
+              // to, so it cannot be reused.
               isNotNull(registryContributions.stripeCheckoutSessionId),
             ),
           )
@@ -1538,31 +1537,29 @@ export const registryService = {
    * WHY THE ROW COMES FIRST, before Stripe is ever told anything about it.
    * Three findings pointed at the same shape:
    *
-   *  - **Nothing a connected account can forge (S-M1).** The webhook endpoint
+   *  - **Nothing a connected account can forge.** The webhook endpoint
    *    also hears about sessions the couple's own account created for itself,
    *    where every metadata field is whatever its owner typed. Settling against
    *    a row WE wrote means a forged session settles nothing: there is no row
    *    with that id, and one cannot be conjured from the event.
-   *  - **Nothing personal in Stripe's metadata (C-H2).** The guest's note and
+   *  - **Nothing personal in Stripe's metadata.** The guest's note and
    *    the name they chose stay in D1 under a basis we have declared. Stripe is
    *    told an opaque id and the money; it needs nothing else to reconcile.
-   *  - **Somewhere for a status to go (S-M2).** A refund or a failed delayed
+   *  - **Somewhere for a status to go.** A refund or a failed delayed
    *    debit has a row to move, instead of an insert that can only ever add.
    *
-   * AND BEFORE STRIPE, not after it (osn-tracker #528). The row used to be
-   * written once Stripe had handed back a session id, because the column was
-   * NOT NULL and there was nothing to put in it beforehand. That left a window
-   * in which a session existed at Stripe that we had never heard of: evict the
-   * Worker between the two and the settle webhook names a row that does not
-   * exist, so a gift that was actually paid is a gift we cannot show anyone.
-   * Now the id is minted here, handed to Stripe as `client_reference_id`, and
-   * the session attached afterwards by `attachCheckoutSession`.
+   * AND BEFORE STRIPE, not after it. The id is minted here, handed to Stripe
+   * as `client_reference_id`, and the session attached afterwards by
+   * `attachCheckoutSession`. Waiting for Stripe to hand back a session id would
+   * leave a window in which a session exists at Stripe that we have never heard
+   * of: evict the Worker between the two and the settle webhook names a row
+   * that does not exist, so a gift that was actually paid is a gift we cannot
+   * show anyone.
    *
    * `onConflictDoNothing` is on the PRIMARY KEY, which is not idempotency —
    * the id is fresh per request, so a conflict means a collision, and the
-   * honest answer is `false` and no payment page. The retry safety that used
-   * to live here now lives in Stripe's own idempotency key plus the reuse
-   * lookup above. Never a throw.
+   * honest answer is `false` and no payment page. Retry safety comes from
+   * Stripe's own idempotency key plus the reuse lookup above. Never a throw.
    */
   createPendingContribution(input: {
     id: string;
@@ -1752,16 +1749,16 @@ export const registryService = {
       );
       if (!pending) return "unknown";
       // A NULL session id is not a mismatch: it is a row written before Stripe
-      // answered, and this event is the first news of which session it became
-      // (osn-tracker #528). Any OTHER session id still means one gift is being
-      // settled by another gift's event.
+      // answered, and this event is the first news of which session it became.
+      // Any OTHER session id still means one gift is being settled by another
+      // gift's event.
       if (pending.sessionId !== null && pending.sessionId !== input.checkoutSessionId) {
         return "rejected";
       }
       if (!pending.ownedAccountId) return "rejected";
       if (pending.status !== "pending") return "duplicate";
 
-      // S-L1. The row's amount is what the guest was shown; the session's is
+      // The row's amount is what the guest was shown; the session's is
       // what Stripe charged. Nothing in the checkout we build can make them
       // disagree — one fixed line item, no promotion codes, no adjustable
       // quantity — so a disagreement means something changed that we do not
@@ -1828,7 +1825,7 @@ export const registryService = {
   },
 
   /**
-   * Close a gift whose money is never going to move (S-M2).
+   * Close a gift whose money is never going to move.
    *
    * Two Stripe events land here, and they are the same fact twice: a delayed
    * bank debit that bounced (`checkout.session.async_payment_failed`), and a
@@ -1898,7 +1895,7 @@ export const registryService = {
   },
 
   /**
-   * Record money that went back (S-M2).
+   * Record money that went back.
    *
    * FOUND BY PAYMENT INTENT, because that is all a refund event carries. Stripe
    * does not thread the checkout session through to `charge.refunded`, and the
@@ -1910,7 +1907,7 @@ export const registryService = {
    * replay or an event about a charge that is not a wedding gift at all, and
    * neither should write.
    *
-   * AND ONLY WHEN THERE IS EXACTLY ONE (osn-tracker #527). The intent column is
+   * AND ONLY WHEN THERE IS EXACTLY ONE. The intent column is
    * indexed, not unique — 0058 argues why, and the argument holds: a UNIQUE
    * would turn a future basket or a retried intent into an insert that fails at
    * 2 a.m. inside a webhook, on a gift that was actually paid. What that leaves
@@ -2682,7 +2679,7 @@ function resolveVisibleRegistry(
 > {
   return Effect.gen(function* () {
     const db = yield* DbService;
-    // The CURRENCY rides along (P-W1): SQLite reads the whole row for the slug
+    // The CURRENCY rides along: SQLite reads the whole row for the slug
     // lookup regardless, so the extra column is free — and it saves
     // `primaryCurrency` a second read of the same row, one round trip down, on
     // the read a guest waits on to reach a payment page.

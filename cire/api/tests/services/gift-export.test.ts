@@ -250,7 +250,7 @@ describe("giftExportService.giftsCsv", () => {
 
         // Every one of these is guest-written text arriving in a file the couple
         // will open in Excel or Numbers, so the leading marker must be neutered
-        // rather than merely quoted (S-M3).
+        // rather than merely quoted.
         const csv = yield* giftExportService.giftsCsv(BOOTSTRAP_WEDDING_ID);
         expect(csv).toContain("'=cmd|' /C calc'!A0");
         expect(csv).toContain("'@evil");

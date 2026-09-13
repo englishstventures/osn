@@ -40,7 +40,7 @@ describe("internal account emails", () => {
 
   /**
    * Registers a service account holding `scopes` and returns a signed ARC token.
-   * The issuer is a parameter because the route pins it (S-M2): a correctly
+   * The issuer is a parameter because the route pins it: a correctly
    * scoped, correctly signed token from any service other than cire-api is
    * still refused, so a test needs to be able to issue one.
    */
@@ -119,7 +119,7 @@ describe("internal account emails", () => {
   });
 
   it("returns 401 for a correctly scoped token issued by another service", async () => {
-    // S-M2: PERMITTED_SCOPES is one flat allowlist governing what
+    // PERMITTED_SCOPES is one flat allowlist governing what
     // /graph/internal/register-service will grant to ANY service, so holding
     // INTERNAL_SERVICE_SECRET is enough to register a key asking for
     // account:email-read. The restriction to cire-api is enforced here instead,
