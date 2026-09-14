@@ -98,6 +98,7 @@ function LockedRow(props: {
       <HoverCard.Trigger
         as="button"
         type="button"
+        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
         role="button"
         aria-expanded={open()}
         aria-label={`${props.mod.label} — locked. Upgrade to unlock.`}

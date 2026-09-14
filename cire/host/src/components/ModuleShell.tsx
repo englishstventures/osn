@@ -49,12 +49,15 @@ const loadInviteBuilder = () => import("./InviteBuilder");
  * opens the module, warmed by the hover on the sub-tab through `PANEL_LOADERS`
  * below.
  *
- * Vendors is three chunks rather than one because its sub-tabs are three
- * unrelated surfaces — a CRM table, a directory browser and an enquiry inbox —
- * and an organiser who lives in one rarely opens the others. The registry's two
- * subs are the same component twice, so they share a chunk.
+ * A chunk per surface rather than per module, because the sub-tabs of both are
+ * different things an organiser rarely wants at once. Vendors is a CRM table, a
+ * directory browser and an enquiry inbox. The registry's list and gifts-received
+ * are two panels of one component and so share a chunk, but its settings tab is
+ * its own file — its bytes stay out of the way of the couple who only came to
+ * add a gift.
  */
 const loadRegistry = () => import("./RegistryView");
+const loadRegistrySettings = () => import("./RegistrySettingsView");
 const loadVendors = () => import("./VendorsView");
 const loadDirectoryBrowse = () => import("./DirectoryBrowseView");
 const loadEnquiries = () => import("./EnquiriesView");
@@ -63,6 +66,7 @@ const EventsEditor = lazy(loadEventsEditor);
 const GuestsEditor = lazy(loadGuestsEditor);
 const InviteBuilder = lazy(loadInviteBuilder);
 const RegistryView = lazy(loadRegistry);
+const RegistrySettingsView = lazy(loadRegistrySettings);
 const VendorsView = lazy(loadVendors);
 const DirectoryBrowseView = lazy(loadDirectoryBrowse);
 const EnquiriesView = lazy(loadEnquiries);
@@ -114,6 +118,7 @@ const PANEL_LOADERS: PanelLoaders = {
   "invite:design": loadInviteBuilder,
   "registry:list": loadRegistry,
   "registry:gifts": loadRegistry,
+  "registry:settings": loadRegistrySettings,
   "vendors:index": loadVendors,
   "vendors:browse": loadDirectoryBrowse,
   "vendors:enquiries": loadEnquiries,
@@ -189,6 +194,11 @@ const MODULE_SUB_TABS: ModuleSubTabs = {
   registry: [
     { id: "list", label: "Gift list" },
     { id: "gifts", label: "Gifts received" },
+    // `edit`, not `manage`: a co-host with edit rights may publish the list and
+    // write its copy. The one owner-only control — connecting the account gifts
+    // are paid into — is disabled inside the panel with the reason, rather than
+    // hiding a whole tab from someone who is allowed most of it.
+    { id: "settings", label: "Settings", edit: true },
   ],
   guests: [
     { id: "list", label: "Households" },
@@ -485,19 +495,36 @@ export default function ModuleShell(props: ModuleShellProps) {
                 </Suspense>
               </Show>
 
-              {/* ── Registry: the gift list + the gifts received ─────────────── */}
+              {/* ── Registry: the gift list, the gifts received, settings ────── */}
               <Show when={module() === "registry"}>
-                {/* One boundary for both subs: they are the same chunk, so a
-                sub switch never re-suspends once it has landed. */}
+                {/* One boundary for all three subs. The list and the gifts
+                received share a chunk, so switching between those never
+                re-suspends once it has landed; settings is a second chunk and
+                suspends the first time it is opened cold — which is what
+                `warmPanel` on the sub-tab is for, and why the fallback below
+                is the panel-shaped one rather than a spinner. */}
                 <Suspense fallback={<PanelLoading />}>
                   <Show when={active() === "list"}>
-                    <RegistryView weddingId={props.weddingId} view="list" canEdit={props.canEdit} />
+                    <RegistryView
+                      weddingId={props.weddingId}
+                      weddingSlug={props.weddingSlug}
+                      view="list"
+                      canEdit={props.canEdit}
+                    />
                   </Show>
                   <Show when={active() === "gifts"}>
                     <RegistryView
                       weddingId={props.weddingId}
+                      weddingSlug={props.weddingSlug}
                       view="gifts"
                       canEdit={props.canEdit}
+                    />
+                  </Show>
+                  <Show when={active() === "settings"}>
+                    <RegistrySettingsView
+                      weddingId={props.weddingId}
+                      canEdit={props.canEdit}
+                      canManage={props.canManage}
                     />
                   </Show>
                 </Suspense>
