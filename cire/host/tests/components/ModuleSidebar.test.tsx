@@ -138,18 +138,32 @@ describe("ModuleSidebar", () => {
 
     const lockedRow = () => within(rail()).getByRole("button", { name: /Registry/ });
 
-    it("fades the row, marks it aria-disabled and drops its native tooltip", () => {
+    it("fades the row, names the lock, and drops its native tooltip", () => {
       render(() => <ModuleSidebar active="overview" entitlements={[]} onSelect={vi.fn()} />);
       const row = lockedRow();
-      expect(row.getAttribute("aria-disabled")).toBe("true");
-      // `aria-disabled` and not `disabled`: Kobalte's trigger drops its pointer
-      // and focus handlers on a disabled trigger, so the card could never open.
+      // The lock is in the accessible name, so it reaches a screen reader while
+      // tabbing rather than only after a three-second dwell.
+      expect(row.getAttribute("aria-label")).toBe("Registry — locked. Upgrade to unlock.");
+      // Never `disabled`: Kobalte's trigger drops its pointer and focus
+      // handlers on a disabled trigger, so the card could never open.
       expect(row.hasAttribute("disabled")).toBe(false);
-      expect(row.getAttribute("class")).toContain("opacity-50");
+      // And never `aria-disabled`: the row answers a click by opening the
+      // offer, so claiming it is inoperable would be a lie to assistive tech.
+      expect(row.hasAttribute("aria-disabled")).toBe(false);
+      // One token, not a token plus an opacity — both text tokens are already
+      // translucent, and multiplying them puts the label under the whole ramp.
+      expect(row.getAttribute("class")).toContain("text-text-faint");
+      expect(row.getAttribute("class")).not.toContain("opacity-");
       // No `title`: a native tooltip fires well inside the dwell and would race
       // the popover.
       expect(row.hasAttribute("title")).toBe(false);
-      expect(row.getAttribute("aria-label")).toBe("Registry — locked. Upgrade to unlock.");
+    });
+
+    it("reports the card's state on the trigger", () => {
+      render(() => <ModuleSidebar active="overview" entitlements={[]} onSelect={vi.fn()} />);
+      expect(lockedRow().getAttribute("aria-expanded")).toBe("false");
+      fireEvent.click(lockedRow());
+      expect(lockedRow().getAttribute("aria-expanded")).toBe("true");
     });
 
     it("navigates nowhere when clicked, and offers the upgrade instead", async () => {
@@ -186,6 +200,88 @@ describe("ModuleSidebar", () => {
       expect((upgrade as HTMLButtonElement).disabled).toBe(true);
     });
 
+    it("opens after a three-second keyboard focus, not on focus alone", async () => {
+      // Kobalte's trigger treats focus like pointer-enter, so this is the whole
+      // keyboard path to the card — and it is why the row carries
+      // `aria-disabled` rather than `disabled`, which would take the row out of
+      // the tab order and drop the handler with it.
+      vi.useFakeTimers();
+      render(() => <ModuleSidebar active="overview" entitlements={[]} onSelect={vi.fn()} />);
+      fireEvent.focus(lockedRow());
+
+      await vi.advanceTimersByTimeAsync(2900);
+      expect(screen.queryByText("Gift registry")).toBeNull();
+
+      await vi.advanceTimersByTimeAsync(200);
+      expect(screen.getByText("Gift registry")).toBeTruthy();
+    });
+
+    it("opens nothing when the pointer leaves before the dwell is up", async () => {
+      // The reason the delay is 3000 and not Kobalte's 700: a pointer merely
+      // crossing the rail must not leave a card behind it. A positive-only
+      // timing test cannot tell a working cancel from one that never runs —
+      // both go green, and the broken one pops the card three seconds after the
+      // pointer has moved on.
+      vi.useFakeTimers();
+      render(() => <ModuleSidebar active="overview" entitlements={[]} onSelect={vi.fn()} />);
+      const row = lockedRow();
+      fireEvent.pointerEnter(row, { pointerType: "mouse" });
+      await vi.advanceTimersByTimeAsync(2000);
+      fireEvent.pointerLeave(row, { pointerType: "mouse" });
+
+      await vi.advanceTimersByTimeAsync(4000);
+      expect(screen.queryByText("Gift registry")).toBeNull();
+    });
+
+    it("opens nothing for a touch pointer, which is why the click path exists", async () => {
+      // Kobalte drops touch pointers in both handlers. Asserting it keeps the
+      // click path from being read as redundant and quietly removed.
+      vi.useFakeTimers();
+      render(() => <ModuleSidebar active="overview" entitlements={[]} onSelect={vi.fn()} />);
+      fireEvent.pointerEnter(lockedRow(), { pointerType: "touch" });
+
+      await vi.advanceTimersByTimeAsync(6000);
+      expect(screen.queryByText("Gift registry")).toBeNull();
+    });
+
+    it("closes the card on a second tap", async () => {
+      // `open` is this component's own signal, so both halves of the round-trip
+      // are our code rather than Kobalte's. It has to toggle: a touch user has
+      // no pointer-leave, so without this the first tap opens a card that never
+      // goes away, and on the sheet that card sits over the nav.
+      render(() => <ModuleSidebar active="overview" entitlements={[]} onSelect={vi.fn()} />);
+      fireEvent.click(lockedRow());
+      await screen.findByText("Gift registry");
+
+      fireEvent.click(lockedRow());
+      // Asserted on the trigger's expanded state, not on unmount, for the same
+      // reason the sheet test is: Kobalte holds the content until the exit
+      // keyframe ends, and happy-dom applies no stylesheet, so the node lingers
+      // here in a way it never would in a browser.
+      await waitFor(() => expect(lockedRow().getAttribute("aria-expanded")).toBe("false"));
+    });
+
+    it("locks the sheet's row too, and a tap there offers the upgrade", async () => {
+      // The sheet is written independently of the rail, and it is the surface
+      // with no dwell at all — invert its `Show` and every rail assertion above
+      // still passes while the phone loses its only way in.
+      const onSelect = vi.fn();
+      render(() => <ModuleSidebar active="overview" entitlements={[]} onSelect={onSelect} />);
+      fireEvent.click(screen.getByRole("button", { name: /Modules/ }));
+      const sheet = await screen.findByRole("dialog", { name: /Wedding modules/i });
+
+      const row = within(sheet).getByRole("button", { name: /Registry/ });
+      expect(row.getAttribute("aria-label")).toBe("Registry — locked. Upgrade to unlock.");
+      expect(row.getAttribute("class")).toContain("text-text-faint");
+
+      fireEvent.click(row);
+      expect(onSelect).not.toHaveBeenCalled();
+      expect(await screen.findByText("Gift registry")).toBeTruthy();
+      // The sheet stays open: nothing was navigated to, so there is nothing to
+      // close it for.
+      expect(screen.getByRole("dialog", { name: /Wedding modules/i })).toBeTruthy();
+    });
+
     it("unlocks the row when the entitlement arrives, without a remount", () => {
       // `MODULE_NAV` never changes, so `For` runs its callback once per module.
       // A ternary between the locked row and the plain button would be resolved
@@ -193,11 +289,11 @@ describe("ModuleSidebar", () => {
       // after a wedding switch or a mid-session grant.
       const [held, setHeld] = createSignal<string[]>([]);
       render(() => <ModuleSidebar active="overview" entitlements={held()} onSelect={vi.fn()} />);
-      expect(lockedRow().getAttribute("aria-disabled")).toBe("true");
+      expect(lockedRow().getAttribute("aria-label")).toContain("locked");
 
       setHeld(["registry"]);
       const row = within(rail()).getByRole("button", { name: /Registry/ });
-      expect(row.getAttribute("aria-disabled")).toBeNull();
+      expect(row.getAttribute("aria-label")).toBeNull();
       expect(row.getAttribute("title")).toBe("Your gift list and what has arrived");
     });
 
@@ -207,7 +303,7 @@ describe("ModuleSidebar", () => {
       ));
       const locked = within(rail())
         .getAllByRole("button")
-        .filter((b) => b.getAttribute("aria-disabled") === "true")
+        .filter((b) => (b.getAttribute("aria-label") ?? "").includes("locked"))
         .map((b) => b.textContent);
       expect(locked).toEqual(["⬡Vendors"]);
     });

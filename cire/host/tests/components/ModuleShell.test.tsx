@@ -15,8 +15,16 @@ import { isModule, isSubOf, type Module } from "../../src/lib/dashboard-route";
  * never reaches a write-only or owner-only sub even via a stale deep link.
  */
 
+// `entitlements` is on the mock deliberately. The shell is the only place its
+// two ends meet — Overview's own tests pass the prop directly — and a required
+// prop means deleting the pass-down fails typecheck while quietly passing `[]`
+// does not. Rendering it here is what makes the wrong value visible.
 vi.mock("../../src/components/Overview", () => ({
-  default: (p: { weddingId: string }) => <div data-testid="overview">{p.weddingId}</div>,
+  default: (p: { weddingId: string; entitlements: readonly string[] }) => (
+    <div data-testid="overview" data-entitlements={p.entitlements.join(",")}>
+      {p.weddingId}
+    </div>
+  ),
 }));
 vi.mock("../../src/components/EventTable", () => ({
   default: (p: { weddingId: string }) => <div data-testid="events">{p.weddingId}</div>,
@@ -383,16 +391,21 @@ describe("ModuleShell", () => {
       expect(screen.queryByTestId("directory-browse")).toBeNull();
     });
 
-    it("renders the vendors feature views when the vendors entitlement is present", () => {
+    // The three vendors panels are `lazy()`, like the registry and for the same
+    // reason, so a mounted one arrives a microtask after the render. Every
+    // positive assertion here has to await it; the NEGATIVE ones deliberately
+    // do not, because the point of the locked case is that the chunk is never
+    // asked for at all.
+    it("renders the vendors feature views when the vendors entitlement is present", async () => {
       renderShell({ module: "vendors", sub: "index", entitlements: ["vendors"] });
       expect(screen.queryByTestId("overview")).toBeNull();
-      expect(screen.getByTestId("vendors")).toBeTruthy();
+      expect(await screen.findByTestId("vendors")).toBeTruthy();
     });
 
-    it("renders the browse sub-view when entitled and active() is 'browse'", () => {
+    it("renders the browse sub-view when entitled and active() is 'browse'", async () => {
       renderShell({ module: "vendors", sub: "browse", entitlements: ["vendors"] });
       expect(screen.queryByTestId("overview")).toBeNull();
-      expect(screen.getByTestId("directory-browse")).toBeTruthy();
+      expect(await screen.findByTestId("directory-browse")).toBeTruthy();
     });
 
     it("coerces on the absent vendors key alone, not on holding some other key", () => {
@@ -408,6 +421,29 @@ describe("ModuleShell", () => {
       renderShell({ module: "vendors", sub: "index", entitlements: [] });
       expect(screen.getByRole("heading", { name: /Overview/ })).toBeTruthy();
       expect(screen.queryByRole("tab", { name: /My vendors/ })).toBeNull();
+    });
+
+    it("coerces without touching the route", () => {
+      // The shell does not own the hash — `Dashboard` does — and pushing
+      // history from a render path invites loops. So the hash keeps saying
+      // `vendors` while Overview renders: stable, if not self-describing. This
+      // is the only falsifiable form of that guarantee.
+      const { onModule, onSub } = renderShell({
+        module: "vendors",
+        sub: "index",
+        entitlements: [],
+      });
+      expect(screen.getByTestId("overview")).toBeTruthy();
+      expect(onModule).not.toHaveBeenCalled();
+      expect(onSub).not.toHaveBeenCalled();
+    });
+
+    it("passes the entitlement set down to Overview", () => {
+      // Overview gates its own Vendors card on the same predicate, so a shell
+      // that forgot to thread the prop would put a card linking to a locked
+      // module on the page the coercion sends you to.
+      renderShell({ module: "overview", entitlements: ["registry", "ai"] });
+      expect(screen.getByTestId("overview").getAttribute("data-entitlements")).toBe("registry,ai");
     });
   });
 

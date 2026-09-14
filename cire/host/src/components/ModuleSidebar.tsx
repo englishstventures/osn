@@ -20,10 +20,20 @@ const rowActive = "text-gold bg-gold/10";
  *  is the background, and it travels. Colour is all the row has to change. */
 const railActive = "text-gold";
 
-/** A locked row: faded, and it changes nothing on hover because it navigates
- *  nowhere. The fade is the whole visual signal, so it is a plain class rather
- *  than a state the row computes. */
-const rowLocked = "text-text-muted cursor-default opacity-50";
+/**
+ * A locked row: dimmer than an idle one, and it changes nothing on hover
+ * because it does not navigate.
+ *
+ * `text-faint` rather than `text-muted` with an `opacity` on top. Both text
+ * tokens are already translucent (see the ink ramp in `styles/global.css`), so
+ * stacking `opacity-50` on `text-muted` multiplies the two and lands the label
+ * under every token on the ramp. One token is the whole fade, and the ramp's
+ * own comment says what it buys: `text-faint` clears 3:1, not the 4.5:1 that
+ * normal-size text wants. That is a deliberate trade for a control whose
+ * purpose is to be de-emphasised, and the lock is carried in the row's
+ * accessible name rather than by its colour, so nothing depends on reading it.
+ */
+const rowLocked = "text-text-faint cursor-default";
 
 /** How long a pointer has to rest on a locked row before its upgrade popover
  *  opens. Kobalte's own default is 700ms, which is short enough to fire while
@@ -47,7 +57,9 @@ const DWELL_MS = 3000;
  *   trigger ignores touch pointers outright, so a hover-only row would be
  *   silently dead on the phone surface. That is also what makes the row a
  *   no-op rather than an unresponsive control: the click opens the offer
- *   instead of opening the module.
+ *   instead of opening the module. It toggles, because a touch user has no
+ *   pointer-leave to close the card with and tapping the row again is the
+ *   obvious way out.
  *
  * The lock is announced in the accessible name, not in the popover, so a
  * screen-reader user hears it while tabbing rather than having to dwell.
@@ -68,20 +80,28 @@ function LockedRow(props: {
       openDelay={DWELL_MS}
       placement={props.placement}
       gutter={8}
+      // The safe corridor between trigger and card costs two forced layouts per
+      // document `pointermove` for as long as a card is open, and across an
+      // 8px gutter it protects a gap the pointer crosses in one frame.
+      ignoreSafeArea
     >
-      {/* `aria-disabled`, never `disabled`: Kobalte's trigger drops both its
-          pointer-enter and its focus handler when the trigger is disabled, so a
-          real `disabled` would make the popover unopenable — and a disabled
-          button takes no focus either. `role` is explicit because the trigger
-          renders Kobalte's link, which would otherwise call a `<button>` a
-          link. */}
+      {/* Never Kobalte's `disabled`: its trigger drops both the pointer-enter
+          and the focus handler on a disabled trigger, so the card could not be
+          opened by any path, and a disabled button takes no focus either.
+          `aria-disabled` is wrong for the same reason it is tempting — the row
+          *is* operable, it opens this card; a control that answers a click must
+          not tell assistive tech it does nothing. What it does not do is
+          navigate, and that is what the accessible name says.
+
+          `role` is explicit because the trigger renders Kobalte's link, which
+          would otherwise call a `<button>` a link. */}
       <HoverCard.Trigger
         as="button"
         type="button"
         role="button"
-        aria-disabled="true"
+        aria-expanded={open()}
         aria-label={`${props.mod.label} — locked. Upgrade to unlock.`}
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen((was) => !was)}
         class={props.rowClass}
       >
         {props.children}
@@ -199,7 +219,7 @@ export default function ModuleSidebar(props: {
           {(mod) => {
             const isActive = () => props.active === mod.id;
             const locked = () => isModuleLocked(mod.id, props.entitlements);
-            const body = () => (
+            const Body = () => (
               <>
                 <span aria-hidden="true" class="w-4 shrink-0 text-center text-[0.95em] opacity-80">
                   {mod.glyph}
@@ -225,12 +245,12 @@ export default function ModuleSidebar(props: {
                     onClick={() => props.onSelect(mod.id)}
                     class={`${railRow} ${isActive() ? railActive : rowIdle}`}
                   >
-                    {body()}
+                    <Body />
                   </button>
                 }
               >
                 <LockedRow mod={mod} placement="right-start" rowClass={`${railRow} ${rowLocked}`}>
-                  {body()}
+                  <Body />
                 </LockedRow>
               </Show>
             );
@@ -295,7 +315,7 @@ export default function ModuleSidebar(props: {
                   {(mod) => {
                     const isActive = () => props.active === mod.id;
                     const locked = () => isModuleLocked(mod.id, props.entitlements);
-                    const body = () => (
+                    const Body = () => (
                       <>
                         <span
                           aria-hidden="true"
@@ -325,7 +345,7 @@ export default function ModuleSidebar(props: {
                             onClick={() => select(mod.id)}
                             class={`${sheetRow} ${isActive() ? rowActive : rowIdle}`}
                           >
-                            {body()}
+                            <Body />
                           </button>
                         }
                       >
@@ -334,7 +354,7 @@ export default function ModuleSidebar(props: {
                           placement="bottom-start"
                           rowClass={`${sheetRow} ${rowLocked}`}
                         >
-                          {body()}
+                          <Body />
                         </LockedRow>
                       </Show>
                     );

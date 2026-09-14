@@ -11,20 +11,27 @@ import ModuleSidebar from "./ModuleSidebar";
  * file at build time; the lab finds it by glob.
  *
  * It exists for the locked rows. The unit tier runs in happy-dom, which applies
- * no stylesheet and computes no layout, so two of the feature's promises cannot
- * be asserted there: that a locked row reads as faded rather than merely
- * carrying a class, and that its upgrade popover lands beside the rail instead
- * of over it. Both are a look, and this is where they get looked at.
+ * no stylesheet and computes no layout, so what it can prove about them stops
+ * at the DOM: that a timer fired, that a class is on an element, that a handler
+ * did not run. What it cannot reach is whether the thing behaves — whether the
+ * card lands beside the rail or over it, whether a three-second dwell reads as
+ * deliberate intent or as a broken button, and whether toggling an entitlement
+ * actually flips the row. The last of those is not hypothetical: it is how the
+ * `Show`-instead-of-a-ternary defect in `ModuleSidebar.tsx` was found, having
+ * passed every test in the suite.
  *
- * The three-second dwell is the other reason. A test can only prove a timer
- * fired; whether three seconds feels like deliberate intent or like a broken
- * button is a judgement someone has to make with a pointer.
+ * **This bench cannot judge colour.** The lab does not resolve the portal's
+ * colour ramp — every row here reports the same computed `color`, `text-gold`
+ * included, because the utilities for cire's `@theme` aliases are not emitted
+ * into the stylesheet this page ends up using. Layout, placement, timing and
+ * interaction are real; the fade is not, and `text-text-faint` looks like
+ * `text-text-muted` here while differing in the app. Judge the fade in the
+ * portal, at `https://<branch>.host.cire.localhost`.
  *
- * This file imports the portal's own stylesheet, because every colour here is a
- * cire token (`text-gold`, `bg-surface`, `text-text-muted`) that the lab's
- * musubi-based CSS does not define. That stylesheet also carries the portal's
- * `:root`, so it re-themes the chrome around the story — open a story with
- * **open** (`?bare`) for the view without it.
+ * The portal's stylesheet is imported anyway, for the shapes and spacing that
+ * do come through. It carries the portal's `:root`, so it re-themes the chrome
+ * around the story — open a story with **open** (`?bare`) for the view without
+ * it.
  *
  * See `wiki/conventions/component-lab.md` and `wiki/systems/cire-entitlements.md`.
  */
@@ -98,9 +105,11 @@ export const Rail = {
     return (
       <div class="flex flex-col gap-5">
         <Guidance>
-          Dwell three seconds on a faded row, or click it. Clicking navigates nowhere — the card is
-          the whole response. Turn an entitlement on in the panel and that row goes back to being an
-          ordinary nav button.
+          Dwell three seconds on Vendors or Registry, or click either. Clicking navigates nowhere
+          and clicking again closes the card — that is the whole response. Turn an entitlement on in
+          the panel and the row goes back to being an ordinary nav button. The rows will not look
+          faded here: the lab does not resolve the portal's colour ramp, so judge the fade in the
+          portal itself.
         </Guidance>
         <Shell width="60rem" wide>
           <ModuleSidebar
@@ -133,7 +142,7 @@ export const Sheet = {
     return (
       <div class="flex flex-col gap-5">
         <Guidance>
-          Open Modules, then tap the faded Vendors row. With `registry` held for contrast, the two
+          Open Modules, then tap the locked Vendors row. With `registry` held for contrast, the two
           rows sit next to each other — one navigates and closes the sheet, the other offers the
           upgrade and leaves it open. Stories are not framed, so the sheet's fixed panel lands over
           the lab's own chrome — use <strong>open</strong> for the clean view.

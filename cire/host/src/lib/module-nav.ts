@@ -72,10 +72,16 @@ export const MODULE_NAV: ModuleDef[] = [
   { id: "settings", label: "Settings", glyph: "✧", hint: "Profile, budget, and co-hosts" },
 ];
 
+/** Built once. `moduleDef` is called from the shell's header, its panel keys,
+ *  the rail, the sheet and the command palette — a linear scan per call turns
+ *  one navigation into dozens of nine-element searches for an answer that never
+ *  changes. */
+const BY_ID = new Map(MODULE_NAV.map((mod) => [mod.id, mod]));
+
 /** The entry for a module. Falls back to Overview, which is also where an
  *  unparseable route lands, so the two agree. */
 export function moduleDef(id: Module): ModuleDef {
-  return MODULE_NAV.find((mod) => mod.id === id) ?? MODULE_NAV[0]!;
+  return BY_ID.get(id) ?? MODULE_NAV[0]!;
 }
 
 /** Whether this wedding has to upgrade to reach the module. Derived from the

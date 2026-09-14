@@ -1,4 +1,4 @@
-import { type Component, For, lazy, Show, Suspense } from "solid-js";
+import { type Component, createMemo, For, lazy, Show, Suspense } from "solid-js";
 
 import { createAutoSize } from "../lib/auto-size";
 import { peekCachedBudget } from "../lib/budget-store";
@@ -7,9 +7,7 @@ import { isModuleLocked, moduleDef } from "../lib/module-nav";
 import { createSlidingPill } from "../lib/sliding-pill";
 import BudgetView from "./BudgetView";
 import ChecklistView from "./ChecklistView";
-import DirectoryBrowseView from "./DirectoryBrowseView";
 import EditWorkspace from "./EditWorkspace";
-import EnquiriesView from "./EnquiriesView";
 import EventTable from "./EventTable";
 import GuestTable from "./GuestTable";
 import HostsPanel from "./HostsPanel";
@@ -19,7 +17,6 @@ import PanelLoading from "./PanelLoading";
 import RemintPanel from "./RemintPanel";
 import RsvpView from "./RsvpView";
 import SettingsPanel from "./SettingsPanel";
-import VendorsView from "./VendorsView";
 
 /**
  * The three big write surfaces, split out of the first load.
@@ -39,22 +36,36 @@ const loadGuestsEditor = () => import("./GuestsEditor");
 const loadInviteBuilder = () => import("./InviteBuilder");
 
 /**
- * The registry, split out for a different reason than the three above.
+ * The two entitlement-gated modules, split out for a different reason than the
+ * three above.
  *
- * It is a read view, so by the rule above it would stay eager. It doesn't,
- * because it is gated by an entitlement: an organiser without it never reaches
- * the module at all, and eager-loading its tree, its money formatting and its
- * two panels for everyone pays for a view most weddings cannot open. Where the
- * entitlement is held the cost lands on the rail click that opens the module —
- * one chunk, warmed by the hover on either sub-tab through `PANEL_LOADERS`
+ * They are read views, so by the rule above they would stay eager. They don't,
+ * because the shell now coerces a locked module to Overview: an organiser
+ * without the key does not merely see an upsell in the module's place, they
+ * cannot reach the module at all. Eager-loading the registry's tree and money
+ * formatting, or the vendors module's three panels and its enquiry dialogs, for
+ * an organiser who provably cannot open either is paying for a view that will
+ * not be shown. Where the key is held the cost lands on the rail click that
+ * opens the module, warmed by the hover on the sub-tab through `PANEL_LOADERS`
  * below.
+ *
+ * Vendors is three chunks rather than one because its sub-tabs are three
+ * unrelated surfaces — a CRM table, a directory browser and an enquiry inbox —
+ * and an organiser who lives in one rarely opens the others. The registry's two
+ * subs are the same component twice, so they share a chunk.
  */
 const loadRegistry = () => import("./RegistryView");
+const loadVendors = () => import("./VendorsView");
+const loadDirectoryBrowse = () => import("./DirectoryBrowseView");
+const loadEnquiries = () => import("./EnquiriesView");
 
 const EventsEditor = lazy(loadEventsEditor);
 const GuestsEditor = lazy(loadGuestsEditor);
 const InviteBuilder = lazy(loadInviteBuilder);
 const RegistryView = lazy(loadRegistry);
+const VendorsView = lazy(loadVendors);
+const DirectoryBrowseView = lazy(loadDirectoryBrowse);
+const EnquiriesView = lazy(loadEnquiries);
 
 /**
  * What one of those chunks resolves to: a panel, default-exported.
@@ -103,6 +114,9 @@ const PANEL_LOADERS: PanelLoaders = {
   "invite:design": loadInviteBuilder,
   "registry:list": loadRegistry,
   "registry:gifts": loadRegistry,
+  "vendors:index": loadVendors,
+  "vendors:browse": loadDirectoryBrowse,
+  "vendors:enquiries": loadEnquiries,
 };
 
 /** The map's keys, for the drift guard in `ModuleShell.test.tsx`. */
@@ -215,8 +229,14 @@ export default function ModuleShell(props: ModuleShellProps) {
   // through this, and no route the parent supplies can render a module this
   // wedding has not paid for. The hash is left alone; the parent owns it, and
   // pushing history from a render path invites loops.
-  const module = (): Module =>
-    isModuleLocked(props.module, props.entitlements) ? DEFAULT_MODULE : props.module;
+  // A memo rather than a plain accessor. Every per-module read below goes
+  // through this — the header, the sub-tabs, the panel ids, the prefetch and
+  // nine `Show` conditions — and `active()` reaches it twice more through
+  // `resolveSub`, so a sub-tab click would otherwise re-derive the same answer
+  // dozens of times and wake every one of those `Show` conditions with it.
+  const module = createMemo<Module>(() =>
+    isModuleLocked(props.module, props.entitlements) ? DEFAULT_MODULE : props.module,
+  );
 
   // The visible sub-tabs for the current module, filtered by role. Overview and
   // Checklist have no sub-tabs (single view), so they return [].
@@ -440,24 +460,29 @@ export default function ModuleShell(props: ModuleShellProps) {
 
               {/* ── Vendors: CRM ("My vendors") + directory Browse ──────────── */}
               <Show when={module() === "vendors"}>
-                <Show when={active() === "index"}>
-                  <VendorsView
-                    weddingId={props.weddingId}
-                    currency={peekCachedBudget(props.weddingId)?.currency ?? "AUD"}
-                    canEdit={props.canEdit}
-                    canManage={props.canManage}
-                  />
-                </Show>
-                <Show when={active() === "browse"}>
-                  <DirectoryBrowseView weddingId={props.weddingId} canEdit={props.canEdit} />
-                </Show>
-                <Show when={active() === "enquiries"}>
-                  <EnquiriesView
-                    weddingId={props.weddingId}
-                    currency={peekCachedBudget(props.weddingId)?.currency ?? "AUD"}
-                    canEdit={props.canEdit}
-                  />
-                </Show>
+                {/* One boundary for all three subs, as the registry does: a sub
+                switch inside the module never re-suspends once its own chunk
+                has landed. */}
+                <Suspense fallback={<PanelLoading />}>
+                  <Show when={active() === "index"}>
+                    <VendorsView
+                      weddingId={props.weddingId}
+                      currency={peekCachedBudget(props.weddingId)?.currency ?? "AUD"}
+                      canEdit={props.canEdit}
+                      canManage={props.canManage}
+                    />
+                  </Show>
+                  <Show when={active() === "browse"}>
+                    <DirectoryBrowseView weddingId={props.weddingId} canEdit={props.canEdit} />
+                  </Show>
+                  <Show when={active() === "enquiries"}>
+                    <EnquiriesView
+                      weddingId={props.weddingId}
+                      currency={peekCachedBudget(props.weddingId)?.currency ?? "AUD"}
+                      canEdit={props.canEdit}
+                    />
+                  </Show>
+                </Suspense>
               </Show>
 
               {/* ── Registry: the gift list + the gifts received ─────────────── */}
