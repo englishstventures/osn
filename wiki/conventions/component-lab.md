@@ -7,7 +7,7 @@ related:
   - "[[frontend-patterns]]"
   - "[[commands]]"
   - "[[devloop-urls]]"
-last-reviewed: 2026-09-09
+last-reviewed: 2026-09-14
 ---
 
 # Component Lab
@@ -172,6 +172,34 @@ Three routes, demonstrated in `src/stories/html-in-canvas.story.tsx`:
 The first two go through an SVG `foreignObject`, which loads nothing external
 (no web fonts, no remote images) and parses its markup as XML (every tag closed).
 Both limits belong to the technique, not the helper.
+
+## WebGPU and TSL
+
+The WebGPU half of three.js is a different API from the WebGL half: `three/webgpu`
+for the renderer and the node materials, `three/tsl` for shaders written as
+JavaScript nodes rather than GLSL strings. The installed three (0.185.1) exports
+both.
+
+A third-party skill covers that API — `dgreenheck/webgpu-claude-skill`, installed
+here as `webgpu-threejs-tsl` and invoked by an agent as `/webgpu-threejs-tsl`. It
+holds renderer setup, TSL syntax, node materials, compute shaders,
+post-processing, custom WGSL, device loss and feature limits, with runnable
+examples and two templates.
+
+`ThreeCanvas` is no help to a story that follows it. It builds a `WebGLRenderer`
+(`src/lab/three.tsx:135`), and a `WebGPURenderer` needs an `await renderer.init()`
+before its first frame, so a WebGPU story owns its own renderer and canvas. It
+needs `headless: false` too, for the same reason the two existing three.js
+stories do.
+
+> [!warning] The skill is not ours to edit
+> The text lives in `.agents/skills/webgpu-threejs-tsl/`,
+> `.claude/skills/webgpu-threejs-tsl` is only a symlink to it, and the root
+> `skills-lock.json` hashes every byte of the folder. Fixing something in place
+> invalidates the lock and the next `npx skills update`, so a fix goes upstream
+> and comes back as a new pin. oxlint, oxfmt and the skill-quality loop leave the
+> tree alone for that reason — see `CLAUDE.md` §Conventions, "Agent skills and
+> their evals".
 
 ## Gates
 
