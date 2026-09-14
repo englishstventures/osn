@@ -119,7 +119,7 @@ describe("SecurityEventsBanner", () => {
       />
     ));
     await waitFor(() => {
-      expect(screen.getByText(/recovery code was used on your account/i)).toBeTruthy();
+      expect(screen.getByText(/a recovery code was used on your Musubi account/i)).toBeTruthy();
     });
   });
 

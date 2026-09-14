@@ -62,7 +62,7 @@ function headlineFor(kind: SecurityEventSummary["kind"], productName: string): s
     case "recovery_code_generate":
       return `Your ${productName} recovery codes were regenerated`;
     case "recovery_code_consume":
-      return `An ${productName} recovery code was used on your account`;
+      return `A recovery code was used on your ${productName} account`;
     default:
       return "Security event on your account";
   }
