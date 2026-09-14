@@ -1,9 +1,10 @@
 import { Dialog } from "@kobalte/core/dialog";
-import { createSignal, For, onCleanup } from "solid-js";
+import { HoverCard } from "@kobalte/core/hover-card";
+import { createSignal, For, type JSX, onCleanup } from "solid-js";
 
 import type { Module } from "../lib/dashboard-route";
 import { haptic } from "../lib/haptics";
-import { MODULE_NAV, moduleDef } from "../lib/module-nav";
+import { isModuleLocked, MODULE_NAV, type ModuleDef, moduleDef } from "../lib/module-nav";
 import { createSlidingPill } from "../lib/sliding-pill";
 
 /** Shared row shape for both surfaces, so the rail and the sheet read as the
@@ -18,6 +19,94 @@ const rowActive = "text-gold bg-gold/10";
 /** The rail's active row carries no background of its own — the pill behind it
  *  is the background, and it travels. Colour is all the row has to change. */
 const railActive = "text-gold";
+
+/** A locked row: faded, and it changes nothing on hover because it navigates
+ *  nowhere. The fade is the whole visual signal, so it is a plain class rather
+ *  than a state the row computes. */
+const rowLocked = "text-text-muted cursor-default opacity-50";
+
+/** How long a pointer has to rest on a locked row before its upgrade popover
+ *  opens. Kobalte's own default is 700ms, which is short enough to fire while
+ *  the pointer is merely crossing the rail. */
+const DWELL_MS = 3000;
+
+/**
+ * A nav row for a module this wedding is not entitled to.
+ *
+ * The row itself looks like every other row and carries the same content; what
+ * changes is that it navigates nowhere, reads as locked to assistive tech, and
+ * opens a popover offering the upgrade.
+ *
+ * Three ways in, because no one of them covers every surface:
+ *
+ * - A pointer resting on it for {@link DWELL_MS}, which is Kobalte's own
+ *   `openDelay`.
+ * - Keyboard focus held for the same delay (Kobalte's trigger treats focus and
+ *   pointer-enter alike).
+ * - A click or a tap, which is the only path a touch user has — Kobalte's
+ *   trigger ignores touch pointers outright, so a hover-only row would be
+ *   silently dead on the phone surface. That is also what makes the row a
+ *   no-op rather than an unresponsive control: the click opens the offer
+ *   instead of opening the module.
+ *
+ * The lock is announced in the accessible name, not in the popover, so a
+ * screen-reader user hears it while tabbing rather than having to dwell.
+ */
+function LockedRow(props: {
+  mod: ModuleDef;
+  rowClass: string;
+  placement: "right-start" | "bottom-start";
+  children: JSX.Element;
+}) {
+  const [open, setOpen] = createSignal(false);
+  const lock = () => props.mod.lock!;
+
+  return (
+    <HoverCard
+      open={open()}
+      onOpenChange={setOpen}
+      openDelay={DWELL_MS}
+      placement={props.placement}
+      gutter={8}
+    >
+      {/* `aria-disabled`, never `disabled`: Kobalte's trigger drops both its
+          pointer-enter and its focus handler when the trigger is disabled, so a
+          real `disabled` would make the popover unopenable — and a disabled
+          button takes no focus either. `role` is explicit because the trigger
+          renders Kobalte's link, which would otherwise call a `<button>` a
+          link. */}
+      <HoverCard.Trigger
+        as="button"
+        type="button"
+        role="button"
+        aria-disabled="true"
+        aria-label={`${props.mod.label} — locked. Upgrade to unlock.`}
+        onClick={() => setOpen(true)}
+        class={props.rowClass}
+      >
+        {props.children}
+      </HoverCard.Trigger>
+
+      {/* Portalled on both surfaces: the sheet's nav scrolls and would clip an
+          in-flow card, and on the rail it keeps the card's own button out of
+          the nav's control list. */}
+      <HoverCard.Portal>
+        <HoverCard.Content class="border-border bg-surface-raised z-50 flex w-64 flex-col gap-2 rounded-sm border p-3 shadow-lg outline-none">
+          <p class="font-display text-text text-[1rem] leading-tight font-light">{lock().title}</p>
+          <p class="text-text-muted text-[0.78rem] leading-snug">{lock().blurb}</p>
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            class="border-border text-text-muted mt-1 rounded-sm border px-3 py-1.5 text-[0.7rem] tracking-[0.18em] uppercase"
+          >
+            Upgrade — coming soon
+          </button>
+        </HoverCard.Content>
+      </HoverCard.Portal>
+    </HoverCard>
+  );
+}
 
 /**
  * The dashboard's module nav.
@@ -39,9 +128,14 @@ const railActive = "text-gold";
  *
  * Only one surface is laid out at a time — the other is `display: none`, so
  * assistive tech sees one nav, never a duplicate.
+ *
+ * A module the wedding is not entitled to keeps its row on both surfaces. It is
+ * faded, navigates nowhere, and offers the upgrade instead — see
+ * {@link LockedRow}.
  */
 export default function ModuleSidebar(props: {
   active: Module;
+  entitlements: readonly string[];
   onSelect: (module: Module) => void;
 }) {
   const [sheetOpen, setSheetOpen] = createSignal(false);
@@ -104,21 +198,30 @@ export default function ModuleSidebar(props: {
         <For each={MODULE_NAV}>
           {(mod) => {
             const isActive = () => props.active === mod.id;
-            return (
+            const locked = () => isModuleLocked(mod.id, props.entitlements);
+            const body = () => (
+              <>
+                <span aria-hidden="true" class="w-4 shrink-0 text-center text-[0.95em] opacity-80">
+                  {mod.glyph}
+                </span>
+                <span class="min-w-0 truncate">{mod.label}</span>
+              </>
+            );
+            const railRow = `${rowBase} relative px-3 py-2 text-[0.82rem]`;
+            return locked() ? (
+              <LockedRow mod={mod} placement="right-start" rowClass={`${railRow} ${rowLocked}`}>
+                {body()}
+              </LockedRow>
+            ) : (
               <button
                 ref={pill.item(mod.id)}
                 type="button"
                 aria-current={isActive() ? "page" : undefined}
                 title={mod.hint}
                 onClick={() => props.onSelect(mod.id)}
-                class={`${rowBase} relative px-3 py-2 text-[0.82rem] ${
-                  isActive() ? railActive : rowIdle
-                }`}
+                class={`${railRow} ${isActive() ? railActive : rowIdle}`}
               >
-                <span aria-hidden="true" class="w-4 shrink-0 text-center text-[0.95em] opacity-80">
-                  {mod.glyph}
-                </span>
-                <span class="min-w-0 truncate">{mod.label}</span>
+                {body()}
               </button>
             );
           }}
@@ -181,15 +284,9 @@ export default function ModuleSidebar(props: {
                 <For each={MODULE_NAV}>
                   {(mod) => {
                     const isActive = () => props.active === mod.id;
-                    return (
-                      <button
-                        type="button"
-                        aria-current={isActive() ? "page" : undefined}
-                        onClick={() => select(mod.id)}
-                        class={`${rowBase} items-start px-3 py-2.5 text-[0.8rem] ${
-                          isActive() ? rowActive : rowIdle
-                        }`}
-                      >
+                    const locked = () => isModuleLocked(mod.id, props.entitlements);
+                    const body = () => (
+                      <>
                         <span
                           aria-hidden="true"
                           class={`w-4 shrink-0 pt-0.5 text-center text-[1em] ${
@@ -204,6 +301,25 @@ export default function ModuleSidebar(props: {
                             {mod.hint}
                           </span>
                         </span>
+                      </>
+                    );
+                    const sheetRow = `${rowBase} items-start px-3 py-2.5 text-[0.8rem]`;
+                    return locked() ? (
+                      <LockedRow
+                        mod={mod}
+                        placement="bottom-start"
+                        rowClass={`${sheetRow} ${rowLocked}`}
+                      >
+                        {body()}
+                      </LockedRow>
+                    ) : (
+                      <button
+                        type="button"
+                        aria-current={isActive() ? "page" : undefined}
+                        onClick={() => select(mod.id)}
+                        class={`${sheetRow} ${isActive() ? rowActive : rowIdle}`}
+                      >
+                        {body()}
                       </button>
                     );
                   }}

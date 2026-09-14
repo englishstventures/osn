@@ -2,8 +2,8 @@ import { type Component, For, lazy, Show, Suspense } from "solid-js";
 
 import { createAutoSize } from "../lib/auto-size";
 import { peekCachedBudget } from "../lib/budget-store";
-import { defaultSub, isSubOf, type Module } from "../lib/dashboard-route";
-import { moduleDef } from "../lib/module-nav";
+import { DEFAULT_MODULE, defaultSub, isSubOf, type Module } from "../lib/dashboard-route";
+import { isModuleLocked, moduleDef } from "../lib/module-nav";
 import { createSlidingPill } from "../lib/sliding-pill";
 import BudgetView from "./BudgetView";
 import ChecklistView from "./ChecklistView";
@@ -19,7 +19,6 @@ import PanelLoading from "./PanelLoading";
 import RemintPanel from "./RemintPanel";
 import RsvpView from "./RsvpView";
 import SettingsPanel from "./SettingsPanel";
-import UpsellPanel from "./UpsellPanel";
 import VendorsView from "./VendorsView";
 
 /**
@@ -43,11 +42,12 @@ const loadInviteBuilder = () => import("./InviteBuilder");
  * The registry, split out for a different reason than the three above.
  *
  * It is a read view, so by the rule above it would stay eager. It doesn't,
- * because it is the only module gated by an entitlement **no wedding holds**:
- * every organiser today loads its tree, its money formatting and its two panels
- * to be shown an upsell instead (REG-P-W4). Once the entitlement is granted the
- * cost lands on the rail click that opens the module — one chunk, warmed by the
- * hover on either sub-tab through `PANEL_LOADERS` below.
+ * because it is gated by an entitlement: an organiser without it never reaches
+ * the module at all, and eager-loading its tree, its money formatting and its
+ * two panels for everyone pays for a view most weddings cannot open. Where the
+ * entitlement is held the cost lands on the rail click that opens the module —
+ * one chunk, warmed by the hover on either sub-tab through `PANEL_LOADERS`
+ * below.
  */
 const loadRegistry = () => import("./RegistryView");
 
@@ -136,8 +136,9 @@ interface ModuleShellProps {
   onSub: (sub: string) => void;
   onWeddingUpdated?: (patch: { displayName: string; slug: string }) => void;
   /** Entitlement keys active on this wedding (from the API list response).
-   *  Used to gate locked modules — when a module's key is absent the shell
-   *  renders an UpsellPanel instead of the feature UI. */
+   *  A module whose key is absent is locked: its nav row fades and offers the
+   *  upgrade, and the module itself never renders — the shell coerces it to
+   *  Overview. */
   entitlements: string[];
   /** Effective guest ceiling derived from the entitlement set. Surfaced for
    *  informational display (e.g. Overview) — enforcement is server-side. */
@@ -208,10 +209,19 @@ const panelId = (module: Module) => `subpanel-${module}`;
  * the module's default sub so the panel is never blank.
  */
 export default function ModuleShell(props: ModuleShellProps) {
+  // The module actually rendered. A locked one becomes Overview here and
+  // nowhere else, so the guarantee is total: every read below — the header, the
+  // sub-tabs, the prefetch, every panel and the rail's active row — goes
+  // through this, and no route the parent supplies can render a module this
+  // wedding has not paid for. The hash is left alone; the parent owns it, and
+  // pushing history from a render path invites loops.
+  const module = (): Module =>
+    isModuleLocked(props.module, props.entitlements) ? DEFAULT_MODULE : props.module;
+
   // The visible sub-tabs for the current module, filtered by role. Overview and
   // Checklist have no sub-tabs (single view), so they return [].
   const subTabs = (): SubDef[] => {
-    const defs = MODULE_SUB_TABS[props.module] ?? [];
+    const defs = MODULE_SUB_TABS[module()] ?? [];
     return defs.filter((s) => {
       if (s.manage && !props.canManage) return false;
       if (s.edit && !props.canEdit) return false;
@@ -224,12 +234,12 @@ export default function ModuleShell(props: ModuleShellProps) {
   const resolveSub = (): string => {
     const sub = props.sub;
     const visible = subTabs();
-    if (visible.length === 0) return defaultSub(props.module);
+    if (visible.length === 0) return defaultSub(module());
     // A sub the caller isn't allowed to see (viewer on invite/design, co-host on
     // invite/codes) → first visible tab.
     const allowed = visible.some((s) => s.id === sub);
     if (allowed) return sub;
-    if (isSubOf(props.module, sub) && !allowed) return visible[0]!.id;
+    if (isSubOf(module(), sub) && !allowed) return visible[0]!.id;
     // Unknown sub entirely.
     return visible[0]!.id;
   };
@@ -288,7 +298,11 @@ export default function ModuleShell(props: ModuleShellProps) {
           1300px panel reads as one crowded block; the extra air is what makes
           the two halves legible as separate things. */}
       <div class="flex flex-col gap-5 @2xl/shell:flex-row @2xl/shell:gap-8 @5xl/shell:gap-10">
-        <ModuleSidebar active={props.module} onSelect={props.onModule} />
+        <ModuleSidebar
+          active={module()}
+          entitlements={props.entitlements}
+          onSelect={props.onModule}
+        />
 
         <div class="@container/panel min-w-0 flex-1">
           {/* The panel names itself. With the per-wedding header gone from the
@@ -300,11 +314,9 @@ export default function ModuleShell(props: ModuleShellProps) {
             <div class="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
               <div class="flex min-w-0 flex-col gap-1">
                 <h2 class="font-display text-text text-[1.4rem] leading-none font-light">
-                  {moduleDef(props.module).label}
+                  {moduleDef(module()).label}
                 </h2>
-                <p class="font-body text-text-muted text-[0.78rem]">
-                  {moduleDef(props.module).hint}
-                </p>
+                <p class="font-body text-text-muted text-[0.78rem]">{moduleDef(module()).hint}</p>
               </div>
 
               {/* Sub-tabs, only for modules that have more than one visible
@@ -338,13 +350,13 @@ export default function ModuleShell(props: ModuleShellProps) {
                         }}
                         type="button"
                         role="tab"
-                        id={tabId(props.module, subTab.id)}
-                        aria-controls={panelId(props.module)}
+                        id={tabId(module(), subTab.id)}
+                        aria-controls={panelId(module())}
                         aria-selected={active() === subTab.id}
                         tabindex={active() === subTab.id ? 0 : -1}
                         onKeyDown={(event) => onTabKeyDown(event, index())}
-                        onPointerEnter={() => warmPanel(props.module, subTab.id)}
-                        onFocus={() => warmPanel(props.module, subTab.id)}
+                        onPointerEnter={() => warmPanel(module(), subTab.id)}
+                        onFocus={() => warmPanel(module(), subTab.id)}
                         onClick={() => props.onSub(subTab.id)}
                         class={`font-body relative flex items-center gap-2 rounded-sm px-3.5 py-1.5 text-[0.74rem] tracking-[0.12em] whitespace-nowrap uppercase transition-colors duration-(--dur-fast) ease-(--ease-out) ${
                           active() === subTab.id
@@ -368,9 +380,9 @@ export default function ModuleShell(props: ModuleShellProps) {
               role when there are tabs to label it. */}
           <div
             ref={panelSize.frame}
-            id={panelId(props.module)}
+            id={panelId(module())}
             role={subTabs().length > 1 ? "tabpanel" : undefined}
-            aria-labelledby={subTabs().length > 1 ? tabId(props.module, active()) : undefined}
+            aria-labelledby={subTabs().length > 1 ? tabId(module(), active()) : undefined}
             tabindex={subTabs().length > 1 ? 0 : undefined}
             class="outline-none"
           >
@@ -380,9 +392,10 @@ export default function ModuleShell(props: ModuleShellProps) {
                 differs depending on whether the frame is currently clipped. */}
             <div ref={panelSize.content} class="flow-root">
               {/* ── Overview ─────────────────────────────────────────────────── */}
-              <Show when={props.module === "overview"}>
+              <Show when={module() === "overview"}>
                 <Overview
                   weddingId={props.weddingId}
+                  entitlements={props.entitlements}
                   onNavigate={(module, sub) => {
                     props.onModule(module);
                     if (sub) props.onSub(sub);
@@ -391,7 +404,7 @@ export default function ModuleShell(props: ModuleShellProps) {
               </Show>
 
               {/* ── Events: List (read) + Edit ───────────────────────────────── */}
-              <Show when={props.module === "events"}>
+              <Show when={module() === "events"}>
                 <Show when={active() === "list"}>
                   <EventTable weddingId={props.weddingId} weddingSlug={props.weddingSlug} />
                 </Show>
@@ -412,12 +425,12 @@ export default function ModuleShell(props: ModuleShellProps) {
               </Show>
 
               {/* ── Checklist: freeform tasks by lead-time bucket ────────────── */}
-              <Show when={props.module === "checklist"}>
+              <Show when={module() === "checklist"}>
                 <ChecklistView weddingId={props.weddingId} canEdit={props.canEdit} />
               </Show>
 
               {/* ── Budget: per-category items + payments ────────────────────── */}
-              <Show when={props.module === "budget"}>
+              <Show when={module() === "budget"}>
                 <BudgetView
                   weddingId={props.weddingId}
                   canEdit={props.canEdit}
@@ -426,61 +439,47 @@ export default function ModuleShell(props: ModuleShellProps) {
               </Show>
 
               {/* ── Vendors: CRM ("My vendors") + directory Browse ──────────── */}
-              <Show when={props.module === "vendors"}>
-                <Show
-                  when={props.entitlements.includes("vendors")}
-                  fallback={<UpsellPanel feature="vendors" />}
-                >
-                  <Show when={active() === "index"}>
-                    <VendorsView
-                      weddingId={props.weddingId}
-                      currency={peekCachedBudget(props.weddingId)?.currency ?? "AUD"}
-                      canEdit={props.canEdit}
-                      canManage={props.canManage}
-                    />
-                  </Show>
-                  <Show when={active() === "browse"}>
-                    <DirectoryBrowseView weddingId={props.weddingId} canEdit={props.canEdit} />
-                  </Show>
-                  <Show when={active() === "enquiries"}>
-                    <EnquiriesView
-                      weddingId={props.weddingId}
-                      currency={peekCachedBudget(props.weddingId)?.currency ?? "AUD"}
-                      canEdit={props.canEdit}
-                    />
-                  </Show>
+              <Show when={module() === "vendors"}>
+                <Show when={active() === "index"}>
+                  <VendorsView
+                    weddingId={props.weddingId}
+                    currency={peekCachedBudget(props.weddingId)?.currency ?? "AUD"}
+                    canEdit={props.canEdit}
+                    canManage={props.canManage}
+                  />
+                </Show>
+                <Show when={active() === "browse"}>
+                  <DirectoryBrowseView weddingId={props.weddingId} canEdit={props.canEdit} />
+                </Show>
+                <Show when={active() === "enquiries"}>
+                  <EnquiriesView
+                    weddingId={props.weddingId}
+                    currency={peekCachedBudget(props.weddingId)?.currency ?? "AUD"}
+                    canEdit={props.canEdit}
+                  />
                 </Show>
               </Show>
 
               {/* ── Registry: the gift list + the gifts received ─────────────── */}
-              <Show when={props.module === "registry"}>
-                <Show
-                  when={props.entitlements.includes("registry")}
-                  fallback={<UpsellPanel feature="registry" />}
-                >
-                  {/* One boundary for both subs: they are the same chunk, so a
-                  sub switch never re-suspends once it has landed. */}
-                  <Suspense fallback={<PanelLoading />}>
-                    <Show when={active() === "list"}>
-                      <RegistryView
-                        weddingId={props.weddingId}
-                        view="list"
-                        canEdit={props.canEdit}
-                      />
-                    </Show>
-                    <Show when={active() === "gifts"}>
-                      <RegistryView
-                        weddingId={props.weddingId}
-                        view="gifts"
-                        canEdit={props.canEdit}
-                      />
-                    </Show>
-                  </Suspense>
-                </Show>
+              <Show when={module() === "registry"}>
+                {/* One boundary for both subs: they are the same chunk, so a
+                sub switch never re-suspends once it has landed. */}
+                <Suspense fallback={<PanelLoading />}>
+                  <Show when={active() === "list"}>
+                    <RegistryView weddingId={props.weddingId} view="list" canEdit={props.canEdit} />
+                  </Show>
+                  <Show when={active() === "gifts"}>
+                    <RegistryView
+                      weddingId={props.weddingId}
+                      view="gifts"
+                      canEdit={props.canEdit}
+                    />
+                  </Show>
+                </Suspense>
               </Show>
 
               {/* ── Guests: Households + RSVPs ───────────────────────────────── */}
-              <Show when={props.module === "guests"}>
+              <Show when={module() === "guests"}>
                 <Show when={active() === "list"}>
                   <GuestTable
                     weddingId={props.weddingId}
@@ -510,7 +509,7 @@ export default function ModuleShell(props: ModuleShellProps) {
               </Show>
 
               {/* ── Invite: Design + Codes ───────────────────────────────────── */}
-              <Show when={props.module === "invite"}>
+              <Show when={module() === "invite"}>
                 <Show when={active() === "design"}>
                   {/* The builder is one big write surface; a viewer sees the invite
                 itself via the header's "Preview invite" (member-gated) instead. */}
@@ -539,7 +538,7 @@ export default function ModuleShell(props: ModuleShellProps) {
               </Show>
 
               {/* ── Settings: Profile + Co-hosts ─────────────────────────────── */}
-              <Show when={props.module === "settings"}>
+              <Show when={module() === "settings"}>
                 <Show when={active() === "wedding"}>
                   <SettingsPanel
                     weddingId={props.weddingId}
