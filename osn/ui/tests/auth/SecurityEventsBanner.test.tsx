@@ -101,7 +101,7 @@ describe("SecurityEventsBanner", () => {
       />
     ));
     await waitFor(() => {
-      expect(screen.getByText(/recovery codes were regenerated/i)).toBeTruthy();
+      expect(screen.getByText(/your Musubi recovery codes were regenerated/i)).toBeTruthy();
       expect(screen.getByText(/Firefox on macOS/)).toBeTruthy();
     });
   });

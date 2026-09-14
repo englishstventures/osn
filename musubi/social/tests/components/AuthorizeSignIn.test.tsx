@@ -66,8 +66,8 @@ describe("<AuthorizeSignIn />", () => {
 
     expect(screen.getByTestId("register")).toBeTruthy();
     expect(screen.queryByTestId("signin")).toBeNull();
-    // This is the site the plan's original test list silently missed: the
-    // consent screen's own registration half, not the sidebar's.
+    // The consent screen's own registration half, which is a separate call
+    // site from the sidebar's and passes the prop separately.
     expect(screen.getByTestId("register-product-name").textContent).toBe("Musubi");
   });
 

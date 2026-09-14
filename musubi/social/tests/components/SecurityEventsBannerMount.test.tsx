@@ -5,10 +5,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 /**
  * `SecurityEventsBannerMount` wires the shared `SecurityEventsBanner` to this
  * app's clients — no other test in `musubi/social` renders it. Without this
- * file, a `productName` prop dropped or misspelled here (xchromo/osn#1028)
- * would compile clean: nothing type-checks the mount's own tests
- * (`musubi/social/tsconfig.json` `include` is `["src"]`), and nothing else
- * renders the component to notice at runtime either.
+ * file a prop dropped or misspelled here compiles clean: nothing type-checks
+ * this directory (`musubi/social/tsconfig.json` `include` is `["src"]`), and
+ * nothing else renders the component to notice at runtime either.
  */
 
 const captured = vi.hoisted(() => ({

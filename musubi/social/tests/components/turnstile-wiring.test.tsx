@@ -19,9 +19,10 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
  * These tests assert the prop actually arrives at each of the three ceremony
  * call sites, which is the part that silently went missing.
  *
- * The same shape of bug hit `productName` (xchromo/osn#1028): a required prop
- * a mock's type doesn't mention compiles and passes silently at every call
- * site. `captured` records both props for that reason.
+ * `productName` is asserted here for the same reason: a required prop a mock's
+ * type doesn't mention compiles and passes silently at every call site, and
+ * nothing type-checks this directory (`tsconfig.json` `include` is `["src"]`).
+ * `captured` records both props so a dropped one fails rather than vanishes.
  */
 
 const SITEKEY = "0x4AAAAAAAtestsitekey";
@@ -153,9 +154,9 @@ describe("Turnstile sitekey and product name reach every ceremony call site", ()
     expect(captured.signIn).toEqual([{ turnstileSiteKey: SITEKEY, productName: PRODUCT_NAME }]);
   });
 
-  // AuthorizeSignIn.tsx's register-mode <Register> — the site the plan for
-  // xchromo/osn#1028 originally missed: nothing else in this file rendered
-  // the consent screen in `initialMode="register"`.
+  // AuthorizeSignIn.tsx's register-mode <Register> is its own call site, and
+  // this is the only test that renders the consent screen with
+  // `initialMode="register"`.
   it("passes both to <Register /> on the consent screen (register mode)", () => {
     render(() => <AuthorizeSignIn initialMode="register" onSuccess={() => {}} />);
     expect(captured.register).toEqual([{ turnstileSiteKey: SITEKEY, productName: PRODUCT_NAME }]);
