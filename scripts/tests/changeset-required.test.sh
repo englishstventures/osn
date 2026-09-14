@@ -70,9 +70,25 @@ run_case "third-party skill tree alone" skip \
 .claude/skills/webgpu-threejs-tsl
 skills-lock.json'
 
+# One case per allowlist arm, each on its own. The compound case above goes red
+# for any of the three, which tells you a rule broke but not which one.
+run_case "third-party skill file alone" skip \
+  '.agents/skills/webgpu-threejs-tsl/SKILL.md'
+
+run_case "the skill symlink alone" skip \
+  '.claude/skills/webgpu-threejs-tsl'
+
+run_case "skills-lock.json alone" skip \
+  'skills-lock.json'
+
+# The source file comes first on purpose. The loop breaks at the first path it
+# will not allow, so with the skill file first this case returns `required`
+# whether or not `.agents/*` is on the allowlist — it would stay green with the
+# rule deleted, and prove nothing. This order makes it prove what it is named
+# after: the loop keeps going past an allowed path and still rejects a later one.
 run_case "third-party skill tree plus one source file" required \
-  '.agents/skills/webgpu-threejs-tsl/SKILL.md
-osn/api/src/index.ts'
+  'osn/api/src/index.ts
+.agents/skills/webgpu-threejs-tsl/SKILL.md'
 
 run_case "source file in a versioned package" required \
   'osn/api/src/routes/graph.ts'

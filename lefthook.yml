@@ -20,9 +20,11 @@ pre-commit:
       glob: "*.{js,jsx,ts,tsx}"
       # Vendored upstream source is left byte-identical so re-vendoring a newer
       # anti-slop is a plain copy, not a copy plus a reformat diff. Third-party
-      # skills under `.agents/**` are stricter still: `skills-lock.json` hashes
-      # every byte of the installed folder, so one reformat invalidates the
-      # lock and the next `npx skills update`.
+      # skills under `.agents/**` are stricter still: `skills-lock.json` carries
+      # a hash the `skills` CLI wrote at install time and checks on
+      # `npx skills update`. Nothing in this repo recomputes it, so a reformat
+      # here fails no gate of ours — it either stops the next update or is
+      # thrown away by it.
       exclude:
         - "tools/oxlint/anti-slop/**"
         - ".agents/**"

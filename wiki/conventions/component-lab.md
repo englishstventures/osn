@@ -192,12 +192,25 @@ before its first frame, so a WebGPU story owns its own renderer and canvas. It
 needs `headless: false` too, for the same reason the two existing three.js
 stories do.
 
+Owning the renderer means owning everything `ThreeCanvas` did for you, and the
+skill's examples are written as standalone pages rather than as lab stories, so
+none of it is in the code they hand you. Four things to put back, all of them
+worked out in `src/lab/three.tsx`:
+
+| Put back | Why | Worked version |
+|---|---|---|
+| Teardown in `onCleanup` — `setAnimationLoop(null)`, dispose the scene, `renderer.dispose()`, `forceContextLoss()`, remove the canvas | A browser keeps about sixteen GPU contexts and drops the oldest to make room, which may be the story on screen. Hot reload runs this path on every save | `three.tsx:211-225` |
+| `setPixelRatio(Math.min(window.devicePixelRatio, 2))` | The examples pass the raw ratio. On a 3× display that is nine device pixels per CSS pixel against four, so 2.25× the fragment work every frame | `three.tsx:136` |
+| A `ResizeObserver` on the host element, not a `window` resize listener | A story is a panel inside the lab, not the window, and an unthrottled listener reallocates the swapchain and every full-screen target through a drag-resize | `three.tsx:166-181` |
+| Objects held in variables the frame callback closes over | `templates/webgpu-project.js:243` finds its mesh with `scene.children.find(…)` inside the animation callback — a linear scan per frame | — |
+
 > [!warning] The skill is not ours to edit
 > The text lives in `.agents/skills/webgpu-threejs-tsl/`,
 > `.claude/skills/webgpu-threejs-tsl` is only a symlink to it, and the root
-> `skills-lock.json` hashes every byte of the folder. Fixing something in place
-> invalidates the lock and the next `npx skills update`, so a fix goes upstream
-> and comes back as a new pin. oxlint, oxfmt and the skill-quality loop leave the
+> `skills-lock.json` carries a hash the `skills` CLI wrote at install time and
+> checks on `npx skills update`. Nothing here recomputes it, so fixing
+> something in place fails no gate of ours — it either stops the next update or
+> is thrown away by it. A fix goes upstream and comes back as a new pin. oxlint, oxfmt and the skill-quality loop leave the
 > tree alone for that reason — see `CLAUDE.md` §Conventions, "Agent skills and
 > their evals".
 
