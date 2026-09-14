@@ -24,6 +24,17 @@ the panel over the input the reader is about to type into.
 that copy's test both move to `@osn/ui`, so the coverage travels with the file
 rather than disappearing.
 
+`PopoverContent` now carries `data-kb-top-layer`, which fixes a bug for every
+popover rather than only this one. A Kobalte `Dialog` is modal by default and
+sets `aria-hidden="true"` on everything outside itself, reaching nodes portalled
+to `<body>` afterwards through a `MutationObserver`. `PopoverContent` portals to
+`<body>`, so any popover opened from inside a dialog was visible on screen and
+missing from the accessibility tree. That attribute is the exemption Kobalte
+itself uses for `ToastRegion`. It sits on the component rather than behind a
+prop, so no call site has to remember it. Dismissal is unchanged — the toggle
+and Escape tests pass with it in place, and each still fails when its dismiss
+action is removed.
+
 Two of the five moved tests asserted nothing and were rewritten rather than
 carried over. The toggle test ended in `expect(!content || closedParent ||
 expandedParent).toBeTruthy()`, where `expandedParent` matches while the popover

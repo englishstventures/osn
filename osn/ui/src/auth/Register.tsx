@@ -82,9 +82,9 @@ export function Register(props: RegisterProps) {
   // only auto-refreshes on the ~300s expiry, not on consumption).
   let resetTurnstile: (() => void) | undefined;
 
-  // The address does three jobs and the flow shows none of them. The second
-  // is the one that should steer which address a person types: an emailed
-  // code is a way back into an account whose passkeys are all gone.
+  // Names all three jobs the address does, so the choice of address is made
+  // knowing the second: an emailed code is a way back into an account whose
+  // passkeys are all gone.
   const emailUses = () =>
     `We send a six-digit code here to confirm the address — your ${props.productName} account is not created until you enter it. It is also how you get back in if you lose every device with a passkey on it, so use an address you will still be reading in a year. Security notices come here too, such as a recovery code being created or used.`;
 

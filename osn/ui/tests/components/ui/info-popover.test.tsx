@@ -2,7 +2,27 @@
 import { render, cleanup, fireEvent, screen, waitFor } from "@solidjs/testing-library";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { Dialog, DialogContent } from "../../../src/components/ui/dialog";
 import { InfoPopover } from "../../../src/components/ui/info-popover";
+
+/**
+ * A modal dialog marks everything outside itself `aria-hidden`, and it reaches
+ * nodes portalled in after it opened through a MutationObserver whose hide
+ * defers via `setTimeout` then `requestAnimationFrame`. Nothing carries the
+ * attribute until both have flushed, so a check made too early passes while
+ * the panel is in fact hidden.
+ */
+async function flushAriaHiding() {
+  for (let i = 0; i < 3; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+function ariaHiddenAncestors(node: HTMLElement): string[] {
+  const hidden: string[] = [];
+  for (let el: HTMLElement | null = node; el && el !== document.body; el = el.parentElement) {
+    if (el.getAttribute("aria-hidden") === "true") hidden.push(el.tagName);
+  }
+  return hidden;
+}
 
 describe("InfoPopover", () => {
   afterEach(() => cleanup());
@@ -86,6 +106,25 @@ describe("InfoPopover", () => {
     // properties the platform uses to provide it.
     expect(trigger.disabled).toBe(false);
     expect(trigger.getAttribute("tabindex")).toBeNull();
+  });
+
+  it("stays in the accessibility tree when opened inside a modal dialog", async () => {
+    render(() => (
+      <Dialog open>
+        <DialogContent>
+          <InfoPopover body="Readable inside a dialog" />
+        </DialogContent>
+      </Dialog>
+    ));
+
+    fireEvent.click(screen.getByLabelText("More info"));
+    const panel = await screen.findByText("Readable inside a dialog");
+    await flushAriaHiding();
+
+    // The panel portals to <body> after the dialog opened, so without an
+    // exemption the dialog's observer hides its portal container and the
+    // explanation is gone for a screen reader while still visible on screen.
+    expect(ariaHiddenAncestors(panel)).toEqual([]);
   });
 
   it("does not submit the form it sits inside", async () => {

@@ -77,14 +77,22 @@ The trigger is a native `<button type="button">`: Kobalte's `ButtonRoot` supplie
 that default, so it never submits the form it sits inside. `osn/ui`'s own tests
 hold that guarantee rather than trusting it.
 
-> [!warning] Not readable by a screen reader inside a modal `Dialog`
+> [!important] Why `PopoverContent` carries `data-kb-top-layer`
 > Kobalte's `Dialog` defaults to `modal: true` and sets `aria-hidden="true"` on
-> everything outside itself, including nodes portalled to `<body>` afterwards. A
-> `PopoverContent` opened from inside a dialog is therefore hidden from the
-> accessibility tree. Only `ToastRegion` carries the `data-kb-top-layer` attribute
-> that exempts a node. This affects `Register`'s email explainer, which renders
-> inside `@musubi/social`'s sign-up dialog; every other `InfoPopover` and `Popover`
-> call site in the repo sits on a page, not in a dialog.
+> everything outside itself — including nodes portalled to `<body>` after it
+> opened, which it reaches with a `MutationObserver`. `PopoverContent` portals to
+> `<body>`, so a popover opened from inside a dialog would be visible on screen
+> and absent from the accessibility tree. `data-kb-top-layer` is what exempts a
+> node from that walk; Kobalte itself sets it on `ToastRegion` and nowhere else.
+>
+> It sits on `PopoverContent` rather than behind a prop, because a prop is
+> something every call site inside a dialog has to remember. Outside a dialog
+> nothing walks the tree and the attribute does nothing.
+>
+> A test covering this **must flush macrotasks first**: the hide defers through
+> `setTimeout` then `requestAnimationFrame`, so a check made immediately passes
+> while the panel is in fact hidden. `osn/ui/tests/components/ui/info-popover.test.tsx`
+> holds the guarantee, rendering the popover inside a real `Dialog`.
 
 `CreateProfileForm.tsx` also uses `UsernameInput` for its handle field. `cire/host` doesn't depend on `@osn/ui` (its own component kit, different design system) — it has a local port at `cire/host/src/components/ui/UsernameInput.tsx` wrapping that kit's own `Input`, same "@"-prefix idea, used in `HostsPanel`'s add-host combobox.
 
