@@ -20,7 +20,7 @@ related:
 packages:
   - "@osn/ui"
   - "@pulse/web"
-last-reviewed: 2026-08-24
+last-reviewed: 2026-09-14
 ---
 
 # Component Library (Zaidan)
@@ -51,6 +51,7 @@ osn/ui/src/
 │       ├── checkbox.tsx       ← Checkbox (Kobalte)
 │       ├── dialog.tsx         ← Dialog, DialogContent, etc. (Kobalte)
 │       ├── dropdown-menu.tsx  ← DropdownMenu, DropdownMenuItem, etc. (Kobalte)
+│       ├── info-popover.tsx   ← InfoPopover (circled glyph beside a form label)
 │       ├── input.tsx          ← Input
 │       ├── label.tsx          ← Label
 │       ├── otp-input.tsx      ← OtpInput (6-digit code verification)
@@ -60,9 +61,30 @@ osn/ui/src/
 │       ├── textarea.tsx       ← Textarea
 │       └── username-input.tsx ← UsernameInput ("@" prefix + availability status)
 └── auth/
-    ├── Register.tsx           ← uses Button, Input, Label, OtpInput, UsernameInput
+    ├── Register.tsx           ← uses Button, InfoPopover, Input, Label, OtpInput, UsernameInput
     └── SignIn.tsx           ← uses Button, Input, Label, OtpInput, clsx()
 ```
+
+### `InfoPopover` — the form-field explainer
+
+A circled glyph beside a form label, opening a `Popover` panel that says what the
+field is for. `glyph` chooses the character (`?` by default, `i` where the panel
+states a fact rather than answering a question), and `placement` chooses the side —
+Kobalte's default `"bottom"` opens the panel over whatever sits below the trigger,
+which for a field label is the input itself, so a form field usually wants `"top"`.
+
+The trigger is a native `<button type="button">`: Kobalte's `ButtonRoot` supplies
+that default, so it never submits the form it sits inside. `osn/ui`'s own tests
+hold that guarantee rather than trusting it.
+
+> [!warning] Not readable by a screen reader inside a modal `Dialog`
+> Kobalte's `Dialog` defaults to `modal: true` and sets `aria-hidden="true"` on
+> everything outside itself, including nodes portalled to `<body>` afterwards. A
+> `PopoverContent` opened from inside a dialog is therefore hidden from the
+> accessibility tree. Only `ToastRegion` carries the `data-kb-top-layer` attribute
+> that exempts a node. This affects `Register`'s email explainer, which renders
+> inside `@musubi/social`'s sign-up dialog; every other `InfoPopover` and `Popover`
+> call site in the repo sits on a page, not in a dialog.
 
 `CreateProfileForm.tsx` also uses `UsernameInput` for its handle field. `cire/host` doesn't depend on `@osn/ui` (its own component kit, different design system) — it has a local port at `cire/host/src/components/ui/UsernameInput.tsx` wrapping that kit's own `Input`, same "@"-prefix idea, used in `HostsPanel`'s add-host combobox.
 
