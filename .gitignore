@@ -257,7 +257,7 @@ DerivedData/
 # the bare repo's root, outside every worktree, so nothing here governs it and no
 # worktree can stage it.
 NEW-FEAT.md
-PLAN-REVIEW.md
+PLAN-REVIEW*.md
 PR-BODY.md
 PREP-PR-REPORT.md
 DOCS-REVIEW.md
