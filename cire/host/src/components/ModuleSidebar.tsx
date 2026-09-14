@@ -1,6 +1,6 @@
 import { Dialog } from "@kobalte/core/dialog";
 import { HoverCard } from "@kobalte/core/hover-card";
-import { createSignal, For, type JSX, onCleanup } from "solid-js";
+import { createSignal, For, type JSX, onCleanup, Show } from "solid-js";
 
 import type { Module } from "../lib/dashboard-route";
 import { haptic } from "../lib/haptics";
@@ -208,21 +208,31 @@ export default function ModuleSidebar(props: {
               </>
             );
             const railRow = `${rowBase} relative px-3 py-2 text-[0.82rem]`;
-            return locked() ? (
-              <LockedRow mod={mod} placement="right-start" rowClass={`${railRow} ${rowLocked}`}>
-                {body()}
-              </LockedRow>
-            ) : (
-              <button
-                ref={pill.item(mod.id)}
-                type="button"
-                aria-current={isActive() ? "page" : undefined}
-                title={mod.hint}
-                onClick={() => props.onSelect(mod.id)}
-                class={`${railRow} ${isActive() ? railActive : rowIdle}`}
+            // `Show`, not a ternary. `MODULE_NAV` never changes, so `For` runs
+            // this callback once per module and a ternary between two elements
+            // would be resolved once and for all — a wedding switched underneath
+            // the rail, or an entitlement granted mid-session, would leave the
+            // row showing the previous wedding's lock.
+            return (
+              <Show
+                when={locked()}
+                fallback={
+                  <button
+                    ref={pill.item(mod.id)}
+                    type="button"
+                    aria-current={isActive() ? "page" : undefined}
+                    title={mod.hint}
+                    onClick={() => props.onSelect(mod.id)}
+                    class={`${railRow} ${isActive() ? railActive : rowIdle}`}
+                  >
+                    {body()}
+                  </button>
+                }
               >
-                {body()}
-              </button>
+                <LockedRow mod={mod} placement="right-start" rowClass={`${railRow} ${rowLocked}`}>
+                  {body()}
+                </LockedRow>
+              </Show>
             );
           }}
         </For>
@@ -304,23 +314,29 @@ export default function ModuleSidebar(props: {
                       </>
                     );
                     const sheetRow = `${rowBase} items-start px-3 py-2.5 text-[0.8rem]`;
-                    return locked() ? (
-                      <LockedRow
-                        mod={mod}
-                        placement="bottom-start"
-                        rowClass={`${sheetRow} ${rowLocked}`}
+                    // `Show` for the same reason as the rail above.
+                    return (
+                      <Show
+                        when={locked()}
+                        fallback={
+                          <button
+                            type="button"
+                            aria-current={isActive() ? "page" : undefined}
+                            onClick={() => select(mod.id)}
+                            class={`${sheetRow} ${isActive() ? rowActive : rowIdle}`}
+                          >
+                            {body()}
+                          </button>
+                        }
                       >
-                        {body()}
-                      </LockedRow>
-                    ) : (
-                      <button
-                        type="button"
-                        aria-current={isActive() ? "page" : undefined}
-                        onClick={() => select(mod.id)}
-                        class={`${sheetRow} ${isActive() ? rowActive : rowIdle}`}
-                      >
-                        {body()}
-                      </button>
+                        <LockedRow
+                          mod={mod}
+                          placement="bottom-start"
+                          rowClass={`${sheetRow} ${rowLocked}`}
+                        >
+                          {body()}
+                        </LockedRow>
+                      </Show>
                     );
                   }}
                 </For>

@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@solidjs/testing-library";
+import { createSignal } from "solid-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ModuleSidebar from "../../src/components/ModuleSidebar";
@@ -183,6 +184,21 @@ describe("ModuleSidebar", () => {
       // "Upgrade to unlock", so that pattern matches the trigger too.
       const upgrade = screen.getByRole("button", { name: /coming soon/i });
       expect((upgrade as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it("unlocks the row when the entitlement arrives, without a remount", () => {
+      // `MODULE_NAV` never changes, so `For` runs its callback once per module.
+      // A ternary between the locked row and the plain button would be resolved
+      // then and never revisited, leaving the previous wedding's locks on screen
+      // after a wedding switch or a mid-session grant.
+      const [held, setHeld] = createSignal<string[]>([]);
+      render(() => <ModuleSidebar active="overview" entitlements={held()} onSelect={vi.fn()} />);
+      expect(lockedRow().getAttribute("aria-disabled")).toBe("true");
+
+      setHeld(["registry"]);
+      const row = within(rail()).getByRole("button", { name: /Registry/ });
+      expect(row.getAttribute("aria-disabled")).toBeNull();
+      expect(row.getAttribute("title")).toBe("Your gift list and what has arrived");
     });
 
     it("locks only the modules whose entitlement is missing", () => {
