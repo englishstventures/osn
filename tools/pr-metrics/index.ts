@@ -1609,6 +1609,30 @@ if (import.meta.main) {
     process.exit(1);
   }
 
+  // `--if-absent` exists for one caller: the unattended `SessionEnd` fallback in
+  // `.claude/settings.json`. That run carries no `--pr`, `--issue` or
+  // `--issue-labels`, so the card it builds is identity-less — and writing it
+  // over the one `retro` committed would strip the pull request, the issue and
+  // the `complexity.declared` every session-metrics query divides spend by,
+  // silently, into a working tree nobody is watching at session end. So the
+  // fallback writes a card for a branch that has none and never touches one
+  // that exists. `retro` owns the identity-bearing write and always overwrites.
+  const outDir = flag("out-dir") ?? defaultMetricsDir();
+  const outPath = `${outDir}/${branchSlug(branch)}.json`;
+
+  // Checked here rather than beside the write below so the fallback costs a
+  // `stat` and not a transcript scan — `SessionEnd` hooks run on a timeout.
+  // `--format markdown` writes nothing at all, so it is never what is skipped.
+  const skipExisting =
+    Bun.argv.includes("--if-absent") &&
+    flag("format") !== "markdown" &&
+    require("node:fs").existsSync(outPath);
+
+  if (skipExisting) {
+    console.log(`pr-metrics: ${outPath} already exists — leaving it alone (--if-absent).`);
+    process.exit(0);
+  }
+
   const sessionsDir = flag("sessions-dir") ?? `${process.env.HOME}/.claude/projects`;
   const base = flag("base") ?? "origin/main";
   const records = readRecordsForBranch(sessionsDir, branch, { repoPaths: repoProjectPaths() });
@@ -1619,7 +1643,7 @@ if (import.meta.main) {
 
   const issueLabels = (flag("issue-labels") ?? "").split(",").filter(Boolean);
 
-  // The labels are the normal source — `prep-pr` passes whatever the issue
+  // The labels are the normal source — `retro` passes whatever the issue
   // carries and the rating comes along with them, so nobody has to retype a
   // number the issue already holds. `--complexity` stays as an override for a
   // branch with no issue, and it is recorded as `manual` so a hand-typed
@@ -1643,17 +1667,14 @@ if (import.meta.main) {
   });
 
   // `--format markdown` prints the `<details>` block on stdout and writes
-  // nothing, so `prep-pr` can append it to a body without a temporary file and
-  // without the warnings below landing in the middle of the markdown.
+  // nothing, so `retro` can append it to a pull-request body without a
+  // temporary file and without the warnings below landing in the markdown.
   if (flag("format") === "markdown") {
     console.log(renderDetails(card));
     process.exit(0);
   }
 
-  const outDir = flag("out-dir") ?? defaultMetricsDir();
-  const outPath = `${outDir}/${branchSlug(branch)}.json`;
-
-  // A re-run on the same branch is common — `prep-pr` writes the card, then the
+  // A re-run on the same branch is common — `retro` writes the card, then the
   // review adds a commit and it is written again. Where nothing but the
   // timestamp moved, leave the file as it stands.
   let existingCard: Card | null = null;

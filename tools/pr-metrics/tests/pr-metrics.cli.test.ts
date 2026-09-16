@@ -60,7 +60,16 @@ interface CliRun {
   writes: { mtimeMs: number; text: string }[];
 }
 
-async function run(extraArgs: string[] = [], invocations = 1): Promise<CliRun> {
+/**
+ * `laterArgs` replaces `extraArgs` from the second invocation on, so a test can
+ * prove what a *changed* re-run does. Without it every invocation is identical
+ * and `sameApartFromGeneratedAt` alone would explain an untouched file.
+ */
+async function run(
+  extraArgs: string[] = [],
+  invocations = 1,
+  laterArgs?: string[],
+): Promise<CliRun> {
   const dir = await mkdtemp(join(tmpdir(), "pr-metrics-cli-"));
 
   try {
@@ -166,7 +175,7 @@ async function run(extraArgs: string[] = [], invocations = 1): Promise<CliRun> {
           "895",
           "--out-dir",
           join(dir, "out"),
-          ...extraArgs,
+          ...(attempt === 0 ? extraArgs : (laterArgs ?? extraArgs)),
         ],
         { cwd: dir, stdout: "pipe", stderr: "pipe" },
       );
@@ -243,7 +252,7 @@ test("the CLI charges pre-edit exploration to tokens_before_first_edit", async (
   expect(card.interaction.tokens_before_first_edit).toBe(1_000_150);
 });
 
-// `prep-pr` passes whatever the issue carries, so the rating rides along with
+// `retro` passes whatever the issue carries, so the rating rides along with
 // the labels and nobody retypes a number the issue already holds.
 test("the CLI reads the declared rating out of the issue labels", async () => {
   const { card } = await run(["--issue-labels", "product:osn-core,complexity:3"]);
@@ -579,7 +588,7 @@ test("the CLI names unmarked subagent transcripts when a card comes back empty",
   }
 });
 
-// `prep-pr` writes the card, the review adds a commit, and the card is written
+// `retro` writes the card, the review adds a commit, and the card is written
 // again — so a second run over unchanged inputs is the common case, not the odd
 // one. Stamping `generated_at` every time turned each of those into a one-line
 // diff with no data behind it.
@@ -589,4 +598,36 @@ test("a second run over unchanged inputs leaves the card file alone", async () =
   expect(writes).toHaveLength(2);
   expect(writes[1]!.text).toBe(writes[0]!.text);
   expect(writes[1]!.mtimeMs).toBe(writes[0]!.mtimeMs);
+});
+
+// The `SessionEnd` hook in `.claude/settings.json` runs the collector with no
+// `--pr`, `--issue` or `--issue-labels` — it has no way to know them. Left
+// unguarded it therefore overwrites the identity-bearing card `retro` wrote and
+// committed with one whose pull request, issue and declared complexity are all
+// null, into a working tree nobody looks at while the session is closing.
+// `--complexity 8` stands in for that difference here: it genuinely changes the
+// card, so an untouched file cannot be explained by the unchanged-inputs rule
+// the test above covers.
+test("--if-absent leaves an existing card alone even when the new one would differ", async () => {
+  const { exitCode, stdout, writes } = await run([], 2, ["--if-absent", "--complexity", "8"]);
+
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain("--if-absent");
+  expect(writes[1]!.text).toBe(writes[0]!.text);
+  expect(JSON.parse(writes[1]!.text).complexity.declared).toBeNull();
+});
+
+test("without --if-absent the same re-run does rewrite the card", async () => {
+  const { writes } = await run([], 2, ["--complexity", "8"]);
+
+  expect(JSON.parse(writes[0]!.text).complexity.declared).toBeNull();
+  expect(JSON.parse(writes[1]!.text).complexity.declared).toBe(8);
+  expect(JSON.parse(writes[1]!.text).complexity.method).toBe("manual");
+});
+
+test("--if-absent writes the card when the branch has none", async () => {
+  const { exitCode, card } = await run(["--if-absent"]);
+
+  expect(exitCode).toBe(0);
+  expect(card.pr.number).toBe(908);
 });

@@ -256,7 +256,12 @@ DerivedData/
 # `orchestrate`'s own `ORCHESTRATE.md` is deliberately absent: it is written at
 # the bare repo's root, outside every worktree, so nothing here governs it and no
 # worktree can stage it.
+#
+# `retro`'s `RETRO.md` is scratch for the same reason, and the one thing it
+# produces that the repository keeps is committed separately: the card under
+# `.claude/metrics/`, which is tracked.
 NEW-FEAT.md
+RETRO.md
 PLAN-REVIEW.md
 PR-BODY.md
 PREP-PR-REPORT.md
