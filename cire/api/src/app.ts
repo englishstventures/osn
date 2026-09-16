@@ -58,6 +58,7 @@ import {
 } from "./routes/registry-guest";
 import { createRegistryStripeRoutes } from "./routes/registry-stripe";
 import { createRsvpRoutes } from "./routes/rsvp";
+import { createStripePlatformWebhookRoutes } from "./routes/stripe-platform-webhook";
 import { createStripeWebhookRoutes } from "./routes/stripe-webhook";
 import { createTaskReadRoutes, createTaskWriteRoutes } from "./routes/tasks";
 import { createUpgradeRoutes } from "./routes/upgrade";
@@ -472,6 +473,14 @@ export interface AppOptions {
    */
   stripe?: StripeClient | null;
   stripeWebhookSecret?: string | null;
+  /**
+   * Signing secret for the PLATFORM webhook — upgrade purchases, where cire is
+   * the merchant. A DIFFERENT secret from `stripeWebhookSecret`, because they
+   * are different Stripe endpoints: that one is Connect-scoped and hears about
+   * gifts on a couple's account. Absent ⇒ the platform route is not mounted,
+   * for the same reason as the other: nothing could be verified.
+   */
+  stripePlatformWebhookSecret?: string | null;
   /** Country for a newly created connected account (`AU` unless overridden). */
   stripeAccountCountry?: string;
   /**
@@ -558,6 +567,7 @@ export function createApp(db: Db, options: AppOptions = {}) {
     registryContributeLimiter = defaultRegistryContributeLimiter,
     stripe = null,
     stripeWebhookSecret = null,
+    stripePlatformWebhookSecret = null,
     stripeAccountCountry,
     registryStripeLimiter = defaultRegistryStripeLimiter,
     upgradeLimiter = defaultUpgradeLimiter,
@@ -955,12 +965,24 @@ export function createApp(db: Db, options: AppOptions = {}) {
   // price caches in the same isolate, so every cached read would be paid for
   // twice against the platform's Stripe quota.
   const upgradeCatalogue = createUpgradeCatalogue({ stripe, prices: upgradePrices });
-  return withStripeWebhook.use(
+  const upgrades = createUpgradeService({ stripe, catalogue: upgradeCatalogue });
+  const withUpgradeRoutes: AnyElysia = withStripeWebhook.use(
     createUpgradeRoutes(db, osnAuthOptions, {
       catalogue: upgradeCatalogue,
-      upgrades: createUpgradeService({ stripe, catalogue: upgradeCatalogue }),
+      upgrades,
       limiter: upgradeLimiter,
       organiserOrigin,
     }),
   );
+  // The platform endpoint, on its own secret. Without it a purchase can be
+  // started and paid but never granted — nothing else in the system moves a
+  // purchase off `pending`.
+  return stripePlatformWebhookSecret
+    ? withUpgradeRoutes.use(
+        createStripePlatformWebhookRoutes(db, {
+          webhookSecret: stripePlatformWebhookSecret,
+          upgrades,
+        }),
+      )
+    : withUpgradeRoutes;
 }

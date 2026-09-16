@@ -80,6 +80,7 @@ const appOptions: Parameters<typeof createApp>[1] = {
   osnAudience: process.env.OSN_AUDIENCE,
   stripe,
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? null,
+  stripePlatformWebhookSecret: process.env.STRIPE_PLATFORM_WEBHOOK_SECRET ?? null,
   upgradePrices: {
     vendors: process.env.STRIPE_UPGRADE_PRICE_VENDORS,
     registry: process.env.STRIPE_UPGRADE_PRICE_REGISTRY,
