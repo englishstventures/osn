@@ -1,3 +1,8 @@
+import Button from "@cire/ui/button";
+import { Field } from "@osn/ui/ui/field";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
+import { Select } from "@osn/ui/ui/select";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 
@@ -18,10 +23,6 @@ import {
   vendorsAccessor,
 } from "../lib/vendors-store";
 import EnquireDialog from "./EnquireDialog";
-import Button from "./ui/Button";
-import Field, { Input, Select } from "./ui/Field";
-import Notice from "./ui/Notice";
-
 /** Vendor pipeline stages in workflow order. */
 const VENDOR_STATUSES = [
   { key: "researching", label: "Researching" },
@@ -253,7 +254,7 @@ export default function VendorsView(props: VendorsViewProps) {
   return (
     <div class="flex flex-col gap-6">
       <Show when={error()}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           {error()}
         </Notice>
       </Show>

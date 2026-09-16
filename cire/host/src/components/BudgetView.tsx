@@ -1,3 +1,8 @@
+import Button from "@cire/ui/button";
+import { Field } from "@osn/ui/ui/field";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
+import { Select } from "@osn/ui/ui/select";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 
@@ -16,10 +21,6 @@ import {
 import { haptic } from "../lib/haptics";
 import { formatMinor } from "../lib/money";
 import { categoryLabel, SERVICE_CATEGORIES, type ServiceCategory } from "../lib/service-categories";
-import Button from "./ui/Button";
-import Field, { Input, Select } from "./ui/Field";
-import Notice from "./ui/Notice";
-
 interface BudgetViewProps {
   weddingId: string;
   /** Owner/editor may add/edit items + payments and reorder. */
@@ -351,7 +352,7 @@ export default function BudgetView(props: BudgetViewProps) {
   return (
     <div class="flex flex-col gap-6">
       <Show when={error()}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           {error()}
         </Notice>
       </Show>

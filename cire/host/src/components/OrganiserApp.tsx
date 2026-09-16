@@ -1,3 +1,4 @@
+import { Notice } from "@osn/ui/ui/notice";
 import { AuthProvider, useAuth } from "@shared/rp-auth/solid";
 import { Toaster } from "@shared/toast";
 import {
@@ -30,7 +31,6 @@ import type { WeddingSummary } from "./CreateWeddingForm";
 import ModuleShell from "./ModuleShell";
 import SecurityPanel from "./SecurityPanel";
 import TopBar from "./TopBar";
-import Notice from "./ui/Notice";
 import WeddingList from "./WeddingList";
 
 /**
@@ -382,7 +382,9 @@ function Dashboard() {
 
         <Show when={view() === "weddings"}>
           <Show when={loaded()} fallback={<Loading label="Loading weddings…" />}>
-            <Show when={loadError()}>{(message) => <Notice tone="error">{message()}</Notice>}</Show>
+            <Show when={loadError()}>
+              {(message) => <Notice tone="danger">{message()}</Notice>}
+            </Show>
 
             <Show when={!loadError() && weddings()}>
               {(list) => (

@@ -1,3 +1,7 @@
+import Button from "@cire/ui/button";
+import { Field } from "@osn/ui/ui/field";
+import { Notice } from "@osn/ui/ui/notice";
+import { Textarea } from "@osn/ui/ui/textarea";
 import { toast } from "@shared/toast";
 import { createSignal, For, Show } from "solid-js";
 
@@ -6,10 +10,6 @@ import { haptic } from "../lib/haptics";
 // Shared, memoised formatters — see `lib/money.ts`.
 import { formatMinor } from "../lib/money";
 import { categoryLabel } from "../lib/service-categories";
-import Button from "./ui/Button";
-import Field, { Textarea } from "./ui/Field";
-import Notice from "./ui/Notice";
-
 interface EnquiryThreadProps {
   enquiry: EnquiryListItem;
   messages: EnquiryMessage[];
@@ -109,7 +109,7 @@ export default function EnquiryThread(props: EnquiryThreadProps) {
           <p class="text-text-muted text-[0.85rem] italic">Loading messages…</p>
         </Show>
         <Show when={props.error}>
-          <Notice tone="error" alert>
+          <Notice tone="danger" alert>
             {props.error}
           </Notice>
         </Show>

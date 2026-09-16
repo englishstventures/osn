@@ -1,3 +1,8 @@
+import { EmptyState } from "@osn/ui/ui/empty-state";
+import { Field } from "@osn/ui/ui/field";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
+import { Table, Td, Th } from "@osn/ui/ui/table";
 import { tokeniseQuery, tokensPrefixName } from "@shared/db-utils/search";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
@@ -18,11 +23,6 @@ import {
 } from "../lib/guests-store";
 import { buildInviteMessage, copyToClipboard } from "../lib/invite-message";
 import SectionIntro from "./SectionIntro";
-import EmptyState from "./ui/EmptyState";
-import Field, { Input } from "./ui/Field";
-import Notice from "./ui/Notice";
-import { Table, Td, Th } from "./ui/Table";
-
 interface FamilyGroup {
   familyId: string;
   publicId: string;
@@ -388,7 +388,7 @@ export default function GuestTable(props: GuestTableProps) {
       </Show>
 
       <Show when={error()}>
-        <Notice tone="error">{error()}</Notice>
+        <Notice tone="danger">{error()}</Notice>
       </Show>
 
       <Show when={!loading() && !error() && !hasGuests()}>

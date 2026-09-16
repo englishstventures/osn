@@ -1,14 +1,13 @@
+import { cardClass } from "@cire/ui/card";
+import Loading from "@cire/ui/loading";
+import { Chip, type ChipTone } from "@osn/ui/ui/chip";
+import { EmptyState } from "@osn/ui/ui/empty-state";
+import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createResource, For, Show } from "solid-js";
 
 import { listEnquiries, type VendorEnquiryListItem } from "../lib/enquiries-store";
 import { categoryLabel } from "../lib/service-categories";
-import { cardClass } from "./ui/Card";
-import Chip, { type ChipTone } from "./ui/Chip";
-import EmptyState from "./ui/EmptyState";
-import Loading from "./ui/Loading";
-import Notice from "./ui/Notice";
-
 /**
  * A status, as a tone.
  *
@@ -20,9 +19,9 @@ import Notice from "./ui/Notice";
 function statusTone(status: VendorEnquiryListItem["status"]): ChipTone {
   switch (status) {
     case "open":
-      return "active";
+      return "pending";
     case "quoted":
-      return "quoted";
+      return "accent";
     case "closed":
       return "neutral";
   }
@@ -67,7 +66,7 @@ export default function VendorEnquiryInbox(props: VendorEnquiryInboxProps) {
       </Show>
 
       <Show when={rows.error}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           Could not load enquiries. Please refresh.
         </Notice>
       </Show>

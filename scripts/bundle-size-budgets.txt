@@ -23,11 +23,18 @@
 # guard-bundle-size.sh's comment for the full reasoning); ~11.7 KB is the
 # figure every row below uses and is a reasonable default to keep using.
 #
+# A re-measure is not automatically a re-baseline. `cire/host` and
+# `cire/vendor` joined the token contract with their thresholds unchanged, so
+# their headroom is now ~7.1 KB and ~4.4 KB rather than ~11.7 KB. That is the
+# right direction: the rule caps headroom (it must stay smaller than the
+# smallest mistake the guard exists to catch), it does not require any. Raising
+# a ceiling to restore the default would make the guard looser for no reason.
+#
 # Blank lines and lines starting with # are ignored.
 
 cire/invites   worker  175000   # measured 163332
-cire/host      static  238617   # measured 226917
-cire/vendor    static  81644    # measured 69961
+cire/host      static  238617   # measured 231558
+cire/vendor    static  81644    # measured 77222
 cire/landing   static  189324   # measured 177641
 musubi/landing static  26865    # measured 15206
 pulse/landing  static  28366    # measured 16683

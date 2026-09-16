@@ -1,3 +1,8 @@
+import Button from "@cire/ui/button";
+import { Field } from "@osn/ui/ui/field";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
+import { Textarea } from "@osn/ui/ui/textarea";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
@@ -18,10 +23,6 @@ import {
   stillWanted,
 } from "../lib/registry-store";
 import RegistryImageField from "./RegistryImageField";
-import Button from "./ui/Button";
-import Field, { Input, Textarea } from "./ui/Field";
-import Notice from "./ui/Notice";
-
 interface RegistryViewProps {
   weddingId: string;
   /** Which sub-view this instance is: the gift list the couple authors, or the
@@ -536,7 +537,7 @@ export default function RegistryView(props: RegistryViewProps) {
   return (
     <div class="flex flex-col gap-6">
       <Show when={error()}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           {error()}
         </Notice>
       </Show>

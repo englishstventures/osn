@@ -1,3 +1,8 @@
+import Button from "@cire/ui/button";
+import { UsernameInput } from "@cire/ui/username-input";
+import { EmptyState } from "@osn/ui/ui/empty-state";
+import { Field, Fieldset } from "@osn/ui/ui/field";
+import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
@@ -5,12 +10,6 @@ import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
 import { haptic } from "../lib/haptics";
 import SectionIntro from "./SectionIntro";
-import Button from "./ui/Button";
-import EmptyState from "./ui/EmptyState";
-import Field, { Fieldset } from "./ui/Field";
-import Notice from "./ui/Notice";
-import { UsernameInput } from "./ui/UsernameInput";
-
 /** A co-host's role — mirrors the API's closed enum (`editor` writes modules,
  *  `viewer` is read-only). Legacy `host` rows are normalised server-side. */
 type HostRole = "editor" | "viewer";
@@ -593,7 +592,7 @@ export default function HostsPanel(props: HostsPanelProps) {
       </Show>
 
       <Show when={error()}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           {error()}
         </Notice>
       </Show>
@@ -635,7 +634,7 @@ export default function HostsPanel(props: HostsPanelProps) {
             a seat the owner can't remove, and every seat can read the household
             claim codes and the dietary export. */}
         <Show when={truncated()}>
-          <Notice tone="error" alert>
+          <Notice tone="danger" alert>
             Showing {hosts().length} of {total()} co-hosts. Contact support — some seats on this
             wedding aren&apos;t listed here and can&apos;t be removed from this screen.
           </Notice>

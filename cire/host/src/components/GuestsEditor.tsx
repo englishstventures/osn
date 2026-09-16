@@ -1,3 +1,8 @@
+import Button from "@cire/ui/button";
+import { EmptyState } from "@osn/ui/ui/empty-state";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
+import { Table, Td, Th } from "@osn/ui/ui/table";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
 import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js";
@@ -27,12 +32,6 @@ import {
 import { registerUnsavedGuard } from "../lib/unsaved-guard";
 import ChangePreview, { type ChangePlan } from "./ChangePreview";
 import SectionIntro from "./SectionIntro";
-import Button from "./ui/Button";
-import EmptyState from "./ui/EmptyState";
-import { Input } from "./ui/Field";
-import Notice from "./ui/Notice";
-import { Table, Td, Th } from "./ui/Table";
-
 interface PreviewResponse {
   changeId: string;
   plan: ChangePlan;
@@ -245,7 +244,7 @@ export default function GuestsEditor(props: { weddingId: string }) {
       />
 
       <Show when={loadError()}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           {loadError()}
         </Notice>
       </Show>
@@ -315,7 +314,7 @@ export default function GuestsEditor(props: { weddingId: string }) {
                     bar: the bar sits behind this modal's overlay, so a failed
                     apply otherwise looked like nothing happened at all. */}
                 <Show when={saveError()}>
-                  <Notice tone="error" alert class="mt-4">
+                  <Notice tone="danger" alert class="mt-4">
                     {saveError()}
                   </Notice>
                 </Show>
@@ -382,7 +381,7 @@ export default function GuestsEditor(props: { weddingId: string }) {
                 the chrome instead of as something that just failed. */}
             <Show when={saveError()}>
               <div class="page-frame pb-3">
-                <Notice tone="error" alert>
+                <Notice tone="danger" alert>
                   {saveError()}
                 </Notice>
               </div>

@@ -1,14 +1,14 @@
 import type { JSX } from "solid-js";
 
 /**
- * The dashboard's rectangle.
+ * cire's rectangle.
  *
  * One border, one radius, one padding, everywhere — the Overview grid, the
- * settings panels, the vendor list. The variants are deliberately few: a card
- * earns the gold rule only by being the loudest thing on its screen (the
- * countdown), and everything else is the neutral one.
+ * settings panels, the listing form, an enquiry in the inbox. The variants are
+ * deliberately few: a card earns the gold rule only by being the loudest thing
+ * on its screen, and everything else is the neutral one.
  *
- * ## Why a class function and a component
+ * ## Why the classes are exported too
  *
  * Some cards are `<div>`s and some are `<button>`s that jump to a module, and a
  * `<div role="button">` is a worse answer than either. So the classes are
@@ -19,16 +19,17 @@ import type { JSX } from "solid-js";
 
 export type CardTone = "default" | "accent";
 
-const CARD_BASE = "flex flex-col gap-3 rounded-sm border p-5";
+const CARD_BASE = "base:flex base:flex-col base:gap-3 base:rounded-osn-sm base:border base:p-5";
 
 const TONE = {
-  default: "border-border bg-surface/30",
-  accent: "border-gold/30 bg-surface/30",
+  default: "base:border-osn-hairline base:bg-osn-surface/30",
+  accent: "base:border-osn-accent/30 base:bg-osn-surface/30",
 } satisfies Readonly<Record<CardTone, string>>;
 
 /** Added when the whole card is the control. */
 const INTERACTIVE =
-  "hover:border-gold-dim hover:bg-surface/50 text-left transition-colors duration-(--dur-base) ease-(--ease-out)";
+  "base:hover:border-osn-accent-soft base:hover:bg-osn-surface/50 base:text-left " +
+  "base:transition-colors base:duration-200 base:ease-out";
 
 export function cardClass(options: { tone?: CardTone; interactive?: boolean } = {}): string {
   return `${CARD_BASE} ${TONE[options.tone ?? "default"]}${
@@ -47,7 +48,9 @@ export default function Card(props: { tone?: CardTone; class?: string; children:
 /** The gold label a card leads with. One weight, one tracking, everywhere. */
 export function CardEyebrow(props: { children: JSX.Element }) {
   return (
-    <p class="font-body text-gold text-[0.7rem] tracking-[0.18em] uppercase">{props.children}</p>
+    <p class="base:font-osn-body base:text-osn-accent base:text-osn-xs base:tracking-osn-ultra base:uppercase">
+      {props.children}
+    </p>
   );
 }
 
@@ -55,16 +58,16 @@ export function CardEyebrow(props: { children: JSX.Element }) {
  * The "go to the module" line at the foot of a card.
  *
  * The arrow is `aria-hidden` and nudges on hover — the movement is the whole
- * point of the detail, and the reduced-motion switch in `global.css` disarms the
+ * point of the detail, and each app's reduced-motion rule disarms the
  * transition without the arrow disappearing.
  */
 export function CardCta(props: { children: JSX.Element }) {
   return (
-    <span class="font-body text-gold-dim hover:text-gold group/cta flex items-center gap-1.5 self-start text-[0.78rem] transition-colors duration-(--dur-fast)">
+    <span class="base:font-osn-body base:text-osn-accent-ink base:hover:text-osn-accent group/cta base:flex base:items-center base:gap-1.5 base:self-start base:text-osn-sm base:transition-colors base:duration-100">
       {props.children}
       <span
         aria-hidden="true"
-        class="transition-transform duration-(--dur-base) ease-(--ease-out) group-hover/cta:translate-x-1"
+        class="base:transition-transform base:duration-200 base:ease-out base:group-hover/cta:translate-x-1"
       >
         →
       </span>

@@ -1,10 +1,9 @@
+import { Meter } from "@osn/ui/ui/meter";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
 import { isHeroEmpty, isStoryEmpty } from "../lib/invite-emptiness";
-import Meter from "./ui/Meter";
-
 /** localStorage key for "this organiser dismissed the getting-started checklist
  *  for this wedding". Per-wedding so dismissing one wedding's guide leaves the
  *  others intact. */

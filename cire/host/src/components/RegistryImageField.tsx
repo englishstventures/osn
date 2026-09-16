@@ -29,15 +29,14 @@
  * saved image from a shop's origin: after the copy, the only URL it knows is ours.
  */
 
+import Button from "@cire/ui/button";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createEffect, createSignal, For, onCleanup, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
 import { haptic } from "../lib/haptics";
-import Button from "./ui/Button";
-import { Input } from "./ui/Field";
-import Notice from "./ui/Notice";
-
 /** Mirrors `MAX_IMAGE_BYTES` in `cire/api/src/services/invite-assets.ts`. Checked
  *  here only to spare the organiser a five-megabyte upload that ends in a 413 —
  *  the cap that counts is the server's. */
@@ -526,7 +525,7 @@ export default function RegistryImageField(props: {
       </Show>
 
       <Show when={error()}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           {error()}
         </Notice>
       </Show>

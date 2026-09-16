@@ -1,3 +1,5 @@
+import { EmptyState } from "@osn/ui/ui/empty-state";
+import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
 import { createSignal, lazy, onMount, Show, For, Suspense } from "solid-js";
@@ -19,9 +21,6 @@ import {
   type ImageCrop,
 } from "../lib/image-crop";
 import SectionIntro from "./SectionIntro";
-import EmptyState from "./ui/EmptyState";
-import Notice from "./ui/Notice";
-
 const ImageCropModal = lazy(() => import("./ImageCropModal"));
 
 interface EventTableProps {
@@ -194,7 +193,7 @@ export default function EventTable(props: EventTableProps) {
       </Show>
 
       <Show when={error()}>
-        <Notice tone="error">{error()}</Notice>
+        <Notice tone="danger">{error()}</Notice>
       </Show>
 
       <Show when={!loading() && !error() && !hasEvents()}>

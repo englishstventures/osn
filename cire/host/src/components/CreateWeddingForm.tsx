@@ -1,12 +1,12 @@
+import Button from "@cire/ui/button";
+import { Field, Fieldset } from "@osn/ui/ui/field";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createSignal, For, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
 import { haptic } from "../lib/haptics";
-import Button from "./ui/Button";
-import Field, { Fieldset, Input } from "./ui/Field";
-import Notice from "./ui/Notice";
-
 export interface WeddingSummary {
   id: string;
   slug: string;
@@ -174,7 +174,7 @@ export default function CreateWeddingForm(props: {
       </div>
 
       <Show when={error()}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           {error()}
         </Notice>
       </Show>

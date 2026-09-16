@@ -1,109 +1,38 @@
 // @vitest-environment happy-dom
-import { cleanup, render } from "@solidjs/testing-library";
+import { cleanup, render, screen } from "@solidjs/testing-library";
 import "@testing-library/jest-dom/vitest";
 import { createSignal } from "solid-js";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import Button from "../../../src/components/ui/Button";
-import Card, { cardClass, CardEyebrow } from "../../../src/components/ui/Card";
-import EmptyState from "../../../src/components/ui/EmptyState";
-import Field, { Fieldset, Input, Select, Textarea } from "../../../src/components/ui/Field";
-import Meter, { meterPct } from "../../../src/components/ui/Meter";
-import Notice from "../../../src/components/ui/Notice";
-import Stat from "../../../src/components/ui/Stat";
-import { Table, Td, Th } from "../../../src/components/ui/Table";
-import { UsernameInput } from "../../../src/components/ui/UsernameInput";
+import { Checkbox } from "../../src/components/ui/checkbox";
+import { Chip } from "../../src/components/ui/chip";
+import { EmptyState } from "../../src/components/ui/empty-state";
+import { Field, Fieldset } from "../../src/components/ui/field";
+import { Input } from "../../src/components/ui/input";
+import { Meter, meterPct } from "../../src/components/ui/meter";
+import { Notice } from "../../src/components/ui/notice";
+import { Select } from "../../src/components/ui/select";
+import { Stat } from "../../src/components/ui/stat";
+import { Table, Td, Th } from "../../src/components/ui/table";
+import { Textarea } from "../../src/components/ui/textarea";
 
 /**
- * These are class-mapping components, and a test that asserts the classes is a
- * test that has to be edited every time the design moves — it pins the current
- * answer, not the contract. So what is checked here is what a call site can rely
- * on: that the variants differ from each other, that props reach the DOM, that
- * the accessibility wiring is there, and that the one piece of arithmetic in the
- * set is right.
+ * The DOM contract of the primitives lifted out of cire's two portals.
  *
- * They live in one file because they are small parts of one thing. A
- * component that grows real behaviour should take its own file with it.
+ * These came with the components. They are deliberately class-agnostic — a test
+ * that asserts the class list pins the current answer rather than the contract,
+ * and has to be edited every time the design moves. What they check is what a
+ * call site can rely on: the accessibility wiring, that props reach the DOM,
+ * that variants differ from one another, and the one piece of arithmetic in the
+ * set.
+ *
+ * They sit at the unit tier because none of it needs a layout engine. The
+ * claims that DO — that a tone is actually painted, that `sm` is really smaller
+ * than `md`, that a table scrolls — are in the `*.browser.test.tsx` files
+ * beside this one, and neither tier can stand in for the other.
  */
 
 afterEach(cleanup);
-
-describe("Button", () => {
-  it("does not submit the form it is standing in, unless told to", () => {
-    // A toolbar control inside a settings form is the common case, and a button
-    // with no type is a submit button.
-    const { getByRole } = render(() => <Button>Export</Button>);
-    expect(getByRole("button")).toHaveProperty("type", "button");
-  });
-
-  it("still takes a type when the caller means it", () => {
-    const { getByRole } = render(() => <Button type="submit">Save</Button>);
-    expect(getByRole("button")).toHaveProperty("type", "submit");
-  });
-
-  it("gives each variant a different look", () => {
-    const { getByText } = render(() => (
-      <>
-        <Button variant="primary">Commit</Button>
-        <Button variant="outline">Second</Button>
-        <Button variant="quiet">Quiet</Button>
-        <Button variant="danger">Delete</Button>
-      </>
-    ));
-    const classes = ["Commit", "Second", "Quiet", "Delete"].map(
-      (label) => getByText(label).className,
-    );
-    expect(new Set(classes).size).toBe(4);
-  });
-
-  it("gives each size a different look", () => {
-    const { getByText } = render(() => (
-      <>
-        <Button size="sm">Small</Button>
-        <Button size="md">Medium</Button>
-        <Button size="icon">✕</Button>
-      </>
-    ));
-    const classes = ["Small", "Medium", "✕"].map((label) => getByText(label).className);
-    expect(new Set(classes).size).toBe(3);
-  });
-
-  it("keeps the caller's own classes", () => {
-    const { getByRole } = render(() => <Button class="self-start">Add</Button>);
-    expect(getByRole("button").className).toContain("self-start");
-  });
-
-  it("passes everything else through", () => {
-    const { getByRole } = render(() => (
-      <Button disabled aria-label="Remove guest">
-        ✕
-      </Button>
-    ));
-    expect(getByRole("button")).toBeDisabled();
-    expect(getByRole("button")).toHaveAttribute("aria-label", "Remove guest");
-  });
-});
-
-describe("Card", () => {
-  it("renders its children in a plain box", () => {
-    const { getByText } = render(() => (
-      <Card>
-        <CardEyebrow>Guests</CardEyebrow>
-      </Card>
-    ));
-    expect(getByText("Guests")).toBeInTheDocument();
-  });
-
-  it("marks the accented card out from the ordinary one", () => {
-    expect(cardClass({ tone: "accent" })).not.toBe(cardClass());
-  });
-
-  it("adds nothing for a card that is not a control", () => {
-    // The hover treatment is a promise that the whole rectangle is clickable.
-    expect(cardClass()).not.toContain("hover:");
-    expect(cardClass({ interactive: true })).toContain("hover:");
-  });
-});
 
 describe("Notice", () => {
   it("says nothing to assistive tech by default", () => {
@@ -115,7 +44,7 @@ describe("Notice", () => {
 
   it("announces itself when it appeared in answer to something", () => {
     const { getByRole } = render(() => (
-      <Notice tone="error" alert>
+      <Notice tone="danger" alert>
         Could not save.
       </Notice>
     ));
@@ -125,7 +54,7 @@ describe("Notice", () => {
   it("gives each tone a different look", () => {
     const { getAllByTestId } = render(() => (
       <>
-        <Notice tone="error" data-testid="n">
+        <Notice tone="danger" data-testid="n">
           E
         </Notice>
         <Notice tone="warn" data-testid="n">
@@ -148,7 +77,7 @@ describe("Notice", () => {
     // and error and warn are the closest pair in the palette.
     const { getAllByTestId } = render(() => (
       <>
-        <Notice tone="error" data-testid="n">
+        <Notice tone="danger" data-testid="n">
           E
         </Notice>
         <Notice tone="warn" data-testid="n">
@@ -168,7 +97,7 @@ describe("Notice", () => {
 
   it("says the word a glyph cannot be heard as", () => {
     const { getByRole } = render(() => (
-      <Notice tone="error" alert>
+      <Notice tone="danger" alert>
         Could not save.
       </Notice>
     ));
@@ -197,7 +126,7 @@ describe("EmptyState", () => {
       <EmptyState
         title="No guests yet"
         description="Add them one at a time, or import a spreadsheet."
-        action={<Button variant="primary">Add a guest</Button>}
+        action={<button type="button">Add a guest</button>}
       />
     ));
     expect(getByRole("button")).toHaveTextContent("Add a guest");
@@ -206,6 +135,13 @@ describe("EmptyState", () => {
   it("leaves the description out when there is none", () => {
     const { container } = render(() => <EmptyState title="Nothing here" />);
     expect(container.querySelectorAll("p")).toHaveLength(1);
+  });
+});
+
+describe("Chip", () => {
+  it("always carries a word, so the hue is never the only carrier", () => {
+    render(() => <Chip tone="success">live</Chip>);
+    expect(screen.getByText("live")).toBeInTheDocument();
   });
 });
 
@@ -474,41 +410,6 @@ describe("controls", () => {
   });
 });
 
-describe("UsernameInput", () => {
-  it("shows a fixed @ ahead of the box", () => {
-    const { getByText } = render(() => <UsernameInput aria-label="OSN handle" />);
-    expect(getByText("@")).toBeInTheDocument();
-  });
-
-  it("names the control by the label alone — the @ isn't part of it", () => {
-    const { getByRole } = render(() => <UsernameInput aria-label="OSN handle" />);
-    expect(getByRole("textbox")).toHaveAccessibleName("OSN handle");
-  });
-
-  it("wires up Field the same as a plain Input", () => {
-    // The combobox use in HostsPanel spreads Field's {...field} (id,
-    // aria-describedby, aria-invalid) onto this component — same contract
-    // Field already proves for Input above.
-    const { getByRole } = render(() => (
-      <Field label="OSN handle" errors={["No account with that handle."]}>
-        {(field) => <UsernameInput {...field} />}
-      </Field>
-    ));
-    const input = getByRole("textbox");
-    expect(input).toHaveAccessibleName("OSN handle");
-    expect(input).toHaveAttribute("aria-invalid", "true");
-  });
-
-  it("passes everything else through to the input", () => {
-    const { getByRole } = render(() => (
-      <UsernameInput aria-label="OSN handle" placeholder="alice" disabled />
-    ));
-    const input = getByRole("textbox");
-    expect(input).toHaveAttribute("placeholder", "alice");
-    expect(input).toBeDisabled();
-  });
-});
-
 describe("Fieldset", () => {
   it("groups the controls that answer one question, and names the group", () => {
     const { getByRole } = render(() => (
@@ -519,5 +420,26 @@ describe("Fieldset", () => {
       </Fieldset>
     ));
     expect(getByRole("group", { name: "Guest code style" })).toBeInTheDocument();
+  });
+
+  it("groups a set of checkboxes under one legend", () => {
+    const { getByRole } = render(() => (
+      <Fieldset legend="Categories">
+        <Checkbox checked={false} onChange={() => {}} label="Florals" />
+        <Checkbox checked onChange={() => {}} label="Catering" />
+      </Fieldset>
+    ));
+    expect(getByRole("group", { name: /categories/i })).toBeInTheDocument();
+    expect(getByRole("checkbox", { name: "Florals" })).not.toBeChecked();
+    expect(getByRole("checkbox", { name: "Catering" })).toBeChecked();
+  });
+});
+
+describe("Checkbox", () => {
+  it("reports the new state, not the old one", () => {
+    const onChange = vi.fn();
+    render(() => <Checkbox checked={false} onChange={onChange} label="Florals" />);
+    screen.getByRole("checkbox", { name: "Florals" }).click();
+    expect(onChange).toHaveBeenCalledWith(true);
   });
 });

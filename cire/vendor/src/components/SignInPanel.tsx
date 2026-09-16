@@ -1,3 +1,5 @@
+import Button from "@cire/ui/button";
+import { Notice } from "@osn/ui/ui/notice";
 import {
   clearAuthError,
   readAuthError,
@@ -8,9 +10,6 @@ import {
 import { createSignal, onMount, Show } from "solid-js";
 
 import { CIRE_API_URL } from "../lib/osn";
-import Button from "./ui/Button";
-import Notice from "./ui/Notice";
-
 const authConfig: RpAuthConfig = { apiBase: CIRE_API_URL };
 
 // The key is an arbitrary server-supplied marker, so the contract is an
@@ -75,7 +74,7 @@ export default function SignInPanel() {
           they came back from the issuer without a session. */}
       <Show when={error()}>
         {(message) => (
-          <Notice tone="error" alert>
+          <Notice tone="danger" alert>
             {message()}
           </Notice>
         )}

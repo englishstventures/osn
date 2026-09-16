@@ -1,3 +1,8 @@
+import Button from "@cire/ui/button";
+import { Field } from "@osn/ui/ui/field";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
+import { Select } from "@osn/ui/ui/select";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import { Portal } from "solid-js/web";
@@ -7,10 +12,6 @@ import { haptic } from "../lib/haptics";
 import { categoryLabel, SERVICE_CATEGORIES } from "../lib/service-categories";
 import { invalidateVendors } from "../lib/vendors-store";
 import EnquireDialog from "./EnquireDialog";
-import Button from "./ui/Button";
-import Field, { Input, Select } from "./ui/Field";
-import Notice from "./ui/Notice";
-
 interface BrowseListing {
   id: string;
   name: string;
@@ -278,14 +279,14 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
 
       {/* Global error */}
       <Show when={error()}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           {error()}
         </Notice>
       </Show>
 
       {/* Add error */}
       <Show when={addError()}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           {addError()}
         </Notice>
       </Show>

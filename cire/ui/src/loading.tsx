@@ -6,13 +6,13 @@
  * the role — and a spinner nobody announces is a blank screen to anyone not
  * looking at it.
  *
- * `role="status"` rather than `role="alert"`: a live region that waits for a
- * gap rather than interrupting. Something starting to load is not urgent, and a
+ * `role="status"` rather than `role="alert"`: a live region that waits for a gap
+ * rather than interrupting. Something starting to load is not urgent, and a
  * portal that cuts across a screen reader mid-sentence to say "Loading…" is
  * worse than one that waits its turn.
  *
- * The pulse is a Tailwind animation, so the reduced-motion kill switch in
- * `global.css` stops it without this component knowing.
+ * The pulse is a Tailwind animation, so each app's reduced-motion kill switch
+ * stops it without this component knowing.
  */
 export default function Loading(props: { label: string }) {
   // oxlint-disable jsx-a11y/prefer-tag-over-role -- `<output>` is the tag that
@@ -24,7 +24,7 @@ export default function Loading(props: { label: string }) {
   return (
     <p
       role="status"
-      class="font-body text-text-muted animate-pulse text-[0.88rem] tracking-[0.1em] uppercase"
+      class="base:font-osn-body base:text-osn-ink-secondary base:animate-pulse base:text-osn-base base:tracking-osn-wider base:uppercase"
     >
       {props.label}
     </p>

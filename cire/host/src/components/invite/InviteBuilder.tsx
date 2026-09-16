@@ -35,6 +35,8 @@ import {
   type SectionTone,
   typographyVars,
 } from "@cire/theme";
+import Button from "@cire/ui/button";
+import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
 import {
@@ -56,8 +58,6 @@ import { isFooterEmpty, isHeroEmpty, isStoryEmpty } from "../../lib/invite-empti
 import { CIRE_WEB_URL } from "../../lib/osn";
 import { registerUnsavedGuard } from "../../lib/unsaved-guard";
 import PaletteField, { resolvedSeeds } from "../PaletteField";
-import Button from "../ui/Button";
-import Notice from "../ui/Notice";
 import { designLayout } from "./design-layout";
 import DesignPicker from "./DesignPicker";
 import {
@@ -1425,7 +1425,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
               {/* ── Save bar — sticky so it's reachable from any section ── */}
               <div class="border-border bg-bg/90 sticky bottom-0 z-10 -mx-6 -mb-6 flex flex-col gap-3 rounded-b-sm border-t px-6 py-4 backdrop-blur">
                 <Show when={error()}>
-                  <Notice tone="error" alert>
+                  <Notice tone="danger" alert>
                     {error()}
                   </Notice>
                 </Show>

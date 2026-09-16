@@ -1,3 +1,8 @@
+import Button from "@cire/ui/button";
+import { Field } from "@osn/ui/ui/field";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
+import { Textarea } from "@osn/ui/ui/textarea";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
 import { batch, createMemo, createSignal, onMount, Show } from "solid-js";
@@ -14,10 +19,6 @@ import {
   type RegistrySnapshot,
 } from "../lib/registry-store";
 import SectionIntro from "./SectionIntro";
-import Button from "./ui/Button";
-import Field, { Input, Textarea } from "./ui/Field";
-import Notice from "./ui/Notice";
-
 /**
  * THE REGISTRY'S SETTINGS — the four decisions the guest surface has been
  * reading all along with nowhere for a couple to make them: whether the list is
@@ -369,7 +370,7 @@ export default function RegistrySettingsView(props: RegistrySettingsViewProps) {
 
       <Show when={loadError()}>
         {(error) => (
-          <Notice tone="error" alert>
+          <Notice tone="danger" alert>
             {error()}
           </Notice>
         )}

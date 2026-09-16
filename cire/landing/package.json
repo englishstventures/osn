@@ -11,10 +11,6 @@
     "test": "vitest run",
     "test:run": "vitest run"
   },
-  "portless": {
-    "name": "cire",
-    "script": "dev:app"
-  },
   "dependencies": {
     "@astrojs/solid-js": "^7.0.2",
     "@shared/legal": "workspace:*",
@@ -35,5 +31,9 @@
     "typescript": "^6.0.3",
     "vite-plugin-solid": "^2.11.14",
     "vitest": "^4.1.11"
+  },
+  "portless": {
+    "name": "cire",
+    "script": "dev:app"
   }
 }

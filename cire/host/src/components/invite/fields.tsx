@@ -12,10 +12,10 @@
  * input the organiser is actively filling in.
  */
 
+import { Input } from "@osn/ui/ui/input";
+import { Select } from "@osn/ui/ui/select";
+import { Textarea } from "@osn/ui/ui/textarea";
 import { createUniqueId, For, type JSX, Show } from "solid-js";
-
-import { Input, Select, Textarea } from "../ui/Field";
-
 const LABEL_CLASS = "font-body text-text-muted text-[0.8rem]";
 
 /**

@@ -1,3 +1,7 @@
+import Button from "@cire/ui/button";
+import Card, { CardEyebrow } from "@cire/ui/card";
+import Loading from "@cire/ui/loading";
+import { Notice } from "@osn/ui/ui/notice";
 import { AuthProvider, useAuth } from "@shared/rp-auth/solid";
 import { createResource, createSignal, onCleanup, onMount, Show } from "solid-js";
 
@@ -7,11 +11,6 @@ import { initTheme } from "../lib/theme";
 import { consumeClaim, fetchClaimPreview, seedClaimedListing } from "../lib/vendor-store";
 import type { OrgSummary } from "../lib/vendor-store";
 import OrgPicker from "./OrgPicker";
-import Button from "./ui/Button";
-import Card, { CardEyebrow } from "./ui/Card";
-import Loading from "./ui/Loading";
-import Notice from "./ui/Notice";
-
 /** Where the invite token waits while the vendor is away signing in. */
 const CLAIM_TOKEN_KEY = "cire.vendor.claim-token";
 
@@ -73,7 +72,7 @@ function ClaimContent() {
           on the branch reached by *doing* something (a claim that came back
           rejected), not on the one that was already true when the page loaded. */}
       <Show when={isDead()}>
-        <Notice tone="error" alert={invalidLink()}>
+        <Notice tone="danger" alert={invalidLink()}>
           This invite link is no longer valid. Ask whoever sent it for a new one.
         </Notice>
       </Show>

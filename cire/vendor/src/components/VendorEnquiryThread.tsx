@@ -1,3 +1,10 @@
+import Button from "@cire/ui/button";
+import Card, { CardEyebrow } from "@cire/ui/card";
+import Loading from "@cire/ui/loading";
+import { Field } from "@osn/ui/ui/field";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
+import { Textarea } from "@osn/ui/ui/textarea";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
 import { createResource, createSignal, For, Show } from "solid-js";
@@ -9,12 +16,6 @@ import {
   submitQuote,
 } from "../lib/enquiries-store";
 import { haptic } from "../lib/haptics";
-import Button from "./ui/Button";
-import Card, { CardEyebrow } from "./ui/Card";
-import Field, { Input, Textarea } from "./ui/Field";
-import Loading from "./ui/Loading";
-import Notice from "./ui/Notice";
-
 // AUD formatter — acceptable for v1; wedding currency context not available in vendor app.
 const aud = new Intl.NumberFormat(undefined, { style: "currency", currency: "AUD" });
 
@@ -118,7 +119,7 @@ export default function VendorEnquiryThread(props: VendorEnquiryThreadProps) {
       </Show>
 
       <Show when={messages.error}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           Could not load messages. Please refresh.
         </Notice>
       </Show>

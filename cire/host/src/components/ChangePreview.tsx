@@ -1,7 +1,5 @@
+import { Table, Td, Th } from "@osn/ui/ui/table";
 import { For, Show } from "solid-js";
-
-import { Table, Td, Th } from "./ui/Table";
-
 // The SHARED change-preview renderer (guest+event editor §8): "extract
 // ImportPanel's plan-rendering into a shared component so both ImportPanel and
 // the editor save-flow render the same preview". Both front doors of the

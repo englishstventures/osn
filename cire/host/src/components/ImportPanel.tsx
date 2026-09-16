@@ -1,3 +1,6 @@
+import Button from "@cire/ui/button";
+import { Field } from "@osn/ui/ui/field";
+import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import type { JSX } from "solid-js";
 import { createSignal, Show, For, onMount } from "solid-js";
@@ -23,10 +26,6 @@ import {
 import ChangeHistory from "./ChangeHistory";
 import { PlanCounts } from "./ChangePreview";
 import SectionIntro from "./SectionIntro";
-import Button from "./ui/Button";
-import Field from "./ui/Field";
-import Notice from "./ui/Notice";
-
 interface ImportPlan {
   eventCreates: unknown[];
   eventUpdates: unknown[];
@@ -444,7 +443,7 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
       </form>
 
       <Show when={error()}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           {error()}
         </Notice>
       </Show>
@@ -466,7 +465,7 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
               when={p().scope !== undefined && p().scope !== props.kind}
               fallback={<p class="text-text-muted text-[0.82rem]">{copy().scopeHint}</p>}
             >
-              <Notice tone="error" alert>
+              <Notice tone="danger" alert>
                 This change covers more than your {copy().eyebrow.toLowerCase()} — the server
                 reports a scope of “{p().scope}”. Check the counts below before applying; nothing is
                 saved until you do.

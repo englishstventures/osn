@@ -1,3 +1,5 @@
+import Button from "@cire/ui/button";
+import { Notice } from "@osn/ui/ui/notice";
 import Cropper from "cropperjs";
 import type { CropperImage, CropperSelection } from "cropperjs";
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
@@ -15,9 +17,6 @@ import {
   presetAspectRatio,
   presetForCrop,
 } from "../lib/image-crop";
-import Button from "./ui/Button";
-import Notice from "./ui/Notice";
-
 /**
  * Drag/resize/zoom crop editor over an uploaded invite image, wrapping the
  * battle-tested vanilla Cropper.js (per the repo's "prefer existing libraries"
@@ -351,7 +350,7 @@ export default function ImageCropModal(props: ImageCropModalProps) {
           </header>
 
           <Show when={error()}>
-            <Notice tone="error" alert>
+            <Notice tone="danger" alert>
               {error()}
             </Notice>
           </Show>

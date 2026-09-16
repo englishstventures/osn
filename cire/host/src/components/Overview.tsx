@@ -1,3 +1,6 @@
+import Card, { CardCta, CardEyebrow, cardClass } from "@cire/ui/card";
+import { Meter } from "@osn/ui/ui/meter";
+import { Stat } from "@osn/ui/ui/stat";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 
@@ -17,10 +20,6 @@ import { ensureTasksLoaded, peekCachedTasks, taskCounts, type TaskRow } from "..
 import { ensureVendorsLoaded, vendorCount, type VendorRow } from "../lib/vendors-store";
 import GettingStarted from "./GettingStarted";
 import SectionIntro from "./SectionIntro";
-import Card, { CardCta, CardEyebrow, cardClass } from "./ui/Card";
-import Meter from "./ui/Meter";
-import Stat from "./ui/Stat";
-
 /** The Overview home — the module shell's landing view. It answers "how's the
  *  wedding tracking?" at a glance: a countdown to the date, RSVP totals rolled
  *  up across events, a Checklist card showing the live open-task count, and a
@@ -745,7 +744,7 @@ export default function Overview(props: {
                           <Meter
                             value={spent}
                             max={cap!}
-                            tone={spent > cap! ? "over" : "gold"}
+                            tone={spent > cap! ? "over" : "accent"}
                             label="Budget spend"
                           />
                           <Show when={spent > cap!}>

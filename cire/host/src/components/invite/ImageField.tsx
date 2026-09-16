@@ -6,6 +6,8 @@
  * that caused it, not in the distant save bar.
  */
 
+import Button from "@cire/ui/button";
+import { Notice } from "@osn/ui/ui/notice";
 import { createSignal, lazy, Show, Suspense } from "solid-js";
 
 import { apiUrl } from "../../lib/api";
@@ -17,8 +19,6 @@ import {
   type CropSlot,
   type ImageCrop,
 } from "../../lib/image-crop";
-import Button from "../ui/Button";
-import Notice from "../ui/Notice";
 import { InstantBadge } from "./fields";
 
 const ImageCropModal = lazy(() => import("../ImageCropModal"));
@@ -143,7 +143,7 @@ export default function ImageField(props: {
         </Show>
       </div>
       <Show when={props.error}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           {props.error}
         </Notice>
       </Show>

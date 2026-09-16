@@ -6,6 +6,12 @@
 @import "@shared/toast/toast.css";
 @import "@shared/design-tokens/tokens.css";
 
+/* `@cire/ui` lives outside this package, so Tailwind has to be told where to
+ * look for its classes. The line goes HERE and not in `@shared/design-tokens`:
+ * a shared file pointing at a product package inverts the layering and would
+ * scan cire's classes into every musubi, pulse, lab and metrics build. */
+@source "../../../ui/src";
+
 /* ── The two ramps ──────────────────────────────────────────────────────────
  * Every colour in the portal is one of the custom properties below, and every
  * Tailwind colour utility is a `@theme` alias onto one of them. That

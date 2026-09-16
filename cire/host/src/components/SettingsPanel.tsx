@@ -1,3 +1,7 @@
+import Button from "@cire/ui/button";
+import { Field } from "@osn/ui/ui/field";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
 import { createSignal, onMount, Show } from "solid-js";
@@ -7,10 +11,6 @@ import { haptic } from "../lib/haptics";
 import { browserTimeZone, describeTimeZone } from "../lib/timezones";
 import DatePicker from "./DatePicker";
 import SectionIntro from "./SectionIntro";
-import Button from "./ui/Button";
-import Field, { Input } from "./ui/Field";
-import Notice from "./ui/Notice";
-
 /** The wedding profile as the settings API reads/writes it. Location is
  *  deliberately absent — an event's place is its free-text `address` (the sole
  *  location source, shown on the invite); the wedding holds one MAIN currency
@@ -286,7 +286,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 
       <Show when={loadError()}>
         {(message) => (
-          <Notice tone="error" alert>
+          <Notice tone="danger" alert>
             {message()}
           </Notice>
         )}

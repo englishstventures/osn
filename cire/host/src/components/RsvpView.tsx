@@ -1,3 +1,8 @@
+import { EmptyState } from "@osn/ui/ui/empty-state";
+import { Field } from "@osn/ui/ui/field";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
+import { Table, Td, Th } from "@osn/ui/ui/table";
 import { useAuth } from "@shared/rp-auth/solid";
 import {
   createEffect,
@@ -25,11 +30,6 @@ import {
   statusCounts,
 } from "../lib/rsvp-filter";
 import SectionIntro from "./SectionIntro";
-import EmptyState from "./ui/EmptyState";
-import Field, { Input } from "./ui/Field";
-import Notice from "./ui/Notice";
-import { Table, Td, Th } from "./ui/Table";
-
 interface RsvpViewProps {
   weddingId: string;
   /** Owner/editor may record RSVPs; a viewer sees the read-only summary only. */
@@ -284,7 +284,7 @@ export default function RsvpView(props: RsvpViewProps) {
       </Show>
 
       <Show when={error()}>
-        <Notice tone="error">{error()}</Notice>
+        <Notice tone="danger">{error()}</Notice>
       </Show>
 
       <Show when={!loading() && !error() && !hasEvents()}>

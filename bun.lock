@@ -61,6 +61,7 @@
         "@astrojs/solid-js": "^7.0.2",
         "@cire/invite-designs": "workspace:*",
         "@cire/theme": "workspace:*",
+        "@cire/ui": "workspace:*",
         "@kobalte/core": "^0.13.14",
         "@osn/ui": "workspace:*",
         "@shared/db-utils": "workspace:*",
@@ -164,11 +165,33 @@
         "@shared/typescript-config": "workspace:*",
       },
     },
+    "cire/ui": {
+      "name": "@cire/ui",
+      "dependencies": {
+        "@osn/ui": "workspace:*",
+        "@shared/design-tokens": "workspace:*",
+      },
+      "devDependencies": {
+        "@shared/typescript-config": "workspace:*",
+        "@solidjs/testing-library": "^0.8.10",
+        "@testing-library/jest-dom": "^7.0.1",
+        "happy-dom": "^20.12.2",
+        "solid-js": "^1.9.15",
+        "typescript": "^6.0.3",
+        "vite": "^8.2.2",
+        "vite-plugin-solid": "^2.11.14",
+        "vitest": "^4.1.11",
+      },
+      "peerDependencies": {
+        "solid-js": ">=1.9",
+      },
+    },
     "cire/vendor": {
       "name": "@cire/vendor",
       "dependencies": {
         "@astrojs/solid-js": "^7.0.2",
         "@cire/theme": "workspace:*",
+        "@cire/ui": "workspace:*",
         "@kobalte/core": "^0.13.14",
         "@osn/ui": "workspace:*",
         "@shared/design-tokens": "workspace:*",
@@ -330,6 +353,7 @@
         "@shared/design-tokens": "workspace:*",
         "@shared/typescript-config": "workspace:*",
         "@solidjs/testing-library": "^0.8.10",
+        "@testing-library/jest-dom": "^7.0.1",
         "@tailwindcss/vite": "^4.3.3",
         "@vitest/browser": "4.1.11",
         "@vitest/browser-playwright": "4.1.11",
@@ -968,6 +992,8 @@
     "@cire/landing": ["@cire/landing@workspace:cire/landing"],
 
     "@cire/theme": ["@cire/theme@workspace:cire/theme"],
+
+    "@cire/ui": ["@cire/ui@workspace:cire/ui"],
 
     "@cire/vendor": ["@cire/vendor@workspace:cire/vendor"],
 

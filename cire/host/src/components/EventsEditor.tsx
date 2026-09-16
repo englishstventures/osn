@@ -1,3 +1,10 @@
+import Button from "@cire/ui/button";
+import { EmptyState } from "@osn/ui/ui/empty-state";
+import { Field, Fieldset } from "@osn/ui/ui/field";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
+import { Select } from "@osn/ui/ui/select";
+import { Textarea } from "@osn/ui/ui/textarea";
 import { useAuth } from "@shared/rp-auth/solid";
 import {
   closestCenter,
@@ -33,11 +40,6 @@ import ChangePreview, { type ChangePlan } from "./ChangePreview";
 import ColorPicker from "./ColorPicker";
 import DatePicker from "./DatePicker";
 import SectionIntro from "./SectionIntro";
-import Button from "./ui/Button";
-import EmptyState from "./ui/EmptyState";
-import Field, { Fieldset, Input, Select, Textarea } from "./ui/Field";
-import Notice from "./ui/Notice";
-
 interface PreviewResponse {
   changeId: string;
   plan: ChangePlan;
@@ -295,7 +297,7 @@ export default function EventsEditor(props: { weddingId: string }) {
       />
 
       <Show when={loadError()}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           {loadError()}
         </Notice>
       </Show>
@@ -709,7 +711,7 @@ function EventDrawer(props: {
           </div>
 
           <Show when={props.errors.length > 0}>
-            <Notice tone="error" alert class="mb-5">
+            <Notice tone="danger" alert class="mb-5">
               <For each={props.errors}>{(msg) => <p>{msg}</p>}</For>
             </Notice>
           </Show>

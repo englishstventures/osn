@@ -4,10 +4,8 @@ import { ColorSlider } from "@kobalte/core/color-slider";
 import { ColorSwatch } from "@kobalte/core/color-swatch";
 import { type Color, parseColor } from "@kobalte/core/colors";
 import { Popover } from "@kobalte/core/popover";
+import { Input } from "@osn/ui/ui/input";
 import { createEffect, createSignal, createUniqueId, Show } from "solid-js";
-
-import { Input } from "./ui/Field";
-
 /**
  * The colour a picker shows when nothing is set and the caller names no
  * fallback. Callers that know the real default — the scheme editor, which knows

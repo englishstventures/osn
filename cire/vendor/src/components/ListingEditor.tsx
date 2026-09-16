@@ -1,3 +1,13 @@
+import Button from "@cire/ui/button";
+import Card, { CardEyebrow } from "@cire/ui/card";
+import Loading from "@cire/ui/loading";
+import { Checkbox } from "@osn/ui/ui/checkbox";
+import { Chip } from "@osn/ui/ui/chip";
+import { Field, Fieldset } from "@osn/ui/ui/field";
+import { Input } from "@osn/ui/ui/input";
+import { Notice } from "@osn/ui/ui/notice";
+import { Select } from "@osn/ui/ui/select";
+import { Textarea } from "@osn/ui/ui/textarea";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
 import { createEffect, createMemo, createResource, createSignal, For, Show } from "solid-js";
@@ -6,13 +16,6 @@ import { friendlyError } from "../lib/api";
 import { haptic } from "../lib/haptics";
 import { categoryLabel, SERVICE_CATEGORIES } from "../lib/service-categories";
 import { fetchListing, putListing, takeSeededListing } from "../lib/vendor-store";
-import Button from "./ui/Button";
-import Card, { CardEyebrow } from "./ui/Card";
-import Chip from "./ui/Chip";
-import Field, { Checkbox, Fieldset, Input, Select, Textarea } from "./ui/Field";
-import Loading from "./ui/Loading";
-import Notice from "./ui/Notice";
-
 // ── Price-band options ─────────────────────────────────────────────────────
 const PRICE_BANDS = [
   { value: "", label: "None" },
@@ -174,7 +177,7 @@ export default function ListingEditor(props: ListingEditorProps) {
           </h2>
         </div>
         <Show when={listing()}>
-          {(l) => <Chip tone={l().listed === "live" ? "live" : "neutral"}>{l().listed}</Chip>}
+          {(l) => <Chip tone={l().listed === "live" ? "success" : "neutral"}>{l().listed}</Chip>}
         </Show>
       </div>
 
@@ -183,7 +186,7 @@ export default function ListingEditor(props: ListingEditorProps) {
       </Show>
 
       <Show when={listing.error}>
-        <Notice tone="error" alert>
+        <Notice tone="danger" alert>
           Could not load your listing. Please refresh.
         </Notice>
       </Show>
@@ -366,7 +369,7 @@ export default function ListingEditor(props: ListingEditorProps) {
               looks back up from the field they were fixing. */}
           <Show when={saveError()}>
             {(message) => (
-              <Notice tone="error" alert>
+              <Notice tone="danger" alert>
                 {message()}
               </Notice>
             )}

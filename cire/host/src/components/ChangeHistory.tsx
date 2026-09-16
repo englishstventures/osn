@@ -1,3 +1,4 @@
+import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createSignal, For, Show } from "solid-js";
 
@@ -5,8 +6,6 @@ import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
 import { invalidateEvents } from "../lib/events-store";
 import { invalidateGuests } from "../lib/guests-store";
 import { invalidateHouseholds } from "../lib/households-store";
-import Notice from "./ui/Notice";
-
 /**
  * One row of the change list as returned by
  * `GET /api/organiser/weddings/:weddingId/changes/list` (the E4 endpoint).
@@ -209,7 +208,7 @@ export default function ChangeHistory(props: { weddingId: string }) {
 
       <div class="border-border/60 flex flex-col gap-4 border-t px-4 py-5">
         <Show when={error()}>
-          <Notice tone="error">{error()}</Notice>
+          <Notice tone="danger">{error()}</Notice>
         </Show>
 
         <Show when={loading() && entries() === null}>

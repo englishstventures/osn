@@ -68,6 +68,7 @@
     "@shared/typescript-config": "workspace:*",
     "@solidjs/testing-library": "^0.8.10",
     "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/jest-dom": "^7.0.1",
     "@vitest/browser": "4.1.11",
     "@vitest/browser-playwright": "4.1.11",
     "happy-dom": "^20.12.2",

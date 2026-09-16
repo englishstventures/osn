@@ -1,15 +1,14 @@
+import { buttonClass } from "@cire/ui/button";
+import { cardClass } from "@cire/ui/card";
+import Loading from "@cire/ui/loading";
+import { EmptyState } from "@osn/ui/ui/empty-state";
+import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createResource, createSignal, For, Show } from "solid-js";
 
 import { friendlyError } from "../lib/api";
 import { OSN_ACCOUNT_URL } from "../lib/osn";
 import { listMyOrgs, type OrgSummary } from "../lib/vendor-store";
-import { buttonClass } from "./ui/Button";
-import { cardClass } from "./ui/Card";
-import EmptyState from "./ui/EmptyState";
-import Loading from "./ui/Loading";
-import Notice from "./ui/Notice";
-
 interface OrgPickerProps {
   onPick: (org: OrgSummary) => void;
 }
@@ -47,7 +46,7 @@ export default function OrgPicker(props: OrgPickerProps) {
     <div class="flex flex-col gap-6">
       <Show when={loadError()}>
         {(message) => (
-          <Notice tone="error" alert>
+          <Notice tone="danger" alert>
             {message()}
           </Notice>
         )}
