@@ -12,7 +12,7 @@ plugin root here is `.claude/`:
 ```
 .claude/
 ├── .tessl-plugin/plugin.json     # name, version, workspace
-├── tessl.json                    # written by `tessl project create` — NOT yet committed
+├── tessl.json                    # the plugin manifest — committed, and NOT the project link
 ├── skills/<name>/SKILL.md
 └── evals/<scenario>/
     ├── task.md                   # free-form markdown — the ONLY file the agent sees
@@ -26,29 +26,67 @@ CLI warns on any extra field. Weight the items that carry the scenario's point,
 and put a prohibition in the description as "MUST NOT ...", since there is no
 category field to say it for you. `tessl eval lint .claude` checks this.
 
-## Before the first run
+## Before the first run — the project link is per-checkout
 
-Two things are missing on purpose, because both need a Tessl account:
+The plugin lives at `.claude/`, and that is deliberate: a `tessl.json` at the
+repo root is not on the changeset allowlist and would force a changeset on
+every pull request that touched it.
 
-The plugin is linked to the `musubi` workspace, and `.claude/tessl.json` names
-the project every run is saved to. Both are committed. If that link ever breaks,
-`tessl project repair` from `.claude/` fixes it — the project is created there
-rather than at the repo root on purpose, because a root `tessl.json` is not on
-the changeset allowlist and would force a changeset on every PR that touched it.
+**The committed `.claude/tessl.json` is the plugin manifest, not the project
+link.** It carries a name, a mode and a dependency map, and no project id. The
+link between this directory and the `osn-agent-skills` project in the `musubi`
+workspace is local state that tessl keeps outside the repository, keyed to the
+directory — so it does not travel with a clone, and **it does not travel to a
+new worktree either.** Cut a worktree, run an eval in it, and tessl answers:
+
+```
+✘ No Tessl project found. Run tessl init from your project root, then rerun this command.
+```
+
+Do not run `tessl init`, whatever that message says — it would make a second
+project and split this suite's history across two scoreboards. Diagnose and
+relink instead, from `.claude/`:
+
+```bash
+tessl project repair --json     # prints sourceMatches and the exact relink command
+tessl project repair --relink --workspace musubi --project osn-agent-skills --yes
+```
+
+`repair` matches on the git remote and the `.claude` subpath, so on a checkout
+of this repository the right project is already in `sourceMatches` and the
+relink is a formality. It writes nothing into the repository — `git status` is
+unchanged afterwards. In CI none of this applies: `tesslio/setup-tessl`
+establishes the link from `TESSL_TOKEN` on a fresh runner every time.
 
 ## Running
 
+**Anything that submits a run goes from inside `.claude/`** — that is the
+directory the project is linked to, and the workflow's own eval step sets
+`working-directory: .claude` for the same reason. The scenarios argument itself
+may sit anywhere; CI passes `$RUNNER_TEMP/scenarios`.
+
 ```bash
-tessl eval run .claude                 # all ten scenarios, baseline + with-skill
+cd .claude
+tessl eval run . --context .                # every scenario, baseline + with-skill
 tessl eval view --last
-tessl scenario generate .claude --count 3   # draft more scenarios
-tessl scenario download --last              # run from INSIDE .claude/ so they land in evals/
+tessl scenario generate . --count 3         # draft more scenarios
+tessl scenario download --last              # lands them in evals/
+```
+
+Two need no project and run from the repo root. Only the first is free —
+`review run quality` spends credits per invocation even though it runs no agent
+solve, so do not loop it.
+
+```bash
+tessl eval lint .claude                          # scenario shape; free
+tessl review run quality .claude/skills/<name>   # the deterministic gate — see below
 ```
 
 ## The inner loop
 
-A full run is ten scenarios, two variants, three runs each — sixty agent solves,
-which is most of a working day and hundreds of credits. The harness launches a
+A full run is every scenario, two variants, three runs each — ninety agent
+solves across the fifteen scenarios there are today, and it grows with the
+suite. That is most of a working day and hundreds of credits. The harness launches a
 whole run index at once (17–20 solves) and waits for the slowest before starting
 the next, so wall clock is the sum of the waves' maxima, not the mean solve:
 run 7 took 290 minutes for 19.4 agent-hours, and one straggler held its last
@@ -82,6 +120,21 @@ before you submit one. The loop is three steps, and
    no agent solve. This is the gate: it fails the check. In CI it is
    `tesslio/skill-review`, which reviews only the `SKILL.md` files the diff
    touched and comments the scores.
+
+   It runs validation before the judge, and a validation error means no score at
+   all — `Review Score: N/A`, whatever the prose is worth. **The one that bites
+   is a colon in the description.** YAML reads `card: nothing else writes one` in
+   an unquoted scalar as a nested mapping and rejects the whole frontmatter, so
+   a skill that reads perfectly well to a person parses as nothing:
+
+   ```
+   ✘ frontmatter_valid - Failed to parse YAML frontmatter:
+     Nested mappings are not allowed in compact mappings at line 2, column 14
+   ```
+
+   Every skill here avoids it with an em dash. The judge's own weakest item is
+   worth reading too — it is usually `trigger_term_quality`, and the fix is
+   naming the thing a person would actually type.
 2. **A narrowed eval.** `scripts/skill-evals.ts changed --base <ref>` names the
    skills the branch touched, `subset` copies just their scenarios into a
    directory, and the run is
