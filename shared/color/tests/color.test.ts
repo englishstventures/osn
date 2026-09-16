@@ -1,10 +1,12 @@
 /**
- * Parser coverage for the shared colour maths. Moved here from
- * `cire/host/src/lib/contrast.ts` when derivation became shared: the
- * organiser, the guest site and the API all read colours through this module
- * now, so its parser is the one that must be right.
+ * Parser coverage for the shared colour maths. The organiser, the guest site,
+ * the API and the design-token conformance harness all read colours through
+ * this module, so its parser is the one that must be right.
+ *
+ * Runs on vitest, not `bun test`: every `shared/*` package does, and this file
+ * moved here from `@cire/theme`, which runs `bun test`.
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 
 import { contrastRatio, parseCssColor, WCAG_TEXT_MIN } from "../src/color";
 

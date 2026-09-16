@@ -39,7 +39,7 @@ const COLOR_PATTERNS = [
   new RegExp(`^oklch\\(${COLOR_INNER}\\)$`),
 ];
 
-export * from "./color";
+export * from "@shared/color";
 export * from "./palette";
 export * from "./typography";
 

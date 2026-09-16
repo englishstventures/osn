@@ -155,6 +155,9 @@
     },
     "cire/theme": {
       "name": "@cire/theme",
+      "dependencies": {
+        "@shared/color": "workspace:*",
+      },
       "devDependencies": {
         "@shared/typescript-config": "workspace:*",
       },
@@ -433,6 +436,14 @@
         "typescript": "^6.0.3",
         "vite": "^8.2.2",
         "vite-plugin-solid": "^2.11.14",
+        "vitest": "^4.1.11",
+      },
+    },
+    "shared/color": {
+      "name": "@shared/color",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@shared/typescript-config": "workspace:*",
         "vitest": "^4.1.11",
       },
     },
@@ -1449,6 +1460,7 @@
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
 
+    "@shared/color": ["@shared/color@workspace:shared/color"],
     "@shared/crypto": ["@shared/crypto@workspace:shared/crypto"],
 
     "@shared/db-utils": ["@shared/db-utils@workspace:shared/db-utils"],
