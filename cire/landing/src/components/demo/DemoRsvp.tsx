@@ -1,5 +1,6 @@
 import Button from "@cire/ui/button";
-import { createMemo, createSignal, createUniqueId, For, Show } from "solid-js";
+import { heldWhileClosing } from "@osn/ui/ui/modal";
+import { createEffect, createMemo, createSignal, createUniqueId, For, on, Show } from "solid-js";
 
 import { DemoModal } from "./DemoModal";
 
@@ -102,21 +103,22 @@ export function DemoRsvp() {
         </p>
       </div>
 
-      <Show when={rsvpEvent()}>
-        {(event) => (
-          <DemoRsvpModal
-            event={event()}
-            members={DEMO_MEMBERS}
-            onClose={() => setRsvpEvent(null)}
-          />
-        )}
-      </Show>
+      {/* No `<Show>`: `DemoModal` has to stay mounted to animate its exit, and
+          `Modal` already mounts its own children only while it is open. The
+          body's event comes through `heldWhileClosing` so it survives the
+          fade. */}
+      <DemoRsvpModal
+        event={rsvpEvent()}
+        members={DEMO_MEMBERS}
+        onClose={() => setRsvpEvent(null)}
+      />
     </div>
   );
 }
 
 interface DemoRsvpModalProps {
-  event: DemoEvent;
+  /** `null` while closed, and still the last event while the sheet fades out. */
+  event: DemoEvent | null;
   members: DemoMember[];
   onClose: () => void;
 }
@@ -127,18 +129,47 @@ interface MemberState {
 }
 
 function DemoRsvpModal(props: DemoRsvpModalProps) {
+  // The body is built from the event, and closing sets it null — so without
+  // this the sheet would fade out as an empty box.
+  const shownEvent = heldWhileClosing(() => props.event);
+
   const eventMembers = createMemo(() =>
-    props.members.filter((m) => m.eventIds.includes(props.event.id)),
+    props.members.filter((m) => m.eventIds.includes(shownEvent()?.id ?? "")),
   );
 
-  const [responses, setResponses] = createSignal<Record<string, MemberState>>(
-    Object.fromEntries(
-      eventMembers().map((m) => [m.guestId, { attending: null, dietary: "" } as MemberState]),
-    ),
-  );
+  const [responses, setResponses] = createSignal<Record<string, MemberState>>({});
   const [error, setError] = createSignal<string | null>(null);
   const [submitted, setSubmitted] = createSignal(false);
   const titleId = createUniqueId();
+
+  /*
+   * Reset per event, explicitly.
+   *
+   * This component used to be mounted inside `<Show when={rsvpEvent()}>`, so
+   * every event got a fresh instance and its state reset by construction. It
+   * stays mounted now — the sheet has to survive its own exit animation — which
+   * means one instance for every event, and a `createSignal` initialiser that
+   * runs once, while `props.event` is still null.
+   *
+   * The failure that caused was quiet rather than loud: `responses` stayed `{}`,
+   * so `current[guestId]?.attending !== null` was `undefined !== null`, every
+   * guest counted as answered, and the "respond for everyone" guard never
+   * fired. A test caught it; nothing about the rendered sheet looked wrong.
+   */
+  createEffect(
+    on(
+      () => shownEvent()?.id,
+      () => {
+        setResponses(
+          Object.fromEntries(
+            eventMembers().map((m) => [m.guestId, { attending: null, dietary: "" } as MemberState]),
+          ),
+        );
+        setError(null);
+        setSubmitted(false);
+      },
+    ),
+  );
 
   function setAttending(guestId: string, attending: Attending) {
     setResponses((prev) => ({ ...prev, [guestId]: { ...prev[guestId]!, attending } }));
@@ -161,7 +192,7 @@ function DemoRsvpModal(props: DemoRsvpModalProps) {
   }
 
   return (
-    <DemoModal onClose={props.onClose} labelledBy={titleId}>
+    <DemoModal open={props.event !== null} onClose={props.onClose} labelledBy={titleId}>
       <Show
         when={!submitted()}
         fallback={
@@ -184,7 +215,7 @@ function DemoRsvpModal(props: DemoRsvpModalProps) {
       >
         <p class="font-body text-gold text-osn-xs tracking-osn-widest mb-3 uppercase">Respond</p>
         <h3 id={titleId} class="font-display text-text text-osn-xl mb-2 font-light italic">
-          {props.event.name}
+          {shownEvent()?.name}
         </h3>
         <p
           class="border-gold/40 bg-gold/5 text-gold text-osn-xs mb-6 rounded-sm border px-3.5 py-2.5 leading-relaxed"

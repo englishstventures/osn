@@ -296,11 +296,32 @@ export function Modal(props: ModalProps) {
       closingToken++;
       setRendered(true);
       dialog.removeAttribute("data-closing");
-      if (!dialog.open) dialog.showModal();
+      if (!dialog.open) open(dialog);
     } else if (dialog.open) {
       void closeWhenAnimationsFinish(dialog);
     }
   });
+
+  /**
+   * `showModal()` where the environment has it, the `open` attribute where it
+   * does not.
+   *
+   * jsdom implements no part of `<dialog>` — `showModal` is `undefined` there,
+   * not merely inert — so calling it unguarded is a `TypeError` that takes the
+   * whole render down. That is a test environment rather than a browser, but
+   * the same is true of any server render, and a component that throws where it
+   * cannot do its best work is worse than one that degrades.
+   *
+   * The fallback is a non-modal dialog: visible, in the DOM, with its contents
+   * reachable, and without the top layer, focus trap or Escape that the method
+   * is what provides. Nothing that needs those can be asserted in such an
+   * environment anyway, which is why this component's own suite is a browser
+   * one.
+   */
+  function open(dialog: HTMLDialogElement): void {
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+  }
 
   /**
    * Close the dialog, but not until whatever is animating it has finished.
@@ -335,7 +356,10 @@ export function Modal(props: ModalProps) {
     if (token !== closingToken || !dialog.isConnected) return;
 
     dialog.removeAttribute("data-closing");
-    if (dialog.open) dialog.close();
+    if (dialog.open) {
+      if (typeof dialog.close === "function") dialog.close();
+      else dialog.removeAttribute("open");
+    }
     setRendered(false);
   }
 
