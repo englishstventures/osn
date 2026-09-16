@@ -119,7 +119,7 @@ export function VenueEventCarousel(props: Props) {
                     </Badge>
                   </div>
                   <p class="line-clamp-2 text-sm font-semibold">{event.title}</p>
-                  <p class="text-muted-foreground mt-1 font-mono text-[11px] tracking-wide">
+                  <p class="text-muted-foreground text-osn-xs mt-1 font-mono tracking-wide">
                     {formatCardDate(event.startTime)}
                   </p>
                 </div>

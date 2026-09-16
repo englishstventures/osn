@@ -360,13 +360,13 @@ export default function BudgetView(props: BudgetViewProps) {
       {/* Summary — spent vs cap, owner cap editor. */}
       <div class="border-border bg-surface/20 flex flex-wrap items-center justify-between gap-4 rounded-sm border p-4">
         <div class="flex flex-col gap-1">
-          <span class="text-gold-dim font-body text-[0.68rem] tracking-[0.16em] uppercase">
+          <span class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
             Spent so far
           </span>
-          <span class="text-text text-[1.2rem] font-semibold">
+          <span class="text-text text-osn-lg font-semibold">
             {fmtMinor(spent(), currency())}
             <Show when={snapshot()?.budgetTotalMinor != null}>
-              <span class="text-text-muted text-[0.9rem] font-normal">
+              <span class="text-text-muted text-osn-base font-normal">
                 {" "}
                 of {fmtMinor(snapshot()!.budgetTotalMinor!, currency())}
               </span>
@@ -377,7 +377,7 @@ export default function BudgetView(props: BudgetViewProps) {
               snapshot()?.budgetTotalMinor != null && spent() > (snapshot()?.budgetTotalMinor ?? 0)
             }
           >
-            <span class="text-error text-[0.75rem]">Over budget</span>
+            <span class="text-error text-osn-sm">Over budget</span>
           </Show>
         </div>
         <Show when={props.canManage}>
@@ -393,7 +393,7 @@ export default function BudgetView(props: BudgetViewProps) {
                       : (snapshot()!.budgetTotalMinor! / 100).toString(),
                   )
                 }
-                class="text-gold-dim hover:text-gold text-[0.78rem] underline-offset-4 hover:underline"
+                class="text-gold-dim hover:text-gold text-osn-sm underline-offset-4 hover:underline"
               >
                 {snapshot()?.budgetTotalMinor == null ? "Set a budget →" : "Edit budget"}
               </button>
@@ -472,7 +472,7 @@ export default function BudgetView(props: BudgetViewProps) {
 
       <Show
         when={grouped().length > 0}
-        fallback={<p class="text-text-muted text-[0.85rem] italic">No budget items yet.</p>}
+        fallback={<p class="text-text-muted text-osn-sm italic">No budget items yet.</p>}
       >
         {/* Categories pair up on a wide panel. The minimum is generous (32rem)
             because a budget row carries a name plus three money cells and the
@@ -487,10 +487,10 @@ export default function BudgetView(props: BudgetViewProps) {
               return (
                 <section class="flex flex-col gap-2">
                   <div class="flex items-baseline justify-between">
-                    <h3 class="text-gold-dim font-body text-[0.7rem] tracking-[0.18em] uppercase">
+                    <h3 class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
                       {categoryLabel(group.category.key)}
                     </h3>
-                    <span class="text-text-muted text-[0.75rem]">
+                    <span class="text-text-muted text-osn-sm">
                       est {fmtMinor(subtotalEst(), currency())} · spent{" "}
                       {fmtMinor(subtotalActual(), currency())}
                     </span>
@@ -500,7 +500,7 @@ export default function BudgetView(props: BudgetViewProps) {
                       {(item, i) => (
                         <li class="border-border bg-surface/10 flex flex-col gap-2 rounded-sm border px-3 py-2">
                           <div class="flex flex-wrap items-center gap-3">
-                            <span class="text-text min-w-[8rem] flex-1 text-[0.9rem]">
+                            <span class="text-text text-osn-base min-w-[8rem] flex-1">
                               {item.name}
                             </span>
                             <MoneyCell
@@ -527,7 +527,7 @@ export default function BudgetView(props: BudgetViewProps) {
                             <button
                               type="button"
                               onClick={() => setExpanded(expanded() === item.id ? null : item.id)}
-                              class="text-text-muted hover:text-text px-1 text-[0.78rem]"
+                              class="text-text-muted hover:text-text text-osn-sm px-1"
                             >
                               payments ({paymentsFor(item.id).length})
                             </button>
@@ -598,13 +598,13 @@ function MoneyCell(props: {
 }) {
   return (
     <label class="flex w-24 flex-col gap-0.5">
-      <span class="text-gold-dim font-body text-[0.58rem] tracking-[0.14em] uppercase">
+      <span class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
         {props.label}
       </span>
       <Show
         when={props.canEdit}
         fallback={
-          <span class="text-text text-[0.85rem]">
+          <span class="text-text text-osn-sm">
             {props.minor == null ? "—" : fmtMinor(props.minor, props.currency)}
           </span>
         }
@@ -646,7 +646,7 @@ function PaymentPanel(props: {
     <div class="border-border/60 ml-2 flex flex-col gap-2 border-l pl-3">
       <For each={props.payments}>
         {(p) => (
-          <div class="flex flex-wrap items-center gap-2 text-[0.82rem]">
+          <div class="text-osn-sm flex flex-wrap items-center gap-2">
             <input
               type="checkbox"
               aria-label={`${p.label} paid`}

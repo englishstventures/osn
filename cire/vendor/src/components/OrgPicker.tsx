@@ -58,7 +58,7 @@ export default function OrgPicker(props: OrgPickerProps) {
 
       <Show when={(orgs() ?? []).length > 0}>
         <div class="flex flex-col gap-3">
-          <h2 class="font-body text-gold text-[0.7rem] tracking-[0.18em] uppercase">
+          <h2 class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
             Your organisations
           </h2>
           {/* One column until there is room for two whole cards. An org row is
@@ -74,7 +74,7 @@ export default function OrgPicker(props: OrgPickerProps) {
                     class={`${cardClass({ interactive: true })} gap-1`}
                   >
                     <span class="font-body text-text font-medium">{org.name}</span>
-                    <span class="font-body text-text-muted text-[0.82rem]">@{org.handle}</span>
+                    <span class="font-body text-text-muted text-osn-sm">@{org.handle}</span>
                   </button>
                 </li>
               )}

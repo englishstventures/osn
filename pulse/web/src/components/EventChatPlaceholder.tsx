@@ -17,7 +17,7 @@ export function EventChatPlaceholder(props: { eventId: string }) {
         Chat for this event will live here — powered by <span class="font-semibold">Zap</span>,
         OSN's messaging app.
       </p>
-      <p class="text-muted-foreground/70 mt-1 text-[10px]">
+      <p class="text-muted-foreground/70 text-osn-xs mt-1">
         Tracked under Zap M2 · event id <code class="font-mono">{props.eventId}</code>
       </p>
     </Card>

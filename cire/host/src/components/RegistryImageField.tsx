@@ -326,7 +326,7 @@ export default function RegistryImageField(props: {
 
   return (
     <div class="flex flex-col gap-2">
-      <span class="font-body text-text-muted text-[0.8rem]" id={`${props.idPrefix}-picture-label`}>
+      <span class="font-body text-text-muted text-osn-sm" id={`${props.idPrefix}-picture-label`}>
         Picture
       </span>
 
@@ -334,7 +334,7 @@ export default function RegistryImageField(props: {
         <div class="flex flex-wrap items-center gap-3">
           <Show
             when={thumb()}
-            fallback={<span class="text-text-muted text-[0.78rem] italic">Picture saved.</span>}
+            fallback={<span class="text-text-muted text-osn-sm italic">Picture saved.</span>}
           >
             {(src) => (
               // Decorative, as in `invite/ImageField.tsx`: the field's own label
@@ -402,7 +402,7 @@ export default function RegistryImageField(props: {
             if (file) void upload(file);
             e.currentTarget.value = "";
           }}
-          class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-[0.82rem] file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5 file:text-[0.82rem]"
+          class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-osn-sm file:text-osn-sm file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5"
         />
       </Show>
 
@@ -410,7 +410,7 @@ export default function RegistryImageField(props: {
         <div class="flex flex-col gap-2">
           <div class="flex flex-wrap items-end gap-2">
             <label
-              class="font-body text-text-muted text-[0.78rem]"
+              class="font-body text-text-muted text-osn-sm"
               for={`${props.idPrefix}-shop-link`}
             >
               Shop link
@@ -438,7 +438,7 @@ export default function RegistryImageField(props: {
           {/* Fetching a shop page takes seconds. Say so, and say it in a live
               region — a field that simply sits there reads as broken. */}
           <Show when={busy() === "preview"}>
-            <p class="text-text-muted text-[0.8rem]" role="status">
+            <p class="text-text-muted text-osn-sm" role="status">
               Looking for pictures on that page…
             </p>
           </Show>
@@ -452,7 +452,7 @@ export default function RegistryImageField(props: {
 
           <Show when={candidates().length > 0}>
             <div class="flex flex-col gap-2">
-              <p class="text-text-muted text-[0.8rem]" id={`${props.idPrefix}-candidates-label`}>
+              <p class="text-text-muted text-osn-sm" id={`${props.idPrefix}-candidates-label`}>
                 Choose the picture for this gift.
               </p>
               <div
@@ -509,7 +509,7 @@ export default function RegistryImageField(props: {
                 >
                   {busy() === "save" ? "Saving…" : "Use this picture"}
                 </Button>
-                <span class="text-text-muted text-[0.72rem]">
+                <span class="text-text-muted text-osn-xs">
                   We keep our own copy, so it stays on your list even if the shop changes the page.
                 </span>
               </div>
@@ -519,7 +519,7 @@ export default function RegistryImageField(props: {
       </Show>
 
       <Show when={busy() === "save" && mode() !== "link"}>
-        <p class="text-text-muted text-[0.8rem]" role="status">
+        <p class="text-text-muted text-osn-sm" role="status">
           Saving that picture…
         </p>
       </Show>

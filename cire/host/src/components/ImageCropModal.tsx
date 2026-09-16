@@ -341,9 +341,9 @@ export default function ImageCropModal(props: ImageCropModalProps) {
       >
         <div class="border-border bg-bg flex max-h-[90vh] w-full max-w-2xl flex-col gap-4 overflow-auto rounded-sm border p-5">
           <header class="flex flex-col gap-1">
-            <p class="font-body text-gold text-[0.72rem] tracking-[0.2em] uppercase">Crop</p>
-            <h3 class="font-display text-text text-[1.3rem] font-light">Choose what guests see</h3>
-            <p class="font-body text-text-muted text-[0.82rem]">
+            <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">Crop</p>
+            <h3 class="font-display text-text text-osn-lg font-light">Choose what guests see</h3>
+            <p class="font-body text-text-muted text-osn-sm">
               Drag to pan, drag a corner to zoom. Pick a shape below — guests see exactly this
               frame, never stretched.
             </p>
@@ -358,7 +358,7 @@ export default function ImageCropModal(props: ImageCropModalProps) {
           {/* Aspect-ratio presets — a segmented control. The active shape is filled
             gold; the rest are quiet outlines. Selecting one re-locks the crop box. */}
           <div class="flex flex-col gap-1.5">
-            <span class="font-body text-text-muted text-[0.72rem] tracking-[0.1em] uppercase">
+            <span class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
               Shape
             </span>
             <div role="group" aria-label="Crop aspect ratio" class="flex flex-wrap gap-1.5">
@@ -369,7 +369,7 @@ export default function ImageCropModal(props: ImageCropModalProps) {
                     aria-pressed={preset() === p.id}
                     disabled={busy()}
                     onClick={() => choosePreset(p.id)}
-                    class="font-body rounded-sm border px-3 py-1.5 text-[0.72rem] tracking-[0.1em] uppercase transition disabled:opacity-40"
+                    class="font-body text-osn-xs tracking-osn-wider rounded-sm border px-3 py-1.5 uppercase transition disabled:opacity-40"
                     classList={{
                       "border-gold bg-gold text-bg": preset() === p.id,
                       "border-border text-text-muted hover:border-gold hover:text-gold bg-transparent":
@@ -409,7 +409,7 @@ export default function ImageCropModal(props: ImageCropModalProps) {
               type="button"
               onClick={() => void handleReset()}
               disabled={busy()}
-              class="font-body text-text-muted hover:text-gold text-[0.82rem] underline-offset-4 hover:underline disabled:opacity-40"
+              class="font-body text-text-muted hover:text-gold text-osn-sm underline-offset-4 hover:underline disabled:opacity-40"
             >
               Reset to full image
             </button>

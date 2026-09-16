@@ -49,7 +49,7 @@ type WeddingsState =
 
 function Loading(props: { label: string }) {
   return (
-    <p class="font-body text-text-muted animate-pulse text-[0.88rem] tracking-[0.1em] uppercase">
+    <p class="font-body text-text-muted text-osn-base tracking-osn-wider animate-pulse uppercase">
       {props.label}
     </p>
   );

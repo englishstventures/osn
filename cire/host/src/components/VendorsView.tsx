@@ -341,12 +341,12 @@ export default function VendorsView(props: VendorsViewProps) {
 
       <Show
         when={(vendors() ?? []).length > 0}
-        fallback={<p class="text-text-muted text-[0.85rem] italic">No vendors yet.</p>}
+        fallback={<p class="text-text-muted text-osn-sm italic">No vendors yet.</p>}
       >
         <For each={grouped()}>
           {(group) => (
             <section class="flex flex-col gap-2">
-              <h3 class="text-gold-dim font-body text-[0.7rem] tracking-[0.18em] uppercase">
+              <h3 class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
                 {group.status.label}
               </h3>
               <ul class="flex flex-col gap-1">
@@ -354,15 +354,15 @@ export default function VendorsView(props: VendorsViewProps) {
                   {(v) => (
                     <li class="border-border bg-surface/10 flex flex-col gap-2 rounded-sm border px-3 py-2">
                       <div class="flex flex-wrap items-center gap-3">
-                        <span class="text-text min-w-[10rem] flex-1 text-[0.9rem] font-medium">
+                        <span class="text-text text-osn-base min-w-[10rem] flex-1 font-medium">
                           {v.name}
                         </span>
                         {/* Category chip */}
-                        <span class="bg-surface/60 text-text-muted rounded-full px-2 py-0.5 text-[0.72rem]">
+                        <span class="bg-surface/60 text-text-muted text-osn-xs rounded-full px-2 py-0.5">
                           {categoryLabel(v.category)}
                         </span>
                         <Show when={v.contactName ?? v.email ?? v.phone}>
-                          <span class="text-text-muted text-[0.82rem]">
+                          <span class="text-text-muted text-osn-sm">
                             {v.contactName}
                             {v.contactName && (v.email || v.phone) ? " · " : ""}
                             {v.email}
@@ -371,7 +371,7 @@ export default function VendorsView(props: VendorsViewProps) {
                           </span>
                         </Show>
                         <Show when={v.quotedMinor != null}>
-                          <span class="text-text text-[0.82rem]">
+                          <span class="text-text text-osn-sm">
                             {fmtMinor(v.quotedMinor!, props.currency ?? "AUD")}
                           </span>
                         </Show>
@@ -396,7 +396,7 @@ export default function VendorsView(props: VendorsViewProps) {
                               type="button"
                               aria-label={`List ${v.name} in directory`}
                               onClick={() => openListing(v)}
-                              class="text-gold-dim hover:text-gold text-[0.78rem] underline-offset-2 hover:underline"
+                              class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
                             >
                               List in directory
                             </button>
@@ -406,7 +406,7 @@ export default function VendorsView(props: VendorsViewProps) {
                                 type="button"
                                 aria-label={`Enquire with ${v.name}`}
                                 onClick={() => setEnquireVendor(v)}
-                                class="text-gold-dim hover:text-gold text-[0.78rem] underline-offset-2 hover:underline"
+                                class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
                               >
                                 Enquire
                               </button>
@@ -463,17 +463,17 @@ export default function VendorsView(props: VendorsViewProps) {
                             }
                           >
                             <div class="flex flex-col gap-2">
-                              <p class="text-text text-[0.85rem]">
+                              <p class="text-text text-osn-sm">
                                 Listed! Share this claim link with {v.name}:
                               </p>
                               <div class="border-border bg-bg flex items-center gap-2 rounded-sm border px-3 py-2">
-                                <span class="text-text-muted grow truncate font-mono text-[0.78rem]">
+                                <span class="text-text-muted text-osn-sm grow truncate font-mono">
                                   {claimUrl()}
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => void copyToClipboard(claimUrl()!)}
-                                  class="text-gold-dim hover:text-gold shrink-0 text-[0.76rem] underline-offset-2 hover:underline"
+                                  class="text-gold-dim hover:text-gold text-osn-sm shrink-0 underline-offset-2 hover:underline"
                                 >
                                   Copy
                                 </button>

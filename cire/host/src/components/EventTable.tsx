@@ -176,7 +176,7 @@ export default function EventTable(props: EventTableProps) {
               type="button"
               onClick={() => void exportEvents()}
               disabled={exporting()}
-              class="border-gold/40 font-body text-gold hover:border-gold hover:bg-gold/10 rounded-sm border px-3 py-1.5 text-[0.72rem] tracking-[0.1em] uppercase transition disabled:opacity-40"
+              class="border-gold/40 font-body text-gold hover:border-gold hover:bg-gold/10 text-osn-xs tracking-osn-wider rounded-sm border px-3 py-1.5 uppercase transition disabled:opacity-40"
             >
               {exporting() ? "Exporting…" : "Download events (CSV)"}
             </button>
@@ -204,7 +204,7 @@ export default function EventTable(props: EventTableProps) {
       </Show>
 
       <Show when={!loading() && !error() && hasEvents()}>
-        <p class="font-body text-text-muted text-[0.82rem]">
+        <p class="font-body text-text-muted text-osn-sm">
           {events().length} {events().length === 1 ? "event" : "events"} · uploading a photo
           replaces the current one
         </p>
@@ -222,16 +222,16 @@ export default function EventTable(props: EventTableProps) {
               // details into a half-width card.
               <li class="border-border bg-surface/30 @container/card flex flex-col gap-3 rounded-sm border p-5">
                 <header class="flex flex-col gap-1">
-                  <span class="font-body text-gold text-[0.72rem] tracking-[0.2em] uppercase">
+                  <span class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
                     {event.slug}
                   </span>
-                  <h3 class="font-display text-text text-[1.5rem] font-light">{event.name}</h3>
-                  <p class="font-body text-text-muted text-[0.82rem]">
+                  <h3 class="font-display text-text text-osn-lg font-light">{event.name}</h3>
+                  <p class="font-body text-text-muted text-osn-sm">
                     {formatEventWhen(event.startAt, event.endAt, event.timezone)} · {event.timezone}
                   </p>
                 </header>
 
-                <dl class="font-body grid grid-cols-1 gap-x-6 gap-y-2 text-[0.88rem] @md/card:grid-cols-2">
+                <dl class="font-body text-osn-base grid grid-cols-1 gap-x-6 gap-y-2 @md/card:grid-cols-2">
                   <Show when={event.address}>
                     <Detail label="Address" value={event.address!} />
                   </Show>
@@ -248,7 +248,7 @@ export default function EventTable(props: EventTableProps) {
                     <For each={event.dressCodePalette!}>
                       {(swatch) => (
                         <span
-                          class="border-border bg-bg font-body text-text-muted inline-flex items-center gap-2 rounded-sm border px-2 py-1 text-[0.72rem] tracking-[0.06em] uppercase"
+                          class="border-border bg-bg font-body text-text-muted text-osn-xs tracking-osn-wide inline-flex items-center gap-2 rounded-sm border px-2 py-1 uppercase"
                           title={swatch.color}
                         >
                           <span
@@ -263,7 +263,7 @@ export default function EventTable(props: EventTableProps) {
                 </Show>
 
                 <Show when={event.pinterestUrl || event.mapsUrl}>
-                  <div class="font-body flex flex-wrap gap-4 pt-1 text-[0.82rem]">
+                  <div class="font-body text-osn-sm flex flex-wrap gap-4 pt-1">
                     <Show when={event.mapsUrl}>
                       <a
                         href={event.mapsUrl!}
@@ -327,7 +327,7 @@ function EventImageField(props: {
 
   return (
     <div class="border-border/60 mt-1 flex flex-col gap-2 rounded-sm border border-dashed p-3">
-      <span class="font-body text-text-muted text-[0.72rem] tracking-[0.1em] uppercase">
+      <span class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
         Event image
       </span>
       <Show when={absoluteUrl()}>
@@ -367,20 +367,20 @@ function EventImageField(props: {
             if (file) props.onSelect(file);
             e.currentTarget.value = "";
           }}
-          class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-[0.82rem] file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5 file:text-[0.82rem]"
+          class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-osn-sm file:text-osn-sm file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5"
         />
         <Show when={props.url}>
           <button
             type="button"
             onClick={() => setCropping(true)}
-            class="font-body text-gold text-[0.82rem] underline-offset-4 hover:underline"
+            class="font-body text-gold text-osn-sm underline-offset-4 hover:underline"
           >
             Crop
           </button>
           <button
             type="button"
             onClick={() => props.onRemove()}
-            class="font-body text-text-muted text-[0.82rem] underline-offset-4 hover:underline"
+            class="font-body text-text-muted text-osn-sm underline-offset-4 hover:underline"
           >
             Remove
           </button>
@@ -407,7 +407,7 @@ function EventImageField(props: {
 function Detail(props: { label: string; value: string; span?: boolean }) {
   return (
     <div class={props.span ? "@md/card:col-span-2" : ""}>
-      <dt class="font-body text-text-muted text-[0.72rem] tracking-[0.1em] uppercase">
+      <dt class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
         {props.label}
       </dt>
       <dd class="text-text">{props.value}</dd>

@@ -815,9 +815,9 @@ export default function InviteBuilder(props: InviteBuilderProps) {
       class="border-border bg-surface/30 @container/builder flex flex-col gap-8 rounded-sm border p-6"
     >
       <header class="flex flex-col gap-1">
-        <p class="font-body text-gold text-[0.72rem] tracking-[0.2em] uppercase">Invite Builder</p>
-        <h2 class="font-display text-text text-[1.4rem] font-light">Customise your invite</h2>
-        <p class="font-body text-text-muted text-[0.82rem]">
+        <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">Invite Builder</p>
+        <h2 class="font-display text-text text-osn-lg font-light">Customise your invite</h2>
+        <p class="font-body text-text-muted text-osn-sm">
           Use the tabs below to move between sections of the guest invite, in the order guests see
           them — images, copy and colours together. Events and guests still come from your
           spreadsheet import.
@@ -827,7 +827,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
       <Show
         when={data()}
         fallback={
-          <p class="font-body text-text-muted animate-pulse text-[0.88rem] tracking-[0.1em] uppercase">
+          <p class="font-body text-text-muted text-osn-base tracking-osn-wider animate-pulse uppercase">
             Loading invite…
           </p>
         }
@@ -899,7 +899,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                       e.preventDefault();
                       closeSectionMenu();
                     }}
-                    class="border-border bg-surface/40 text-text hover:border-gold-dim font-body flex min-h-11 w-full items-center justify-between gap-3 rounded-sm border px-3 py-2 text-[0.75rem] tracking-[0.08em] uppercase transition-colors @3xl/builder:hidden"
+                    class="border-border bg-surface/40 text-text hover:border-gold-dim font-body text-osn-sm tracking-osn-wider flex min-h-11 w-full items-center justify-between gap-3 rounded-sm border px-3 py-2 uppercase transition-colors @3xl/builder:hidden"
                   >
                     <span class="flex min-w-0 items-center gap-2">
                       <Show when={activeShown() !== undefined}>
@@ -916,11 +916,11 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                     </span>
                     <span
                       aria-hidden
-                      class="text-text-muted flex shrink-0 items-center gap-2 text-[0.66rem] tracking-[0.14em] tabular-nums"
+                      class="text-text-muted text-osn-xs tracking-osn-widest flex shrink-0 items-center gap-2 tabular-nums"
                     >
                       {activeIndex() + 1}/{NAV_SECTIONS.length}
                       <span
-                        class="text-gold inline-block text-[0.8rem] tracking-normal transition-transform duration-(--dur-fast)"
+                        class="text-gold text-osn-sm inline-block tracking-normal transition-transform duration-(--dur-fast)"
                         classList={{ "rotate-180": sectionMenuOpen() }}
                       >
                         ▾
@@ -959,7 +959,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                             onKeyDown={(e) => onSectionTabKeyDown(e, item.id)}
                             // `min-h-11` is a 44px touch target in the menu; the
                             // wide row keeps the compact pill it has always been.
-                            class={`font-body flex min-h-11 w-full shrink-0 items-center gap-1.5 rounded-sm px-3 py-2 text-left text-[0.72rem] tracking-[0.08em] uppercase transition-colors @3xl/builder:min-h-0 @3xl/builder:w-auto @3xl/builder:px-2.5 @3xl/builder:py-1 ${
+                            class={`font-body text-osn-xs tracking-osn-wider flex min-h-11 w-full shrink-0 items-center gap-1.5 rounded-sm px-3 py-2 text-left uppercase transition-colors @3xl/builder:min-h-0 @3xl/builder:w-auto @3xl/builder:px-2.5 @3xl/builder:py-1 ${
                               active()
                                 ? "bg-gold/12 text-gold"
                                 : "text-text-muted hover:text-text hover:bg-surface/60"
@@ -991,7 +991,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                 <button
                   type="button"
                   onClick={() => setPreviewModalOpen(true)}
-                  class="font-body text-gold border-gold/40 hover:bg-gold/10 flex min-h-11 shrink-0 items-center rounded-sm border px-3 py-1 text-[0.72rem] tracking-[0.08em] uppercase transition-colors @3xl/builder:min-h-0 @3xl/builder:py-1 @4xl/builder:hidden"
+                  class="font-body text-gold border-gold/40 hover:bg-gold/10 text-osn-xs tracking-osn-wider flex min-h-11 shrink-0 items-center rounded-sm border px-3 py-1 uppercase transition-colors @3xl/builder:min-h-0 @3xl/builder:py-1 @4xl/builder:hidden"
                 >
                   Preview
                 </button>
@@ -1359,7 +1359,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                         }
                       />
                     </Show>
-                    <p class="font-body text-text-muted text-[0.78rem] italic">
+                    <p class="font-body text-text-muted text-osn-sm italic">
                       Uses the colours you picked for Code Entry &amp; Welcome — the closing note is
                       you speaking to your guests, same as the greeting.
                     </p>
@@ -1444,16 +1444,14 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                   <Show
                     when={isDirty()}
                     fallback={
-                      <span class="font-body text-text-muted text-[0.75rem]">
-                        All changes saved
-                      </span>
+                      <span class="font-body text-text-muted text-osn-sm">All changes saved</span>
                     }
                   >
-                    <span role="status" class="font-body text-gold text-[0.75rem]">
+                    <span role="status" class="font-body text-gold text-osn-sm">
                       Unsaved changes
                     </span>
                   </Show>
-                  <span class="font-body text-text-muted text-[0.75rem]">
+                  <span class="font-body text-text-muted text-osn-sm">
                     Copy, colours, fonts and hero display save together. Images, crops and the
                     design apply as soon as you change them.
                   </span>
@@ -1498,7 +1496,7 @@ function ToneField(props: {
   } satisfies Record<SectionTone, string>;
   return (
     <div class="flex flex-col gap-1.5">
-      <span class="font-body text-text-muted text-[0.8rem]">Section background</span>
+      <span class="font-body text-text-muted text-osn-sm">Section background</span>
       <div
         class="flex flex-wrap gap-2"
         role="group"
@@ -1511,7 +1509,7 @@ function ToneField(props: {
               type="button"
               aria-pressed={current() === tone}
               onClick={() => props.onChange(tone === "ground" ? null : tone)}
-              class="border-border hover:border-gold focus-visible:border-gold focus-visible:ring-gold/40 font-body aria-pressed:border-gold aria-pressed:ring-gold/60 rounded-sm border px-3 py-1.5 text-[0.78rem] transition outline-none focus-visible:ring-2 aria-pressed:ring-1"
+              class="border-border hover:border-gold focus-visible:border-gold focus-visible:ring-gold/40 font-body aria-pressed:border-gold aria-pressed:ring-gold/60 text-osn-sm rounded-sm border px-3 py-1.5 transition outline-none focus-visible:ring-2 aria-pressed:ring-1"
               style={{ "background-color": surfaceFor[tone], color: "var(--color-text)" }}
             >
               {TONE_LABELS[tone]}
@@ -1520,7 +1518,7 @@ function ToneField(props: {
         </For>
       </div>
       <Show when={props.hint}>
-        <span class="font-body text-text-muted text-[0.72rem] italic">{props.hint}</span>
+        <span class="font-body text-text-muted text-osn-xs italic">{props.hint}</span>
       </Show>
     </div>
   );

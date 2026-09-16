@@ -32,7 +32,7 @@ export function MobileTopBar() {
         <div class="flex h-12 items-center justify-between px-4">
           <div class="flex items-baseline gap-1.5">
             <span class="text-foreground text-title font-medium">OSN</span>
-            <span class="text-subtle text-meta tracking-[0.06em] uppercase">Social</span>
+            <span class="text-subtle text-meta tracking-osn-wide uppercase">Social</span>
           </div>
           <div class="flex items-center gap-2">
             <ThemeToggle />

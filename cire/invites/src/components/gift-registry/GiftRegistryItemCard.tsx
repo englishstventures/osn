@@ -195,26 +195,26 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
       </Show>
 
       <div class="flex flex-1 flex-col gap-3 p-5">
-        <h3 class="font-display text-text text-[1.05rem] leading-snug font-light">
+        <h3 class="font-display text-text text-osn-md leading-snug font-light">
           {props.item.title}
         </h3>
 
         <Show when={props.item.description}>
           {(description) => (
-            <p class="font-body text-text-muted text-[0.85rem] leading-[1.6] break-words whitespace-pre-line">
+            <p class="font-body text-text-muted text-osn-sm leading-osn-normal break-words whitespace-pre-line">
               {description()}
             </p>
           )}
         </Show>
 
         <Show when={price()}>
-          {(amount) => <p class="font-body text-gold-ink text-[0.9rem]">{amount()}</p>}
+          {(amount) => <p class="font-body text-gold-ink text-osn-base">{amount()}</p>}
         </Show>
 
         {/* COUNTS ONLY. Never a name, never a total. */}
         <p
           data-gift-remaining
-          class="font-body text-text-muted text-[0.72rem] tracking-[0.14em] uppercase"
+          class="font-body text-text-muted text-osn-xs tracking-osn-widest uppercase"
         >
           {giftRegistryRemainingCopy(props.item)}
         </p>
@@ -228,7 +228,7 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
               // handle back to this page.
               target="_blank"
               rel="noopener noreferrer"
-              class="font-body text-text-muted hover:text-gold-ink focus-visible:ring-gold/60 self-start rounded-sm text-[0.78rem] underline underline-offset-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2"
+              class="font-body text-text-muted hover:text-gold-ink focus-visible:ring-gold/60 text-osn-sm self-start rounded-sm underline underline-offset-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2"
             >
               View this gift
             </a>
@@ -241,7 +241,7 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
           {(claim) => (
             <p
               data-gift-mine
-              class="border-gold/40 bg-gold/5 text-gold-ink font-body rounded-sm border px-3 py-2 text-[0.78rem]"
+              class="border-gold/40 bg-gold/5 text-gold-ink font-body text-osn-sm rounded-sm border px-3 py-2"
             >
               You reserved {claim().quantity === 1 ? "this" : `${claim().quantity} of these`}
               <Show when={claim().displayName}>{(name) => <> as {name()}</>}</Show>.
@@ -253,9 +253,7 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
           {/* Fully reserved by OTHER households — said once, for everyone,
               signed in or not. Still a count, still no name. */}
           <Show when={!props.claim && remaining() === 0}>
-            <p class="font-body text-text-muted text-[0.78rem]">
-              Another guest has this one covered.
-            </p>
+            <p class="font-body text-text-muted text-osn-sm">Another guest has this one covered.</p>
           </Show>
           <Show when={props.canClaim && !open()}>
             <Show when={canReserveMore()}>
@@ -268,7 +266,7 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
                 type="button"
                 disabled={props.busy}
                 onClick={() => props.onRelease()}
-                class="font-body text-text-muted hover:text-gold-ink focus-visible:ring-gold/60 rounded-sm px-1 text-[0.78rem] underline underline-offset-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40"
+                class="font-body text-text-muted hover:text-gold-ink focus-visible:ring-gold/60 text-osn-sm rounded-sm px-1 underline underline-offset-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Release
               </button>
@@ -287,7 +285,7 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
             Confirm that can only 401 again. */}
         <Show when={open() && props.canClaim}>
           <form class="flex flex-col gap-3 pt-1" onSubmit={submit}>
-            <label class="font-body text-text-muted flex flex-col gap-1 text-[0.72rem] tracking-[0.14em] uppercase">
+            <label class="font-body text-text-muted text-osn-xs tracking-osn-widest flex flex-col gap-1 uppercase">
               How many
               <input
                 type="number"
@@ -296,11 +294,11 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
                 step="1"
                 value={quantityText()}
                 onInput={(e) => setQuantityText(e.currentTarget.value)}
-                class="border-text/55 bg-text/[0.045] font-body text-text focus:border-gold w-full rounded-sm border px-3 py-2 text-[0.9rem] tracking-normal normal-case transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--invite-focus)]"
+                class="border-text/55 bg-text/[0.045] font-body text-text focus:border-gold text-osn-base w-full rounded-sm border px-3 py-2 tracking-normal normal-case transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--invite-focus)]"
               />
             </label>
 
-            <label class="font-body text-text-muted flex flex-col gap-1 text-[0.72rem] tracking-[0.14em] uppercase">
+            <label class="font-body text-text-muted text-osn-xs tracking-osn-widest flex flex-col gap-1 uppercase">
               From (optional)
               <input
                 type="text"
@@ -308,18 +306,18 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
                 value={displayName()}
                 onInput={(e) => setDisplayName(e.currentTarget.value)}
                 placeholder="The Ashworths"
-                class="border-text/55 bg-text/[0.045] font-body text-text placeholder:text-text-muted focus:border-gold w-full rounded-sm border px-3 py-2 text-[0.9rem] tracking-normal normal-case transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--invite-focus)]"
+                class="border-text/55 bg-text/[0.045] font-body text-text placeholder:text-text-muted focus:border-gold text-osn-base w-full rounded-sm border px-3 py-2 tracking-normal normal-case transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--invite-focus)]"
               />
             </label>
 
-            <label class="font-body text-text-muted flex flex-col gap-1 text-[0.72rem] tracking-[0.14em] uppercase">
+            <label class="font-body text-text-muted text-osn-xs tracking-osn-widest flex flex-col gap-1 uppercase">
               Note for the couple (optional)
               <textarea
                 rows="2"
                 maxlength="500"
                 value={note()}
                 onInput={(e) => setNote(e.currentTarget.value)}
-                class="border-text/55 bg-text/[0.045] font-body text-text placeholder:text-text-muted focus:border-gold w-full resize-y rounded-sm border px-3 py-2 text-[0.9rem] tracking-normal normal-case transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--invite-focus)]"
+                class="border-text/55 bg-text/[0.045] font-body text-text placeholder:text-text-muted focus:border-gold text-osn-base w-full resize-y rounded-sm border px-3 py-2 tracking-normal normal-case transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--invite-focus)]"
               />
             </label>
 
@@ -331,7 +329,7 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
                 type="button"
                 disabled={props.busy}
                 onClick={() => setOpen(false)}
-                class="font-body text-text-muted hover:text-gold-ink focus-visible:ring-gold/60 rounded-sm px-1 text-[0.78rem] underline underline-offset-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40"
+                class="font-body text-text-muted hover:text-gold-ink focus-visible:ring-gold/60 text-osn-sm rounded-sm px-1 underline underline-offset-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Cancel
               </button>

@@ -203,11 +203,11 @@ export default function ColorPicker(props: {
 
   return (
     <div class="flex flex-col items-start gap-1.5">
-      <span class="font-body text-text-muted text-[0.68rem] tracking-[0.08em] uppercase">
+      <span class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
         {props.label}
       </span>
       <Show when={props.hint}>
-        <span class="font-body text-text-muted -mt-1 text-[0.68rem] italic">{props.hint}</span>
+        <span class="font-body text-text-muted text-osn-xs -mt-1 italic">{props.hint}</span>
       </Show>
       <div class="flex items-center gap-2">
         <Popover gutter={8} placement="bottom-start">
@@ -221,11 +221,9 @@ export default function ColorPicker(props: {
             />
             <Show
               when={props.value}
-              fallback={
-                <span class="font-body text-text-muted text-[0.78rem] italic">Default</span>
-              }
+              fallback={<span class="font-body text-text-muted text-osn-sm italic">Default</span>}
             >
-              <span class="font-body text-text text-[0.78rem] tracking-[0.04em] uppercase tabular-nums">
+              <span class="font-body text-text text-osn-sm tracking-osn-wide uppercase tabular-nums">
                 {toHex(display())}
               </span>
             </Show>
@@ -265,7 +263,7 @@ export default function ColorPicker(props: {
               <div class="flex flex-col gap-1">
                 <label
                   for={hexId}
-                  class="font-body text-text-muted text-[0.66rem] tracking-[0.1em] uppercase"
+                  class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase"
                 >
                   Hex
                 </label>
@@ -292,7 +290,7 @@ export default function ColorPicker(props: {
                     <span
                       id={hexNoteId}
                       role="status"
-                      class="font-body text-text-muted text-[0.7rem]"
+                      class="font-body text-text-muted text-osn-xs"
                     >
                       Needs 6 digits — kept {kept()}
                     </span>
@@ -304,7 +302,7 @@ export default function ColorPicker(props: {
                 <button
                   type="button"
                   onClick={() => props.onChange(null)}
-                  class="font-body text-text-muted hover:text-text self-start text-[0.72rem] underline-offset-4 hover:underline"
+                  class="font-body text-text-muted hover:text-text text-osn-xs self-start underline-offset-4 hover:underline"
                 >
                   Use default
                 </button>
@@ -317,7 +315,7 @@ export default function ColorPicker(props: {
           <button
             type="button"
             onClick={() => props.onChange(null)}
-            class="font-body text-text-muted text-[0.72rem] underline-offset-4 hover:underline"
+            class="font-body text-text-muted text-osn-xs underline-offset-4 hover:underline"
           >
             Use default
           </button>

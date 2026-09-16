@@ -38,8 +38,8 @@ interface WeddingProfile {
 /** Kept for the two blocks that are NOT a control: the read-only invite link,
  *  and the standing notes beside a DatePicker (which draws its own label). Every
  *  real input on this panel goes through `Field`. */
-const labelClass = "font-body text-text-muted text-[0.72rem] tracking-[0.1em] uppercase";
-const hintClass = "font-body text-text-muted text-[0.75rem] leading-snug";
+const labelClass = "font-body text-text-muted text-osn-xs tracking-osn-wider uppercase";
+const hintClass = "font-body text-text-muted text-osn-sm leading-snug";
 
 /** The RSVP-by half of the settings PUT body — on its own it is the whole patch
  *  an editor co-host may send. */
@@ -324,7 +324,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 
             <div class="flex flex-col gap-1.5">
               <span class={labelClass}>Invite link</span>
-              <p class="font-body text-text border-border bg-bg/50 rounded-sm border px-3 py-2 text-[0.95rem] opacity-70">
+              <p class="font-body text-text border-border bg-bg/50 text-osn-base rounded-sm border px-3 py-2 opacity-70">
                 {slug()}
               </p>
               <span class={hintClass}>

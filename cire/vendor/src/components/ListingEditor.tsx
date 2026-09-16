@@ -172,7 +172,7 @@ export default function ListingEditor(props: ListingEditorProps) {
       <div class="flex items-start justify-between gap-4">
         <div class="flex min-w-0 flex-col gap-0.5">
           <CardEyebrow>Directory listing</CardEyebrow>
-          <h2 class="font-display text-text text-[1.4rem] leading-tight font-light">
+          <h2 class="font-display text-text text-osn-lg leading-tight font-light">
             {props.orgName}
           </h2>
         </div>

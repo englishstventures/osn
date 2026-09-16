@@ -438,10 +438,10 @@ export function RsvpModal(props: RsvpModalProps) {
       // add its own bottom padding underneath it.
       flushBottom
     >
-      <p class="font-body text-gold-ink mb-3 text-[0.72rem] tracking-[0.2em] uppercase">Respond</p>
+      <p class="font-body text-gold-ink text-osn-xs tracking-osn-widest mb-3 uppercase">Respond</p>
       <h3
         id={titleId}
-        class="font-display text-text text-[1.6rem] font-light italic"
+        class="font-display text-text text-osn-xl font-light italic"
         classList={{
           "mb-6": !props.preview && !props.closed,
           "mb-3": props.preview || props.closed,
@@ -452,7 +452,7 @@ export function RsvpModal(props: RsvpModalProps) {
 
       <Show when={props.closed}>
         <p
-          class="border-border bg-surface-raised text-text-muted mb-6 rounded-sm border px-3.5 py-2.5 text-[0.74rem] leading-relaxed"
+          class="border-border bg-surface-raised text-text-muted text-osn-xs mb-6 rounded-sm border px-3.5 py-2.5 leading-relaxed"
           role="status"
         >
           {props.closedOn ? `RSVPs closed on ${props.closedOn}.` : "RSVPs have closed."} This is
@@ -463,7 +463,7 @@ export function RsvpModal(props: RsvpModalProps) {
 
       <Show when={props.preview}>
         <p
-          class="border-gold/40 bg-gold/5 text-gold-ink mb-6 rounded-sm border px-3.5 py-2.5 text-[0.74rem] leading-relaxed"
+          class="border-gold/40 bg-gold/5 text-gold-ink text-osn-xs mb-6 rounded-sm border px-3.5 py-2.5 leading-relaxed"
           role="status"
         >
           Preview — try the RSVP as a guest would. Nothing you send here is saved.
@@ -482,14 +482,14 @@ export function RsvpModal(props: RsvpModalProps) {
               // padding puts the first control ~25px under the border — level
               // with the 20px inset on the other three sides.
               <fieldset class="border-border m-0 rounded-sm border px-5 pt-0 pb-5">
-                <legend class="font-display text-text mb-3 text-[1.1rem] font-normal italic">
+                <legend class="font-display text-text text-osn-md mb-3 font-normal italic">
                   {member.firstName} {member.lastName}
                 </legend>
 
                 <div class="flex gap-2">
                   <button
                     type="button"
-                    class="font-body flex-1 cursor-pointer rounded-sm border px-3 py-2.5 text-[0.82rem] tracking-[0.06em] uppercase transition-colors duration-200"
+                    class="font-body text-osn-sm tracking-osn-wide flex-1 cursor-pointer rounded-sm border px-3 py-2.5 uppercase transition-colors duration-200"
                     classList={{
                       "border-gold text-gold-ink bg-gold/8":
                         responses()[guestId]?.attending === "attending",
@@ -504,7 +504,7 @@ export function RsvpModal(props: RsvpModalProps) {
                   </button>
                   <button
                     type="button"
-                    class="font-body flex-1 cursor-pointer rounded-sm border px-3 py-2.5 text-[0.82rem] tracking-[0.06em] uppercase transition-colors duration-200"
+                    class="font-body text-osn-sm tracking-osn-wide flex-1 cursor-pointer rounded-sm border px-3 py-2.5 uppercase transition-colors duration-200"
                     classList={{
                       "border-gold text-gold-ink bg-gold/8":
                         responses()[guestId]?.attending === "declined",
@@ -520,7 +520,7 @@ export function RsvpModal(props: RsvpModalProps) {
                 </div>
 
                 <Show when={responses()[guestId]?.attending === "attending"}>
-                  <label class="font-body text-text-muted mt-3 block text-[0.78rem] tracking-[0.06em] uppercase">
+                  <label class="font-body text-text-muted text-osn-sm tracking-osn-wide mt-3 block uppercase">
                     Dietary requirements
                     <input
                       type="text"
@@ -528,7 +528,7 @@ export function RsvpModal(props: RsvpModalProps) {
                       // utilities layer and would beat the base-layer
                       // `:focus-visible` ring, leaving a border tint as the
                       // only focus cue on the invite's main data-entry field.
-                      class="border-border font-body text-text placeholder:text-text-muted focus:border-gold mt-1.5 block w-full rounded-sm border bg-transparent px-3 py-2.5 text-base transition-colors duration-200 sm:text-[0.9rem]"
+                      class="border-border font-body text-text placeholder:text-text-muted focus:border-gold sm:text-osn-base mt-1.5 block w-full rounded-sm border bg-transparent px-3 py-2.5 text-base transition-colors duration-200"
                       placeholder="e.g. Vegetarian, no nuts"
                       value={responses()[guestId]?.dietary ?? ""}
                       onInput={(e) => setDietary(guestId, e.currentTarget.value)}
@@ -541,7 +541,7 @@ export function RsvpModal(props: RsvpModalProps) {
                       guest has actually entered dietary text (special-category
                       data). See cire-guest-data DPIA → C-H2. */}
                   <Show when={(responses()[guestId]?.dietary.trim().length ?? 0) > 0}>
-                    <label class="font-body text-text-muted mt-3 flex items-start gap-2.5 text-[0.78rem] leading-relaxed normal-case">
+                    <label class="font-body text-text-muted text-osn-sm mt-3 flex items-start gap-2.5 leading-relaxed normal-case">
                       <input
                         type="checkbox"
                         class="accent-gold mt-0.5 h-4 w-4 shrink-0 cursor-pointer"
@@ -571,7 +571,7 @@ export function RsvpModal(props: RsvpModalProps) {
         </For>
 
         <Show when={error()}>
-          <p class="font-body text-error py-1 text-[0.82rem]" role="alert">
+          <p class="font-body text-error text-osn-sm py-1" role="alert">
             {error()}
           </p>
         </Show>
@@ -598,7 +598,7 @@ export function RsvpModal(props: RsvpModalProps) {
         <div class="border-border bg-surface sticky bottom-0 -mx-6 flex gap-3 border-t px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-4">
           <button
             type="button"
-            class="border-border font-body text-text-muted hover:border-gold-dim hover:text-text flex-1 cursor-pointer rounded-sm border bg-transparent px-4 py-3 text-[0.82rem] tracking-[0.1em] uppercase transition-colors duration-200 disabled:opacity-40"
+            class="border-border font-body text-text-muted hover:border-gold-dim hover:text-text text-osn-sm tracking-osn-wider flex-1 cursor-pointer rounded-sm border bg-transparent px-4 py-3 uppercase transition-colors duration-200 disabled:opacity-40"
             ref={dismissRef}
             onClick={() => props.onClose()}
             // Nothing left to cancel once the reply is in and the sheet is
@@ -640,7 +640,7 @@ export function RsvpModal(props: RsvpModalProps) {
                 keyed on `loading()` instead, which is the state that earns it. */}
             <button
               type="submit"
-              class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg disabled:hover:text-gold-ink flex-1 rounded-sm border bg-transparent px-4 py-3 text-[0.82rem] tracking-[0.1em] uppercase transition-colors duration-200 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+              class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg disabled:hover:text-gold-ink text-osn-sm tracking-osn-wider flex-1 rounded-sm border bg-transparent px-4 py-3 uppercase transition-colors duration-200 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               classList={{
                 "opacity-40": loading(),
                 "cursor-pointer": !saved(),

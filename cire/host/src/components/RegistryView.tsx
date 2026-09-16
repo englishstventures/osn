@@ -616,29 +616,29 @@ export default function RegistryView(props: RegistryViewProps) {
 
         <Show
           when={items().length > 0}
-          fallback={<p class="text-text-muted text-[0.85rem] italic">No gifts on the list yet.</p>}
+          fallback={<p class="text-text-muted text-osn-sm italic">No gifts on the list yet.</p>}
         >
           <ul class="flex flex-col gap-1">
             <For each={items()}>
               {(item, i) => (
                 <li class="border-border bg-surface/10 flex flex-col gap-2 rounded-sm border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-3">
-                    <span class="text-text min-w-[10rem] flex-1 text-[0.9rem] font-medium">
+                    <span class="text-text text-osn-base min-w-[10rem] flex-1 font-medium">
                       {item.title}
                     </span>
                     <Show when={item.category}>
-                      <span class="bg-surface/60 text-text-muted rounded-full px-2 py-0.5 text-[0.72rem]">
+                      <span class="bg-surface/60 text-text-muted text-osn-xs rounded-full px-2 py-0.5">
                         {item.category}
                       </span>
                     </Show>
                     <Show when={item.priceMinor != null}>
-                      <span class="text-text text-[0.82rem]">
+                      <span class="text-text text-osn-sm">
                         {formatMinor(item.priceMinor!, currency())}
                       </span>
                     </Show>
                     {/* Claimed-vs-wanted, so the couple can see what is still
                         open without reading the gift log. */}
-                    <span class="text-text-muted text-[0.78rem]">
+                    <span class="text-text-muted text-osn-sm">
                       {item.quantityClaimed} of {item.quantityWanted} claimed
                       {stillWanted(item) === 0 ? " · all taken" : ""}
                     </span>
@@ -658,7 +658,7 @@ export default function RegistryView(props: RegistryViewProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`Open the shop page for ${item.title}`}
-                        class="text-gold-dim hover:text-gold text-[0.78rem] underline-offset-2 hover:underline"
+                        class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
                       >
                         Link
                       </a>
@@ -688,7 +688,7 @@ export default function RegistryView(props: RegistryViewProps) {
                           type="button"
                           aria-label={`Edit ${item.title}`}
                           onClick={() => (editingId() === item.id ? closeEdit() : openEdit(item))}
-                          class="text-gold-dim hover:text-gold text-[0.78rem] underline-offset-2 hover:underline"
+                          class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
                         >
                           Edit
                         </button>
@@ -705,7 +705,7 @@ export default function RegistryView(props: RegistryViewProps) {
                   </div>
 
                   <Show when={item.description}>
-                    <p class="text-text-muted text-[0.82rem]">{item.description}</p>
+                    <p class="text-text-muted text-osn-sm">{item.description}</p>
                   </Show>
 
                   {/* Inline editor */}
@@ -821,19 +821,19 @@ export default function RegistryView(props: RegistryViewProps) {
         <Show when={giftSummary()}>
           {(summary) => (
             <div class="border-border bg-surface/20 flex flex-col gap-2 rounded-sm border p-4">
-              <span class="text-gold-dim font-body text-[0.7rem] tracking-[0.18em] uppercase">
+              <span class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
                 Your record of gifts
               </span>
-              <p class="text-text-muted text-[0.8rem]">
+              <p class="text-text-muted text-osn-sm">
                 On {summaryDate(summary().sweptOn)}, a year after your wedding, we deleted your
                 guests' details — and the gifts went with them. Who gave what, and the notes they
                 wrote, are gone. These totals are what we kept.
               </p>
               <Show when={summary().claims.reserved + summary().claims.purchased > 0}>
-                <span class="text-text text-[1.05rem]">
+                <span class="text-text text-osn-md">
                   {plural(summary().claims.reserved + summary().claims.purchased, "gift", "gifts")}{" "}
                   from your list
-                  <span class="text-text-muted text-[0.85rem]">
+                  <span class="text-text-muted text-osn-sm">
                     {" "}
                     · {summary().claims.purchased} marked bought
                   </span>
@@ -843,19 +843,19 @@ export default function RegistryView(props: RegistryViewProps) {
                 {/* Per currency, side by side, never added together: a total
                     that re-values itself is not a record of anything, and
                     there is nothing left here to re-derive a rate from. */}
-                <span class="text-text text-[1.05rem]">
+                <span class="text-text text-osn-md">
                   {summary()
                     .contributions.totals.map((total) =>
                       formatMinor(total.amountMinor, total.currency),
                     )
                     .join(" · ")}
-                  <span class="text-text-muted text-[0.85rem]">
+                  <span class="text-text-muted text-osn-sm">
                     {" "}
                     · {plural(summary().contributions.count, "cash gift", "cash gifts")}
                   </span>
                 </span>
               </Show>
-              <span class="text-text-muted text-[0.75rem]">
+              <span class="text-text-muted text-osn-sm">
                 Gifts arrived between {summaryDate(summary().firstGiftOn)} and{" "}
                 {summaryDate(summary().lastGiftOn)}. Each currency is totalled as it was given.
               </span>
@@ -870,16 +870,16 @@ export default function RegistryView(props: RegistryViewProps) {
               }
             >
               <div class="border-border bg-surface/20 flex flex-col gap-1 rounded-sm border p-4">
-                <span class="text-gold-dim font-body text-[0.7rem] tracking-[0.18em] uppercase">
+                <span class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
                   Cash gifts
                 </span>
-                <span class="text-text text-[1.05rem]">
+                <span class="text-text text-osn-md">
                   {formatMinor(snap().contributionsPrimaryMinor, snap().currency)}
                 </span>
                 {/* A gift converted to the couple's currency was converted at the
                     rate on the day it arrived, so this is a sum of historical
                     conversions, not a live valuation. Labelled, never exact. */}
-                <span class="text-text-muted text-[0.75rem]">
+                <span class="text-text-muted text-osn-sm">
                   Approximate — a gift given in another currency is counted at the rate on the day
                   it arrived.
                 </span>
@@ -887,7 +887,7 @@ export default function RegistryView(props: RegistryViewProps) {
                     amount of anything, so gifts left in their own currency are
                     counted here instead of being folded into the figure above. */}
                 <Show when={snap().contributionsOtherCurrencyCount > 0}>
-                  <span class="text-text-muted text-[0.75rem]">
+                  <span class="text-text-muted text-osn-sm">
                     {snap().contributionsOtherCurrencyCount === 1
                       ? "One more gift is held in another currency and is not in this total."
                       : `${snap().contributionsOtherCurrencyCount} more gifts are held in other currencies and are not in this total.`}{" "}
@@ -922,7 +922,7 @@ export default function RegistryView(props: RegistryViewProps) {
             // above has just said so, and "No gifts yet." underneath it would
             // flatly contradict it.
             <Show when={!giftSummary()}>
-              <p class="text-text-muted text-[0.85rem] italic">No gifts yet.</p>
+              <p class="text-text-muted text-osn-sm italic">No gifts yet.</p>
             </Show>
           }
         >
@@ -938,28 +938,28 @@ export default function RegistryView(props: RegistryViewProps) {
                   <li class="border-border bg-surface/10 flex flex-col gap-1 rounded-sm border px-3 py-2">
                     <div class="flex flex-wrap items-center gap-3">
                       {/* Guest-authored — a text node, never markup (S-L3). */}
-                      <span class="text-text min-w-[10rem] flex-1 text-[0.9rem] font-medium">
+                      <span class="text-text text-osn-base min-w-[10rem] flex-1 font-medium">
                         {giftFrom(gift)}
                       </span>
-                      <span class="text-text-muted text-[0.82rem]">
+                      <span class="text-text-muted text-osn-sm">
                         {gift.itemTitle ?? "Cash gift"}
                       </span>
                       <Show when={(gift.quantity ?? 1) > 1}>
-                        <span class="text-text-muted text-[0.78rem]">×{gift.quantity}</span>
+                        <span class="text-text-muted text-osn-sm">×{gift.quantity}</span>
                       </Show>
                       <Show when={gift.amountMinor != null}>
                         <span class="flex flex-col items-end">
-                          <span class="text-text text-[0.85rem]">{money.given}</span>
+                          <span class="text-text text-osn-sm">{money.given}</span>
                           <Show when={money.primary}>
-                            <span class="text-text-muted text-[0.72rem]">≈ {money.primary}</span>
+                            <span class="text-text-muted text-osn-xs">≈ {money.primary}</span>
                           </Show>
                         </span>
                       </Show>
                       <span
                         class={
                           status.gone
-                            ? "bg-error/10 text-error rounded-full px-2 py-0.5 text-[0.72rem]"
-                            : "bg-surface/60 text-text-muted rounded-full px-2 py-0.5 text-[0.72rem]"
+                            ? "bg-error/10 text-error text-osn-xs rounded-full px-2 py-0.5"
+                            : "bg-surface/60 text-text-muted text-osn-xs rounded-full px-2 py-0.5"
                         }
                       >
                         {status.label}
@@ -968,7 +968,7 @@ export default function RegistryView(props: RegistryViewProps) {
                         when={props.canEdit}
                         fallback={
                           <Show when={gift.thankedAt != null}>
-                            <span class="text-text-muted text-[0.78rem]">Thanked</span>
+                            <span class="text-text-muted text-osn-sm">Thanked</span>
                           </Show>
                         }
                       >
@@ -977,7 +977,7 @@ export default function RegistryView(props: RegistryViewProps) {
                           aria-pressed={gift.thankedAt != null}
                           aria-label={`Mark thanked: ${giftFrom(gift)}`}
                           onClick={() => toggleThanked(gift)}
-                          class="text-gold-dim hover:text-gold text-[0.78rem] underline-offset-2 hover:underline"
+                          class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
                         >
                           {gift.thankedAt != null ? "Thanked" : "Mark thanked"}
                         </button>
@@ -986,13 +986,13 @@ export default function RegistryView(props: RegistryViewProps) {
                     {/* A refunded gift stays in the log and stays out of the
                         total, which is two facts a one-word pill cannot carry. */}
                     <Show when={gift.kind === "contribution" && gift.status === "refunded"}>
-                      <p class="text-text-muted text-[0.78rem]">
+                      <p class="text-text-muted text-osn-sm">
                         This one went back to the guest, so it is not counted in the total above.
                       </p>
                     </Show>
                     <Show when={gift.note}>
                       {/* Guest-authored — a text node, never markup (S-L3). */}
-                      <p class="text-text-muted text-[0.82rem] italic">{gift.note}</p>
+                      <p class="text-text-muted text-osn-sm italic">{gift.note}</p>
                     </Show>
                   </li>
                 );

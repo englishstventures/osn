@@ -196,7 +196,7 @@ export default function ChangeHistory(props: { weddingId: string }) {
 
   return (
     <details class="border-border bg-bg/30 group/history rounded-sm border" onToggle={onToggle}>
-      <summary class="font-body text-text hover:text-gold flex cursor-pointer items-center gap-2 px-4 py-3 text-[0.88rem] transition select-none [&::-webkit-details-marker]:hidden">
+      <summary class="font-body text-text hover:text-gold text-osn-base flex cursor-pointer items-center gap-2 px-4 py-3 transition select-none [&::-webkit-details-marker]:hidden">
         <span
           class="text-gold inline-block transition-transform group-open/history:rotate-90"
           aria-hidden
@@ -212,13 +212,13 @@ export default function ChangeHistory(props: { weddingId: string }) {
         </Show>
 
         <Show when={loading() && entries() === null}>
-          <p class="text-text-muted text-[0.85rem]" aria-busy="true">
+          <p class="text-text-muted text-osn-sm" aria-busy="true">
             Loading…
           </p>
         </Show>
 
         <Show when={loaded() && (entries()?.length ?? 0) === 0}>
-          <p class="text-text-muted text-[0.85rem]">No changes yet.</p>
+          <p class="text-text-muted text-osn-sm">No changes yet.</p>
         </Show>
 
         <Show when={(entries()?.length ?? 0) > 0}>
@@ -232,15 +232,15 @@ export default function ChangeHistory(props: { weddingId: string }) {
                 return (
                   <li class="border-border bg-surface/30 flex flex-col gap-2 rounded-sm border p-4 @lg/panel:flex-row @lg/panel:items-center @lg/panel:justify-between">
                     <div class="flex flex-col gap-1">
-                      <span class="font-body text-gold text-[0.62rem] tracking-[0.18em] uppercase">
+                      <span class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
                         {KIND_LABEL[entry.kind] ?? "Change"}
                       </span>
-                      <span class="font-body text-text text-[0.88rem]">
+                      <span class="font-body text-text text-osn-base">
                         {formatDate(entry.uploadedAt)}
                       </span>
-                      <span class="text-text-muted text-[0.82rem]">{summarise(entry.summary)}</span>
+                      <span class="text-text-muted text-osn-sm">{summarise(entry.summary)}</span>
                       <span
-                        class="font-body text-[0.66rem] tracking-[0.18em] uppercase"
+                        class="font-body text-osn-xs tracking-osn-widest uppercase"
                         classList={{
                           "text-gold": entry.status === "applied",
                           "text-text-muted": entry.status !== "applied",
@@ -256,7 +256,7 @@ export default function ChangeHistory(props: { weddingId: string }) {
                         onClick={() => void handleRevert(entry)}
                         disabled={revertingId() !== null}
                         aria-busy={reverting()}
-                        class="border-gold/40 font-body text-gold hover:border-gold hover:bg-gold/10 shrink-0 self-start rounded-sm border px-4 py-2 text-[0.78rem] tracking-[0.1em] uppercase transition disabled:opacity-40 @lg/panel:self-auto"
+                        class="border-gold/40 font-body text-gold hover:border-gold hover:bg-gold/10 text-osn-sm tracking-osn-wider shrink-0 self-start rounded-sm border px-4 py-2 uppercase transition disabled:opacity-40 @lg/panel:self-auto"
                       >
                         {reverting() ? "Reverting…" : "Revert"}
                       </button>
@@ -264,7 +264,7 @@ export default function ChangeHistory(props: { weddingId: string }) {
 
                     <Show when={agedOut()}>
                       <span
-                        class="font-body text-text-muted shrink-0 self-start text-[0.72rem] italic @lg/panel:max-w-[12rem] @lg/panel:self-auto @lg/panel:text-right"
+                        class="font-body text-text-muted text-osn-xs shrink-0 self-start italic @lg/panel:max-w-[12rem] @lg/panel:self-auto @lg/panel:text-right"
                         title="Only the ten most recent changes keep a restore point."
                       >
                         Restore point no longer available

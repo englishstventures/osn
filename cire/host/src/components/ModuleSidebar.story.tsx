@@ -69,7 +69,7 @@ function Shell(props: { width: string; wide?: boolean; children: JSX.Element }) 
  *  having to find this file. */
 function Guidance(props: { children: JSX.Element }) {
   return (
-    <p class="font-body text-text-muted max-w-prose text-[0.8rem] leading-relaxed">
+    <p class="font-body text-text-muted text-osn-sm max-w-prose leading-relaxed">
       {props.children}
     </p>
   );
@@ -117,7 +117,7 @@ export const Rail = {
             entitlements={entitlementsFrom(args)}
             onSelect={setActive}
           />
-          <div class="border-border text-text-muted font-body flex min-h-64 flex-1 items-center justify-center rounded-sm border border-dashed text-[0.8rem] tracking-[0.08em] uppercase">
+          <div class="border-border text-text-muted font-body text-osn-sm tracking-osn-wider flex min-h-64 flex-1 items-center justify-center rounded-sm border border-dashed uppercase">
             {active()}
           </div>
         </Shell>

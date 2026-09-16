@@ -410,7 +410,7 @@ export default function EventsEditor(props: { weddingId: string }) {
         <Portal>
           <div class="border-border bg-surface/95 fixed inset-x-0 bottom-0 z-40 border-t backdrop-blur">
             <div class="page-frame flex flex-wrap items-center justify-between gap-3 py-3">
-              <span class="font-body text-text-muted text-[0.82rem]">
+              <span class="font-body text-text-muted text-osn-sm">
                 <Show when={hasErrors()} fallback="You have unsaved changes.">
                   <span class="text-error">
                     Fix {store.errors().length} {store.errors().length === 1 ? "error" : "errors"}{" "}
@@ -453,12 +453,12 @@ export default function EventsEditor(props: { weddingId: string }) {
               </div>
             </div>
             <Show when={store.warnings().length > 0 && !hasErrors()}>
-              <p class="border-gold/20 bg-gold/5 text-gold-dim page-frame border-t py-2 text-[0.82rem]">
+              <p class="border-gold/20 bg-gold/5 text-gold-dim page-frame text-osn-sm border-t py-2">
                 {store.warnings().join(" ")}
               </p>
             </Show>
             <Show when={saveError()}>
-              <p class="border-error/20 bg-error/5 text-error page-frame border-t py-2 text-[0.82rem]">
+              <p class="border-error/20 bg-error/5 text-error page-frame text-osn-sm border-t py-2">
                 {saveError()}
               </p>
             </Show>
@@ -493,7 +493,7 @@ function EventRowCard(props: {
   const moveButton = (delta: -1 | 1) => (
     <button
       {...props.sortableItem.moveProps(delta)}
-      class="border-border bg-surface font-body text-text-muted hover:text-gold sr-only rounded-sm border px-2 py-1 text-[0.7rem] tracking-[0.1em] uppercase focus:not-sr-only focus:relative focus:z-20"
+      class="border-border bg-surface font-body text-text-muted hover:text-gold text-osn-xs tracking-osn-wider sr-only rounded-sm border px-2 py-1 uppercase focus:not-sr-only focus:relative focus:z-20"
     >
       {props.sortableItem.moveLabel(delta)}
     </button>
@@ -533,7 +533,7 @@ function EventRowCard(props: {
           {...props.sortableItem.gripProps()}
           // `py-2` is not decoration: it brings the handle to the WCAG 2.5.8
           // 24px minimum target, on the row's only re-order affordance.
-          class="text-text-muted hover:text-gold focus-visible:text-gold cursor-grab touch-none px-1 py-2 text-[1.1rem] leading-none active:cursor-grabbing"
+          class="text-text-muted hover:text-gold focus-visible:text-gold text-osn-md cursor-grab touch-none px-1 py-2 leading-none active:cursor-grabbing"
         >
           ⠿
         </button>
@@ -555,23 +555,23 @@ function EventRowCard(props: {
       </div>
 
       <div class="min-w-0 flex-1">
-        <p class="font-display text-text truncate text-[1.15rem]">
+        <p class="font-display text-text text-osn-md truncate">
           {props.event.name || <span class="text-text-muted not-italic">{UNNAMED_EVENT}</span>}
         </p>
         {/* The stored value is never printed raw: it carries a derived UTC
             offset, and showing that next to the zone named right after it says
             the same fact twice — once in a form the organiser can't edit. */}
-        <p class="font-body text-text-muted truncate text-[0.8rem]">
+        <p class="font-body text-text-muted text-osn-sm truncate">
           <Show when={props.event.startAt} fallback="No start time set">
             {formatEventWhen(props.event.startAt, props.event.endAt, props.event.timezone)}
           </Show>
           {props.event.timezone ? ` · ${props.event.timezone}` : ""}
         </p>
         <Show when={props.hasError}>
-          <p class="text-error text-[0.76rem]">This event has errors — open it to fix them.</p>
+          <p class="text-error text-osn-sm">This event has errors — open it to fix them.</p>
         </Show>
         <Show when={props.event.id === null}>
-          <span class="font-body text-gold/70 border-gold/30 mt-1 inline-block rounded-sm border px-1.5 py-0.5 text-[0.6rem] tracking-[0.14em] uppercase">
+          <span class="font-body text-gold/70 border-gold/30 text-osn-xs tracking-osn-widest mt-1 inline-block rounded-sm border px-1.5 py-0.5 uppercase">
             New — saved on apply
           </span>
         </Show>
@@ -592,7 +592,7 @@ function EventRowCard(props: {
 /** The palette group's heading. Not a `Field` label: the group holds a list of
  *  swatch rows rather than one control, so there is nothing for a `for` to point
  *  at. Kept in step with `Field`'s own label by hand. */
-const fieldLabel = "font-body text-text-muted text-[0.72rem] tracking-[0.1em] uppercase";
+const fieldLabel = "font-body text-text-muted text-osn-xs tracking-osn-wider uppercase";
 
 /** The add/edit drawer — a right-hand panel with the full event form. Every
  *  field writes straight through to the draft (no local staging), so undo/
@@ -699,12 +699,12 @@ function EventDrawer(props: {
           onClick={(e) => e.stopPropagation()}
         >
           <div class="mb-6 flex items-center justify-between">
-            <h2 class="font-display text-gold-dim text-[1.4rem]">Event details</h2>
+            <h2 class="font-display text-gold-dim text-osn-lg">Event details</h2>
             <button
               type="button"
               onClick={props.onClose}
               aria-label="Close"
-              class="text-text-muted hover:text-text text-[1.2rem]"
+              class="text-text-muted hover:text-text text-osn-lg"
             >
               ✕
             </button>
@@ -867,7 +867,7 @@ function EventDrawer(props: {
                       type="button"
                       onClick={() => removeSwatch(i())}
                       aria-label={`Remove swatch ${i() + 1}`}
-                      class="font-body text-text-muted hover:text-error text-[0.72rem] tracking-[0.1em] uppercase"
+                      class="font-body text-text-muted hover:text-error text-osn-xs tracking-osn-wider uppercase"
                     >
                       Remove
                     </button>

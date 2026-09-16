@@ -62,7 +62,7 @@ export function DeviceToggle(props: {
       type="button"
       aria-pressed={props.value === device}
       onClick={() => props.onChange(device)}
-      class="border-border hover:border-gold aria-pressed:border-gold aria-pressed:text-gold font-body text-text-muted rounded-sm border px-2 py-1 text-[0.68rem] tracking-[0.08em] uppercase transition"
+      class="border-border hover:border-gold aria-pressed:border-gold aria-pressed:text-gold font-body text-text-muted text-osn-xs tracking-osn-wider rounded-sm border px-2 py-1 uppercase transition"
     >
       {label}
     </button>
@@ -236,7 +236,7 @@ export function HeroPreview(props: {
   return (
     <div class="flex flex-col gap-2 @4xl/builder:hidden">
       <span class="flex items-center justify-between gap-2">
-        <span class="font-body text-text-muted text-[0.8rem]">Live preview</span>
+        <span class="font-body text-text-muted text-osn-sm">Live preview</span>
         <Show when={props.imageUrl}>
           <DeviceToggle value={device()} onChange={setDevice} />
         </Show>
@@ -404,7 +404,7 @@ export function SectionSample(props: {
         <Show when={props.eyebrow}>
           <span
             style={{ color: "var(--color-gold)" }}
-            class="text-[0.6rem] tracking-[0.18em] uppercase opacity-80"
+            class="text-osn-xs tracking-osn-widest uppercase opacity-80"
           >
             {props.eyebrow}
           </span>
@@ -440,7 +440,7 @@ export function SectionSample(props: {
           inherited from the wrapper above. */}
         <span
           style={{ color: "var(--color-text-muted)" }}
-          class="max-w-full text-[0.62rem] break-words"
+          class="text-osn-xs max-w-full break-words"
         >
           {props.body}
         </span>
@@ -453,14 +453,14 @@ export function SectionSample(props: {
                 "border-color": "var(--color-border)",
               }}
             >
-              <span class="text-[0.68rem]" style={{ color: "var(--color-text)" }}>
+              <span class="text-osn-xs" style={{ color: "var(--color-text)" }}>
                 {card().name}
               </span>
-              <span class="text-[0.6rem]" style={{ color: "var(--color-text-muted)" }}>
+              <span class="text-osn-xs" style={{ color: "var(--color-text-muted)" }}>
                 {card().meta}
               </span>
               <span
-                class="w-fit rounded-sm px-1.5 py-0.5 text-[0.58rem]"
+                class="text-osn-xs w-fit rounded-sm px-1.5 py-0.5"
                 style={{ "background-color": "var(--color-gold)", color: "var(--color-bg)" }}
               >
                 Respond
@@ -500,7 +500,7 @@ export function SectionPreview(props: {
 }) {
   return (
     <div class="flex flex-col gap-1.5 @4xl/builder:hidden">
-      <span class="font-body text-text-muted text-[0.8rem]">Live preview</span>
+      <span class="font-body text-text-muted text-osn-sm">Live preview</span>
       <figure
         aria-label={`${props.label} preview`}
         style={{ ...props.tokens, "border-color": "var(--color-border)" }}
@@ -521,7 +521,7 @@ export function SectionPreview(props: {
         />
         <figcaption
           style={{ color: "var(--color-text-muted)", "background-color": props.surface }}
-          class="font-body px-4 pb-2 text-center text-[0.62rem] tracking-[0.08em] uppercase"
+          class="font-body text-osn-xs tracking-osn-wider px-4 pb-2 text-center uppercase"
         >
           {props.label}
         </figcaption>

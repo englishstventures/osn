@@ -29,14 +29,14 @@ export function FilterRail(props: {
         {(cat) => (
           <button
             type="button"
-            class={`inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-medium transition-colors ${
+            class={`text-osn-sm inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 font-medium transition-colors ${
               props.active === cat.id
                 ? "border-foreground bg-foreground text-background"
                 : "border-border bg-card text-foreground hover:bg-secondary"
             }`}
             onClick={() => props.onSelect(cat.id)}
           >
-            <span class="text-[13px]">{cat.ico}</span>
+            <span class="text-osn-sm">{cat.ico}</span>
             {cat.label}
           </button>
         )}
@@ -44,7 +44,7 @@ export function FilterRail(props: {
       <span class="w-2 shrink-0" />
       <button
         type="button"
-        class={`inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-medium transition-colors ${
+        class={`text-osn-sm inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 font-medium transition-colors ${
           props.moreFiltersActive
             ? "border-foreground bg-foreground text-background"
             : "border-border bg-card text-muted-foreground hover:bg-secondary"

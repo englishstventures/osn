@@ -134,10 +134,10 @@ export function ConsentPreferences() {
         tabindex="-1"
         class="border-border bg-bg relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-lg border p-6 focus:outline-none sm:rounded-lg"
       >
-        <h2 id={titleId} class="font-display text-text text-[1.4rem] leading-tight font-light">
+        <h2 id={titleId} class="font-display text-text text-osn-lg leading-tight font-light">
           Your privacy choices
         </h2>
-        <p id={descriptionId} class="font-body text-text-muted mt-2 text-[0.82rem] leading-relaxed">
+        <p id={descriptionId} class="font-body text-text-muted text-osn-sm mt-2 leading-relaxed">
           Choose what this invite is allowed to load. You can change this at any time from the link
           in the footer of any page.
         </p>
@@ -150,7 +150,7 @@ export function ConsentPreferences() {
             happens when there is something to clear: a guest who never
             opened an event's details sheet loaded no embed, and reloading them
             would cost a full page load to clear nothing. */}
-        <p class="font-body text-text-muted/80 mt-1.5 text-[0.76rem] leading-relaxed">
+        <p class="font-body text-text-muted/80 text-osn-sm mt-1.5 leading-relaxed">
           Switching something off takes effect straight away. If content from that company already
           loaded during this visit, the page reloads to clear it.
         </p>
@@ -214,7 +214,7 @@ function CategoryRow(props: {
         <div class="min-w-0 flex-1">
           <label
             for={inputId}
-            class="font-body text-text flex items-center gap-2 text-[0.88rem] font-normal"
+            class="font-body text-text text-osn-base flex items-center gap-2 font-normal"
           >
             {props.title}
             <Show when={props.required}>
@@ -223,14 +223,10 @@ function CategoryRow(props: {
                   over a surface has no single ratio for the derivation to
                   enforce — `text-gold-ink/80` would have looked fixed without
                   being fixed. */}
-              <span class="text-gold-ink text-[0.62rem] tracking-[0.14em] uppercase">
-                Always on
-              </span>
+              <span class="text-gold-ink text-osn-xs tracking-osn-widest uppercase">Always on</span>
             </Show>
           </label>
-          <p class="font-body text-text-muted mt-1 text-[0.76rem] leading-relaxed">
-            {props.summary}
-          </p>
+          <p class="font-body text-text-muted text-osn-sm mt-1 leading-relaxed">{props.summary}</p>
 
           <Show when={gated().length > 0}>
             <VendorList label="This switch controls" vendors={gated()} />
@@ -248,13 +244,13 @@ function CategoryRow(props: {
 function VendorList(props: { label: string; vendors: readonly ConsentVendor[] }) {
   return (
     <div class="mt-2.5">
-      <p class="font-body text-text-muted/70 text-[0.66rem] tracking-[0.1em] uppercase">
+      <p class="font-body text-text-muted/70 text-osn-xs tracking-osn-wider uppercase">
         {props.label}
       </p>
       <ul class="mt-1 flex flex-col gap-1">
         <For each={props.vendors}>
           {(vendor) => (
-            <li class="font-body text-text-muted text-[0.74rem] leading-snug">
+            <li class="font-body text-text-muted text-osn-xs leading-snug">
               <span class="text-text/90">{vendor.name}</span>
               <Show when={vendor.transfer}>{(transfer) => <> — {transfer()}</>}</Show>
               <Show when={vendor.privacyUrl}>
@@ -287,8 +283,8 @@ function ChoiceButton(props: { primary?: boolean; onClick: () => void; children:
       onClick={props.onClick}
       class={
         props.primary
-          ? "border-gold bg-gold text-bg font-body hover:text-gold-ink focus-visible:ring-gold/60 rounded-sm border px-5 py-2 text-[0.74rem] tracking-[0.12em] uppercase transition-colors duration-200 hover:bg-transparent focus:outline-none focus-visible:ring-2"
-          : "border-border font-body text-text hover:border-gold hover:text-gold-ink focus-visible:ring-gold/60 rounded-sm border px-5 py-2 text-[0.74rem] tracking-[0.12em] uppercase transition-colors duration-200 focus:outline-none focus-visible:ring-2"
+          ? "border-gold bg-gold text-bg font-body hover:text-gold-ink focus-visible:ring-gold/60 text-osn-xs tracking-osn-wider rounded-sm border px-5 py-2 uppercase transition-colors duration-200 hover:bg-transparent focus:outline-none focus-visible:ring-2"
+          : "border-border font-body text-text hover:border-gold hover:text-gold-ink focus-visible:ring-gold/60 text-osn-xs tracking-osn-wider rounded-sm border px-5 py-2 uppercase transition-colors duration-200 focus:outline-none focus-visible:ring-2"
       }
     >
       {props.children}

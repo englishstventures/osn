@@ -41,7 +41,7 @@ export function CommsSummary(props: { eventId: string }) {
             {(blast) => (
               <li class="border-primary/40 border-l-2 pl-3 text-sm">
                 <p class="text-foreground break-words whitespace-pre-wrap">{blast.body}</p>
-                <p class="text-muted-foreground mt-0.5 text-[10px] tracking-wide uppercase">
+                <p class="text-muted-foreground text-osn-xs mt-0.5 tracking-wide uppercase">
                   {blast.channel} · {formatRelative(blast.createdAt)}
                 </p>
               </li>

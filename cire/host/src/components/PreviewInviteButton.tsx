@@ -95,9 +95,9 @@ export default function PreviewInviteButton(props: { weddingId: string }) {
       onClick={() => void preview()}
       disabled={loading()}
       aria-busy={loading()}
-      class="border-gold-dim font-body text-gold hover:bg-gold hover:text-bg hover:border-gold flex h-9 items-center justify-center gap-2 rounded-sm border bg-transparent px-2.5 text-[0.72rem] tracking-[0.12em] whitespace-nowrap uppercase transition-colors duration-(--dur-fast) ease-(--ease-out) disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent @2xl/frame:px-3.5"
+      class="border-gold-dim font-body text-gold hover:bg-gold hover:text-bg hover:border-gold text-osn-xs tracking-osn-wider flex h-9 items-center justify-center gap-2 rounded-sm border bg-transparent px-2.5 whitespace-nowrap uppercase transition-colors duration-(--dur-fast) ease-(--ease-out) disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent @2xl/frame:px-3.5"
     >
-      <span aria-hidden="true" class="text-[0.85rem] leading-none @2xl/frame:hidden">
+      <span aria-hidden="true" class="text-osn-sm leading-none @2xl/frame:hidden">
         ◎
       </span>
       <span class="sr-only @2xl/frame:not-sr-only">

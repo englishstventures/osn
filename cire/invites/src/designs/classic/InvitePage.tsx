@@ -425,10 +425,10 @@ export default function InvitePage(props: InvitePageProps) {
             }}
           >
             <div class="mx-auto max-w-[540px] text-center md:max-w-[640px]">
-              <p class="font-body text-gold-ink mb-3 text-[0.72rem] tracking-[0.2em] uppercase">
+              <p class="font-body text-gold-ink text-osn-xs tracking-osn-widest mb-3 uppercase">
                 {detailsEyebrow()}
               </p>
-              <h2 class="font-display text-text mb-5 text-[calc(clamp(2rem,5vw,3rem)*var(--invite-heading-scale,1))] leading-[1.15] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]">
+              <h2 class="font-display text-text leading-osn-none mb-5 text-[calc(clamp(2rem,5vw,3rem)*var(--invite-heading-scale,1))] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]">
                 {detailsHeading()}
               </h2>
               {/* The RSVP-by line. One line governs every card — a per-card
@@ -451,7 +451,7 @@ export default function InvitePage(props: InvitePageProps) {
                 {(notice) => (
                   <p
                     id={RSVP_NOTICE_ID}
-                    class="font-body mb-3 text-center text-[0.85rem]"
+                    class="font-body text-osn-sm mb-3 text-center"
                     classList={{ "text-text-muted": rsvpClosed(), "text-gold-ink": !rsvpClosed() }}
                     role="status"
                   >

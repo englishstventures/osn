@@ -374,7 +374,7 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
           {copy().exportLabel}
         </Button>
       </div>
-      <p class="font-body text-text-muted max-w-prose text-[0.82rem]">{copy().exportHint}</p>
+      <p class="font-body text-text-muted text-osn-sm max-w-prose">{copy().exportHint}</p>
 
       <CsvFormatHelp kind={props.kind} />
 
@@ -395,17 +395,17 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
                 accept=".csv,text/csv"
                 ref={fileInput}
                 onChange={(e) => selectFile(e.currentTarget.files?.[0] ?? null)}
-                class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-[0.82rem] file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5 file:text-[0.82rem]"
+                class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-osn-sm file:text-osn-sm file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5"
               />
             )}
           </Field>
           <Show when={file()}>
             <span class="flex items-center gap-2">
-              <span class="text-text-muted font-mono text-[0.72rem]">{file()?.name}</span>
+              <span class="text-text-muted text-osn-xs font-mono">{file()?.name}</span>
               <button
                 type="button"
                 onClick={clearFile}
-                class="font-body text-text-muted hover:text-gold text-[0.72rem] underline-offset-4 hover:underline"
+                class="font-body text-text-muted hover:text-gold text-osn-xs underline-offset-4 hover:underline"
               >
                 Remove {copy().fileName}
               </button>
@@ -419,7 +419,7 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
         <Show when={file()}>
           <p
             aria-live="polite"
-            class="border-border bg-bg/40 text-text-muted rounded-sm border p-3 text-[0.82rem]"
+            class="border-border bg-bg/40 text-text-muted text-osn-sm rounded-sm border p-3"
           >
             {copy().scopeHint}
           </p>
@@ -434,7 +434,7 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
               type="button"
               onClick={reset}
               disabled={busy()}
-              class="font-body text-text-muted text-[0.82rem] underline-offset-4 hover:underline disabled:opacity-40"
+              class="font-body text-text-muted text-osn-sm underline-offset-4 hover:underline disabled:opacity-40"
             >
               Reset
             </button>
@@ -451,7 +451,7 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
       <Show when={preview()}>
         {(p) => (
           <div class="border-border bg-bg/40 flex flex-col gap-4 rounded-sm border p-4">
-            <h3 class="font-display text-gold-ink text-[1.1rem]">Diff preview</h3>
+            <h3 class="font-display text-gold-ink text-osn-md">Diff preview</h3>
             {/* The reassurance under a destructive confirm is read off the
                 SERVER's echoed scope, not off what this panel believes it sent
                 (S-L2). Today they cannot disagree — one key goes out, and the API
@@ -463,7 +463,7 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
                 rather than reassuring about a half this change does manage. */}
             <Show
               when={p().scope !== undefined && p().scope !== props.kind}
-              fallback={<p class="text-text-muted text-[0.82rem]">{copy().scopeHint}</p>}
+              fallback={<p class="text-text-muted text-osn-sm">{copy().scopeHint}</p>}
             >
               <Notice tone="danger" alert>
                 This change covers more than your {copy().eyebrow.toLowerCase()} — the server
@@ -473,7 +473,7 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
             </Show>
             <PlanCounts plan={p().plan} />
             <Show when={p().plan.warnings.length > 0}>
-              <ul class="text-text-muted flex flex-col gap-1 text-[0.82rem]">
+              <ul class="text-text-muted text-osn-sm flex flex-col gap-1">
                 <For each={p().plan.warnings}>
                   {(w) => <li class="before:mr-2 before:content-['•']">{w}</li>}
                 </For>
@@ -488,9 +488,9 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
 
       <Show when={applied()}>
         {(s) => (
-          <div class="border-gold/30 bg-gold/5 text-text flex flex-col gap-2 rounded-sm border p-4 text-[0.88rem]">
-            <p class="font-display text-gold-ink text-[1.1rem]">Applied</p>
-            <p class="text-text-muted font-mono text-[0.72rem]">{s().importId}</p>
+          <div class="border-gold/30 bg-gold/5 text-text text-osn-base flex flex-col gap-2 rounded-sm border p-4">
+            <p class="font-display text-gold-ink text-osn-md">Applied</p>
+            <p class="text-text-muted text-osn-xs font-mono">{s().importId}</p>
             <p>
               events: +{s().eventsCreated} / ~{s().eventsUpdated} / -{s().eventsRemoved} · families:
               +{s().familiesCreated} / ~{s().familiesUpdated ?? 0} / -{s().familiesRemoved} ·
@@ -525,7 +525,7 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
 function Col(props: { children: string; required?: boolean }) {
   return (
     <code
-      class="rounded-[2px] border px-1.5 py-0.5 font-mono text-[0.74rem]"
+      class="text-osn-xs rounded-[2px] border px-1.5 py-0.5 font-mono"
       classList={{
         "text-gold-ink bg-gold/12 border-gold/45": props.required === true,
         "text-text-muted bg-bg/60 border-border": props.required !== true,
@@ -547,8 +547,8 @@ function Col(props: { children: string; required?: boolean }) {
  */
 function KeyLegend() {
   return (
-    <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.78rem]">
-      <span class="font-body text-gold text-[0.66rem] tracking-[0.18em] uppercase">Key</span>
+    <div class="text-osn-sm flex flex-wrap items-center gap-x-4 gap-y-1.5">
+      <span class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">Key</span>
       <span class="text-text-muted flex items-center gap-1.5">
         <Col required>Aa</Col> indicates mandatory fields
       </span>
@@ -569,7 +569,7 @@ function KeyLegend() {
 function FormattingTips(props: { children: JSX.Element }) {
   return (
     <details class="border-gold/25 bg-gold/[0.06] group/tips rounded-sm border">
-      <summary class="font-display text-gold-ink flex cursor-pointer list-none items-center gap-2 p-3 text-[0.95rem] select-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
+      <summary class="font-display text-gold-ink text-osn-base flex cursor-pointer list-none items-center gap-2 p-3 select-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
         <span
           class="text-gold inline-block not-italic transition-transform group-open/tips:rotate-90"
           aria-hidden
@@ -586,7 +586,7 @@ function FormattingTips(props: { children: JSX.Element }) {
 /** The numbered circle that leads each step card. */
 function StepBadge(props: { n: number }) {
   return (
-    <span class="border-gold/50 text-gold flex h-6 w-6 shrink-0 items-center justify-center rounded-full border font-mono text-[0.78rem]">
+    <span class="border-gold/50 text-gold text-osn-sm flex h-6 w-6 shrink-0 items-center justify-center rounded-full border font-mono">
       {props.n}
     </span>
   );
@@ -600,7 +600,7 @@ function StepBadge(props: { n: number }) {
 function MiniMatrix() {
   return (
     <div class="border-border/70 overflow-hidden rounded-[3px] border">
-      <table class="w-full border-collapse font-mono text-[0.7rem]">
+      <table class="text-osn-xs w-full border-collapse font-mono">
         <thead>
           <tr class="bg-bg/50 text-gold-ink">
             <th class="px-2 py-1 text-left font-normal">Name</th>
@@ -631,7 +631,7 @@ function StepCard(props: { n: number; title: string; children: JSX.Element }) {
     <li class="border-border bg-surface/30 flex flex-col gap-3 rounded-sm border p-4">
       <div class="flex items-center gap-2.5">
         <StepBadge n={props.n} />
-        <h3 class="font-display text-text text-[1.05rem]">{props.title}</h3>
+        <h3 class="font-display text-text text-osn-md">{props.title}</h3>
       </div>
       {props.children}
     </li>
@@ -649,7 +649,7 @@ function StepCard(props: { n: number; title: string; children: JSX.Element }) {
 function EventsGuidance() {
   return (
     <div class="flex flex-col gap-3">
-      <p class="text-text-muted text-[0.8rem]">One row per event.</p>
+      <p class="text-text-muted text-osn-sm">One row per event.</p>
       <ul class="flex flex-wrap gap-1.5">
         <For each={EVENT_REQUIRED_HEADERS}>
           {(h) => (
@@ -668,7 +668,7 @@ function EventsGuidance() {
       </ul>
 
       <FormattingTips>
-        <dl class="flex flex-col gap-2.5 text-[0.78rem]">
+        <dl class="text-osn-sm flex flex-col gap-2.5">
           <div class="flex flex-col gap-0.5">
             <dt class="text-text">Timestamps</dt>
             <dd class="text-text-muted">
@@ -734,7 +734,7 @@ function EventsGuidance() {
 function GuestsGuidance() {
   return (
     <div class="flex flex-col gap-3">
-      <p class="text-text-muted text-[0.8rem]">One row per guest.</p>
+      <p class="text-text-muted text-osn-sm">One row per guest.</p>
       <ul class="flex flex-wrap gap-1.5">
         <For each={GUEST_TEMPLATE_FIXED_HEADERS}>
           {(h) => (
@@ -744,10 +744,10 @@ function GuestsGuidance() {
           )}
         </For>
       </ul>
-      <p class="text-text-muted text-[0.78rem]">
+      <p class="text-text-muted text-osn-sm">
         Then <strong class="text-text">one column per event</strong>, named exactly after an event.
       </p>
-      <p class="text-text-muted text-[0.78rem]">Optional:</p>
+      <p class="text-text-muted text-osn-sm">Optional:</p>
       <ul class="flex flex-wrap gap-1.5">
         <For each={GUEST_OPTIONAL_HEADERS}>
           {(h) => (
@@ -760,7 +760,7 @@ function GuestsGuidance() {
       <MiniMatrix />
 
       <FormattingTips>
-        <dl class="flex flex-col gap-2.5 text-[0.78rem]">
+        <dl class="text-osn-sm flex flex-col gap-2.5">
           <div class="flex flex-col gap-0.5">
             <dt class="text-text">One row per guest</dt>
             <dd class="text-text-muted">Don't combine a couple onto one line.</dd>
@@ -836,7 +836,7 @@ function CsvFormatHelp(props: { kind: ImportKind }) {
           keyboard path as well: Enter/Space on a focused summary IS a click. */}
       <summary
         onClick={() => setTouched(true)}
-        class="font-body text-text hover:text-gold flex cursor-pointer items-center gap-2 px-4 py-3 text-[0.88rem] transition select-none"
+        class="font-body text-text hover:text-gold text-osn-base flex cursor-pointer items-center gap-2 px-4 py-3 transition select-none"
       >
         <span class="text-gold inline-block transition-transform group-open:rotate-90" aria-hidden>
           ›
@@ -847,12 +847,12 @@ function CsvFormatHelp(props: { kind: ImportKind }) {
       <div class="border-border/60 flex flex-col gap-5 border-t px-4 py-5">
         <ol class="auto-grid items-start [--auto-grid-min:17rem]">
           <StepCard n={1} title="New here?">
-            <p class="text-text-muted text-[0.8rem]">
+            <p class="text-text-muted text-osn-sm">
               Download the starter template above — it has the correct headers and example rows, so
               you can fill in your details and re-upload.
             </p>
             <Show when={props.kind === "guests"}>
-              <p class="text-text-muted text-[0.76rem]">
+              <p class="text-text-muted text-osn-sm">
                 In the guests template, rename the <Col>{GUEST_TEMPLATE_EXAMPLE_EVENTS[0]}</Col> /{" "}
                 <Col>{GUEST_TEMPLATE_EXAMPLE_EVENTS[1]}</Col> columns to your real event names.
               </p>
@@ -860,7 +860,7 @@ function CsvFormatHelp(props: { kind: ImportKind }) {
           </StepCard>
 
           <StepCard n={2} title="Fill in your details">
-            <p class="text-text-muted text-[0.8rem]">The key shows which fields are mandatory.</p>
+            <p class="text-text-muted text-osn-sm">The key shows which fields are mandatory.</p>
             <KeyLegend />
             <Show when={props.kind === "events"} fallback={<GuestsGuidance />}>
               <EventsGuidance />
@@ -871,26 +871,26 @@ function CsvFormatHelp(props: { kind: ImportKind }) {
             <Show
               when={props.kind === "events"}
               fallback={
-                <p class="text-text-muted text-[0.8rem]">
+                <p class="text-text-muted text-osn-sm">
                   This sheet is authoritative for your guest list — households, guests, and who's
                   invited to what are reconciled to match it. Your events aren't touched.
                 </p>
               }
             >
-              <p class="text-text-muted text-[0.8rem]">
+              <p class="text-text-muted text-osn-sm">
                 This sheet is authoritative for your schedule — events are reconciled to match it.
                 Your guest list isn't touched.
               </p>
             </Show>
             <Show when={props.kind === "guests"}>
-              <p class="text-text-muted text-[0.76rem]">
+              <p class="text-text-muted text-osn-sm">
                 Adding a new event that guests need inviting to? Do{" "}
                 <strong class="text-text">events first</strong>, then guests — each guest's event
                 columns are matched to events that already exist, so the events sheet has to go in
                 before the guests sheet.
               </p>
             </Show>
-            <p class="text-text-muted text-[0.76rem]">
+            <p class="text-text-muted text-osn-sm">
               <span class="text-text">Preview</span> shows a diff of what will change; nothing is
               saved until you <span class="text-text">Apply</span>.
             </p>

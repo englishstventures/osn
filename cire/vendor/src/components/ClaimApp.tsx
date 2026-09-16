@@ -85,7 +85,7 @@ function ClaimContent() {
       <Show when={preview.state === "ready" && preview() !== null && !invalidLink()}>
         <Card tone="accent">
           <CardEyebrow>You've been invited to claim</CardEyebrow>
-          <p class="font-display text-text text-[1.6rem] leading-tight font-light">
+          <p class="font-display text-text text-osn-xl leading-tight font-light">
             {preview()?.name}
           </p>
         </Card>
@@ -95,7 +95,7 @@ function ClaimContent() {
           when={session() !== null && session() !== undefined}
           fallback={
             <div class="flex flex-col gap-4">
-              <p class="font-body text-text-muted text-[0.88rem] leading-relaxed">
+              <p class="font-body text-text-muted text-osn-base leading-relaxed">
                 Sign in with your musubi account to continue. We'll bring you straight back here.
               </p>
               <Button
@@ -109,7 +109,7 @@ function ClaimContent() {
           }
         >
           <div class="flex flex-col gap-4">
-            <h2 class="font-body text-gold text-[0.7rem] tracking-[0.18em] uppercase">
+            <h2 class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
               Choose the organisation that owns this listing
             </h2>
             <OrgPicker onPick={(org) => void handleClaim(org)} />

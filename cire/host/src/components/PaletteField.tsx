@@ -113,7 +113,7 @@ export default function PaletteField(props: {
   return (
     <div class="flex flex-col gap-5">
       <div class="flex flex-col gap-2">
-        <span class="font-body text-text-muted text-[0.72rem] tracking-[0.1em] uppercase">
+        <span class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
           Scheme
         </span>
         <div class="flex flex-wrap gap-2" role="group" aria-label="Colour scheme">
@@ -140,7 +140,7 @@ export default function PaletteField(props: {
                       )}
                     </For>
                   </span>
-                  <span class="font-body text-text text-[0.78rem]">{PRESET_LABELS[key]}</span>
+                  <span class="font-body text-text text-osn-sm">{PRESET_LABELS[key]}</span>
                 </button>
               );
             }}
@@ -149,10 +149,10 @@ export default function PaletteField(props: {
       </div>
 
       <div class="flex flex-col gap-2">
-        <span class="font-body text-text-muted text-[0.72rem] tracking-[0.1em] uppercase">
+        <span class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
           Colours
         </span>
-        <p class="font-body text-text-muted text-[0.82rem]">
+        <p class="font-body text-text-muted text-osn-sm">
           Five colours build the whole invite — every border, button and pop-up follows them. Change
           one and the rest adjust around it.
         </p>
@@ -175,7 +175,7 @@ export default function PaletteField(props: {
           text side by side, which is the part an organiser cannot picture from
           five swatches alone. */}
       <div class="flex flex-col gap-2">
-        <span class="font-body text-text-muted text-[0.72rem] tracking-[0.1em] uppercase">
+        <span class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
           Live preview
         </span>
         <figure
@@ -193,7 +193,7 @@ export default function PaletteField(props: {
             style={{ "font-family": "var(--font-body)" }}
           >
             <span
-              class="text-[0.6rem] tracking-[0.18em] uppercase"
+              class="text-osn-xs tracking-osn-widest uppercase"
               style={{ color: "var(--color-gold)" }}
             >
               Celebrate with us
@@ -223,21 +223,21 @@ export default function PaletteField(props: {
                 "border-color": "var(--color-border)",
               }}
             >
-              <span class="text-[0.8rem]" style={{ color: "var(--color-text)" }}>
+              <span class="text-osn-sm" style={{ color: "var(--color-text)" }}>
                 Ceremony
               </span>
-              <span class="text-[0.7rem]" style={{ color: "var(--color-text-muted)" }}>
+              <span class="text-osn-xs" style={{ color: "var(--color-text-muted)" }}>
                 Saturday, 4pm · St Mary's
               </span>
               <div class="flex gap-2">
                 <span
-                  class="rounded-sm px-2 py-1 text-[0.65rem]"
+                  class="text-osn-xs rounded-sm px-2 py-1"
                   style={{ "background-color": "var(--color-gold)", color: "var(--color-bg)" }}
                 >
                   Respond
                 </span>
                 <span
-                  class="rounded-sm border px-2 py-1 text-[0.65rem]"
+                  class="text-osn-xs rounded-sm border px-2 py-1"
                   style={{ "border-color": "var(--color-gold)", color: "var(--color-gold)" }}
                 >
                   View event
@@ -259,7 +259,7 @@ export default function PaletteField(props: {
       <Show when={adjusted().length > 0}>
         <p
           role="status"
-          class="border-gold-dim bg-gold/5 text-text rounded-sm border px-3 py-2 text-[0.78rem] leading-relaxed"
+          class="border-gold-dim bg-gold/5 text-text text-osn-sm rounded-sm border px-3 py-2 leading-relaxed"
         >
           Adjusted to stay readable:{" "}
           {adjusted()
@@ -285,12 +285,12 @@ export default function PaletteField(props: {
       <div
         role="status"
         classList={{
-          "flex flex-col gap-1 rounded-sm px-3 py-2 text-[0.78rem] leading-relaxed": true,
+          "flex flex-col gap-1 rounded-sm px-3 py-2 text-osn-sm leading-relaxed": true,
           "border-error/40 bg-error/5 text-text border": warnings().length > 0,
         }}
       >
         <Show when={warnings().length > 0}>
-          <span class="font-body text-text tracking-[0.04em]">Some colours are hard to read</span>
+          <span class="font-body text-text tracking-osn-wide">Some colours are hard to read</span>
           {/* `Index`, not `For`. `For` reconciles by item REFERENCE, and
               `paletteContrastWarnings` allocates fresh objects from a token map
               whose identity changes every pointermove frame of a colour drag —

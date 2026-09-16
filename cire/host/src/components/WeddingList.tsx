@@ -25,7 +25,7 @@ export default function WeddingList(props: {
   return (
     <div class="flex flex-col gap-8">
       <Show when={isEmpty()}>
-        <p class="border-border bg-surface/30 text-text-muted rounded-sm border p-6 text-[0.88rem]">
+        <p class="border-border bg-surface/30 text-text-muted text-osn-base rounded-sm border p-6">
           You don&apos;t host any weddings yet. Create your first one to start adding guests,
           events, and the invite.
         </p>
@@ -52,13 +52,13 @@ export default function WeddingList(props: {
                     aria-hidden="true"
                     class="bg-gold absolute inset-y-0 left-0 w-[2px] origin-top scale-y-0 transition-transform duration-(--dur-base) ease-(--ease-out) group-hover:scale-y-100"
                   />
-                  <span class="font-body text-gold text-[0.7rem] tracking-[0.22em] uppercase">
+                  <span class="font-body text-gold text-osn-xs tracking-osn-ultra uppercase">
                     {wedding.slug}
                   </span>
-                  <span class="font-display text-text text-[1.5rem] leading-tight font-light">
+                  <span class="font-display text-text text-osn-lg leading-tight font-light">
                     {wedding.displayName}
                   </span>
-                  <span class="font-body text-text-muted group-hover:text-gold mt-2 flex items-center gap-2 text-[0.72rem] tracking-[0.16em] uppercase transition-colors duration-(--dur-base)">
+                  <span class="font-body text-text-muted group-hover:text-gold text-osn-xs tracking-osn-widest mt-2 flex items-center gap-2 uppercase transition-colors duration-(--dur-base)">
                     Open dashboard
                     <span
                       aria-hidden="true"
@@ -92,7 +92,7 @@ function CreateAffordance(props: { onClick: () => void }) {
     <button
       type="button"
       onClick={props.onClick}
-      class="border-border text-text-muted hover:border-gold hover:text-gold font-body self-start rounded-sm border border-dashed px-4 py-2 text-[0.82rem] tracking-[0.1em] uppercase transition-colors"
+      class="border-border text-text-muted hover:border-gold hover:text-gold font-body text-osn-sm tracking-osn-wider self-start rounded-sm border border-dashed px-4 py-2 uppercase transition-colors"
     >
       + Create a wedding
     </button>

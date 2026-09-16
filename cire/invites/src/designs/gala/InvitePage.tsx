@@ -444,13 +444,13 @@ export default function InvitePage(props: InvitePageProps) {
           >
             {/* Login form — visible before claim */}
             <div ref={(el) => (loginFormRef = el)} style={{ display: revealed() ? "none" : "" }}>
-              <p class="font-body text-gold-ink mb-3 text-[0.72rem] tracking-[0.2em] uppercase">
+              <p class="font-body text-gold-ink text-osn-xs tracking-osn-widest mb-3 uppercase">
                 Your Invitation
               </p>
-              <h2 class="font-display text-text mb-5 text-[calc(clamp(1.5rem,4vw,2rem)*var(--invite-heading-scale,1))] leading-[1.15] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]">
+              <h2 class="font-display text-text leading-osn-none mb-5 text-[calc(clamp(1.5rem,4vw,2rem)*var(--invite-heading-scale,1))] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]">
                 Enter Your Code
               </h2>
-              <p class="text-text-muted mb-8 text-[0.92rem] leading-[1.6] font-light">
+              <p class="text-text-muted text-osn-base leading-osn-normal mb-8 font-light">
                 Enter the code from your invitation to see your events.
               </p>
               <form class="flex flex-col gap-3" onSubmit={claim.handleSubmit}>
@@ -467,7 +467,7 @@ export default function InvitePage(props: InvitePageProps) {
                   // with the border clearing WCAG SC 1.4.11's 3:1 on the worst
                   // of them. Same values as classic's LoginSection — see the
                   // note there; the two packs must not drift.
-                  class="border-text/55 bg-text/[0.045] font-body text-text placeholder:text-text-muted focus:border-gold w-full cursor-text rounded-sm border px-4 py-3.5 text-center text-base tracking-[0.1em] uppercase transition-colors duration-200 placeholder:tracking-[0.04em] placeholder:normal-case focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--invite-focus)] disabled:cursor-not-allowed disabled:opacity-50"
+                  class="border-text/55 bg-text/[0.045] font-body text-text placeholder:text-text-muted focus:border-gold tracking-osn-wider placeholder:tracking-osn-wide w-full cursor-text rounded-sm border px-4 py-3.5 text-center text-base uppercase transition-colors duration-200 placeholder:normal-case focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--invite-focus)] disabled:cursor-not-allowed disabled:opacity-50"
                   // A placeholder is not an accessible name, and it vanishes on
                   // input — see the note in classic's LoginSection.
                   aria-label="Invitation code"
@@ -485,7 +485,7 @@ export default function InvitePage(props: InvitePageProps) {
                   pattern="[A-Za-z0-9\-]+"
                 />
                 <Show when={claim.error()}>
-                  <p class="font-body text-error py-2 text-[0.82rem]" role="alert">
+                  <p class="font-body text-error text-osn-sm py-2" role="alert">
                     {claim.error()}
                   </p>
                 </Show>
@@ -517,7 +517,7 @@ export default function InvitePage(props: InvitePageProps) {
             <div ref={(el) => (welcomeRef = el)} style={{ display: revealed() ? "" : "none" }}>
               <Show when={claimResult()?.preview}>
                 <p
-                  class="border-gold/40 bg-gold/5 text-gold-ink mb-6 rounded-sm border px-4 py-3 text-[0.78rem] tracking-[0.08em] uppercase"
+                  class="border-gold/40 bg-gold/5 text-gold-ink text-osn-sm tracking-osn-wider mb-6 rounded-sm border px-4 py-3 uppercase"
                   role="status"
                 >
                   Preview mode. Every event is shown; try the RSVP, nothing you send is saved.
@@ -527,13 +527,13 @@ export default function InvitePage(props: InvitePageProps) {
                 when={isIndividual()}
                 fallback={
                   <>
-                    <h2 class="font-display text-gold-ink mb-3 text-[calc(clamp(1.5rem,4vw,2rem)*var(--invite-heading-scale,1))] leading-[1.15] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]">
+                    <h2 class="font-display text-gold-ink leading-osn-none mb-3 text-[calc(clamp(1.5rem,4vw,2rem)*var(--invite-heading-scale,1))] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]">
                       Welcome, the {claimResult()?.familyName} Family
                     </h2>
-                    <p class="text-text-muted mb-2 text-[0.92rem] leading-[1.6] font-light">
+                    <p class="text-text-muted text-osn-base leading-osn-normal mb-2 font-light">
                       {welcomeMessage()}
                     </p>
-                    <p class="text-text mb-8 text-[0.88rem] leading-[1.6] font-light">
+                    <p class="text-text text-osn-base leading-osn-normal mb-8 font-light">
                       <For each={claimResult()?.members}>
                         {(member, i) => (
                           <>
@@ -546,17 +546,17 @@ export default function InvitePage(props: InvitePageProps) {
                   </>
                 }
               >
-                <h2 class="font-display text-gold-ink mb-3 text-[calc(clamp(1.5rem,4vw,2rem)*var(--invite-heading-scale,1))] leading-[1.15] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]">
+                <h2 class="font-display text-gold-ink leading-osn-none mb-3 text-[calc(clamp(1.5rem,4vw,2rem)*var(--invite-heading-scale,1))] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]">
                   Dear {individualName()}
                 </h2>
-                <p class="text-text-muted mb-8 text-[0.92rem] leading-[1.6] font-light">
+                <p class="text-text-muted text-osn-base leading-osn-normal mb-8 font-light">
                   {welcomeMessage()}
                 </p>
               </Show>
               <button
                 type="button"
                 onClick={handleSignOut}
-                class="font-body text-text-muted hover:text-gold-ink focus-visible:ring-gold/60 rounded-sm text-[0.78rem] underline underline-offset-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2"
+                class="font-body text-text-muted hover:text-gold-ink focus-visible:ring-gold/60 text-osn-sm rounded-sm underline underline-offset-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2"
               >
                 {signOutLabel()}
               </button>
@@ -585,10 +585,10 @@ export default function InvitePage(props: InvitePageProps) {
           >
             <div class="mx-auto max-w-[1200px]">
               <div data-testid="events-column" class="max-w-[960px] text-left">
-                <p class="font-body text-gold-ink mb-3 text-[0.72rem] tracking-[0.2em] uppercase">
+                <p class="font-body text-gold-ink text-osn-xs tracking-osn-widest mb-3 uppercase">
                   {detailsEyebrow()}
                 </p>
-                <h2 class="font-display text-text mb-5 text-[calc(clamp(1.75rem,4vw,2.5rem)*var(--invite-heading-scale,1))] leading-[1.15] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]">
+                <h2 class="font-display text-text leading-osn-none mb-5 text-[calc(clamp(1.75rem,4vw,2.5rem)*var(--invite-heading-scale,1))] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]">
                   {detailsHeading()}
                 </h2>
                 <hr class="border-border mb-10 h-0 w-full border-t" aria-hidden="true" />
@@ -608,7 +608,7 @@ export default function InvitePage(props: InvitePageProps) {
                   {(notice) => (
                     <p
                       id={RSVP_NOTICE_ID}
-                      class="font-body mb-3 text-center text-[0.85rem]"
+                      class="font-body text-osn-sm mb-3 text-center"
                       classList={{
                         "text-text-muted": rsvpClosed(),
                         "text-gold-ink": !rsvpClosed(),

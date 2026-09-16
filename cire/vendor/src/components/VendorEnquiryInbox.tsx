@@ -57,8 +57,8 @@ export default function VendorEnquiryInbox(props: VendorEnquiryInboxProps) {
   return (
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-0.5">
-        <p class="font-body text-gold text-[0.7rem] tracking-[0.18em] uppercase">Enquiries</p>
-        <h2 class="font-display text-text text-[1.4rem] leading-tight font-light">Your inbox</h2>
+        <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">Enquiries</p>
+        <h2 class="font-display text-text text-osn-lg leading-tight font-light">Your inbox</h2>
       </div>
 
       <Show when={rows.loading}>
@@ -97,11 +97,11 @@ export default function VendorEnquiryInbox(props: VendorEnquiryInboxProps) {
                   </div>
 
                   <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span class="font-body text-text-muted text-[0.72rem] tracking-[0.1em] uppercase">
+                    <span class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
                       {categoryLabel(item.category)}
                     </span>
                     <Show when={item.quotedMinor != null}>
-                      <span class="font-body text-gold-ink text-[0.78rem] tabular-nums">
+                      <span class="font-body text-gold-ink text-osn-sm tabular-nums">
                         {aud.format(item.quotedMinor! / 100)}
                       </span>
                     </Show>
@@ -110,7 +110,7 @@ export default function VendorEnquiryInbox(props: VendorEnquiryInboxProps) {
                         gives the exact moment to anything that wants it. */}
                     <time
                       datetime={new Date(item.lastMessageAt).toISOString()}
-                      class="font-body text-text-muted ml-auto text-[0.72rem]"
+                      class="font-body text-text-muted text-osn-xs ml-auto"
                     >
                       {shortDate(item.lastMessageAt)}
                     </time>

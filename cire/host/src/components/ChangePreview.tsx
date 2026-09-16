@@ -119,15 +119,15 @@ export function PlanCounts(props: { plan: ChangePlan }) {
 export default function ChangePreview(props: ChangePreviewProps) {
   return (
     <div class="border-border bg-bg/40 flex flex-col gap-4 rounded-sm border p-4">
-      <h3 class="font-display text-gold-dim text-[1.1rem]">Diff preview</h3>
+      <h3 class="font-display text-gold-dim text-osn-md">Diff preview</h3>
       <PlanCounts plan={props.plan} />
 
       <Show when={props.warnings.length > 0}>
         <div class="border-gold/30 bg-gold/[0.06] flex flex-col gap-1.5 rounded-sm border p-3">
-          <p class="font-body text-gold text-[0.66rem] tracking-[0.18em] uppercase">
+          <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
             Before you apply
           </p>
-          <ul class="text-text-muted flex flex-col gap-1 text-[0.82rem]">
+          <ul class="text-text-muted text-osn-sm flex flex-col gap-1">
             <For each={props.warnings}>
               {(w) => <li class="before:mr-2 before:content-['•']">{w}</li>}
             </For>
@@ -140,7 +140,7 @@ export default function ChangePreview(props: ChangePreviewProps) {
           type="button"
           onClick={() => props.onConfirm()}
           disabled={props.busy}
-          class="border-gold bg-gold font-body text-bg hover:bg-gold-dim rounded-sm border px-4 py-2 text-[0.82rem] tracking-[0.1em] uppercase transition disabled:opacity-40"
+          class="border-gold bg-gold font-body text-bg hover:bg-gold-dim text-osn-sm tracking-osn-wider rounded-sm border px-4 py-2 uppercase transition disabled:opacity-40"
         >
           {props.busy ? "Applying…" : (props.confirmLabel ?? "Apply changes")}
         </button>
@@ -148,7 +148,7 @@ export default function ChangePreview(props: ChangePreviewProps) {
           type="button"
           onClick={() => props.onCancel()}
           disabled={props.busy}
-          class="font-body text-text-muted text-[0.82rem] underline-offset-4 hover:underline disabled:opacity-40"
+          class="font-body text-text-muted text-osn-sm underline-offset-4 hover:underline disabled:opacity-40"
         >
           Cancel
         </button>

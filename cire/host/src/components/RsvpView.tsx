@@ -60,7 +60,7 @@ const STATUS_META = {
 const CHIP_CLASS =
   "border-border hover:border-gold focus-visible:border-gold focus-visible:ring-gold/40 " +
   "font-body text-text-muted aria-pressed:border-gold aria-pressed:text-gold " +
-  "flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-[0.75rem] tracking-[0.06em] " +
+  "flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-osn-sm tracking-osn-wide " +
   "uppercase transition outline-none focus-visible:ring-2";
 
 /** Identifies the row being edited (event + guest) so only one form is open. */
@@ -321,7 +321,7 @@ export default function RsvpView(props: RsvpViewProps) {
                     onClick={() => setFilter(chip.key)}
                   >
                     {chip.label}
-                    <span class="text-text font-mono text-[0.72rem]">{counts()[chip.key]}</span>
+                    <span class="text-text text-osn-xs font-mono">{counts()[chip.key]}</span>
                   </button>
                 )}
               </For>
@@ -329,7 +329,7 @@ export default function RsvpView(props: RsvpViewProps) {
           </div>
           {/* Two readings of one fact: the printed count updates as you type,
               the announced one waits for you to stop. */}
-          <p class="font-body text-text-muted text-[0.78rem]">
+          <p class="font-body text-text-muted text-osn-sm">
             <Show when={filtering()}>
               Showing {shownCount()} of {counts().all} guest rows.
             </Show>
@@ -344,28 +344,28 @@ export default function RsvpView(props: RsvpViewProps) {
             {(section) => (
               <section class="border-border bg-surface/30 flex flex-col gap-4 rounded-sm border p-5">
                 <header class="flex flex-wrap items-end justify-between gap-3">
-                  <h3 class="font-display text-text text-[1.3rem] leading-none font-light">
+                  <h3 class="font-display text-text text-osn-lg leading-none font-light">
                     {section.event.name}
                   </h3>
-                  <dl class="font-body text-text-muted flex flex-wrap gap-x-4 gap-y-1 text-[0.78rem]">
+                  <dl class="font-body text-text-muted text-osn-sm flex flex-wrap gap-x-4 gap-y-1">
                     <div class="flex items-center gap-1.5">
-                      <dt class="text-gold tracking-[0.08em] uppercase">Attending</dt>
+                      <dt class="text-gold tracking-osn-wider uppercase">Attending</dt>
                       <dd class="text-text font-mono">{section.event.attending}</dd>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <dt class="tracking-[0.08em] uppercase">Declined</dt>
+                      <dt class="tracking-osn-wider uppercase">Declined</dt>
                       <dd class="text-text font-mono">{section.event.declined}</dd>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <dt class="tracking-[0.08em] uppercase">Maybe</dt>
+                      <dt class="tracking-osn-wider uppercase">Maybe</dt>
                       <dd class="text-text font-mono">{section.event.maybe}</dd>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <dt class="tracking-[0.08em] uppercase">No reply</dt>
+                      <dt class="tracking-osn-wider uppercase">No reply</dt>
                       <dd class="text-text font-mono">{section.event.noResponse}</dd>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <dt class="tracking-[0.08em] uppercase">Invited</dt>
+                      <dt class="tracking-osn-wider uppercase">Invited</dt>
                       <dd class="text-text font-mono">{section.event.invited}</dd>
                     </div>
                   </dl>
@@ -374,7 +374,7 @@ export default function RsvpView(props: RsvpViewProps) {
                 <Show
                   when={section.rows().length > 0}
                   fallback={
-                    <p class="font-body text-text-muted text-[0.82rem] italic">
+                    <p class="font-body text-text-muted text-osn-sm italic">
                       No guests to show for this event.
                     </p>
                   }
@@ -382,7 +382,7 @@ export default function RsvpView(props: RsvpViewProps) {
                   <Show
                     when={section.visible().length > 0}
                     fallback={
-                      <p class="font-body text-text-muted text-[0.82rem] italic">
+                      <p class="font-body text-text-muted text-osn-sm italic">
                         No guests match this filter.
                       </p>
                     }
@@ -412,7 +412,7 @@ export default function RsvpView(props: RsvpViewProps) {
                                   <Show when={row.consentSource === "organiser_attested"}>
                                     {" "}
                                     <span
-                                      class="border-gold/40 text-gold ml-1 inline-block rounded-sm border px-1.5 py-0.5 text-[0.55rem] tracking-[0.12em] uppercase"
+                                      class="border-gold/40 text-gold text-osn-xs tracking-osn-wider ml-1 inline-block rounded-sm border px-1.5 py-0.5 uppercase"
                                       title="Recorded by a host (phone/paper RSVP)"
                                     >
                                       Host-entered
@@ -422,7 +422,7 @@ export default function RsvpView(props: RsvpViewProps) {
                                 <Td class="text-text-muted align-middle">{row.familyName}</Td>
                                 <Td class="align-middle">
                                   <span
-                                    class={`font-body inline-block rounded-sm px-1.5 py-0.5 text-[0.6rem] tracking-[0.14em] uppercase ${STATUS_META[row.status].class}`}
+                                    class={`font-body text-osn-xs tracking-osn-widest inline-block rounded-sm px-1.5 py-0.5 uppercase ${STATUS_META[row.status].class}`}
                                   >
                                     {STATUS_META[row.status].label}
                                   </span>
@@ -439,7 +439,7 @@ export default function RsvpView(props: RsvpViewProps) {
                                   <Td class="text-right align-middle">
                                     <button
                                       type="button"
-                                      class="border-border text-text-muted hover:text-text hover:border-gold/40 rounded-sm border px-2.5 py-1 text-[0.7rem] tracking-[0.08em] uppercase"
+                                      class="border-border text-text-muted hover:text-text hover:border-gold/40 text-osn-xs tracking-osn-wider rounded-sm border px-2.5 py-1 uppercase"
                                       aria-label={`${row.responded ? "Edit" : "Record"} reply for ${row.firstName} ${row.lastName}`}
                                       onClick={() => openRow(section.event.id, row)}
                                     >
@@ -479,17 +479,17 @@ export default function RsvpView(props: RsvpViewProps) {
           void save();
         }}
       >
-        <p class="font-body text-text text-[0.82rem]">
+        <p class="font-body text-text text-osn-sm">
           Recording for{" "}
           <span class="text-gold">
             {guest.firstName} {guest.lastName}
           </span>
         </p>
 
-        <label class="font-body text-text-muted flex flex-col gap-1 text-[0.75rem] tracking-[0.06em] uppercase">
+        <label class="font-body text-text-muted text-osn-sm tracking-osn-wide flex flex-col gap-1 uppercase">
           Status
           <select
-            class="border-border bg-bg text-text rounded-sm border px-2.5 py-1.5 text-[0.86rem] normal-case"
+            class="border-border bg-bg text-text text-osn-base rounded-sm border px-2.5 py-1.5 normal-case"
             value={formStatus()}
             onChange={(e) => setFormStatus(e.currentTarget.value as RsvpStatus)}
             disabled={saving()}
@@ -500,10 +500,10 @@ export default function RsvpView(props: RsvpViewProps) {
           </select>
         </label>
 
-        <label class="font-body text-text-muted flex flex-col gap-1 text-[0.75rem] tracking-[0.06em] uppercase">
+        <label class="font-body text-text-muted text-osn-sm tracking-osn-wide flex flex-col gap-1 uppercase">
           Dietary requirements (optional)
           <textarea
-            class="border-border bg-bg text-text rounded-sm border px-2.5 py-1.5 text-[0.86rem] normal-case"
+            class="border-border bg-bg text-text text-osn-base rounded-sm border px-2.5 py-1.5 normal-case"
             rows={2}
             maxlength={500}
             value={formDietary()}
@@ -513,7 +513,7 @@ export default function RsvpView(props: RsvpViewProps) {
         </label>
 
         <Show when={formDietary().trim().length > 0}>
-          <label class="font-body text-text-muted flex items-start gap-2.5 text-[0.78rem] leading-relaxed normal-case">
+          <label class="font-body text-text-muted text-osn-sm flex items-start gap-2.5 leading-relaxed normal-case">
             <input
               type="checkbox"
               class="accent-gold mt-0.5 h-4 w-4 shrink-0 cursor-pointer"
@@ -529,20 +529,20 @@ export default function RsvpView(props: RsvpViewProps) {
         </Show>
 
         <Show when={formError()}>
-          <p class="text-error text-[0.78rem]">{formError()}</p>
+          <p class="text-error text-osn-sm">{formError()}</p>
         </Show>
 
         <div class="flex items-center gap-2">
           <button
             type="submit"
-            class="bg-gold text-bg rounded-sm px-3 py-1.5 text-[0.78rem] tracking-[0.08em] uppercase disabled:opacity-50"
+            class="bg-gold text-bg text-osn-sm tracking-osn-wider rounded-sm px-3 py-1.5 uppercase disabled:opacity-50"
             disabled={saving()}
           >
             {saving() ? "Saving…" : "Save reply"}
           </button>
           <button
             type="button"
-            class="border-border text-text-muted hover:text-text rounded-sm border px-3 py-1.5 text-[0.78rem] tracking-[0.08em] uppercase"
+            class="border-border text-text-muted hover:text-text text-osn-sm tracking-osn-wider rounded-sm border px-3 py-1.5 uppercase"
             onClick={closeEditor}
             disabled={saving()}
           >

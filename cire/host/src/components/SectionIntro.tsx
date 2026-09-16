@@ -19,10 +19,10 @@ export default function SectionIntro(props: {
   return (
     <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div class="flex flex-col gap-1">
-        <p class="font-body text-gold text-[0.72rem] tracking-[0.2em] uppercase">{props.eyebrow}</p>
-        <h2 class="font-display text-text text-[1.4rem] font-light">{props.title}</h2>
+        <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">{props.eyebrow}</p>
+        <h2 class="font-display text-text text-osn-lg font-light">{props.title}</h2>
         <Show when={props.description}>
-          <p class="font-body text-text-muted max-w-prose text-[0.82rem] leading-relaxed">
+          <p class="font-body text-text-muted text-osn-sm max-w-prose leading-relaxed">
             {props.description}
           </p>
         </Show>

@@ -363,7 +363,7 @@ export default function GuestTable(props: GuestTableProps) {
               type="button"
               onClick={() => void exportCsv("guests")}
               disabled={exporting() !== null}
-              class="border-gold/40 font-body text-gold hover:border-gold hover:bg-gold/10 rounded-sm border px-3 py-1.5 text-[0.72rem] tracking-[0.1em] uppercase transition disabled:opacity-40"
+              class="border-gold/40 font-body text-gold hover:border-gold hover:bg-gold/10 text-osn-xs tracking-osn-wider rounded-sm border px-3 py-1.5 uppercase transition disabled:opacity-40"
             >
               {exporting() === "guests" ? "Exporting…" : "Download guests (CSV)"}
             </button>
@@ -371,7 +371,7 @@ export default function GuestTable(props: GuestTableProps) {
               type="button"
               onClick={() => void exportCsv("rsvps")}
               disabled={exporting() !== null}
-              class="border-gold/40 font-body text-gold hover:border-gold hover:bg-gold/10 rounded-sm border px-3 py-1.5 text-[0.72rem] tracking-[0.1em] uppercase transition disabled:opacity-40"
+              class="border-gold/40 font-body text-gold hover:border-gold hover:bg-gold/10 text-osn-xs tracking-osn-wider rounded-sm border px-3 py-1.5 uppercase transition disabled:opacity-40"
             >
               {exporting() === "rsvps" ? "Exporting…" : "Download RSVPs (CSV)"}
             </button>
@@ -400,7 +400,7 @@ export default function GuestTable(props: GuestTableProps) {
 
       <Show when={!loading() && !error() && hasGuests()}>
         <div class="flex flex-wrap items-end justify-between gap-3">
-          <p class="font-body text-text-muted text-[0.82rem]">
+          <p class="font-body text-text-muted text-osn-sm">
             {guests().length} {guests().length === 1 ? "guest" : "guests"} across{" "}
             {families().length} {families().length === 1 ? "household" : "households"}
           </p>
@@ -419,7 +419,7 @@ export default function GuestTable(props: GuestTableProps) {
         </div>
 
         <Show when={visibleFamilies().length === 0}>
-          <p class="font-body text-text-muted text-[0.82rem] italic">
+          <p class="font-body text-text-muted text-osn-sm italic">
             No guests match “{search().trim()}”.
           </p>
         </Show>
@@ -461,11 +461,11 @@ export default function GuestTable(props: GuestTableProps) {
                           }`}
                         >
                           <div class="flex flex-wrap items-center justify-between gap-3">
-                            <span class="font-display text-gold-dim flex items-center gap-2 text-[1rem]">
+                            <span class="font-display text-gold-dim text-osn-md flex items-center gap-2">
                               {family.familyName}
                               <Show when={isDeactivated(family)}>
                                 <span
-                                  class="font-body border-error/40 text-error rounded-sm border px-1.5 py-0.5 text-[0.6rem] tracking-[0.14em] uppercase not-italic"
+                                  class="font-body border-error/40 text-error text-osn-xs tracking-osn-widest rounded-sm border px-1.5 py-0.5 uppercase not-italic"
                                   title="Deactivated — this household's code no longer opens the invite. Reactivate to restore it."
                                 >
                                   Deactivated — code disabled
@@ -481,7 +481,7 @@ export default function GuestTable(props: GuestTableProps) {
                                   fallback={
                                     <Show when={isShared(family)}>
                                       <span
-                                        class="font-body text-gold/80 border-gold/30 rounded-sm border px-1.5 py-0.5 text-[0.6rem] tracking-[0.14em] uppercase not-italic"
+                                        class="font-body text-gold/80 border-gold/30 text-osn-xs tracking-osn-widest rounded-sm border px-1.5 py-0.5 uppercase not-italic"
                                         title="Sent — you copied this family's invite message"
                                       >
                                         Sent
@@ -490,7 +490,7 @@ export default function GuestTable(props: GuestTableProps) {
                                   }
                                 >
                                   <span
-                                    class="font-body bg-gold text-bg rounded-sm px-1.5 py-0.5 text-[0.6rem] tracking-[0.14em] uppercase not-italic"
+                                    class="font-body bg-gold text-bg text-osn-xs tracking-osn-widest rounded-sm px-1.5 py-0.5 uppercase not-italic"
                                     title={`Opened — a guest opened this invite (code used) on ${formatOpenedDate(
                                       family.firstOpenedAt!,
                                     )}`}
@@ -504,7 +504,7 @@ export default function GuestTable(props: GuestTableProps) {
                               <button
                                 type="button"
                                 onClick={() => void copyMessage(family)}
-                                class="font-body text-text-muted hover:text-gold hover:border-gold border-border rounded-sm border px-2.5 py-1 text-[0.7rem] tracking-[0.1em] uppercase transition-colors"
+                                class="font-body text-text-muted hover:text-gold hover:border-gold border-border text-osn-xs tracking-osn-wider rounded-sm border px-2.5 py-1 uppercase transition-colors"
                               >
                                 Copy message
                               </button>
@@ -522,21 +522,21 @@ export default function GuestTable(props: GuestTableProps) {
                                           type="button"
                                           onClick={() => setConfirmingId(family.familyId)}
                                           disabled={togglingId() === family.familyId}
-                                          class="font-body text-text-muted hover:text-error hover:border-error/60 border-border rounded-sm border px-2.5 py-1 text-[0.7rem] tracking-[0.1em] uppercase transition-colors disabled:opacity-40"
+                                          class="font-body text-text-muted hover:text-error hover:border-error/60 border-border text-osn-xs tracking-osn-wider rounded-sm border px-2.5 py-1 uppercase transition-colors disabled:opacity-40"
                                           title="Disable this household's code (e.g. a withdrawn invite). Reversible — their guests and RSVPs are kept."
                                         >
                                           Deactivate
                                         </button>
                                       }
                                     >
-                                      <span class="font-body text-text-muted text-[0.7rem] tracking-[0.05em]">
+                                      <span class="font-body text-text-muted text-osn-xs tracking-osn-wide">
                                         Disable this code?
                                       </span>
                                       <button
                                         type="button"
                                         onClick={() => void toggleDeactivated(family, true)}
                                         disabled={togglingId() === family.familyId}
-                                        class="border-error bg-error font-body text-bg rounded-sm border px-2.5 py-1 text-[0.7rem] tracking-[0.1em] uppercase transition hover:opacity-90 disabled:opacity-40"
+                                        class="border-error bg-error font-body text-bg text-osn-xs tracking-osn-wider rounded-sm border px-2.5 py-1 uppercase transition hover:opacity-90 disabled:opacity-40"
                                       >
                                         {togglingId() === family.familyId
                                           ? "Deactivating…"
@@ -546,7 +546,7 @@ export default function GuestTable(props: GuestTableProps) {
                                         type="button"
                                         onClick={() => setConfirmingId(null)}
                                         disabled={togglingId() === family.familyId}
-                                        class="font-body text-text-muted text-[0.7rem] underline-offset-4 hover:underline disabled:opacity-40"
+                                        class="font-body text-text-muted text-osn-xs underline-offset-4 hover:underline disabled:opacity-40"
                                       >
                                         Cancel
                                       </button>
@@ -557,7 +557,7 @@ export default function GuestTable(props: GuestTableProps) {
                                     type="button"
                                     onClick={() => void toggleDeactivated(family, false)}
                                     disabled={togglingId() === family.familyId}
-                                    class="font-body text-gold hover:border-gold border-gold/40 rounded-sm border px-2.5 py-1 text-[0.7rem] tracking-[0.1em] uppercase transition-colors disabled:opacity-40"
+                                    class="font-body text-gold hover:border-gold border-gold/40 text-osn-xs tracking-osn-wider rounded-sm border px-2.5 py-1 uppercase transition-colors disabled:opacity-40"
                                     title="Re-enable this household's code — their guests and RSVPs were kept."
                                   >
                                     {togglingId() === family.familyId
@@ -581,7 +581,7 @@ export default function GuestTable(props: GuestTableProps) {
                                 <For each={member.events}>
                                   {(eventId) => (
                                     <span
-                                      class="bg-gold/10 text-gold inline-block rounded-sm px-2 py-0.5 text-[0.72rem] tracking-[0.06em] uppercase"
+                                      class="bg-gold/10 text-gold text-osn-xs tracking-osn-wide inline-block rounded-sm px-2 py-0.5 uppercase"
                                       title={eventId}
                                     >
                                       {eventNameById().get(eventId) ?? eventId}
@@ -589,11 +589,11 @@ export default function GuestTable(props: GuestTableProps) {
                                   )}
                                 </For>
                                 <Show when={member.events.length === 0}>
-                                  <span class="text-text-muted text-[0.8rem]">--</span>
+                                  <span class="text-text-muted text-osn-sm">--</span>
                                 </Show>
                               </div>
                             </Td>
-                            <Td class="text-text-muted align-middle font-mono tracking-[0.06em]">
+                            <Td class="text-text-muted tracking-osn-wide align-middle font-mono">
                               <Show when={index() === 0}>{family.publicId}</Show>
                             </Td>
                           </tr>

@@ -104,8 +104,8 @@ export default function CreateWeddingForm(props: {
       onSubmit={submit}
     >
       <div class="flex flex-col gap-1">
-        <p class="font-body text-gold text-[0.72rem] tracking-[0.2em] uppercase">New wedding</p>
-        <h2 class="font-display text-text text-[1.4rem] font-light">Start a new celebration</h2>
+        <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">New wedding</p>
+        <h2 class="font-display text-text text-osn-lg font-light">Start a new celebration</h2>
       </div>
 
       <Field label="Wedding name">
@@ -143,9 +143,9 @@ export default function CreateWeddingForm(props: {
                     onChange={() => setCodeStyle(option.value)}
                     class="accent-gold"
                   />
-                  <span class="font-body text-text text-[0.9rem]">{option.label}</span>
+                  <span class="font-body text-text text-osn-base">{option.label}</span>
                 </span>
-                <span class="font-body text-text-muted pl-6 text-[0.78rem] leading-snug">
+                <span class="font-body text-text-muted text-osn-sm pl-6 leading-snug">
                   {option.hint}
                 </span>
               </label>
@@ -166,7 +166,7 @@ export default function CreateWeddingForm(props: {
             type="button"
             onClick={() => props.onCancel?.()}
             disabled={busy()}
-            class="font-body text-text-muted text-[0.82rem] underline-offset-4 hover:underline disabled:opacity-40"
+            class="font-body text-text-muted text-osn-sm underline-offset-4 hover:underline disabled:opacity-40"
           >
             Cancel
           </button>

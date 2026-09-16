@@ -64,7 +64,7 @@ export default function ImageField(props: {
   return (
     <div class="flex flex-col gap-2">
       <span class="flex items-center gap-2">
-        <span class="font-body text-text-muted text-[0.8rem]">{props.label}</span>
+        <span class="font-body text-text-muted text-osn-sm">{props.label}</span>
         <InstantBadge />
       </span>
       <div class="flex flex-wrap items-end gap-3">
@@ -124,7 +124,7 @@ export default function ImageField(props: {
             if (file) props.onSelect(file);
             e.currentTarget.value = "";
           }}
-          class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-[0.82rem] file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5 file:text-[0.82rem]"
+          class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-osn-sm file:text-osn-sm file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5"
         />
         <Show when={props.url}>
           <Button variant="outline" size="sm" onClick={() => setCropping("desktop")}>
@@ -148,7 +148,7 @@ export default function ImageField(props: {
         </Notice>
       </Show>
       <Show when={hasMobileCrop()}>
-        <p class="font-body text-text-muted text-[0.72rem]">
+        <p class="font-body text-text-muted text-osn-xs">
           Phones show a tall slice of this photo — use “Phone crop” to choose which part, so the
           people in it stay in view on small screens.
         </p>

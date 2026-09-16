@@ -168,11 +168,11 @@ export function PulseAccountLink(props: PulseAccountLinkProps) {
       >
         <h3
           id="pulse-link-heading"
-          class="font-display text-gold-ink mb-1 text-[1.3rem] leading-tight font-light italic"
+          class="font-display text-gold-ink text-osn-lg mb-1 leading-tight font-light italic"
         >
           Link your Pulse account
         </h3>
-        <p class="text-text-muted mb-4 text-[0.84rem] leading-[1.55] font-light">
+        <p class="text-text-muted text-osn-sm leading-osn-normal mb-4 font-light">
           Connect your OSN account so this invitation appears in Pulse. Optional — your invite works
           either way.
         </p>
@@ -185,14 +185,14 @@ export function PulseAccountLink(props: PulseAccountLinkProps) {
             // with this panel signed in.
             <div class="flex flex-col gap-3">
               <Show when={error()}>
-                <p class="text-error text-[0.8rem]" role="alert">
+                <p class="text-error text-osn-sm" role="alert">
                   {error()}
                 </p>
               </Show>
               <button
                 type="button"
                 onClick={() => signIn(window.location.href)}
-                class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg self-start rounded-sm border bg-transparent px-5 py-2.5 text-[0.82rem] tracking-[0.1em] uppercase transition-colors duration-200"
+                class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg text-osn-sm tracking-osn-wider self-start rounded-sm border bg-transparent px-5 py-2.5 uppercase transition-colors duration-200"
               >
                 Sign in with musubi
               </button>
@@ -200,7 +200,7 @@ export function PulseAccountLink(props: PulseAccountLinkProps) {
           }
         >
           {/* Signed in to OSN — pick which household member you are, then link. */}
-          <p class="text-text mb-3 text-[0.82rem] font-light">Which guest are you?</p>
+          <p class="text-text text-osn-sm mb-3 font-light">Which guest are you?</p>
           <ul class="flex flex-col gap-2" aria-label="Household members">
             <For each={props.members}>
               {(member) => (
@@ -219,7 +219,7 @@ export function PulseAccountLink(props: PulseAccountLinkProps) {
                       for={`pulse-link-${member.guestId}`}
                       // The radio is a sibling, not a child, so the base
                       // label rule can't reach it — say "clickable" here.
-                      class="text-text cursor-pointer text-[0.86rem] font-light"
+                      class="text-text text-osn-base cursor-pointer font-light"
                     >
                       {member.firstName} {member.lastName}
                     </label>
@@ -227,19 +227,19 @@ export function PulseAccountLink(props: PulseAccountLinkProps) {
                   <Show
                     when={isLinked(member.guestId)}
                     fallback={
-                      <span class="text-text-muted font-body text-[0.66rem] tracking-[0.12em] uppercase">
+                      <span class="text-text-muted font-body text-osn-xs tracking-osn-wider uppercase">
                         Not linked
                       </span>
                     }
                   >
                     <span class="flex items-center gap-2">
-                      <output class="text-gold-ink font-body text-[0.66rem] tracking-[0.12em] uppercase">
+                      <output class="text-gold-ink font-body text-osn-xs tracking-osn-wider uppercase">
                         ✓ Linked
                       </output>
                       <button
                         type="button"
                         onClick={() => void unlinkMember(member.guestId)}
-                        class="text-text-muted hover:text-error text-[0.72rem] underline-offset-2 hover:underline"
+                        class="text-text-muted hover:text-error text-osn-xs underline-offset-2 hover:underline"
                       >
                         Unlink
                       </button>
@@ -251,7 +251,7 @@ export function PulseAccountLink(props: PulseAccountLinkProps) {
           </ul>
 
           <Show when={error()}>
-            <p class="text-error mt-3 text-[0.8rem]" role="alert">
+            <p class="text-error text-osn-sm mt-3" role="alert">
               {error()}
             </p>
           </Show>
@@ -263,7 +263,7 @@ export function PulseAccountLink(props: PulseAccountLinkProps) {
               if (id) void linkMember(id);
             }}
             disabled={!selected() || linking()}
-            class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg mt-4 rounded-sm border bg-transparent px-5 py-2.5 text-[0.82rem] tracking-[0.1em] uppercase transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+            class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg text-osn-sm tracking-osn-wider mt-4 rounded-sm border bg-transparent px-5 py-2.5 uppercase transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
           >
             {linking() ? "Linking…" : "Link my account"}
           </button>

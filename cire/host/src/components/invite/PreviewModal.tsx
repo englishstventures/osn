@@ -37,13 +37,13 @@ export default function PreviewModal(
             class="border-border bg-bg flex max-h-[85vh] w-full max-w-sm flex-col gap-4 overflow-y-auto rounded-sm border p-4"
           >
             <div class="flex items-center justify-between gap-2">
-              <p class="font-body text-gold text-[0.72rem] tracking-[0.2em] uppercase">
+              <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
                 Live preview
               </p>
               <button
                 type="button"
                 onClick={props.onClose}
-                class="font-body text-text-muted hover:text-text text-[0.78rem]"
+                class="font-body text-text-muted hover:text-text text-osn-sm"
               >
                 Close
               </button>

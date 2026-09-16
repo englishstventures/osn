@@ -18,9 +18,9 @@ interface AddToCalendarProps {
 
 const TRIGGER_CLASS = {
   outline:
-    "border-border font-body text-text-muted hover:border-gold hover:text-gold-ink rounded-sm border bg-transparent px-5 py-2.5 text-[0.82rem] tracking-[0.12em] uppercase transition-colors duration-200",
+    "border-border font-body text-text-muted hover:border-gold hover:text-gold-ink rounded-sm border bg-transparent px-5 py-2.5 text-osn-sm tracking-osn-wider uppercase transition-colors duration-200",
   primary:
-    "border-gold bg-gold text-bg font-body hover:bg-transparent hover:text-gold-ink inline-flex items-center gap-2 rounded-sm border px-5 py-2.5 text-[0.82rem] tracking-[0.12em] uppercase transition-colors duration-200",
+    "border-gold bg-gold text-bg font-body hover:bg-transparent hover:text-gold-ink inline-flex items-center gap-2 rounded-sm border px-5 py-2.5 text-osn-sm tracking-osn-wider uppercase transition-colors duration-200",
 } satisfies Record<NonNullable<AddToCalendarProps["variant"]>, string>;
 
 interface PopoverPosition {
@@ -244,7 +244,7 @@ export function AddToCalendar(props: AddToCalendarProps) {
               href={googleHref()}
               target="_blank"
               rel="noopener noreferrer"
-              class="font-body text-text-muted hover:bg-gold hover:text-bg focus:bg-gold focus:text-bg rounded-sm px-3 py-2 text-[0.82rem] tracking-[0.12em] uppercase transition-colors duration-200"
+              class="font-body text-text-muted hover:bg-gold hover:text-bg focus:bg-gold focus:text-bg text-osn-sm tracking-osn-wider rounded-sm px-3 py-2 uppercase transition-colors duration-200"
               onClick={() => setOpen(false)}
             >
               Google Calendar
@@ -253,7 +253,7 @@ export function AddToCalendar(props: AddToCalendarProps) {
               role="menuitem"
               href={icsHref() ?? "#"}
               download={filename()}
-              class="font-body text-text-muted hover:bg-gold hover:text-bg focus:bg-gold focus:text-bg rounded-sm px-3 py-2 text-[0.82rem] tracking-[0.12em] uppercase transition-colors duration-200"
+              class="font-body text-text-muted hover:bg-gold hover:text-bg focus:bg-gold focus:text-bg text-osn-sm tracking-osn-wider rounded-sm px-3 py-2 uppercase transition-colors duration-200"
               onClick={() => setOpen(false)}
             >
               Apple / Outlook (.ics)

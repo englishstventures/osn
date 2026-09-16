@@ -61,19 +61,19 @@ export function DemoRsvp() {
     <div class="border-border bg-surface-raised mx-auto max-w-[640px] overflow-hidden rounded-lg border shadow-2xl">
       {/* An honest frame header — a plain label, not imitation browser chrome. */}
       <div class="border-border flex items-center justify-center border-b px-4 py-3">
-        <span class="font-body text-text-muted text-[0.72rem] tracking-[0.18em] uppercase">
+        <span class="font-body text-text-muted text-osn-xs tracking-osn-widest uppercase">
           A live Cire invitation
         </span>
       </div>
 
       <div class="px-6 py-10 text-center md:px-10">
-        <p class="font-body text-gold mb-3 text-[0.7rem] tracking-[0.24em] uppercase">
+        <p class="font-body text-gold text-osn-xs tracking-osn-ultra mb-3 uppercase">
           Together with their families
         </p>
-        <h3 class="font-display text-text mb-2 text-[clamp(2rem,6vw,2.75rem)] leading-[1.1] font-light italic">
+        <h3 class="font-display text-text leading-osn-none mb-2 text-[clamp(2rem,6vw,2.75rem)] font-light italic">
           Amara &amp; Sam
         </h3>
-        <p class="font-body text-text-muted mb-8 text-[0.9rem] font-light">
+        <p class="font-body text-text-muted text-osn-base mb-8 font-light">
           request the pleasure of your company
         </p>
 
@@ -82,11 +82,11 @@ export function DemoRsvp() {
             {(event) => (
               <article class="border-border bg-surface rounded-sm border px-5 py-5">
                 <h4 class="font-display text-text mb-1 text-xl font-normal italic">{event.name}</h4>
-                <p class="font-body text-gold mb-1 text-[0.74rem] tracking-[0.12em] uppercase">
+                <p class="font-body text-gold text-osn-xs tracking-osn-wider mb-1 uppercase">
                   {event.date}
                 </p>
-                <p class="font-body text-text-muted mb-2 text-[0.85rem]">{event.location}</p>
-                <p class="font-body text-text-muted mb-4 text-[0.85rem] leading-[1.6] font-light">
+                <p class="font-body text-text-muted text-osn-sm mb-2">{event.location}</p>
+                <p class="font-body text-text-muted text-osn-sm leading-osn-normal mb-4 font-light">
                   {event.description}
                 </p>
                 <Button variant="cta" class="min-h-11" onClick={() => setRsvpEvent(event)}>
@@ -97,7 +97,7 @@ export function DemoRsvp() {
           </For>
         </div>
 
-        <p class="font-body text-text-muted mt-6 text-[0.74rem] tracking-[0.06em]">
+        <p class="font-body text-text-muted text-osn-xs tracking-osn-wide mt-6">
           This is an interactive preview. Responses aren&rsquo;t saved.
         </p>
       </div>
@@ -166,13 +166,13 @@ function DemoRsvpModal(props: DemoRsvpModalProps) {
         when={!submitted()}
         fallback={
           <div class="py-6 text-center">
-            <p class="font-body text-gold mb-3 text-[0.72rem] tracking-[0.2em] uppercase">
+            <p class="font-body text-gold text-osn-xs tracking-osn-widest mb-3 uppercase">
               Preview
             </p>
-            <h3 class="font-display text-text mb-4 text-[1.6rem] font-light italic">
+            <h3 class="font-display text-text text-osn-xl mb-4 font-light italic">
               That&rsquo;s the feeling.
             </h3>
-            <p class="font-body text-text-muted mb-7 text-[0.9rem] leading-[1.6] font-light">
+            <p class="font-body text-text-muted text-osn-base leading-osn-normal mb-7 font-light">
               On a real Cire invitation, your reply would be on its way to the couple and counted in
               their live guest dashboard. Here, nothing is saved. It&rsquo;s just a taste.
             </p>
@@ -182,12 +182,12 @@ function DemoRsvpModal(props: DemoRsvpModalProps) {
           </div>
         }
       >
-        <p class="font-body text-gold mb-3 text-[0.72rem] tracking-[0.2em] uppercase">Respond</p>
-        <h3 id={titleId} class="font-display text-text mb-2 text-[1.6rem] font-light italic">
+        <p class="font-body text-gold text-osn-xs tracking-osn-widest mb-3 uppercase">Respond</p>
+        <h3 id={titleId} class="font-display text-text text-osn-xl mb-2 font-light italic">
           {props.event.name}
         </h3>
         <p
-          class="border-gold/40 bg-gold/5 text-gold mb-6 rounded-sm border px-3.5 py-2.5 text-[0.74rem] leading-relaxed"
+          class="border-gold/40 bg-gold/5 text-gold text-osn-xs mb-6 rounded-sm border px-3.5 py-2.5 leading-relaxed"
           role="status"
         >
           Interactive preview. Your reply won&rsquo;t be saved.
@@ -199,13 +199,13 @@ function DemoRsvpModal(props: DemoRsvpModalProps) {
               const guestId = member.guestId;
               return (
                 <fieldset class="border-border m-0 rounded-sm border p-5">
-                  <legend class="font-display text-text mb-3 text-[1.1rem] font-normal italic">
+                  <legend class="font-display text-text text-osn-md mb-3 font-normal italic">
                     {member.firstName} {member.lastName}
                   </legend>
                   <div class="flex gap-2">
                     <button
                       type="button"
-                      class="font-body flex-1 cursor-pointer rounded-sm border px-3 py-2.5 text-[0.82rem] tracking-[0.06em] uppercase transition-colors duration-200"
+                      class="font-body text-osn-sm tracking-osn-wide flex-1 cursor-pointer rounded-sm border px-3 py-2.5 uppercase transition-colors duration-200"
                       classList={{
                         "border-gold text-gold bg-gold/8":
                           responses()[guestId]?.attending === "attending",
@@ -219,7 +219,7 @@ function DemoRsvpModal(props: DemoRsvpModalProps) {
                     </button>
                     <button
                       type="button"
-                      class="font-body flex-1 cursor-pointer rounded-sm border px-3 py-2.5 text-[0.82rem] tracking-[0.06em] uppercase transition-colors duration-200"
+                      class="font-body text-osn-sm tracking-osn-wide flex-1 cursor-pointer rounded-sm border px-3 py-2.5 uppercase transition-colors duration-200"
                       classList={{
                         "border-gold text-gold bg-gold/8":
                           responses()[guestId]?.attending === "declined",
@@ -233,11 +233,11 @@ function DemoRsvpModal(props: DemoRsvpModalProps) {
                     </button>
                   </div>
                   <Show when={responses()[guestId]?.attending === "attending"}>
-                    <label class="font-body text-text-muted mt-3 block text-[0.78rem] tracking-[0.06em] uppercase">
+                    <label class="font-body text-text-muted text-osn-sm tracking-osn-wide mt-3 block uppercase">
                       Dietary requirements
                       <input
                         type="text"
-                        class="border-border font-body text-text placeholder:text-text-muted focus:border-gold mt-1.5 block w-full rounded-sm border bg-transparent px-3 py-2.5 text-base transition-colors duration-200 focus:outline-none sm:text-[0.9rem]"
+                        class="border-border font-body text-text placeholder:text-text-muted focus:border-gold sm:text-osn-base mt-1.5 block w-full rounded-sm border bg-transparent px-3 py-2.5 text-base transition-colors duration-200 focus:outline-none"
                         placeholder="e.g. Vegetarian, no nuts"
                         value={responses()[guestId]?.dietary ?? ""}
                         onInput={(e) => setDietary(guestId, e.currentTarget.value)}
@@ -251,7 +251,7 @@ function DemoRsvpModal(props: DemoRsvpModalProps) {
           </For>
 
           <Show when={error()}>
-            <p class="font-body text-error py-1 text-[0.82rem]" role="alert">
+            <p class="font-body text-error text-osn-sm py-1" role="alert">
               {error()}
             </p>
           </Show>
@@ -259,7 +259,7 @@ function DemoRsvpModal(props: DemoRsvpModalProps) {
           <div class="border-border bg-surface sticky bottom-0 -mx-6 -mb-[max(2.5rem,env(safe-area-inset-bottom))] flex gap-3 border-t px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:-mb-10 md:pb-4">
             <button
               type="button"
-              class="border-border font-body text-text-muted hover:border-gold-dim hover:text-text flex-1 cursor-pointer rounded-sm border bg-transparent px-4 py-3 text-[0.82rem] tracking-[0.1em] uppercase transition-colors duration-200"
+              class="border-border font-body text-text-muted hover:border-gold-dim hover:text-text text-osn-sm tracking-osn-wider flex-1 cursor-pointer rounded-sm border bg-transparent px-4 py-3 uppercase transition-colors duration-200"
               onClick={() => props.onClose()}
             >
               Cancel

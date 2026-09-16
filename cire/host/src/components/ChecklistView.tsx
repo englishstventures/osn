@@ -252,12 +252,12 @@ export default function ChecklistView(props: ChecklistViewProps) {
         <For each={grouped()}>
           {(group) => (
             <section class="flex flex-col gap-2">
-              <h3 class="text-gold-dim font-body text-[0.7rem] tracking-[0.18em] uppercase">
+              <h3 class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
                 {group.bucket.label}
               </h3>
               <Show
                 when={group.items.length > 0}
-                fallback={<p class="text-text-muted text-[0.8rem] italic">Nothing here yet.</p>}
+                fallback={<p class="text-text-muted text-osn-sm italic">Nothing here yet.</p>}
               >
                 <ul class="flex flex-col gap-1">
                   <For each={group.items}>
@@ -271,15 +271,13 @@ export default function ChecklistView(props: ChecklistViewProps) {
                           onChange={() => props.canEdit && toggleDone(task)}
                         />
                         <span
-                          class={`flex-1 text-[0.9rem] ${
+                          class={`text-osn-base flex-1 ${
                             task.status === "done" ? "text-text-muted line-through" : "text-text"
                           }`}
                         >
                           {task.title}
                           <Show when={task.dueAt}>
-                            <span class="text-text-muted ml-2 text-[0.72rem]">
-                              · due {task.dueAt}
-                            </span>
+                            <span class="text-text-muted text-osn-xs ml-2">· due {task.dueAt}</span>
                           </Show>
                         </span>
                         <Show when={props.canEdit}>
