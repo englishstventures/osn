@@ -124,9 +124,14 @@ Read the body out and append to it — never compose a new one. The five section
 `prep-pr` wrote are the pull request's contract, and an edit that rebuilds the
 body from memory loses them.
 
-**Check the card is not already on the body** before appending. A re-run of this
-skill on a branch whose card is already rendered would otherwise stack a second
-`<details>` block.
+**Check the card is not already on the body** before appending — a re-run of
+this skill would otherwise stack a second block. Match the summary line, not the
+tag: a body that describes what this step does mentions `<details>` in its own
+prose, and a bare `grep -c '<details>'` then reports a block that is not there.
+
+```bash
+gh pr view "$PR" --json body --jq .body | grep -c '^<details><summary>Session metrics'
+```
 
 The block is a `<details>`, never a `##` section: `prep-pr`'s body shape check
 permits exactly five top-level headings, and appending a sixth fails a body
