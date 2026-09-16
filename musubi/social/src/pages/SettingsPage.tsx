@@ -112,7 +112,7 @@ export function SettingsPage() {
 
         {/* Profile section */}
         <Show when={section() === "profile"}>
-          <Card class="rounded-card flex flex-col gap-5 p-5">
+          <Card padding="md" class="rounded-card flex flex-col gap-5">
             <div class="flex items-center gap-4">
               <Avatar class="h-16 w-16">
                 <Show when={safeAvatarUrl(activeProfile()?.avatarUrl)}>
@@ -158,7 +158,7 @@ export function SettingsPage() {
 
         {/* Account section */}
         <Show when={section() === "account"}>
-          <Card class="rounded-card flex flex-col gap-5 p-5">
+          <Card padding="md" class="rounded-card flex flex-col gap-5">
             <div class="flex flex-col gap-1.5">
               <Label class="text-subtle text-meta">Email</Label>
               <Input value={claims().email ?? ""} disabled class="bg-muted/50 text-body" />
@@ -187,7 +187,7 @@ export function SettingsPage() {
 
         {/* Security section — manage passkeys (add / rename / delete). */}
         <Show when={section() === "security"}>
-          <Card class="rounded-card flex flex-col gap-3 p-5">
+          <Card padding="md" class="rounded-card flex flex-col gap-3">
             <Show
               when={accessToken() && claims().profileId}
               fallback={
@@ -203,7 +203,7 @@ export function SettingsPage() {
 
         {/* Connected apps section */}
         <Show when={section() === "apps"}>
-          <Card class="rounded-card flex flex-col gap-4 p-5">
+          <Card padding="md" class="rounded-card flex flex-col gap-4">
             <Show
               when={accessToken()}
               fallback={<p class="text-subtle text-meta">Sign in to manage your connected apps.</p>}

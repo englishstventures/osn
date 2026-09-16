@@ -79,7 +79,7 @@ export function RsvpSection(props: {
   }
 
   return (
-    <Card class="p-4">
+    <Card padding="sm">
       <div class="mb-3 flex items-center justify-between">
         <h3 class="text-foreground text-sm font-semibold">Who's going</h3>
         <button

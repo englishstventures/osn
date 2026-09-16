@@ -66,7 +66,7 @@ export function MapPreview(props: {
       when={props.latitude != null && props.longitude != null}
       fallback={
         <Show when={props.label}>
-          <Card class="p-4">
+          <Card padding="sm">
             <p class="text-foreground text-sm font-medium">Location</p>
             <p class="text-muted-foreground text-sm">{props.label}</p>
           </Card>

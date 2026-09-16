@@ -258,7 +258,7 @@ export function VenueDetailPage() {
             {/* Full hours */}
             <Show when={hours()}>
               {(h) => (
-                <Card class="p-5">
+                <Card padding="md">
                   <p class="text-muted-foreground text-osn-xs tracking-osn-widest font-mono uppercase">
                     Hours
                   </p>
@@ -285,7 +285,7 @@ export function VenueDetailPage() {
 
             {/* About */}
             <Show when={v().description}>
-              <Card class="p-5">
+              <Card padding="md">
                 <p class="text-muted-foreground text-osn-xs tracking-osn-widest font-mono uppercase">
                   About
                 </p>

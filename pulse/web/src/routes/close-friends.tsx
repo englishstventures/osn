@@ -87,7 +87,7 @@ export function CloseFriendsPage() {
         when={session()}
         fallback={<p class="text-muted-foreground text-sm">Sign in to manage close friends.</p>}
       >
-        <Card class="mb-6 flex flex-col gap-2 p-4">
+        <Card padding="sm" class="mb-6 flex flex-col gap-2">
           <h2 class="text-base font-semibold">Your close friends</h2>
           <Show
             when={closeFriends().length > 0}
@@ -132,7 +132,7 @@ export function CloseFriendsPage() {
           </Show>
         </Card>
 
-        <Card class="flex flex-col gap-2 p-4">
+        <Card padding="sm" class="flex flex-col gap-2">
           <h2 class="text-base font-semibold">Add from your connections</h2>
           <Show
             when={candidates() !== null}

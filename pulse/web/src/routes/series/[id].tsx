@@ -131,7 +131,7 @@ export function SeriesDetailPage() {
       <Show when={series()}>
         {(s) => (
           <article class="flex flex-col gap-6">
-            <Card class="p-5">
+            <Card padding="md">
               <div class="mb-2 flex items-center gap-2">
                 <Badge variant="secondary" class="text-osn-xs tracking-wider uppercase">
                   Recurring

@@ -59,7 +59,7 @@ export function SettingsPage() {
         when={session()}
         fallback={<p class="text-muted-foreground text-sm">Sign in to change your settings.</p>}
       >
-        <Card class="flex flex-col gap-3 p-4">
+        <Card padding="sm" class="flex flex-col gap-3">
           <Label class="text-base font-semibold">Who can see events you're attending?</Label>
           <p class="text-muted-foreground text-xs">
             Note: if an event has a public guest list, attending it opts you in regardless of this

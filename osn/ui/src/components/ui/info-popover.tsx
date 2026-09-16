@@ -31,7 +31,7 @@ export function InfoPopover(props: InfoPopoverProps) {
     <Popover placement={props.placement}>
       <PopoverTrigger
         aria-label={props.label ?? "More info"}
-        class="base:bg-osn-surface-sunk base:text-osn-ink-secondary base:hover:bg-osn-surface-sunk/80 base:focus:ring-osn-focus base:ml-1 base:inline-flex base:h-4 base:w-4 base:items-center base:justify-center base:rounded-osn-pill base:text-[10px] base:font-semibold base:focus:ring-2 base:focus:outline-none"
+        class="base:bg-osn-surface-sunk base:text-osn-ink-secondary base:hover:bg-osn-surface-sunk/80 base:focus:ring-osn-focus base:ml-1 base:inline-flex base:h-4 base:w-4 base:items-center base:justify-center base:rounded-osn-pill base:text-osn-xs base:font-semibold base:focus:ring-2 base:focus:outline-none"
       >
         {props.glyph ?? "?"}
       </PopoverTrigger>

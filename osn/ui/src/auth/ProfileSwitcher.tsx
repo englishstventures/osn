@@ -118,14 +118,14 @@ export function ProfileSwitcher(props: ProfileSwitcherProps) {
                       </Show>
                     </span>
                     <Show when={isActive()}>
-                      <span class="text-primary text-[10px]" aria-label="Active profile">
+                      <span class="text-primary text-osn-xs" aria-label="Active profile">
                         &#10003;
                       </span>
                     </Show>
                     <Show when={!isActive()}>
                       <button
                         type="button"
-                        class="text-muted-foreground hover:text-destructive ml-auto text-[10px]"
+                        class="text-muted-foreground hover:text-destructive text-osn-xs ml-auto"
                         aria-label={`Delete profile @${profile.handle}`}
                         onClick={(e) => {
                           e.stopPropagation();

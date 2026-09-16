@@ -19,7 +19,7 @@ export function CommsSummary(props: { eventId: string }) {
   const [data] = createResource(() => props.eventId, fetchCommsSummary);
 
   return (
-    <Card class="p-4">
+    <Card padding="sm">
       <div class="mb-2 flex items-center justify-between">
         <h3 class="text-foreground text-sm font-semibold">Announcements</h3>
         <Show when={data()?.channels}>

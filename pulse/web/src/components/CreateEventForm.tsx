@@ -126,7 +126,7 @@ export function CreateEventForm(props: { onSuccess: () => void; onCancel: () => 
   }
 
   return (
-    <Card class="mb-4 p-4">
+    <Card padding="sm" class="mb-4">
       <form onSubmit={handleSubmit} class="flex flex-col gap-4">
         {/* Title */}
         <div class="flex flex-col gap-1">

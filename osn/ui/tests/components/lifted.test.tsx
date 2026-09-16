@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 import { createSignal } from "solid-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { Card, CardHeader } from "../../src/components/ui/card";
 import { Checkbox } from "../../src/components/ui/checkbox";
 import { Chip } from "../../src/components/ui/chip";
 import { EmptyState } from "../../src/components/ui/empty-state";
@@ -441,5 +442,30 @@ describe("Checkbox", () => {
     render(() => <Checkbox checked={false} onChange={onChange} label="Florals" />);
     screen.getByRole("checkbox", { name: "Florals" }).click();
     expect(onChange).toHaveBeenCalledWith(true);
+  });
+});
+
+describe("Card", () => {
+  it("adds no padding by default, so a composed card is not double-padded", () => {
+    // `CardHeader`, `CardContent` and `CardFooter` carry their own padding. A
+    // default on the Card would add to theirs, which is why `none` is the
+    // default rather than an oversight.
+    const { container } = render(() => (
+      <Card>
+        <CardHeader>Head</CardHeader>
+      </Card>
+    ));
+    const card = container.firstElementChild!;
+    expect([...card.classList].some((c) => /^base:p-\d/.test(c))).toBe(false);
+  });
+
+  it("gives each padding step a different class, or the prop is decoration", () => {
+    const classes = (["sm", "md", "lg"] as const).map((padding) => {
+      const { container, unmount } = render(() => <Card padding={padding}>body</Card>);
+      const c = container.firstElementChild!.className;
+      unmount();
+      return c;
+    });
+    expect(new Set(classes).size).toBe(3);
   });
 });
