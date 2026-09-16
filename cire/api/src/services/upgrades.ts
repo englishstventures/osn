@@ -88,7 +88,13 @@ export interface StartPurchaseInput {
   entitlement: PurchasableEntitlement;
   /** The owner who pressed Upgrade. Recorded, and used as the grant's actor. */
   actorProfileId: string;
-  successUrl: string;
+  /**
+   * Built from the purchase id, which does not exist until this call mints it —
+   * so the caller hands over the shape of the URL rather than the URL. A plain
+   * string here is how a `PURCHASE_ID` placeholder reaches Stripe and the
+   * organiser returns to a page that cannot tell which purchase to poll.
+   */
+  successUrlFor: (purchaseId: string) => string;
   cancelUrl: string;
 }
 
@@ -280,7 +286,7 @@ export function createUpgradeService(deps: UpgradeServiceDeps) {
         const session = yield* deps.stripe
           .createPlatformCheckoutSession({
             priceId,
-            successUrl: input.successUrl,
+            successUrl: input.successUrlFor(purchaseId),
             cancelUrl: input.cancelUrl,
             clientReferenceId: purchaseId,
             metadata: { purchaseId },

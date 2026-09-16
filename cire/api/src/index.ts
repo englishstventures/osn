@@ -139,6 +139,13 @@ export interface Env {
   // unauthenticated write API. Both: `wrangler secret put …`.
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
+  // Stripe Price ids for the self-serve upgrades (KEY-OPTIONAL, per key). A key
+  // with no Price id here is not for sale in this deployment: it never appears
+  // in the catalogue and the checkout route 404s for it. NOT secrets — they are
+  // `[vars]` in wrangler.toml, and named envs inherit none, so each tier
+  // declares its own. The AMOUNT lives at Stripe, never in this repository.
+  STRIPE_UPGRADE_PRICE_VENDORS?: string;
+  STRIPE_UPGRADE_PRICE_REGISTRY?: string;
   // Two-letter country for a NEW connected account (`AU` unless set). Stripe
   // fixes an account's country at creation, so this is a per-deployment default
   // and not something a couple can change afterwards.
@@ -450,6 +457,10 @@ const handler: ExportedHandler<Env> = {
         turnstileVerifier,
         stripe,
         stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET ?? null,
+        upgradePrices: {
+          vendors: env.STRIPE_UPGRADE_PRICE_VENDORS,
+          registry: env.STRIPE_UPGRADE_PRICE_REGISTRY,
+        },
         stripeAccountCountry: env.STRIPE_ACCOUNT_COUNTRY,
         flags,
         orgMembership,

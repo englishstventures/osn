@@ -68,6 +68,8 @@ const sales = (db: Db) =>
 interface StripeStub {
   client: StripeClient;
   created: string[];
+  /** The success URLs Stripe was actually handed. */
+  successUrls: string[];
   /** What the next probe answers. */
   probe: PlatformSessionState | "error";
   failCreate: boolean;
@@ -76,6 +78,7 @@ interface StripeStub {
 function stubStripe(): StripeStub {
   const stub: StripeStub = {
     created: [],
+    successUrls: [],
     probe: { status: "expired" },
     failCreate: false,
     client: undefined as unknown as StripeClient,
@@ -83,10 +86,11 @@ function stubStripe(): StripeStub {
   let minted = 0;
   stub.client = {
     retrievePrice: () => Effect.succeed({ unitAmountMinor: 4900, currency: "AUD" }),
-    createPlatformCheckoutSession(input: { clientReferenceId: string }) {
+    createPlatformCheckoutSession(input: { clientReferenceId: string; successUrl: string }) {
       if (stub.failCreate) return Effect.fail(new StripeError({ reason: "unreachable" }));
       minted += 1;
       stub.created.push(input.clientReferenceId);
+      stub.successUrls.push(input.successUrl);
       const id = `cs_${minted}`;
       return Effect.succeed({ id, url: `https://pay.test/${id}` });
     },
@@ -113,7 +117,7 @@ const START = {
   weddingId: "wed_test",
   entitlement: "vendors" as const,
   actorProfileId: "usr_owner",
-  successUrl: "https://host.test/?upgrade=x",
+  successUrlFor: (id: string) => `https://host.test/?upgrade=${id}&w=wed_test&m=vendors`,
   cancelUrl: "https://host.test/",
 };
 
@@ -178,6 +182,23 @@ describe("startPurchase", () => {
     expect(res.reused).toBe(false);
     expect(res.url).toBe("https://pay.test/cs_1");
     expect(purchases(db)).toMatchObject([{ status: "pending", checkout_session_id: "cs_1" }]);
+  });
+
+  it("sends Stripe a success URL naming the real purchase, not a placeholder", async () => {
+    // The purchase id does not exist until the row is minted, so the URL has to
+    // be built from it. Getting this wrong is silent: Stripe accepts any URL,
+    // the organiser pays, and only the page they land on is broken — it cannot
+    // tell which purchase to poll, so nothing ever unlocks.
+    const db = createDb();
+    seedWedding(db);
+    const stripe = stubStripe();
+    const svc = makeService(stripe.client, { t: BASE_MS });
+
+    const res = await run(db, svc.startPurchase(START));
+    expect(stripe.successUrls).toEqual([
+      `https://host.test/?upgrade=${res.purchaseId}&w=wed_test&m=vendors`,
+    ]);
+    expect(stripe.successUrls[0]).not.toContain("PURCHASE_ID");
   });
 
   it("hands back the SAME open session on a second press", async () => {
