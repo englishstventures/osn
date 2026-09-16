@@ -22,6 +22,8 @@
     "@cire/theme": "workspace:*",
     "@fontsource/cormorant-garamond": "^5.3.0",
     "@fontsource/lato": "^5.3.0",
+    "@cire/ui": "workspace:*",
+    "@shared/design-tokens": "workspace:*",
     "@shared/legal": "workspace:*",
     "@shared/toast": "workspace:*",
     "@shared/rp-auth": "workspace:*",

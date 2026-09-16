@@ -108,6 +108,8 @@
         "@cire/theme": "workspace:*",
         "@fontsource/cormorant-garamond": "^5.3.0",
         "@fontsource/lato": "^5.3.0",
+        "@cire/ui": "workspace:*",
+        "@shared/design-tokens": "workspace:*",
         "@shared/legal": "workspace:*",
         "@shared/rp-auth": "workspace:*",
         "@shared/toast": "workspace:*",
@@ -136,6 +138,8 @@
       "name": "@cire/landing",
       "dependencies": {
         "@astrojs/solid-js": "^7.0.2",
+        "@cire/ui": "workspace:*",
+        "@shared/design-tokens": "workspace:*",
         "@shared/legal": "workspace:*",
         "@tailwindcss/vite": "^4.3.3",
         "astro": "^7.2.10",
