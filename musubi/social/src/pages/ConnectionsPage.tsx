@@ -5,7 +5,6 @@ import type {
   SentRequestEntry,
 } from "@osn/client";
 import { useAuth } from "@osn/client/solid";
-import { clsx } from "@osn/ui/lib/utils";
 import { Avatar, AvatarFallback } from "@osn/ui/ui/avatar";
 import { Button } from "@osn/ui/ui/button";
 import {
@@ -19,6 +18,7 @@ import { toast } from "@shared/toast";
 import { createResource, createSignal, For, Show } from "solid-js";
 
 import { ResponsiveDialogContent } from "../components/ResponsiveDialogContent";
+import { SectionTabs } from "../components/SectionTabs";
 import { graphClient } from "../lib/api";
 
 type Tab = "all" | "pending" | "sent" | "blocked";
@@ -163,25 +163,13 @@ export function ConnectionsPage() {
           </div>
         }
       >
-        {/* Tab bar */}
-        <div class="border-border mb-6 flex gap-1 overflow-x-auto border-b whitespace-nowrap">
-          <For each={TABS}>
-            {(t) => (
-              <button
-                type="button"
-                class={clsx(
-                  "border-b-2 px-3 pb-2.5 text-body font-medium transition-colors max-md:min-h-11",
-                  tab() === t.value
-                    ? "border-foreground text-foreground"
-                    : "text-muted-foreground hover:text-foreground border-transparent",
-                )}
-                onClick={() => setTab(t.value)}
-              >
-                {t.label}
-              </button>
-            )}
-          </For>
-        </div>
+        <SectionTabs
+          label="Connection filters"
+          tabs={TABS}
+          current={tab()}
+          onSelect={setTab}
+          class="mb-6"
+        />
 
         {/* All connections */}
         <Show when={tab() === "all"}>

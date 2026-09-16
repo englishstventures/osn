@@ -198,6 +198,15 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive-foreground: var(--destructive-foreground);
+  /* The coral brand family, as utilities. Without these `--pulse-accent` can
+     only be reached through an inline `style` and a `text-[var(--…)]`
+     arbitrary value, which is how the explore nav's two accent pills were
+     written — one of them with a hover state and one without, because two
+     copies of a style drift. */
+  --color-pulse-accent: var(--pulse-accent);
+  --color-pulse-accent-strong: var(--pulse-accent-strong);
+  --color-pulse-accent-soft: var(--pulse-accent-soft);
+  --color-pulse-accent-fg: var(--pulse-accent-fg);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -327,7 +336,7 @@ body {
 /* ── Design-token contract ───────────────────────────────────────────────────
  * `@shared/design-tokens` names the roles a shared component reads; this block
  * says which of pulse's colours plays each one. App code is untouched — every
- * `bg-card`, `text-pulse-accent` and `shadow-md` stays exactly as written.
+ * `bg-card`, `bg-pulse-accent` and `shadow-md` stays exactly as written.
  *
  * ## `--osn-accent` is `--primary`, not `--pulse-accent`
  *

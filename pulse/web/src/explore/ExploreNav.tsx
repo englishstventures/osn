@@ -16,6 +16,7 @@ import { Icon } from "../components/Icon";
 import { setShowCreateForm } from "../lib/createEventSignal";
 import { TABS } from "../lib/tabs";
 import { displayNameOf, initialOf, safeAvatarUrl } from "../lib/utils";
+import { NavPill } from "./NavPill";
 
 export function ExploreNav(props: {
   query: string;
@@ -125,35 +126,21 @@ export function ExploreNav(props: {
           <Show
             when={session()}
             fallback={
-              <button
-                type="button"
-                class="text-osn-sm inline-flex h-9 items-center gap-2 rounded-full border border-transparent px-3.5 font-medium text-[var(--pulse-accent-fg)]"
-                style={{ background: "var(--pulse-accent)" }}
-                onClick={() => signIn()}
-              >
+              <NavPill tone="accent" onClick={() => signIn()}>
                 Continue with musubi
-              </button>
+              </NavPill>
             }
           >
             {/* Notifications */}
-            <button
-              type="button"
-              class="border-border bg-card hover:bg-secondary text-osn-sm relative inline-flex h-9 items-center gap-2 rounded-full border px-3.5 font-medium"
-              title="Notifications"
-            >
+            <NavPill tone="outline" title="Notifications" aria-label="Notifications">
               <Icon name="bell" size={14} />
-            </button>
+            </NavPill>
 
             {/* Host CTA */}
-            <button
-              type="button"
-              class="text-osn-sm inline-flex h-9 items-center gap-2 rounded-full border border-transparent px-3.5 font-medium text-[var(--pulse-accent-fg)] hover:opacity-90"
-              style={{ background: "var(--pulse-accent)" }}
-              onClick={() => setShowCreateForm((v) => !v)}
-            >
+            <NavPill tone="accent" onClick={() => setShowCreateForm((v) => !v)}>
               <Icon name="plus" size={14} />
               Host
-            </button>
+            </NavPill>
 
             {/* Avatar dropdown */}
             <DropdownMenu>

@@ -1,14 +1,14 @@
 import { useAuth } from "@osn/client/solid";
 import { ProfileOnboarding } from "@osn/ui/auth/ProfileOnboarding";
-import { clsx } from "@osn/ui/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@osn/ui/ui/avatar";
 import { Button } from "@osn/ui/ui/button";
 import { Card } from "@osn/ui/ui/card";
 import { Input } from "@osn/ui/ui/input";
 import { Label } from "@osn/ui/ui/label";
 import { useLocation, useNavigate } from "@solidjs/router";
-import { createMemo, For, lazy, Show, Suspense } from "solid-js";
+import { createMemo, lazy, Show, Suspense } from "solid-js";
 
+import { SectionTabs } from "../components/SectionTabs";
 import { registrationClient } from "../lib/authClients";
 import { getTokenClaims, profileInitials, safeAvatarUrl } from "../lib/utils";
 
@@ -90,25 +90,13 @@ export function SettingsPage() {
           <ProfileOnboarding checkHandle={registrationClient.checkHandle} dismissible />
         </div>
 
-        {/* Section tabs */}
-        <div class="border-border mb-6 flex gap-1 overflow-x-auto border-b whitespace-nowrap">
-          <For each={SECTIONS}>
-            {(s) => (
-              <button
-                type="button"
-                class={clsx(
-                  "border-b-2 px-3 pb-2.5 text-body font-medium transition-colors max-md:min-h-11",
-                  section() === s.value
-                    ? "border-foreground text-foreground"
-                    : "text-muted-foreground hover:text-foreground border-transparent",
-                )}
-                onClick={() => selectSection(s.value)}
-              >
-                {s.label}
-              </button>
-            )}
-          </For>
-        </div>
+        <SectionTabs
+          label="Settings sections"
+          tabs={SECTIONS}
+          current={section()}
+          onSelect={selectSection}
+          class="mb-6"
+        />
 
         {/* Profile section */}
         <Show when={section() === "profile"}>
