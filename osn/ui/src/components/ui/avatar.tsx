@@ -30,7 +30,7 @@ const AvatarFallback: Component<ComponentProps<"span">> = (props) => {
   return (
     <span
       class={clsx(
-        "base:bg-muted base:text-muted-foreground base:flex base:h-full base:w-full base:items-center base:justify-center base:text-[10px] base:font-semibold",
+        "base:bg-osn-surface-sunk base:text-osn-ink-secondary base:flex base:h-full base:w-full base:items-center base:justify-center base:text-[10px] base:font-semibold",
         local.class,
       )}
       {...others}

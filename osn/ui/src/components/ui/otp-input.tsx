@@ -92,7 +92,7 @@ const OtpInput: Component<OtpInputProps> = (props) => {
       return "base:border-blue-500 base:ring-1 base:ring-blue-500";
     if (s === "verifying") return "base:border-border";
     // idle
-    if (focusedIndex() === index) return "base:border-foreground base:ring-1 base:ring-foreground";
+    if (focusedIndex() === index) return "base:border-osn-ink base:ring-1 base:ring-osn-ink";
     return "base:border-border";
   }
 
@@ -115,7 +115,7 @@ const OtpInput: Component<OtpInputProps> = (props) => {
             onBlur={() => setFocusedIndex(-1)}
             aria-label={`Digit ${i() + 1}`}
             class={clsx(
-              "base:h-12 base:w-12 base:rounded-md base:border-2 base:bg-background base:text-center base:text-lg base:font-medium base:text-foreground base:outline-none base:transition-colors base:disabled:cursor-not-allowed base:disabled:opacity-70",
+              "base:h-12 base:w-12 base:rounded-md base:border-2 base:bg-osn-ground base:text-center base:text-lg base:font-medium base:text-osn-ink base:outline-none base:transition-colors base:disabled:cursor-not-allowed base:disabled:opacity-70",
               borderClass(i()),
             )}
           />

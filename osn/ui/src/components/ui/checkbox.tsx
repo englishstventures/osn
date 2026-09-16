@@ -20,7 +20,7 @@ const Checkbox: Component<CheckboxProps> = (props) => {
       {...others}
     >
       <KobalteCheckbox.Input />
-      <KobalteCheckbox.Control class="base:border-input base:bg-background base:data-[checked]:bg-primary base:data-[checked]:text-primary-foreground base:peer base:focus-visible:ring-ring base:h-4 base:w-4 base:shrink-0 base:rounded-sm base:border base:transition-colors base:focus-visible:ring-2 base:focus-visible:outline-none">
+      <KobalteCheckbox.Control class="base:border-osn-hairline-strong base:bg-osn-ground base:data-[checked]:bg-osn-accent base:data-[checked]:text-osn-on-accent base:peer base:focus-visible:ring-osn-focus base:h-4 base:w-4 base:shrink-0 base:rounded-sm base:border base:transition-colors base:focus-visible:ring-2 base:focus-visible:outline-none">
         <KobalteCheckbox.Indicator class="base:flex base:items-center base:justify-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"

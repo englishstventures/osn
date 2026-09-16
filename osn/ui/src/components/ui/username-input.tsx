@@ -37,7 +37,7 @@ const UsernameInput: Component<UsernameInputProps> = (props) => {
   return (
     <div class="base:flex base:flex-col base:gap-1">
       <div class={clsx("base:flex base:items-center base:gap-2", local.class)}>
-        <span class="base:text-muted-foreground" aria-hidden="true">
+        <span class="base:text-osn-ink-secondary" aria-hidden="true">
           @
         </span>
         <Input
@@ -50,19 +50,19 @@ const UsernameInput: Component<UsernameInputProps> = (props) => {
         />
       </div>
       <Show when={status() === "checking"}>
-        <span class="base:text-muted-foreground base:text-xs">Checking…</span>
+        <span class="base:text-osn-ink-secondary base:text-xs">Checking…</span>
       </Show>
       <Show when={status() === "available"}>
         <span class="base:text-xs base:text-green-600">@{local.value} is available</span>
       </Show>
       <Show when={status() === "taken"}>
-        <span class="base:text-destructive base:text-xs">@{local.value} is taken</span>
+        <span class="base:text-osn-danger base:text-xs">@{local.value} is taken</span>
       </Show>
       <Show when={status() === "invalid" && local.invalidMessage}>
-        <span class="base:text-destructive base:text-xs">{local.invalidMessage}</span>
+        <span class="base:text-osn-danger base:text-xs">{local.invalidMessage}</span>
       </Show>
       <Show when={status() === "error"}>
-        <span class="base:text-destructive base:text-xs">
+        <span class="base:text-osn-danger base:text-xs">
           Couldn&apos;t check availability — try again
         </span>
       </Show>

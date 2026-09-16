@@ -35,8 +35,8 @@ const RadioGroupItem: Component<RadioGroupItemProps> = (props) => {
       {...others}
     >
       <KobalteRadioGroup.ItemInput />
-      <KobalteRadioGroup.ItemControl class="base:border-input base:bg-background base:data-[checked]:border-primary base:focus-visible:ring-ring base:aspect-square base:h-4 base:w-4 base:rounded-full base:border base:transition-colors base:focus-visible:ring-2 base:focus-visible:outline-none">
-        <KobalteRadioGroup.ItemIndicator class="base:after:bg-primary base:flex base:items-center base:justify-center base:after:block base:after:h-2.5 base:after:w-2.5 base:after:rounded-full" />
+      <KobalteRadioGroup.ItemControl class="base:border-osn-hairline-strong base:bg-osn-ground base:data-[checked]:border-osn-accent base:focus-visible:ring-osn-focus base:aspect-square base:h-4 base:w-4 base:rounded-full base:border base:transition-colors base:focus-visible:ring-2 base:focus-visible:outline-none">
+        <KobalteRadioGroup.ItemIndicator class="base:after:bg-osn-accent base:flex base:items-center base:justify-center base:after:block base:after:h-2.5 base:after:w-2.5 base:after:rounded-full" />
       </KobalteRadioGroup.ItemControl>
       <KobalteRadioGroup.ItemLabel class="base:text-sm base:leading-none">
         {local.label}

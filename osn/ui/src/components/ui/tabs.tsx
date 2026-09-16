@@ -21,8 +21,8 @@ const TabsTrigger: Component<{
       value={local.value}
       class={clsx(
         "base:rounded-md base:px-3 base:py-1.5 base:text-sm base:font-medium base:transition-colors",
-        "base:text-muted-foreground base:hover:bg-muted",
-        "base:data-[selected]:bg-primary base:data-[selected]:text-primary-foreground",
+        "base:text-osn-ink-secondary base:hover:bg-osn-surface-sunk",
+        "base:data-[selected]:bg-osn-accent base:data-[selected]:text-osn-on-accent",
         local.class,
       )}
       {...others}

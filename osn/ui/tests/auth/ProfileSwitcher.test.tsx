@@ -134,11 +134,15 @@ describe("ProfileSwitcher", () => {
       expect(screen.getByText(/Permanently delete/)).toBeTruthy();
     });
 
-    // Confirm deletion — the dialog footer has Cancel + Delete buttons.
-    // Use getAllByText to find "Delete" buttons and pick the one in the footer.
+    // Confirm deletion — the dialog footer has Cancel + Delete buttons, and the
+    // row that opened it also says "Delete", so the variant is what tells them
+    // apart. `osn-danger` rather than `destructive` since the primitives were
+    // re-keyed onto the token contract; the assertion is unchanged in substance
+    // — this still checks the confirm button is the destructive variant and not
+    // the trigger.
     const allDeleteBtns = document.querySelectorAll("button");
     const confirmBtn = Array.from(allDeleteBtns).find(
-      (btn) => btn.textContent?.trim() === "Delete" && btn.className.includes("destructive"),
+      (btn) => btn.textContent?.trim() === "Delete" && btn.className.includes("osn-danger"),
     ) as HTMLButtonElement;
     expect(confirmBtn).toBeTruthy();
     await fireEvent.click(confirmBtn);

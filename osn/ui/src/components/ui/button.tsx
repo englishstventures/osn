@@ -3,17 +3,17 @@ import { clsx } from "clsx";
 import { splitProps, type Component, type ComponentProps } from "solid-js";
 
 const buttonVariants = cva(
-  "base:inline-flex base:cursor-pointer base:items-center base:justify-center base:gap-2 base:whitespace-nowrap base:rounded-md base:text-sm base:font-medium base:transition-colors base:focus-visible:outline-none base:focus-visible:ring-2 base:focus-visible:ring-ring base:disabled:pointer-events-none base:disabled:opacity-50",
+  "base:inline-flex base:cursor-pointer base:items-center base:justify-center base:gap-2 base:whitespace-nowrap base:rounded-md base:text-sm base:font-medium base:transition-colors base:focus-visible:outline-none base:focus-visible:ring-2 base:focus-visible:ring-osn-focus base:disabled:pointer-events-none base:disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "base:bg-primary base:text-primary-foreground base:hover:bg-primary/90",
-        destructive: "base:bg-destructive base:text-white base:hover:bg-destructive/90",
+        default: "base:bg-osn-accent base:text-osn-on-accent base:hover:bg-osn-accent/90",
+        destructive: "base:bg-osn-danger base:text-osn-on-danger base:hover:bg-osn-danger/90",
         outline:
-          "base:border base:border-input base:bg-background base:hover:bg-secondary base:hover:text-secondary-foreground",
-        secondary: "base:bg-secondary base:text-secondary-foreground base:hover:bg-secondary/80",
-        ghost: "base:hover:bg-secondary base:hover:text-secondary-foreground",
-        link: "base:text-primary base:underline-offset-4 base:hover:underline",
+          "base:border base:border-osn-hairline-strong base:bg-osn-ground base:hover:bg-osn-surface-sunk base:hover:text-osn-ink",
+        secondary: "base:bg-osn-surface-sunk base:text-osn-ink base:hover:bg-osn-surface-sunk/80",
+        ghost: "base:hover:bg-osn-surface-sunk base:hover:text-osn-ink",
+        link: "base:text-osn-accent-ink base:underline-offset-4 base:hover:underline",
       },
       size: {
         default: "base:h-9 base:px-4 base:py-2",

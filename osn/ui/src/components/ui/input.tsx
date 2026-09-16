@@ -8,7 +8,7 @@ const Input: Component<InputProps> = (props) => {
   return (
     <input
       class={clsx(
-        "base:border-input base:bg-background base:text-foreground base:ring-offset-background base:placeholder:text-muted-foreground base:focus-visible:ring-ring base:flex base:h-9 base:w-full base:rounded-md base:border base:px-3 base:py-2 base:text-sm base:file:border-0 base:file:bg-transparent base:file:text-sm base:file:font-medium base:focus-visible:outline-none base:focus-visible:ring-2 base:focus-visible:ring-offset-2 base:disabled:cursor-not-allowed base:disabled:opacity-50",
+        "base:border-osn-hairline-strong base:bg-osn-ground base:text-osn-ink base:ring-offset-background base:placeholder:text-osn-ink-secondary base:focus-visible:ring-osn-focus base:flex base:h-9 base:w-full base:rounded-md base:border base:px-3 base:py-2 base:text-sm base:file:border-0 base:file:bg-transparent base:file:text-sm base:file:font-medium base:focus-visible:outline-none base:focus-visible:ring-2 base:focus-visible:ring-offset-2 base:disabled:cursor-not-allowed base:disabled:opacity-50",
         local.class,
       )}
       {...others}
