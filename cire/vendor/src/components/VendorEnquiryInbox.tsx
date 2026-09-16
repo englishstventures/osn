@@ -83,6 +83,9 @@ export default function VendorEnquiryInbox(props: VendorEnquiryInboxProps) {
           <For each={rows()}>
             {(item) => (
               <li>
+                {/* As in `OrgPicker`: the whole card is the control, so it is
+                    a `<button>` wearing `cardClass` rather than a `Button` or a
+                    `<div role="button">`. */}
                 <button
                   type="button"
                   onClick={() => props.onOpen(item.id)}

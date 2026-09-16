@@ -257,13 +257,9 @@ function DemoRsvpModal(props: DemoRsvpModalProps) {
           </Show>
 
           <div class="border-border bg-surface sticky bottom-0 -mx-6 -mb-[max(2.5rem,env(safe-area-inset-bottom))] flex gap-3 border-t px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:-mb-10 md:pb-4">
-            <button
-              type="button"
-              class="border-border font-body text-text-muted hover:border-gold-dim hover:text-text text-osn-sm tracking-osn-wider flex-1 cursor-pointer rounded-sm border bg-transparent px-4 py-3 uppercase transition-colors duration-200"
-              onClick={() => props.onClose()}
-            >
+            <Button variant="quiet" class="flex-1" onClick={() => props.onClose()}>
               Cancel
-            </button>
+            </Button>
             <Button type="submit" variant="cta" class="flex-1">
               Send RSVP
             </Button>

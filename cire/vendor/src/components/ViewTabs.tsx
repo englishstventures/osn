@@ -5,6 +5,13 @@ import { createSlidingPill } from "../lib/sliding-pill";
 /**
  * The portal's two views, as one control.
  *
+ * Bare `<button>`s rather than `@cire/ui`'s `Button`, deliberately. These are
+ * not actions — they are a `aria-current="page"` set with a single travelling
+ * highlight, which is a tab bar. Wearing a button's border and uppercase
+ * tracking would say "press me" twice on a control whose whole job is to say
+ * "you are here".
+ *
+ *
  * Before this they were two bare `<button>`s that turned gold when active,
  * sitting in a row beside "Sign out" — so "which view am I in" and "leave" were
  * the same kind of thing in the same place, told apart only by a colour. A

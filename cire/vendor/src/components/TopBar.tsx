@@ -89,6 +89,9 @@ export default function TopBar(props: {
    * case where the idle warm has not fired. A click asks for it *and* opens it,
    * so a press that lands first is never swallowed.
    */
+  // A bare `<button>`, not `@cire/ui`'s: this is a menu trigger wrapping an
+  // avatar, so it must contribute no border, no padding and no background of
+  // its own — `AVATAR_TRIGGER_CLASS` is the whole of its appearance.
   const AccountPlaceholder = () => (
     <button
       type="button"
@@ -109,6 +112,10 @@ export default function TopBar(props: {
   return (
     <header class="border-border bg-bg/85 sticky top-0 z-30 border-b backdrop-blur-md">
       <div class="page-frame flex h-14 items-center gap-2 @2xl/frame:h-16">
+        {/* The wordmark, which is a way home rather than an action — so it
+            takes no button chrome. `@cire/ui`'s `Button` would give it a
+            border and uppercase tracking, and a bordered wordmark reads as a
+            control somebody has to decide about. */}
         <button
           type="button"
           aria-label="Cire — your listings"

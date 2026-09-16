@@ -68,6 +68,10 @@ export default function OrgPicker(props: OrgPickerProps) {
             <For each={orgs()}>
               {(org) => (
                 <li class="contents">
+                  {/* A `<button>` wearing `cardClass`, which is the form
+                      `@cire/ui`'s Card exports its classes FOR: the whole
+                      rectangle is the control, and `<div role="button">` is a
+                      worse answer than either a div or a button. */}
                   <button
                     type="button"
                     onClick={() => props.onPick(org)}
