@@ -14,7 +14,12 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { ALL_COLOR_TOKENS, CONTRACT_SCALAR_TOKENS, contrastPairs } from "../src/index";
+import {
+  ALL_COLOR_TOKENS,
+  CONTRACT_SCALAR_TOKENS,
+  CONTRACT_SCALES,
+  contrastPairs,
+} from "../src/index";
 
 const RAW = readFileSync(fileURLToPath(new URL("../src/tokens.css", import.meta.url)), "utf8");
 
@@ -59,6 +64,13 @@ describe("tokens.css agrees with the exported token list", () => {
       ...ALL_COLOR_TOKENS,
       ...CONTRACT_SCALAR_TOKENS.radius,
       ...CONTRACT_SCALAR_TOKENS.fontFamily,
+      // The scale namespaces. `measure` breaks the `--osn-<key>-<step>` pattern
+      // because Tailwind's namespace is `--container-*` while the role is a
+      // measure; the contract is named for the role, the alias for Tailwind.
+      ...Object.keys(CONTRACT_SCALES.text).map((s) => `--osn-text-${s}`),
+      ...Object.keys(CONTRACT_SCALES.tracking).map((s) => `--osn-tracking-${s}`),
+      ...Object.keys(CONTRACT_SCALES.leading).map((s) => `--osn-leading-${s}`),
+      ...Object.keys(CONTRACT_SCALES.measure).map((s) => `--osn-measure-${s}`),
     ]);
     const extra = [...aliasedTokens()].filter((t) => !known.has(t));
     expect(extra).toEqual([]);

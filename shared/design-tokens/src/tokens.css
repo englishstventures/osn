@@ -140,11 +140,79 @@
   --radius-osn-pill: var(--osn-radius-pill, 999px);
 
   /* ── Type families ────────────────────────────────────────────────────────
-   * Families only. The type SCALE is a separate decision and lands with its
-   * own migration — see README §Scales. */
+   * Families only — the sizes are the scale below. */
   --font-osn-body: var(--osn-font-body, ui-sans-serif, system-ui, sans-serif);
   --font-osn-display: var(--osn-font-display, ui-serif, Georgia, serif);
   --font-osn-mono: var(--osn-font-mono, ui-monospace, SFMono-Regular, monospace);
+
+  /* ── Type scale ───────────────────────────────────────────────────────────
+   * Seven steps, clustered from what the monorepo actually used: 956 sites
+   * carrying 93 distinct font sizes, nine of them between 0.7rem and 0.95rem.
+   * That is not a house style, it is drift, and a scale is the thing that
+   * stops it recurring.
+   *
+   * Seven and not eleven because a scale nobody can hold in their head is
+   * another way of having no scale: each step here is visibly distinct, which
+   * is what makes "use the next step up" a decision rather than a guess. The
+   * cost is paid once, in the migration — 749 of 853 sites move by a pixel or
+   * less, 104 move more.
+   *
+   * Values are unitless-in-rem so a user's root font size still scales the
+   * whole system. `em` is deliberately absent: two `em` sizes nested compound,
+   * which is how a scale stops being one.
+   *
+   * Named for role, not value. Changing `--osn-text-sm` is one line; changing
+   * `text-[0.82rem]` was 108 sites. */
+  --text-osn-xs: var(--osn-text-xs, 0.7rem);
+  --text-osn-sm: var(--osn-text-sm, 0.8rem);
+  --text-osn-base: var(--osn-text-base, 0.9rem);
+  --text-osn-md: var(--osn-text-md, 1.05rem);
+  --text-osn-lg: var(--osn-text-lg, 1.3rem);
+  --text-osn-xl: var(--osn-text-xl, 1.75rem);
+  --text-osn-2xl: var(--osn-text-2xl, 2.5rem);
+
+  /* ── Tracking ─────────────────────────────────────────────────────────────
+   * Six steps from 18 observed values, chosen so nothing moves more than
+   * 0.04em — under half a pixel per character at the sizes that use it.
+   *
+   * The wide end is not decoration: `wider` and `ultra` are what the uppercase
+   * eyebrow labels across cire and pulse are built on, and letter-spacing is
+   * the whole difference between an eyebrow and shouting. */
+  --tracking-osn-tight: var(--osn-tracking-tight, -0.02em);
+  --tracking-osn-normal: var(--osn-tracking-normal, 0em);
+  --tracking-osn-wide: var(--osn-tracking-wide, 0.04em);
+  --tracking-osn-wider: var(--osn-tracking-wider, 0.1em);
+  --tracking-osn-widest: var(--osn-tracking-widest, 0.16em);
+  --tracking-osn-ultra: var(--osn-tracking-ultra, 0.24em);
+
+  /* ── Leading ──────────────────────────────────────────────────────────────
+   * Five steps from 12 observed values; nothing moves more than 0.05.
+   * `none` is not 1 — a display line still needs its descenders. */
+  --leading-osn-none: var(--osn-leading-none, 1.1);
+  --leading-osn-tight: var(--osn-leading-tight, 1.2);
+  --leading-osn-snug: var(--osn-leading-snug, 1.4);
+  --leading-osn-normal: var(--osn-leading-normal, 1.6);
+  --leading-osn-relaxed: var(--osn-leading-relaxed, 1.75);
+
+  /* ── Measure ──────────────────────────────────────────────────────────────
+   * Content widths only — the caps that decide how long a line of prose gets,
+   * and how wide a panel or modal grows. Seven steps from 87 uses spread over
+   * 28 distinct widths, which mixed units for identical values:
+   * `max-w-[640px]` and `max-w-[40rem]` are the same number written twice.
+   * One unit, so that cannot recur.
+   *
+   * A one-off layout constant — a 240px rail, a 44% grid column — is NOT a
+   * measure and does not belong here. Those stay arbitrary, with the
+   * exemption documented in the README, because forcing a sidebar width into
+   * a typographic scale makes the scale meaningless rather than making the
+   * sidebar consistent. */
+  --container-osn-xs: var(--osn-measure-xs, 20rem);
+  --container-osn-sm: var(--osn-measure-sm, 30rem);
+  --container-osn-md: var(--osn-measure-md, 34rem);
+  --container-osn-lg: var(--osn-measure-lg, 40rem);
+  --container-osn-xl: var(--osn-measure-xl, 46rem);
+  --container-osn-2xl: var(--osn-measure-2xl, 64rem);
+  --container-osn-3xl: var(--osn-measure-3xl, 75rem);
 }
 
 /*

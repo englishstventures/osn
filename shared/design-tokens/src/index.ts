@@ -66,6 +66,185 @@ export const CONTRACT_SCALAR_TOKENS = {
   elevation: ["--osn-elev-1", "--osn-elev-2"],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 
+/**
+ * The size scales, as `role → value`.
+ *
+ * These are the values `tokens.css` falls back to, restated here for the same
+ * reason the colour list is — so a migration can be checked against data rather
+ * than by reading CSS, and so `SCALE_MIGRATION` below has something to point
+ * at. `tests/tokens-css-agrees.test.ts` asserts the two do not drift.
+ */
+export const CONTRACT_SCALES = {
+  text: {
+    xs: "0.7rem",
+    sm: "0.8rem",
+    base: "0.9rem",
+    md: "1.05rem",
+    lg: "1.3rem",
+    xl: "1.75rem",
+    "2xl": "2.5rem",
+  },
+  tracking: {
+    tight: "-0.02em",
+    normal: "0em",
+    wide: "0.04em",
+    wider: "0.1em",
+    widest: "0.16em",
+    ultra: "0.24em",
+  },
+  leading: {
+    none: "1.1",
+    tight: "1.2",
+    snug: "1.4",
+    normal: "1.6",
+    relaxed: "1.75",
+  },
+  measure: {
+    xs: "20rem",
+    sm: "30rem",
+    md: "34rem",
+    lg: "40rem",
+    xl: "46rem",
+    "2xl": "64rem",
+    "3xl": "75rem",
+  },
+} as const satisfies Readonly<Record<string, Readonly<Record<string, string>>>>;
+
+/**
+ * Where the arbitrary values in the tree go.
+ *
+ * The scales above were clustered from what the monorepo actually used, so this
+ * is the inverse of that clustering and the table a codemod applies. It exists
+ * here rather than in a migration script because the mapping is the *decision*
+ * — the script is just the thing that carries it out — and because a reviewer
+ * reading a 1,500-site diff needs to be able to check the rule rather than the
+ * sites.
+ *
+ * ## Two sets of values this must not touch
+ *
+ * **Computed values.** `text-[calc(clamp(2rem,5vw,3rem)*var(--invite-heading-scale,1))]`
+ * is not a size, it is an expression whose value depends on a runtime custom
+ * property. Snapping it to a step would delete a feature — cire's organisers
+ * choose that heading scale.
+ *
+ * **Variants.** `data-[state=open]:` and `aria-[current=page]:` are selectors
+ * that happen to share the bracket syntax. A codemod that treats them as
+ * arbitrary values corrupts behaviour rather than appearance, which is worse
+ * and much harder to spot in review.
+ *
+ * ## Sizes below the scale floor
+ *
+ * The smallest step is `0.7rem` (11.2px). Six sites sit at 8–9.5px and move up
+ * by 2–3px, which is a visible change on a badge or a superscript rather than a
+ * rounding difference. They are listed here for completeness but want a
+ * designer's eye during the migration, not a blind substitution.
+ */
+export const SCALE_MIGRATION = {
+  text: {
+    // → xs (0.7rem). The 8–9.5px entries are the ones to look at by hand
+    "8px": "xs",
+    "9px": "xs",
+    "9.5px": "xs",
+    "10px": "xs",
+    "10.5px": "xs",
+    "11px": "xs",
+    "11.5px": "xs",
+    "0.55rem": "xs",
+    "0.58rem": "xs",
+    "0.6rem": "xs",
+    "0.62rem": "xs",
+    "0.64rem": "xs",
+    "0.65rem": "xs",
+    "0.66rem": "xs",
+    "0.68rem": "xs",
+    "0.7rem": "xs",
+    "0.72rem": "xs",
+    "0.74rem": "xs",
+    // → sm (0.8rem)
+    "12px": "sm",
+    "12.5px": "sm",
+    "13px": "sm",
+    "13.5px": "sm",
+    "0.75rem": "sm",
+    "0.76rem": "sm",
+    "0.78rem": "sm",
+    "0.8rem": "sm",
+    "0.82rem": "sm",
+    "0.84rem": "sm",
+    "0.85rem": "sm",
+    // → base (0.9rem)
+    "15.5px": "base",
+    "0.86rem": "base",
+    "0.875rem": "base",
+    "0.88rem": "base",
+    "0.9rem": "base",
+    "0.92rem": "base",
+    "0.95rem": "base",
+    // → md (1.05rem)
+    "16.5px": "md",
+    "0.98rem": "md",
+    "1rem": "md",
+    "1.02rem": "md",
+    "1.05rem": "md",
+    "1.1rem": "md",
+    "1.15rem": "md",
+    // → lg (1.3rem)
+    "22px": "lg",
+    "1.2rem": "lg",
+    "1.25rem": "lg",
+    "1.3rem": "lg",
+    "1.4rem": "lg",
+    "1.5rem": "lg",
+    // → xl (1.75rem)
+    "26px": "xl",
+    "28px": "xl",
+    "1.6rem": "xl",
+    "1.7rem": "xl",
+    "2rem": "xl",
+    // → 2xl (2.5rem)
+    "34px": "2xl",
+    "42px": "2xl",
+    "2.5rem": "2xl",
+    "2.75rem": "2xl",
+    "3rem": "2xl",
+    "3.25rem": "2xl",
+  },
+  tracking: {
+    "-0.02em": "tight",
+    "-0.01em": "tight",
+    "0.02em": "wide",
+    "0.04em": "wide",
+    "0.05em": "wide",
+    "0.06em": "wide",
+    "0.08em": "wider",
+    "0.1em": "wider",
+    "0.12em": "wider",
+    "0.14em": "widest",
+    "0.16em": "widest",
+    "0.18em": "widest",
+    "0.2em": "widest",
+    "0.22em": "ultra",
+    "0.24em": "ultra",
+    "0.25em": "ultra",
+    "0.26em": "ultra",
+    "0.28em": "ultra",
+  },
+  leading: {
+    "1.05": "none",
+    "1.08": "none",
+    "1.1": "none",
+    "1.15": "none",
+    "1.2": "tight",
+    "1.4": "snug",
+    "1.55": "normal",
+    "1.6": "normal",
+    "1.65": "normal",
+    "1.7": "relaxed",
+    "1.75": "relaxed",
+    "1.8": "relaxed",
+  },
+} as const satisfies Readonly<Record<string, Readonly<Record<string, string>>>>;
+
 /** WCAG 2.2 minimum contrast for body text. */
 export const WCAG_TEXT = 4.5;
 
