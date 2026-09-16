@@ -39,6 +39,7 @@ const COLOR_PATTERNS = [
   new RegExp(`^oklch\\(${COLOR_INNER}\\)$`),
 ];
 
+export * from "./css-ramp";
 export * from "@shared/color";
 export * from "./palette";
 export * from "./typography";
