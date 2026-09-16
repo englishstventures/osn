@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "pr": {
+    "number": null,
+    "branch": "claude/festive-keller-y6wq8r",
+    "base_sha": "b5f9c8f4c3701ae6e3a08529c86db40f1ca563ac",
+    "head_sha": "ca845191ccd1a445740d154b253ba3c7c5c0dd2b",
+    "generated_at": "2026-09-16T14:44:29.101Z",
+    "merged_at": null,
+    "phase": "at-open"
+  },
+  "issue": {
+    "number": null,
+    "type": null,
+    "labels": []
+  },
+  "complexity": {
+    "declared": null,
+    "method": "none"
+  },
+  "window": {
+    "sessions": 1,
+    "first_ts": "2026-09-16T14:17:30.958Z",
+    "last_ts": "2026-09-16T14:44:27.889Z",
+    "span_seconds": 1617,
+    "active_seconds": 1545,
+    "compactions": 0
+  },
+  "spend": {
+    "usd_equivalent": 12.2102545,
+    "tokens": {
+      "input": 178,
+      "output": 71796,
+      "thinking": 21469,
+      "cache_write_5m": 0,
+      "cache_write_1h": 240259,
+      "cache_read": 16023749
+    },
+    "by_model": {
+      "claude-opus-5": {
+        "tokens": {
+          "input": 178,
+          "output": 71796,
+          "thinking": 21469,
+          "cache_write_5m": 0,
+          "cache_write_1h": 240259,
+          "cache_read": 16023749
+        },
+        "usd_equivalent": 12.2102545,
+        "messages": 89
+      }
+    },
+    "by_actor": {
+      "main": {
+        "tokens": {
+          "input": 178,
+          "output": 71796,
+          "thinking": 21469,
+          "cache_write_5m": 0,
+          "cache_write_1h": 240259,
+          "cache_read": 16023749
+        },
+        "usd_equivalent": 12.2102545,
+        "messages": 89
+      },
+      "subagent": {
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "thinking": 0,
+          "cache_write_5m": 0,
+          "cache_write_1h": 0,
+          "cache_read": 0
+        },
+        "usd_equivalent": 0,
+        "messages": 0
+      }
+    },
+    "effort": {
+      "high": 89
+    },
+    "unpriced_models": []
+  },
+  "diff": {
+    "files": {
+      "generated": 1,
+      "test": 1,
+      "docs": 11,
+      "config": 7,
+      "source": 2
+    },
+    "loc": {
+      "generated": {
+        "added": 7,
+        "deleted": 0
+      },
+      "test": {
+        "added": 45,
+        "deleted": 4
+      },
+      "docs": {
+        "added": 507,
+        "deleted": 37
+      },
+      "config": {
+        "added": 728,
+        "deleted": 1
+      },
+      "source": {
+        "added": 33,
+        "deleted": 7
+      }
+    },
+    "packages": [
+      "tools/pr-metrics"
+    ],
+    "touches_migration": false,
+    "commits": 2
+  },
+  "interaction": {
+    "user_turns": 3,
+    "corrective_turns": 2,
+    "tokens_before_first_edit": 1729793,
+    "sessions_with_observed_edit": 1,
+    "tool_calls": {
+      "Bash": 103
+    },
+    "edit_churn": {
+      "files_edited_3plus": 0,
+      "max_edits_one_file": 0
+    },
+    "skills": {},
+    "subagents": {}
+  }
+}
