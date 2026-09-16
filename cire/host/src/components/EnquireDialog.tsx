@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
 import { createSignal, Show } from "solid-js";
@@ -112,13 +113,9 @@ export default function EnquireDialog(props: EnquireDialogProps) {
               >
                 {sending() ? "Sending…" : "Send"}
               </button>
-              <button
-                type="button"
-                onClick={dismiss}
-                class="text-text-muted hover:text-text text-osn-sm"
-              >
+              <Button variant="bare" type="button" onClick={dismiss}>
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         </div>

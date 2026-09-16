@@ -666,40 +666,42 @@ export default function RegistryView(props: RegistryViewProps) {
 
                     <Show when={props.canEdit}>
                       <div class="flex items-center gap-2">
-                        <button
+                        <Button
+                          variant="bare"
                           type="button"
                           aria-label={`Move ${item.title} up`}
                           disabled={i() === 0}
                           onClick={() => move(i(), -1)}
-                          class="text-text-muted hover:text-text px-1 disabled:opacity-30"
+                          class="disabled:opacity-30"
                         >
                           ↑
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="bare"
                           type="button"
                           aria-label={`Move ${item.title} down`}
                           disabled={i() === items().length - 1}
                           onClick={() => move(i(), 1)}
-                          class="text-text-muted hover:text-text px-1 disabled:opacity-30"
+                          class="disabled:opacity-30"
                         >
                           ↓
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="link"
                           type="button"
                           aria-label={`Edit ${item.title}`}
                           onClick={() => (editingId() === item.id ? closeEdit() : openEdit(item))}
-                          class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
                         >
                           Edit
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="bareDanger"
                           type="button"
                           aria-label={`Remove ${item.title}`}
                           onClick={() => deleteItem(item)}
-                          class="text-text-muted hover:text-error px-1"
                         >
                           ✕
-                        </button>
+                        </Button>
                       </div>
                     </Show>
                   </div>
@@ -972,15 +974,15 @@ export default function RegistryView(props: RegistryViewProps) {
                           </Show>
                         }
                       >
-                        <button
+                        <Button
+                          variant="link"
                           type="button"
                           aria-pressed={gift.thankedAt != null}
                           aria-label={`Mark thanked: ${giftFrom(gift)}`}
                           onClick={() => toggleThanked(gift)}
-                          class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
                         >
                           {gift.thankedAt != null ? "Thanked" : "Mark thanked"}
-                        </button>
+                        </Button>
                       </Show>
                     </div>
                     {/* A refunded gift stays in the log and stays out of the

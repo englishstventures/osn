@@ -491,12 +491,14 @@ function EventRowCard(props: {
    *  silently no-opping, so AT reports the boundary instead of the user
    *  pressing into nothing. */
   const moveButton = (delta: -1 | 1) => (
-    <button
+    <Button
+      variant="quiet"
+      size="sm"
       {...props.sortableItem.moveProps(delta)}
-      class="border-border bg-surface font-body text-text-muted hover:text-gold text-osn-xs tracking-osn-wider sr-only rounded-sm border px-2 py-1 uppercase focus:not-sr-only focus:relative focus:z-20"
+      class="bg-surface sr-only focus:not-sr-only focus:relative focus:z-20"
     >
       {props.sortableItem.moveLabel(delta)}
-    </button>
+    </Button>
   );
 
   return (
@@ -525,7 +527,9 @@ function EventRowCard(props: {
           required — without it the browser scrolls instead of handing the
           gesture to the sensor. */}
       <div class="flex items-center">
-        <button
+        <Button
+          variant="bare"
+          size="icon"
           // `dragActivators` FIRST, so the pointer sensor can never clobber the
           // grip's own keyboard handler — later props win in Solid's spread,
           // and `gripProps` is what carries `onKeyDown`, the label and the ref.
@@ -533,10 +537,10 @@ function EventRowCard(props: {
           {...props.sortableItem.gripProps()}
           // `py-2` is not decoration: it brings the handle to the WCAG 2.5.8
           // 24px minimum target, on the row's only re-order affordance.
-          class="text-text-muted hover:text-gold focus-visible:text-gold text-osn-md cursor-grab touch-none px-1 py-2 leading-none active:cursor-grabbing"
+          class="focus-visible:text-gold cursor-grab touch-none leading-none active:cursor-grabbing"
         >
           ⠿
-        </button>
+        </Button>
 
         {/* The arrow-key handler on the grip above is NOT enough on its own:
             NVDA and JAWS run in browse mode by default and consume unmodified
@@ -700,14 +704,15 @@ function EventDrawer(props: {
         >
           <div class="mb-6 flex items-center justify-between">
             <h2 class="font-display text-gold-dim text-osn-lg">Event details</h2>
-            <button
+            <Button
+              variant="bare"
               type="button"
               onClick={props.onClose}
               aria-label="Close"
-              class="text-text-muted hover:text-text text-osn-lg"
+              class="text-osn-lg"
             >
               ✕
-            </button>
+            </Button>
           </div>
 
           <Show when={props.errors.length > 0}>
@@ -863,14 +868,15 @@ function EventDrawer(props: {
                       value={swatch.color}
                       onChange={(c) => updateSwatch(i(), { color: c })}
                     />
-                    <button
+                    <Button
+                      variant="bareDanger"
+                      size="sm"
                       type="button"
                       onClick={() => removeSwatch(i())}
                       aria-label={`Remove swatch ${i() + 1}`}
-                      class="font-body text-text-muted hover:text-error text-osn-xs tracking-osn-wider uppercase"
                     >
                       Remove
-                    </button>
+                    </Button>
                   </div>
                 )}
               </For>

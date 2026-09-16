@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { createSignal, For, Show } from "solid-js";
 
 import CreateWeddingForm, { type WeddingSummary } from "./CreateWeddingForm";
@@ -39,10 +40,11 @@ export default function WeddingList(props: {
           <For each={props.weddings}>
             {(wedding) => (
               <li class="flex">
-                <button
+                <Button
+                  variant="quiet"
                   type="button"
                   onClick={() => props.onSelect(wedding)}
-                  class="border-border bg-surface/30 hover:border-gold-dim hover:bg-surface/60 group relative flex w-full flex-col gap-2 overflow-hidden rounded-sm border p-6 text-left transition-colors duration-(--dur-base) ease-(--ease-out)"
+                  class="bg-surface/30 hover:bg-surface/60 group relative flex w-full flex-col gap-2 overflow-hidden p-6 text-left"
                 >
                   {/* A gold rule that draws down the left edge on hover — the
                       same marker vocabulary the module rail uses for "you are
@@ -67,7 +69,7 @@ export default function WeddingList(props: {
                       →
                     </span>
                   </span>
-                </button>
+                </Button>
               </li>
             )}
           </For>
@@ -89,12 +91,8 @@ export default function WeddingList(props: {
 
 function CreateAffordance(props: { onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={props.onClick}
-      class="border-border text-text-muted hover:border-gold hover:text-gold font-body text-osn-sm tracking-osn-wider self-start rounded-sm border border-dashed px-4 py-2 uppercase transition-colors"
-    >
+    <Button variant="quiet" type="button" onClick={props.onClick} class="self-start border-dashed">
       + Create a wedding
-    </button>
+    </Button>
   );
 }

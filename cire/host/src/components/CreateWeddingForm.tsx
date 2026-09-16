@@ -162,14 +162,14 @@ export default function CreateWeddingForm(props: {
           {/* Not a Button: cancelling out of a form the host has not committed
               to is a link's worth of weight, and giving it a border would put
               it in the same tier as the thing it backs out of. */}
-          <button
+          <Button
+            variant="subtle"
             type="button"
             onClick={() => props.onCancel?.()}
             disabled={busy()}
-            class="font-body text-text-muted text-osn-sm underline-offset-4 hover:underline disabled:opacity-40"
           >
             Cancel
-          </button>
+          </Button>
         </Show>
       </div>
 

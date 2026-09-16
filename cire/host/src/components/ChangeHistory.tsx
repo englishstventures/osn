@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createSignal, For, Show } from "solid-js";
@@ -251,15 +252,16 @@ export default function ChangeHistory(props: { weddingId: string }) {
                     </div>
 
                     <Show when={entry.status === "applied" && entry.revertable}>
-                      <button
+                      <Button
+                        variant="outline"
                         type="button"
                         onClick={() => void handleRevert(entry)}
                         disabled={revertingId() !== null}
                         aria-busy={reverting()}
-                        class="border-gold/40 font-body text-gold hover:border-gold hover:bg-gold/10 text-osn-sm tracking-osn-wider shrink-0 self-start rounded-sm border px-4 py-2 uppercase transition disabled:opacity-40 @lg/panel:self-auto"
+                        class="shrink-0 self-start transition @lg/panel:self-auto"
                       >
                         {reverting() ? "Reverting…" : "Revert"}
-                      </button>
+                      </Button>
                     </Show>
 
                     <Show when={agedOut()}>

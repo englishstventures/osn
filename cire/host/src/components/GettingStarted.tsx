@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { Meter } from "@osn/ui/ui/meter";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
@@ -200,13 +201,9 @@ export default function GettingStarted(props: {
           organiser can use to bring the checklist back. */}
       <Show when={dismissed()}>
         <div class="flex justify-end">
-          <button
-            type="button"
-            onClick={restore}
-            class="font-body text-text-muted hover:text-gold text-osn-xs tracking-osn-wider uppercase underline-offset-4 transition hover:underline"
-          >
+          <Button variant="subtle" size="sm" type="button" onClick={restore} class="transition">
             Show getting started
-          </button>
+          </Button>
         </div>
       </Show>
 
@@ -217,15 +214,17 @@ export default function GettingStarted(props: {
         >
           {/* Dismiss (X) — top-right, so an organiser who doesn't want the guide
             can hide it; the choice persists per wedding in localStorage. */}
-          <button
+          <Button
+            variant="quiet"
+            size="lg"
             type="button"
             onClick={dismiss}
             aria-label="Dismiss getting started"
             title="Dismiss getting started"
-            class="text-text-muted hover:text-gold hover:border-gold/50 border-border text-osn-base absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-sm border border-transparent leading-none transition-colors"
+            class="hover:border-gold/50 absolute top-3 right-3 flex h-7 w-7 items-center justify-center border-transparent leading-none"
           >
             <span aria-hidden>✕</span>
-          </button>
+          </Button>
 
           <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 pr-8">
             <div class="flex flex-col gap-1">
@@ -260,11 +259,12 @@ export default function GettingStarted(props: {
             <For each={steps()}>
               {(step, i) => (
                 <li>
-                  <button
+                  <Button
+                    variant="quiet"
                     type="button"
                     onClick={() => props.onJump(step.tab)}
                     data-complete={step.complete ? "true" : "false"}
-                    class="group border-border bg-bg/30 hover:border-gold/60 flex w-full items-start gap-3 rounded-sm border p-3 text-left transition-colors"
+                    class="group bg-bg/30 hover:border-gold/60 flex w-full items-start gap-3 p-3 text-left"
                   >
                     <StepMarker n={i() + 1} complete={step.complete} />
                     <span class="flex flex-col gap-0.5">
@@ -281,7 +281,7 @@ export default function GettingStarted(props: {
                         {step.complete ? step.done : step.todo}
                       </span>
                     </span>
-                  </button>
+                  </Button>
                 </li>
               )}
             </For>

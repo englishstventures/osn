@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import type { RpSession } from "@shared/rp-auth";
 import { onMount, Show } from "solid-js";
 
@@ -125,12 +126,13 @@ export default function TopBar(props: {
 
         {/* ── Actions ──────────────────────────────────────────────────────── */}
         <div class="ml-auto flex shrink-0 items-center gap-2">
-          <button
+          <Button
+            variant="quiet"
             type="button"
             aria-label="Search and jump to"
             aria-keyshortcuts="Meta+K Control+K"
             onClick={() => props.onOpenPalette()}
-            class="border-border bg-surface/40 text-text-muted hover:border-gold-dim hover:text-text flex h-9 items-center gap-2 rounded-sm border px-2.5 transition-colors duration-(--dur-fast) ease-(--ease-out)"
+            class="bg-surface/40 flex h-9 items-center gap-2"
           >
             <span aria-hidden="true" class="text-osn-sm leading-none">
               ⌕
@@ -141,7 +143,7 @@ export default function TopBar(props: {
             >
               ⌘K
             </span>
-          </button>
+          </Button>
 
           {/* Rendered at every width. The button collapses to its glyph on a
               narrow bar (see `PreviewInviteButton`) rather than being hidden

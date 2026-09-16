@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { Table, Td, Th } from "@osn/ui/ui/table";
 import { For, Show } from "solid-js";
 // The SHARED change-preview renderer (guest+event editor §8): "extract
@@ -136,22 +137,23 @@ export default function ChangePreview(props: ChangePreviewProps) {
       </Show>
 
       <div class="flex flex-wrap items-center gap-3">
-        <button
+        <Button
+          variant="primary"
           type="button"
           onClick={() => props.onConfirm()}
           disabled={props.busy}
-          class="border-gold bg-gold font-body text-bg hover:bg-gold-dim text-osn-sm tracking-osn-wider rounded-sm border px-4 py-2 uppercase transition disabled:opacity-40"
+          class="hover:bg-gold-dim transition"
         >
           {props.busy ? "Applying…" : (props.confirmLabel ?? "Apply changes")}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="subtle"
           type="button"
           onClick={() => props.onCancel()}
           disabled={props.busy}
-          class="font-body text-text-muted text-osn-sm underline-offset-4 hover:underline disabled:opacity-40"
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );

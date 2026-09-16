@@ -698,13 +698,15 @@ export default function HostsPanel(props: HostsPanelProps) {
                   </span>
                   <Show when={props.canManage}>
                     <span class="flex items-center gap-3">
-                      <button
+                      <Button
+                        variant="subtle"
+                        size="sm"
                         type="button"
                         onClick={() =>
                           void changeRole(host, host.role === "viewer" ? "editor" : "viewer")
                         }
                         disabled={roleBusyId() === host.osnProfileId}
-                        class="font-body text-text-muted hover:text-gold text-osn-xs tracking-osn-wider uppercase underline-offset-4 transition hover:underline disabled:opacity-40"
+                        class="transition"
                         aria-label={`Make ${host.handle ? `@${host.handle}` : "host"} ${
                           host.role === "viewer" ? "an editor" : "a viewer"
                         }`}
@@ -714,15 +716,17 @@ export default function HostsPanel(props: HostsPanelProps) {
                           : host.role === "viewer"
                             ? "Make editor"
                             : "Make viewer"}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="subtle"
+                        size="sm"
                         type="button"
                         onClick={() => void remove(host)}
-                        class="font-body text-text-muted hover:text-error text-osn-xs tracking-osn-wider uppercase underline-offset-4 transition hover:underline"
+                        class="transition"
                         aria-label={`Remove ${host.handle ? `@${host.handle}` : "host"}`}
                       >
                         Remove
-                      </button>
+                      </Button>
                     </span>
                   </Show>
                 </li>

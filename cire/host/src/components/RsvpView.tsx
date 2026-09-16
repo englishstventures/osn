@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { EmptyState } from "@osn/ui/ui/empty-state";
 import { Field } from "@osn/ui/ui/field";
 import { Input } from "@osn/ui/ui/input";
@@ -437,14 +438,16 @@ export default function RsvpView(props: RsvpViewProps) {
                                 </Td>
                                 <Show when={props.canEdit}>
                                   <Td class="text-right align-middle">
-                                    <button
+                                    <Button
+                                      variant="quiet"
+                                      size="sm"
                                       type="button"
-                                      class="border-border text-text-muted hover:text-text hover:border-gold/40 text-osn-xs tracking-osn-wider rounded-sm border px-2.5 py-1 uppercase"
+                                      class="hover:border-gold/40"
                                       aria-label={`${row.responded ? "Edit" : "Record"} reply for ${row.firstName} ${row.lastName}`}
                                       onClick={() => openRow(section.event.id, row)}
                                     >
                                       {row.responded ? "Edit" : "Record"}
-                                    </button>
+                                    </Button>
                                   </Td>
                                 </Show>
                               </tr>
@@ -540,14 +543,15 @@ export default function RsvpView(props: RsvpViewProps) {
           >
             {saving() ? "Saving…" : "Save reply"}
           </button>
-          <button
+          <Button
+            variant="quiet"
             type="button"
-            class="border-border text-text-muted hover:text-text text-osn-sm tracking-osn-wider rounded-sm border px-3 py-1.5 uppercase"
+
             onClick={closeEditor}
             disabled={saving()}
           >
             Cancel
-          </button>
+          </Button>
         </div>
       </form>
     );

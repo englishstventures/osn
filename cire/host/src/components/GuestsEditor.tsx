@@ -571,14 +571,15 @@ function GuestRow(props: {
           )}
         </For>
         <Td class="text-right">
-          <button
+          <Button
+            variant="bareDanger"
+            size="sm"
             type="button"
             onClick={() => props.store.removeGuest(props.guest.key)}
             aria-label={`Remove ${props.guest.firstName || "guest"}`}
-            class="font-body text-text-muted hover:text-error text-osn-xs tracking-osn-wider uppercase transition-colors"
           >
             Remove
-          </button>
+          </Button>
         </Td>
       </tr>
       <Show when={props.errors.length > 0}>

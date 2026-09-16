@@ -12,6 +12,7 @@ import {
   resolveSeeds,
   typographyVar,
 } from "@cire/theme";
+import Button from "@cire/ui/button";
 import { createMemo, For, Index, Show } from "solid-js";
 
 import ColorPicker from "./ColorPicker";
@@ -122,11 +123,12 @@ export default function PaletteField(props: {
               const preset = PALETTE_PRESETS[key];
               const selected = () => (props.value.preset ?? DEFAULT_PRESET) === key;
               return (
-                <button
+                <Button
+                  variant="quiet"
                   type="button"
                   aria-pressed={selected()}
                   onClick={() => choosePreset(key)}
-                  class="border-border hover:border-gold focus-visible:border-gold focus-visible:ring-gold/40 aria-pressed:border-gold flex items-center gap-2 rounded-sm border px-2.5 py-2 transition outline-none focus-visible:ring-2"
+                  class="focus-visible:border-gold focus-visible:ring-gold/40 aria-pressed:border-gold flex items-center gap-2 transition outline-none focus-visible:ring-2"
                 >
                   {/* The five colours themselves are the label — a scheme is
                       easier to recognise than to read. */}
@@ -141,7 +143,7 @@ export default function PaletteField(props: {
                     </For>
                   </span>
                   <span class="font-body text-text text-osn-sm">{PRESET_LABELS[key]}</span>
-                </button>
+                </Button>
               );
             }}
           </For>

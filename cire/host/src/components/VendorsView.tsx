@@ -392,34 +392,34 @@ export default function VendorsView(props: VendorsViewProps) {
                               </For>
                             </Select>
                             {/* List in directory */}
-                            <button
+                            <Button
+                              variant="link"
                               type="button"
                               aria-label={`List ${v.name} in directory`}
                               onClick={() => openListing(v)}
-                              class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
                             >
                               List in directory
-                            </button>
+                            </Button>
                             {/* Enquire — only available when linked to a directory vendor */}
                             <Show when={v.directoryVendorId}>
-                              <button
+                              <Button
+                                variant="link"
                                 type="button"
                                 aria-label={`Enquire with ${v.name}`}
                                 onClick={() => setEnquireVendor(v)}
-                                class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
                               >
                                 Enquire
-                              </button>
+                              </Button>
                             </Show>
                             {/* Delete */}
-                            <button
+                            <Button
+                              variant="bareDanger"
                               type="button"
                               aria-label={`Delete ${v.name}`}
                               onClick={() => deleteVendor(v)}
-                              class="text-text-muted hover:text-error px-1"
                             >
                               ✕
-                            </button>
+                            </Button>
                           </div>
                         </Show>
                       </div>
@@ -470,13 +470,14 @@ export default function VendorsView(props: VendorsViewProps) {
                                 <span class="text-text-muted text-osn-sm grow truncate font-mono">
                                   {claimUrl()}
                                 </span>
-                                <button
+                                <Button
+                                  variant="link"
                                   type="button"
                                   onClick={() => void copyToClipboard(claimUrl()!)}
-                                  class="text-gold-dim hover:text-gold text-osn-sm shrink-0 underline-offset-2 hover:underline"
+                                  class="shrink-0"
                                 >
                                   Copy
-                                </button>
+                                </Button>
                               </div>
                               <Button
                                 variant="quiet"

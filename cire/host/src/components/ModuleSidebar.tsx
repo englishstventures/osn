@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { Dialog } from "@kobalte/core/dialog";
 import { HoverCard } from "@kobalte/core/hover-card";
 import { createSignal, For, type JSX, onCleanup, Show } from "solid-js";
@@ -115,14 +116,16 @@ function LockedRow(props: {
         <HoverCard.Content class="border-border bg-surface-raised z-50 flex w-64 flex-col gap-2 rounded-sm border p-3 shadow-lg outline-none">
           <p class="font-display text-text text-osn-md leading-tight font-light">{lock().title}</p>
           <p class="text-text-muted text-osn-sm leading-snug">{lock().blurb}</p>
-          <button
+          <Button
+            variant="quiet"
+            size="sm"
             type="button"
             disabled
             aria-disabled="true"
-            class="border-border text-text-muted text-osn-xs tracking-osn-widest mt-1 rounded-sm border px-3 py-1.5 uppercase"
+            class="tracking-osn-widest mt-1"
           >
             Upgrade — coming soon
-          </button>
+          </Button>
         </HoverCard.Content>
       </HoverCard.Portal>
     </HoverCard>

@@ -405,14 +405,14 @@ export default function ImageCropModal(props: ImageCropModalProps) {
           </div>
 
           <div class="flex flex-wrap items-center justify-between gap-3">
-            <button
+            <Button
+              variant="subtle"
               type="button"
               onClick={() => void handleReset()}
               disabled={busy()}
-              class="font-body text-text-muted hover:text-gold text-osn-sm underline-offset-4 hover:underline disabled:opacity-40"
             >
               Reset to full image
-            </button>
+            </Button>
             <div class="flex items-center gap-3">
               <Button
                 variant="quiet"

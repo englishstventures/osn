@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { EmptyState } from "@osn/ui/ui/empty-state";
 import { Field } from "@osn/ui/ui/field";
 import { Input } from "@osn/ui/ui/input";
@@ -359,22 +360,26 @@ export default function GuestTable(props: GuestTableProps) {
         description="Everyone you're inviting, grouped into households. Copy a household's invite message to send their link and code, and download replies any time."
         actions={
           <Show when={!loading() && !error() && hasGuests()}>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               type="button"
               onClick={() => void exportCsv("guests")}
               disabled={exporting() !== null}
-              class="border-gold/40 font-body text-gold hover:border-gold hover:bg-gold/10 text-osn-xs tracking-osn-wider rounded-sm border px-3 py-1.5 uppercase transition disabled:opacity-40"
+              class="transition"
             >
               {exporting() === "guests" ? "Exporting…" : "Download guests (CSV)"}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               type="button"
               onClick={() => void exportCsv("rsvps")}
               disabled={exporting() !== null}
-              class="border-gold/40 font-body text-gold hover:border-gold hover:bg-gold/10 text-osn-xs tracking-osn-wider rounded-sm border px-3 py-1.5 uppercase transition disabled:opacity-40"
+              class="transition"
             >
               {exporting() === "rsvps" ? "Exporting…" : "Download RSVPs (CSV)"}
-            </button>
+            </Button>
           </Show>
         }
       />
@@ -501,13 +506,14 @@ export default function GuestTable(props: GuestTableProps) {
                               </Show>
                             </span>
                             <div class="flex flex-wrap items-center gap-2">
-                              <button
+                              <Button
+                                variant="quiet"
+                                size="sm"
                                 type="button"
                                 onClick={() => void copyMessage(family)}
-                                class="font-body text-text-muted hover:text-gold hover:border-gold border-border text-osn-xs tracking-osn-wider rounded-sm border px-2.5 py-1 uppercase transition-colors"
                               >
                                 Copy message
-                              </button>
+                              </Button>
                               {/* Deactivate is confirm-gated (cuts off a live code);
                                 Reactivate is a direct restore. Owner-only —
                                 code management sits above editor writes. */}
@@ -518,15 +524,17 @@ export default function GuestTable(props: GuestTableProps) {
                                     <Show
                                       when={confirmingId() === family.familyId}
                                       fallback={
-                                        <button
+                                        <Button
+                                          variant="quiet"
+                                          size="sm"
                                           type="button"
                                           onClick={() => setConfirmingId(family.familyId)}
                                           disabled={togglingId() === family.familyId}
-                                          class="font-body text-text-muted hover:text-error hover:border-error/60 border-border text-osn-xs tracking-osn-wider rounded-sm border px-2.5 py-1 uppercase transition-colors disabled:opacity-40"
+                                          class="hover:border-error/60"
                                           title="Disable this household's code (e.g. a withdrawn invite). Reversible — their guests and RSVPs are kept."
                                         >
                                           Deactivate
-                                        </button>
+                                        </Button>
                                       }
                                     >
                                       <span class="font-body text-text-muted text-osn-xs tracking-osn-wide">
@@ -542,28 +550,31 @@ export default function GuestTable(props: GuestTableProps) {
                                           ? "Deactivating…"
                                           : "Confirm"}
                                       </button>
-                                      <button
+                                      <Button
+                                        variant="subtle"
+                                        size="sm"
                                         type="button"
                                         onClick={() => setConfirmingId(null)}
                                         disabled={togglingId() === family.familyId}
-                                        class="font-body text-text-muted text-osn-xs underline-offset-4 hover:underline disabled:opacity-40"
                                       >
                                         Cancel
-                                      </button>
+                                      </Button>
                                     </Show>
                                   }
                                 >
-                                  <button
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     type="button"
                                     onClick={() => void toggleDeactivated(family, false)}
                                     disabled={togglingId() === family.familyId}
-                                    class="font-body text-gold hover:border-gold border-gold/40 text-osn-xs tracking-osn-wider rounded-sm border px-2.5 py-1 uppercase transition-colors disabled:opacity-40"
+
                                     title="Re-enable this household's code — their guests and RSVPs were kept."
                                   >
                                     {togglingId() === family.familyId
                                       ? "Reactivating…"
                                       : "Reactivate"}
-                                  </button>
+                                  </Button>
                                 </Show>
                               </Show>
                             </div>

@@ -12,6 +12,7 @@
  * input the organiser is actively filling in.
  */
 
+import Button from "@cire/ui/button";
 import { Input } from "@osn/ui/ui/input";
 import { Select } from "@osn/ui/ui/select";
 import { Textarea } from "@osn/ui/ui/textarea";
@@ -255,13 +256,9 @@ export function SectionCard(props: {
             <SegmentBadge shown={props.shown!} />
           </Show>
           <Show when={props.onReset}>
-            <button
-              type="button"
-              onClick={() => props.onReset!()}
-              class="font-body text-text-muted hover:text-text text-osn-xs underline-offset-4 hover:underline"
-            >
+            <Button variant="subtle" size="sm" type="button" onClick={() => props.onReset!()}>
               Reset section
-            </button>
+            </Button>
           </Show>
         </div>
       </Show>

@@ -16,6 +16,7 @@
  */
 
 import { headingSizeCss, typographyVar } from "@cire/theme";
+import Button from "@cire/ui/button";
 import { createMemo, createSignal, Show } from "solid-js";
 
 import { apiUrl } from "../../lib/api";
@@ -58,14 +59,16 @@ export function DeviceToggle(props: {
   onChange: (v: PreviewDevice) => void;
 }) {
   const option = (device: PreviewDevice, label: string) => (
-    <button
+    <Button
+      variant="quiet"
+      size="sm"
       type="button"
       aria-pressed={props.value === device}
       onClick={() => props.onChange(device)}
-      class="border-border hover:border-gold aria-pressed:border-gold aria-pressed:text-gold font-body text-text-muted text-osn-xs tracking-osn-wider rounded-sm border px-2 py-1 uppercase transition"
+      class="aria-pressed:border-gold aria-pressed:text-gold transition"
     >
       {label}
-    </button>
+    </Button>
   );
   return (
     <span class="flex gap-1.5" role="group" aria-label="Preview device">

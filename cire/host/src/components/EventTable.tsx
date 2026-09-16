@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { EmptyState } from "@osn/ui/ui/empty-state";
 import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
@@ -172,14 +173,16 @@ export default function EventTable(props: EventTableProps) {
         description="Every event your guests can be invited to — the details come from Edit, by hand or from a spreadsheet. Add one photo per event here to bring each card to life."
         actions={
           <Show when={!loading() && !error() && hasEvents()}>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               type="button"
               onClick={() => void exportEvents()}
               disabled={exporting()}
-              class="border-gold/40 font-body text-gold hover:border-gold hover:bg-gold/10 text-osn-xs tracking-osn-wider rounded-sm border px-3 py-1.5 uppercase transition disabled:opacity-40"
+              class="transition"
             >
               {exporting() ? "Exporting…" : "Download events (CSV)"}
-            </button>
+            </Button>
           </Show>
         }
       />
@@ -370,20 +373,12 @@ function EventImageField(props: {
           class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-osn-sm file:text-osn-sm file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5"
         />
         <Show when={props.url}>
-          <button
-            type="button"
-            onClick={() => setCropping(true)}
-            class="font-body text-gold text-osn-sm underline-offset-4 hover:underline"
-          >
+          <Button variant="link" type="button" onClick={() => setCropping(true)}>
             Crop
-          </button>
-          <button
-            type="button"
-            onClick={() => props.onRemove()}
-            class="font-body text-text-muted text-osn-sm underline-offset-4 hover:underline"
-          >
+          </Button>
+          <Button variant="subtle" type="button" onClick={() => props.onRemove()}>
             Remove
-          </button>
+          </Button>
         </Show>
       </div>
       <Show when={cropping() && absoluteUrl()}>

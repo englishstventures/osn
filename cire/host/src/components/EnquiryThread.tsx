@@ -54,14 +54,15 @@ export default function EnquiryThread(props: EnquiryThreadProps) {
     <div class="flex flex-col gap-4">
       {/* Back + header */}
       <div class="flex items-center gap-3">
-        <button
+        <Button
+          variant="link"
           type="button"
           onClick={props.onBack}
-          class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
+
           aria-label="Back"
         >
           ← Back
-        </button>
+        </Button>
         <div class="flex flex-1 flex-wrap items-center gap-2">
           <span class="text-text text-osn-base font-medium">{props.enquiry.vendorName}</span>
           <span class="bg-surface/60 text-text-muted text-osn-xs rounded-full px-2 py-0.5">

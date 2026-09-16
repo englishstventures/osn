@@ -177,17 +177,17 @@ export default function RemintPanel(props: RemintPanelProps) {
             <Button variant="danger" onClick={() => void remint()} disabled={busy()}>
               {busy() ? "Re-minting…" : "Yes, re-mint"}
             </Button>
-            <button
+            <Button
+              variant="subtle"
               type="button"
               onClick={() => {
                 haptic("dismiss");
                 setConfirming(false);
               }}
               disabled={busy()}
-              class="font-body text-text-muted text-osn-sm underline-offset-4 hover:underline disabled:opacity-40"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       </Show>

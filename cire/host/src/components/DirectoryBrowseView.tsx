@@ -339,29 +339,30 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2 pt-1">
-                  <button
+                  <Button
+                    variant="link"
                     type="button"
                     onClick={(e) => {
                       modalOpener = e.currentTarget;
                       setModalListing(item);
                     }}
-                    class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
                   >
                     View
-                  </button>
+                  </Button>
 
                   <Show when={props.canEdit}>
                     <Show
                       when={!item.inWedding}
                       fallback={
-                        <button
+                        <Button
+                          variant="bare"
                           type="button"
                           disabled
                           aria-label="Already added to this wedding"
-                          class="text-text-muted text-osn-sm opacity-60"
+                          class="opacity-60"
                         >
                           Added ✓
-                        </button>
+                        </Button>
                       }
                     >
                       {/* Category picker (shown inline when multi-category) */}
@@ -377,14 +378,14 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
                             >
                               {addingId() === item.id ? "Adding…" : "Add to wedding"}
                             </Button>
-                            <button
+                            <Button
+                              variant="link"
                               type="button"
                               aria-label={`Enquire with ${item.name}`}
                               onClick={() => setEnquireListing(item)}
-                              class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
                             >
                               Enquire
-                            </button>
+                            </Button>
                           </div>
                         }
                       >
@@ -478,14 +479,15 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
               >
                 <div class="flex items-start justify-between gap-4">
                   <h2 class="text-text text-osn-md font-medium">{ml().name}</h2>
-                  <button
+                  <Button
+                    variant="bare"
                     type="button"
                     aria-label="Close"
                     onClick={closeModal}
-                    class="text-text-muted hover:text-text shrink-0"
+                    class="shrink-0"
                   >
                     ✕
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Category chips */}
@@ -564,14 +566,15 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
                   <Show
                     when={!ml().inWedding}
                     fallback={
-                      <button
+                      <Button
+                        variant="bare"
                         type="button"
                         disabled
                         aria-label="Already added to this wedding"
-                        class="text-text-muted text-osn-sm opacity-60"
+                        class="opacity-60"
                       >
                         Added ✓
-                      </button>
+                      </Button>
                     }
                   >
                     <Show

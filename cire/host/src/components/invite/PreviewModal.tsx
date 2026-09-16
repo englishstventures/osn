@@ -6,6 +6,7 @@
  * never two markup sources to drift apart.
  */
 
+import Button from "@cire/ui/button";
 import { Show } from "solid-js";
 import { Portal } from "solid-js/web";
 
@@ -40,13 +41,9 @@ export default function PreviewModal(
               <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
                 Live preview
               </p>
-              <button
-                type="button"
-                onClick={props.onClose}
-                class="font-body text-text-muted hover:text-text text-osn-sm"
-              >
+              <Button variant="bare" type="button" onClick={props.onClose}>
                 Close
-              </button>
+              </Button>
             </div>
             <PreviewPane {...props} />
           </div>

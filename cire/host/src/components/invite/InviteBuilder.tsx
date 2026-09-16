@@ -881,7 +881,8 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                     Shown/Hidden dot) so the menu only has to be opened to move,
                     never to orient — the thing the scrolling strip could not do
                     for the sections parked off its right edge. */}
-                  <button
+                  <Button
+                    variant="quiet"
                     type="button"
                     ref={(el) => (sectionMenuTrigger = el)}
                     aria-expanded={sectionMenuOpen()}
@@ -899,7 +900,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                       e.preventDefault();
                       closeSectionMenu();
                     }}
-                    class="border-border bg-surface/40 text-text hover:border-gold-dim font-body text-osn-sm tracking-osn-wider flex min-h-11 w-full items-center justify-between gap-3 rounded-sm border px-3 py-2 uppercase transition-colors @3xl/builder:hidden"
+                    class="bg-surface/40 text-text flex min-h-11 w-full items-center justify-between gap-3 @3xl/builder:hidden"
                   >
                     <span class="flex min-w-0 items-center gap-2">
                       <Show when={activeShown() !== undefined}>
@@ -926,7 +927,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                         ▾
                       </span>
                     </span>
-                  </button>
+                  </Button>
 
                   {/* ONE tablist, two presentations. Narrow + open: a two-column
                     grid dropped under the trigger — all eight sections on screen
@@ -988,13 +989,15 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                 {/* Hidden once the sticky side pane below can show instead — the
                   same `@4xl/builder` threshold `showPreviewPane`/`showInlinePreviews`
                   measure in JS. */}
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   type="button"
                   onClick={() => setPreviewModalOpen(true)}
-                  class="font-body text-gold border-gold/40 hover:bg-gold/10 text-osn-xs tracking-osn-wider flex min-h-11 shrink-0 items-center rounded-sm border px-3 py-1 uppercase transition-colors @3xl/builder:min-h-0 @3xl/builder:py-1 @4xl/builder:hidden"
+                  class="flex min-h-11 shrink-0 items-center @3xl/builder:min-h-0 @3xl/builder:py-1 @4xl/builder:hidden"
                 >
                   Preview
-                </button>
+                </Button>
               </div>
 
               {/* Form and preview side by side from `@4xl/builder` up — a
@@ -1505,15 +1508,16 @@ function ToneField(props: {
       >
         <For each={SECTION_TONES}>
           {(tone) => (
-            <button
+            <Button
+              variant="quiet"
               type="button"
               aria-pressed={current() === tone}
               onClick={() => props.onChange(tone === "ground" ? null : tone)}
-              class="border-border hover:border-gold focus-visible:border-gold focus-visible:ring-gold/40 font-body aria-pressed:border-gold aria-pressed:ring-gold/60 text-osn-sm rounded-sm border px-3 py-1.5 transition outline-none focus-visible:ring-2 aria-pressed:ring-1"
+              class="focus-visible:border-gold focus-visible:ring-gold/40 aria-pressed:border-gold aria-pressed:ring-gold/60 transition outline-none focus-visible:ring-2 aria-pressed:ring-1"
               style={{ "background-color": surfaceFor[tone], color: "var(--color-text)" }}
             >
               {TONE_LABELS[tone]}
-            </button>
+            </Button>
           )}
         </For>
       </div>

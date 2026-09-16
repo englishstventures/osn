@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { Popover } from "@kobalte/core/popover";
 import { createEffect, createSignal, For, Show } from "solid-js";
 
@@ -237,11 +238,12 @@ export default function DatePicker(props: {
           <Popover.Content class="border-border bg-surface-raised z-50 flex w-64 flex-col gap-3 rounded-sm border p-3 shadow-lg outline-none">
             {/* ── Month header: prev / label / next ─────────────────────── */}
             <div class="flex items-center justify-between gap-2">
-              <button
+              <Button
+                variant="quiet"
                 type="button"
                 aria-label="Previous month"
                 onClick={() => shiftMonth(-1)}
-                class="border-border text-text-muted hover:border-gold hover:text-gold flex h-7 w-7 items-center justify-center rounded-sm border transition-colors"
+                class="flex h-7 w-7 items-center justify-center"
               >
                 <svg
                   class="h-4 w-4"
@@ -253,13 +255,14 @@ export default function DatePicker(props: {
                 >
                   <path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-              </button>
+              </Button>
               <span class="font-body text-text text-osn-sm tracking-osn-wide">{monthLabel()}</span>
-              <button
+              <Button
+                variant="quiet"
                 type="button"
                 aria-label="Next month"
                 onClick={() => shiftMonth(1)}
-                class="border-border text-text-muted hover:border-gold hover:text-gold flex h-7 w-7 items-center justify-center rounded-sm border transition-colors"
+                class="flex h-7 w-7 items-center justify-center"
               >
                 <svg
                   class="h-4 w-4"
@@ -271,7 +274,7 @@ export default function DatePicker(props: {
                 >
                   <path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-              </button>
+              </Button>
             </div>
 
             {/* ── Weekday header row ────────────────────────────────────── */}
@@ -341,24 +344,26 @@ export default function DatePicker(props: {
 
             {/* ── Clear / today shortcuts ───────────────────────────────── */}
             <div class="flex items-center justify-between gap-2 pt-0.5">
-              <button
+              <Button
+                variant="link"
+                size="sm"
                 type="button"
                 onClick={() => commit(startOfDay(new Date()))}
-                class="font-body text-gold-dim hover:text-gold text-osn-xs underline-offset-4 transition-colors hover:underline"
               >
                 Today
-              </button>
+              </Button>
               <Show when={selected()}>
-                <button
+                <Button
+                  variant="subtle"
+                  size="sm"
                   type="button"
                   onClick={() => {
                     props.onChange(null);
                     setOpen(false);
                   }}
-                  class="font-body text-text-muted hover:text-text text-osn-xs underline-offset-4 transition-colors hover:underline"
                 >
                   Clear date
-                </button>
+                </Button>
               </Show>
             </div>
           </Popover.Content>

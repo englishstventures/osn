@@ -36,12 +36,21 @@ import { splitProps } from "solid-js";
  * Anything that needs a different colour or padding wants a new variant.
  */
 
-export type ButtonVariant = "primary" | "cta" | "outline" | "quiet" | "danger";
+export type ButtonVariant =
+  | "primary"
+  | "cta"
+  | "outline"
+  | "quiet"
+  | "danger"
+  | "link"
+  | "subtle"
+  | "bare"
+  | "bareDanger";
 export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 const BASE =
   "base:font-osn-body base:inline-flex base:items-center base:justify-center base:gap-2 " +
-  "base:rounded-osn-sm base:border base:whitespace-nowrap base:uppercase " +
+  "base:rounded-osn-sm base:border base:whitespace-nowrap " +
   "base:transition-colors base:duration-100 base:ease-out " +
   // Its own focus ring, from the contract's own token. A library component
   // cannot assume its host declares a blanket `:focus-visible` rule: the two
@@ -81,17 +90,73 @@ const VARIANT = {
     "base:border-osn-hairline base:text-osn-ink-secondary base:hover:border-osn-accent base:hover:text-osn-accent-ink",
   danger:
     "base:border-osn-danger/40 base:text-osn-danger base:hover:border-osn-danger base:hover:bg-osn-danger/10",
+
+  /*
+   * The three borderless ones.
+   *
+   * Counted across `cire/host` before they existed: 9 accent text links, 17
+   * muted ones and 25 glyph buttons — 51 of that app's 98 raw `<button>`
+   * elements, each written out by hand. Three variants rather than one, because
+   * the differences are not decoration:
+   *
+   * `link` is the affirmative text action — "View listing", "Today", "Back".
+   * Accent ink, so it reads as the thing to do.
+   *
+   * `subtle` is its opposite number — "Cancel", "Clear", "Dismiss". Muted ink
+   * that brightens on hover, and it keeps the underline: it is still a link,
+   * and dropping the underline on 17 cancel actions is a redesign, not a
+   * refactor.
+   *
+   * `bare` is a glyph — a move-up arrow, a close cross, a disclosure caret. No
+   * underline, because there is no word to underline.
+   */
+  link: "base:border-transparent base:bg-transparent base:text-osn-accent-ink base:underline-offset-4 base:hover:underline",
+  subtle:
+    "base:border-transparent base:bg-transparent base:text-osn-ink-secondary base:underline-offset-4 base:hover:text-osn-ink base:hover:underline",
+  bare: "base:border-transparent base:bg-transparent base:text-osn-ink-secondary base:hover:text-osn-ink",
+  /**
+   * A glyph that destroys something — the bin beside a budget line, a
+   * checklist task, a colour swatch. Muted at rest like `bare`, because a row
+   * of red crosses down a table reads as an error state rather than as a
+   * column of controls, and danger only on hover, where it is a warning
+   * arriving exactly when it is useful.
+   *
+   * It exists because dropping it was a real regression: five of these were
+   * `text-text-muted hover:text-error`, and folding them into `bare` left a
+   * delete action that no longer signals anything.
+   */
+  bareDanger:
+    "base:border-transparent base:bg-transparent base:text-osn-ink-secondary base:hover:text-osn-danger",
 } satisfies Readonly<Record<ButtonVariant, string>>;
 
+/**
+ * The variants that draw no box.
+ *
+ * They take the type size from {@link SIZE}'s twin below and none of its
+ * padding: a bordered control needs `px-4 py-2` to BE a control, and a text
+ * link with the same padding is a word floating in a gap. Nor the uppercase —
+ * a link reads as a sentence fragment, and shouting it makes it a button
+ * wearing a link's clothes.
+ */
+const BORDERLESS = new Set<ButtonVariant>(["link", "subtle", "bare", "bareDanger"]);
+
 const SIZE = {
-  sm: "base:px-3 base:py-1.5 base:text-osn-xs base:tracking-osn-wider",
-  md: "base:px-4 base:py-2 base:text-osn-sm base:tracking-osn-wider",
+  sm: "base:px-3 base:py-1.5 base:text-osn-xs base:tracking-osn-wider base:uppercase",
+  md: "base:px-4 base:py-2 base:text-osn-sm base:tracking-osn-wider base:uppercase",
   // For a control that is the only thing to do on the screen it is on — a
   // claim-code submit, an RSVP commit. Also the minimum comfortable touch
   // target on a phone, which is where most invites are opened.
-  lg: "base:px-6 base:py-3.5 base:text-osn-base base:tracking-osn-wider",
+  lg: "base:px-6 base:py-3.5 base:text-osn-base base:tracking-osn-wider base:uppercase",
   // Square, for a single glyph. No tracking — there is nothing to track.
-  icon: "base:h-8 base:w-8 base:shrink-0 base:p-0 base:text-osn-base",
+  icon: "base:h-8 base:w-8 base:shrink-0 base:p-0 base:text-osn-base base:uppercase",
+} satisfies Readonly<Record<ButtonSize, string>>;
+
+/** {@link SIZE} for the borderless variants: type only, plus what a glyph needs to stay hittable. */
+const BORDERLESS_SIZE = {
+  sm: "base:text-osn-xs",
+  md: "base:text-osn-sm",
+  lg: "base:text-osn-base",
+  icon: "base:px-1 base:text-osn-md base:leading-none",
 } satisfies Readonly<Record<ButtonSize, string>>;
 
 /**
@@ -100,7 +165,10 @@ const SIZE = {
  * this instead of `<button role="link">` is the right trade every time.
  */
 export function buttonClass(options: { variant?: ButtonVariant; size?: ButtonSize } = {}): string {
-  return `${BASE} ${VARIANT[options.variant ?? "quiet"]} ${SIZE[options.size ?? "md"]}`;
+  const variant = options.variant ?? "quiet";
+  const size = options.size ?? "md";
+  const sizing = BORDERLESS.has(variant) ? BORDERLESS_SIZE[size] : SIZE[size];
+  return `${BASE} ${VARIANT[variant]} ${sizing}`;
 }
 
 export type ButtonProps = SafeProps<"button"> & {

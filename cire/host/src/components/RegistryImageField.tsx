@@ -462,7 +462,8 @@ export default function RegistryImageField(props: {
               >
                 <For each={candidates()}>
                   {(candidate, i) => (
-                    <button
+                    <Button
+                      variant="quiet"
                       ref={(el) => {
                         refs[i()] = el;
                       }}
@@ -474,7 +475,7 @@ export default function RegistryImageField(props: {
                       disabled={props.disabled || busy() !== null}
                       onClick={() => setChosen(candidate)}
                       onKeyDown={(e) => onKey(e, i())}
-                      class="border-border aria-checked:border-gold rounded-sm border p-1"
+                      class="aria-checked:border-gold p-1"
                     >
                       {/* Decorative: the button carries the name. */}
                       {/* `no-referrer`: the shop is a third party we do not trust with
@@ -496,7 +497,7 @@ export default function RegistryImageField(props: {
                         height={80}
                         class="h-20 w-20 object-cover"
                       />
-                    </button>
+                    </Button>
                   )}
                 </For>
               </div>

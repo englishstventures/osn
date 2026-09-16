@@ -1,4 +1,5 @@
 import { oklchToRgb, parseColor as parseAnyColor } from "@cire/theme";
+import Button from "@cire/ui/button";
 import { ColorArea } from "@kobalte/core/color-area";
 import { ColorSlider } from "@kobalte/core/color-slider";
 import { ColorSwatch } from "@kobalte/core/color-swatch";
@@ -299,26 +300,24 @@ export default function ColorPicker(props: {
               </div>
 
               <Show when={props.value}>
-                <button
+                <Button
+                  variant="subtle"
+                  size="sm"
                   type="button"
                   onClick={() => props.onChange(null)}
-                  class="font-body text-text-muted hover:text-text text-osn-xs self-start underline-offset-4 hover:underline"
+                  class="self-start"
                 >
                   Use default
-                </button>
+                </Button>
               </Show>
             </Popover.Content>
           </Popover.Portal>
         </Popover>
 
         <Show when={props.value}>
-          <button
-            type="button"
-            onClick={() => props.onChange(null)}
-            class="font-body text-text-muted text-osn-xs underline-offset-4 hover:underline"
-          >
+          <Button variant="subtle" size="sm" type="button" onClick={() => props.onChange(null)}>
             Use default
-          </button>
+          </Button>
         </Show>
       </div>
     </div>

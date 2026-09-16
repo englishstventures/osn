@@ -282,32 +282,34 @@ export default function ChecklistView(props: ChecklistViewProps) {
                         </span>
                         <Show when={props.canEdit}>
                           <div class="flex items-center gap-1">
-                            <button
+                            <Button
+                              variant="bare"
                               type="button"
                               aria-label="Move up"
                               disabled={i() === 0}
                               onClick={() => move(group.bucket.key, i(), -1)}
-                              class="text-text-muted hover:text-text px-1 disabled:opacity-30"
+                              class="disabled:opacity-30"
                             >
                               ↑
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              variant="bare"
                               type="button"
                               aria-label="Move down"
                               disabled={i() === group.items.length - 1}
                               onClick={() => move(group.bucket.key, i(), 1)}
-                              class="text-text-muted hover:text-text px-1 disabled:opacity-30"
+                              class="disabled:opacity-30"
                             >
                               ↓
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              variant="bareDanger"
                               type="button"
                               aria-label="Delete task"
                               onClick={() => deleteTask(task)}
-                              class="text-text-muted hover:text-error px-1"
                             >
                               ✕
-                            </button>
+                            </Button>
                           </div>
                         </Show>
                       </li>

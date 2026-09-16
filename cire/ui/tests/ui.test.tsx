@@ -79,6 +79,63 @@ describe("Button", () => {
   });
 });
 
+describe("Button — the borderless variants", () => {
+  it("draws no box, which is the whole distinction from the bordered four", () => {
+    // Collected then asserted once, so a failure names the variant that broke
+    // rather than stopping at the first and leaving the rest unmeasured.
+    const boxed = (["link", "subtle", "bare", "bareDanger"] as const).filter((variant) => {
+      const { getByRole, unmount } = render(() => <Button variant={variant}>Go</Button>);
+      const cls = getByRole("button").className;
+      unmount();
+      return !cls.includes("border-transparent") || !cls.includes("bg-transparent");
+    });
+    expect(boxed).toEqual([]);
+  });
+
+  it("does not shout, where a bordered button does", () => {
+    // Uppercase is the bordered house style. A text link reads as a sentence
+    // fragment — "Cancel", "View listing" — and shouting it makes it a button
+    // wearing a link's clothes.
+    const bordered = render(() => <Button variant="primary">Save</Button>);
+    expect(bordered.getByRole("button").className).toContain("uppercase");
+    bordered.unmount();
+
+    const link = render(() => <Button variant="link">View listing</Button>);
+    expect(link.getByRole("button").className).not.toContain("uppercase");
+  });
+
+  it("takes the type size but not a bordered control's padding", () => {
+    // `px-4 py-2` is what makes a bordered control a control. The same padding
+    // on a text link is a word floating in a gap.
+    const { getByRole } = render(() => <Button variant="link">Go</Button>);
+    const cls = getByRole("button").className;
+    expect(cls).toContain("text-osn-sm");
+    expect(cls).not.toMatch(/base:px-4|base:py-2/);
+  });
+
+  it("underlines a link but never a glyph", () => {
+    // `bare` is an arrow or a cross. There is no word to underline.
+    const link = render(() => <Button variant="subtle">Cancel</Button>);
+    expect(link.getByRole("button").className).toContain("hover:underline");
+    link.unmount();
+
+    const glyph = render(() => <Button variant="bare">{"\u25B2"}</Button>);
+    expect(glyph.getByRole("button").className).not.toContain("underline");
+  });
+
+  it("keeps a destructive glyph muted at rest and red only on hover", () => {
+    // Folding these into `bare` was a real regression: five delete actions
+    // stopped signalling anything. A row of red crosses down a table reads as
+    // an error state rather than a column of controls, so the danger belongs
+    // on hover, where it arrives exactly when it is useful.
+    const { getByRole } = render(() => <Button variant="bareDanger">{"\u00D7"}</Button>);
+    const cls = getByRole("button").className;
+    expect(cls).toContain("text-osn-ink-secondary");
+    expect(cls).toContain("hover:text-osn-danger");
+    expect(cls).not.toMatch(/base:text-osn-danger\b/);
+  });
+});
+
 describe("Card", () => {
   it("renders its children in a plain box", () => {
     const { getByText } = render(() => (

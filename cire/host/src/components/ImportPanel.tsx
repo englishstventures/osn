@@ -402,13 +402,9 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
           <Show when={file()}>
             <span class="flex items-center gap-2">
               <span class="text-text-muted text-osn-xs font-mono">{file()?.name}</span>
-              <button
-                type="button"
-                onClick={clearFile}
-                class="font-body text-text-muted hover:text-gold text-osn-xs underline-offset-4 hover:underline"
-              >
+              <Button variant="subtle" size="sm" type="button" onClick={clearFile}>
                 Remove {copy().fileName}
-              </button>
+              </Button>
             </span>
           </Show>
         </div>
@@ -430,14 +426,9 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
             {busy() ? "Working…" : "Preview"}
           </Button>
           <Show when={preview() || applied() || error()}>
-            <button
-              type="button"
-              onClick={reset}
-              disabled={busy()}
-              class="font-body text-text-muted text-osn-sm underline-offset-4 hover:underline disabled:opacity-40"
-            >
+            <Button variant="subtle" type="button" onClick={reset} disabled={busy()}>
               Reset
-            </button>
+            </Button>
           </Show>
         </div>
       </form>

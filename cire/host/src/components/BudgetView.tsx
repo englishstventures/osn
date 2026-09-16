@@ -384,7 +384,8 @@ export default function BudgetView(props: BudgetViewProps) {
           <Show
             when={capDraft() !== null}
             fallback={
-              <button
+              <Button
+                variant="link"
                 type="button"
                 onClick={() =>
                   setCapDraft(
@@ -393,10 +394,9 @@ export default function BudgetView(props: BudgetViewProps) {
                       : (snapshot()!.budgetTotalMinor! / 100).toString(),
                   )
                 }
-                class="text-gold-dim hover:text-gold text-osn-sm underline-offset-4 hover:underline"
               >
                 {snapshot()?.budgetTotalMinor == null ? "Set a budget →" : "Edit budget"}
-              </button>
+              </Button>
             }
           >
             <div class="flex items-end gap-2">
@@ -524,41 +524,43 @@ export default function BudgetView(props: BudgetViewProps) {
                               canEdit={props.canEdit}
                               onCommit={(raw) => patchItemMoney(item, "actualMinor", raw)}
                             />
-                            <button
+                            <Button
+                              variant="bare"
                               type="button"
                               onClick={() => setExpanded(expanded() === item.id ? null : item.id)}
-                              class="text-text-muted hover:text-text text-osn-sm px-1"
                             >
                               payments ({paymentsFor(item.id).length})
-                            </button>
+                            </Button>
                             <Show when={props.canEdit}>
                               <div class="flex items-center gap-1">
-                                <button
+                                <Button
+                                  variant="bare"
                                   type="button"
                                   aria-label="Move up"
                                   disabled={i() === 0}
                                   onClick={() => move(group.category.key, i(), -1)}
-                                  class="text-text-muted hover:text-text px-1 disabled:opacity-30"
+                                  class="disabled:opacity-30"
                                 >
                                   ↑
-                                </button>
-                                <button
+                                </Button>
+                                <Button
+                                  variant="bare"
                                   type="button"
                                   aria-label="Move down"
                                   disabled={i() === group.items.length - 1}
                                   onClick={() => move(group.category.key, i(), 1)}
-                                  class="text-text-muted hover:text-text px-1 disabled:opacity-30"
+                                  class="disabled:opacity-30"
                                 >
                                   ↓
-                                </button>
-                                <button
+                                </Button>
+                                <Button
+                                  variant="bareDanger"
                                   type="button"
                                   aria-label="Delete item"
                                   onClick={() => deleteItem(item)}
-                                  class="text-text-muted hover:text-error px-1"
                                 >
                                   ✕
-                                </button>
+                                </Button>
                               </div>
                             </Show>
                           </div>
@@ -664,14 +666,14 @@ function PaymentPanel(props: {
               </Show>
             </span>
             <Show when={props.canEdit}>
-              <button
+              <Button
+                variant="bareDanger"
                 type="button"
                 aria-label="Delete payment"
                 onClick={() => props.onDelete(props.item, p)}
-                class="text-text-muted hover:text-error px-1"
               >
                 ✕
-              </button>
+              </Button>
             </Show>
           </div>
         )}
