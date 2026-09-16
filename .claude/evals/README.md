@@ -55,8 +55,14 @@ tessl project repair --relink --workspace musubi --project osn-agent-skills --ye
 `repair` matches on the git remote and the `.claude` subpath, so on a checkout
 of this repository the right project is already in `sourceMatches` and the
 relink is a formality. It writes nothing into the repository — `git status` is
-unchanged afterwards. In CI none of this applies: `tesslio/setup-tessl`
-establishes the link from `TESSL_TOKEN` on a fresh runner every time.
+unchanged afterwards.
+
+**CI is the same case, and that is what kept the eval half inert.** A fresh
+runner is a fresh directory, so `tesslio/setup-tessl` authenticates the token
+without linking anything, and every submit died on the message above while the
+quality gate two jobs up passed on the same credentials. `skill-eval.yml` now
+runs the relink between the two, for the same reason and with the same command.
+Never `tessl init` there either: a second project splits the scoreboard.
 
 ## Running
 

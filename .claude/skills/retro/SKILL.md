@@ -70,40 +70,48 @@ record, and it is written first so a run that ends early still leaves it behind.
 
 ```bash
 BRANCH=$(git branch --show-current)
-PR=$(gh pr view --json number --jq .number)                  # or the number prep-pr reported
-ISSUE=$(gh pr view --json closingIssuesReferences --jq '.closingIssuesReferences[0].number // empty')
 ```
 
 Then the two runs, which do different jobs:
 
 ```bash
-# 1. The committed card — identity and labels attached.
-bun run --cwd tools/pr-metrics card -- \
-  --pr "$PR" --issue "$ISSUE" \
-  --issue-labels "$(gh issue view "$ISSUE" --repo xchromo/osn --json labels --jq '[.labels[].name] | join(",")')"
+# 1. The committed card. `--resolve-issue` finds the pull request, its first
+#    linked issue and that issue's `complexity:` label for itself.
+bun run --cwd tools/pr-metrics card -- --resolve-issue
 
 # 2. The `<details>` block for the pull-request body, on stdout, warnings excluded.
-bun run --cwd tools/pr-metrics card -- --issue-labels "…" --format markdown > /tmp/card.md
+bun run --cwd tools/pr-metrics card -- --resolve-issue --format markdown > /tmp/card.md
 ```
 
 Three rules about that pair:
 
-- **`--issue-labels` is how the rating reaches the card.** `complexity.declared`
-  is read out of the label, not typed in. A card written without the labels has
-  a null denominator and every comparison below is unavailable — which is a
-  worse outcome than it looks, because the file will sit in the corpus looking
-  complete.
-- **Only when the issue is in `xchromo/osn`.** Most work here closes a finding
-  in the private `xchromo/osn-tracker`, and that issue's `severity:`/`area:`
-  labels must never reach a card committed to a public repository. Pass no
-  labels; the card records `complexity.method: "not-fetched"` and that is
-  correct.
+- **Let `--resolve-issue` do the lookup; do not hand-roll it.** It exists
+  because the obvious shell version is wrong in a way nothing reports.
+  `.closingIssuesReferences[0].number` throws the repository away, and a
+  follow-up `gh issue view <n> --repo xchromo/osn` then **succeeds** against a
+  different repository's issue of the same number and writes a stranger's
+  `complexity:` label in as this branch's denominator. `resolveIdentity` in
+  `tools/pr-metrics/index.ts` compares the reference's own repository instead.
+- **Labels are read only from an issue in this repository.** Most work here
+  closes a finding in the private `xchromo/osn-tracker`, and that issue's
+  `severity:`/`area:` labels must never reach a card committed to a public
+  repository. The flag withholds them and records
+  `complexity.method: "not-fetched"`, which is **not** `"none"` — a rating may
+  well exist there and nobody looked. `"lookup-failed"` is its third answer,
+  for a call that did not land.
+- **Pass explicit flags only where you know better than `gh` does.** `--pr`,
+  `--issue`, `--issue-labels` and `--complexity` all win over the lookup, and
+  passing one turns the rest of it off. The usual reason is a branch whose pull
+  request is not open yet.
 - **Commit the JSON with the branch.** `~/.claude/projects` is local,
   unversioned and dies with a remote container. The committed file is the
-  record; an uncommitted one is nothing.
+  record; an uncommitted one is nothing. Stage the one card, never the
+  directory: `.claude/metrics/` holds every other branch's card too, and a
+  `git add` of the whole of it sweeps in anything a concurrent session left
+  there.
 
 ```bash
-git add .claude/metrics/
+git add ".claude/metrics/$(echo "$BRANCH" | tr -c 'a-zA-Z0-9._-' '-').json"
 git commit -m "chore: session-metrics card for $BRANCH"
 git push
 

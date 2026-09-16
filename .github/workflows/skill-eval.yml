@@ -268,6 +268,33 @@ jobs:
       # problem is not a reason to redden a pull request that has passed every
       # gate that means something. It warns, and the collector finds nothing to
       # collect.
+      # `tessl eval run` needs a project link for the directory it runs in, and
+      # that link is local state the CLI keeps outside the repository, keyed to
+      # the path. It is not in the committed `.claude/tessl.json`, which is the
+      # plugin manifest and carries no project id — so a clone has none, and a
+      # fresh runner has none however good the token is. That is what made the
+      # submit step fail with `No Tessl project found. Run tessl init from your
+      # project root`, on every run, while the quality gate above passed with
+      # the same credentials.
+      #
+      # `repair --relink` and not `init`: `init` would create a SECOND project
+      # and split this suite's history across two scoreboards. The relink
+      # matches on the git remote and the `.claude` subpath, so it names the
+      # project that already exists. `continue-on-error` because this job never
+      # reddens a pull request — the submit step below reports what it finds.
+      - name: Link the Tessl project
+        continue-on-error: true
+        if: steps.subset.outputs.count != '' && steps.subset.outputs.count != '0'
+        env:
+          TESSL_TOKEN: ${{ secrets.TESSL_TOKEN }}
+        working-directory: .claude
+        run: |
+          tessl project repair --json || true
+          tessl project repair --relink \
+            --workspace musubi \
+            --project osn-agent-skills \
+            --yes
+
       - name: Start the eval run
         id: run
         continue-on-error: true

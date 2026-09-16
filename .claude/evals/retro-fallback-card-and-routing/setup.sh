@@ -13,6 +13,17 @@
 # this script runs inside the checkout the agent then works in.
 set -euo pipefail
 
+# Refuse to run anywhere but a checkout of this repository. Everything below is
+# a relative `rm -rf`, and `.claude/projects` is where Claude Code keeps its
+# session transcripts — a card never written is gone for good. The harness does
+# `cd` to `installPath` before running this, but that is an assumption about
+# someone else's runner, and an assumption guarded by nothing is how a delete
+# lands in a home directory.
+[ -f CLAUDE.md ] && [ -d .claude/skills ] && [ -d tools/pr-metrics ] || {
+  echo "setup.sh: not in an osn checkout — refusing to delete anything" >&2
+  exit 1
+}
+
 # The fixture ships the repository's own agent instructions. `.claude/commands`
 # holds verbatim copies of skills, which would hand the baseline the content
 # the eval withholds; `exclude` in scenario.json does not strip them.
