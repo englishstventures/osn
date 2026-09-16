@@ -6,6 +6,8 @@ import { buildSrcSet, variantSrc } from "./invite-images";
 // The event card photo's default display aspect (4∶3) — used when a crop carries
 // no source dimensions (a legacy crop), so the box keeps today's fixed shape.
 const EVENT_DEFAULT_ASPECT = 4 / 3;
+import Button from "@cire/ui/button";
+
 import { formatEventDay, venueLine } from "./event-details";
 import { TOTAL_DURATION_MS } from "./rsvp-responded";
 import type { EventSummary } from "./types";
@@ -294,12 +296,13 @@ export function EventCard(props: EventCardProps) {
                 </Show>
               </span>
             </button>
-            <button
-              class="border-border font-body text-text-muted hover:border-gold hover:text-gold-ink text-osn-sm tracking-osn-wider min-h-11 flex-1 rounded-sm border bg-transparent px-5 py-3 uppercase transition-colors duration-200 sm:flex-none sm:py-2.5"
+            <Button
+              variant="quiet"
+              class="min-h-11 flex-1 duration-200 sm:flex-none sm:py-2.5"
               onClick={() => props.onDetails(props.event)}
             >
               Event Details
-            </button>
+            </Button>
           </div>
         </div>
 

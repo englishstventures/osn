@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { toast } from "@shared/toast";
 import {
   batch,
@@ -596,9 +597,10 @@ export function RsvpModal(props: RsvpModalProps) {
             so a negative bottom margin lifts the bar up over the last card
             instead of stretching it down into the padding. */}
         <div class="border-border bg-surface sticky bottom-0 -mx-6 flex gap-3 border-t px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-4">
-          <button
+          <Button
+            variant="quiet"
             type="button"
-            class="border-border font-body text-text-muted hover:border-gold-dim hover:text-text text-osn-sm tracking-osn-wider flex-1 cursor-pointer rounded-sm border bg-transparent px-4 py-3 uppercase transition-colors duration-200 disabled:opacity-40"
+            class="flex-1 duration-200"
             ref={dismissRef}
             onClick={() => props.onClose()}
             // Nothing left to cancel once the reply is in and the sheet is
@@ -620,7 +622,7 @@ export function RsvpModal(props: RsvpModalProps) {
             {/* Past the deadline there is nothing to cancel — the sheet is a
                 view, so its one button says so. */}
             {props.closed ? "Close" : "Cancel"}
-          </button>
+          </Button>
           {/* No submit button once RSVPs are closed: a disabled Save invites a
               guest to keep clicking at a door that won't open. */}
           <Show when={!props.closed}>

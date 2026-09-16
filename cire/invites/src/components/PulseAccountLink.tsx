@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { useAuth } from "@shared/rp-auth/solid";
 import { createResource, createSignal, For, Show } from "solid-js";
 
@@ -189,13 +190,14 @@ export function PulseAccountLink(props: PulseAccountLinkProps) {
                   {error()}
                 </p>
               </Show>
-              <button
+              <Button
+                variant="cta"
                 type="button"
                 onClick={() => signIn(window.location.href)}
-                class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg text-osn-sm tracking-osn-wider self-start rounded-sm border bg-transparent px-5 py-2.5 uppercase transition-colors duration-200"
+                class="self-start duration-200"
               >
                 Sign in with musubi
-              </button>
+              </Button>
             </div>
           }
         >
@@ -236,13 +238,14 @@ export function PulseAccountLink(props: PulseAccountLinkProps) {
                       <output class="text-gold-ink font-body text-osn-xs tracking-osn-wider uppercase">
                         ✓ Linked
                       </output>
-                      <button
+                      <Button
+                        variant="subtle"
+                        size="sm"
                         type="button"
                         onClick={() => void unlinkMember(member.guestId)}
-                        class="text-text-muted hover:text-error text-osn-xs underline-offset-2 hover:underline"
                       >
                         Unlink
-                      </button>
+                      </Button>
                     </span>
                   </Show>
                 </li>
@@ -256,17 +259,18 @@ export function PulseAccountLink(props: PulseAccountLinkProps) {
             </p>
           </Show>
 
-          <button
+          <Button
+            variant="cta"
             type="button"
             onClick={() => {
               const id = selected();
               if (id) void linkMember(id);
             }}
             disabled={!selected() || linking()}
-            class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg text-osn-sm tracking-osn-wider mt-4 rounded-sm border bg-transparent px-5 py-2.5 uppercase transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+            class="mt-4 duration-200"
           >
             {linking() ? "Linking…" : "Link my account"}
-          </button>
+          </Button>
         </Show>
       </section>
     </Show>

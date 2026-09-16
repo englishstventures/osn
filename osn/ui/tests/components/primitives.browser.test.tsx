@@ -20,6 +20,7 @@ import { Chip } from "../../src/components/ui/chip";
 import { EmptyState } from "../../src/components/ui/empty-state";
 import { Notice } from "../../src/components/ui/notice";
 import { Stat } from "../../src/components/ui/stat";
+import { Table, Td } from "../../src/components/ui/table";
 
 import "../test-support/tailwind.css";
 
@@ -176,5 +177,51 @@ describe("Stat", () => {
     probe.remove();
 
     expect(painted(figure, "color")).toBe(accentInk);
+  });
+});
+
+describe("Table cells", () => {
+  it("aligns by prop, because a passed class would not reliably win", () => {
+    // Two Tailwind utilities on one property resolve by stylesheet order, not
+    // by the order they appear in `class` — so `<Td class="text-right">`
+    // against the component's own `text-left` is a coin flip. Only a real
+    // engine can say which won.
+    const { getAllByRole } = render(() => (
+      <Table label="Budget">
+        <tbody>
+          <tr>
+            <Td>start</Td>
+            <Td align="center">centre</Td>
+            <Td align="end">end</Td>
+          </tr>
+        </tbody>
+      </Table>
+    ));
+    const aligns = getAllByRole("cell").map((c) => getComputedStyle(c).textAlign);
+    expect(aligns).toEqual(["left", "center", "right"]);
+  });
+
+  it("mutes a cell that is context rather than content", () => {
+    const plain = render(() => (
+      <Table label="A">
+        <tbody>
+          <tr>
+            <Td>content</Td>
+          </tr>
+        </tbody>
+      </Table>
+    ));
+    const muted = render(() => (
+      <Table label="B">
+        <tbody>
+          <tr>
+            <Td tone="muted">context</Td>
+          </tr>
+        </tbody>
+      </Table>
+    ));
+    expect(painted(muted.getByRole("cell"), "color")).not.toBe(
+      painted(plain.getByRole("cell"), "color"),
+    );
   });
 });

@@ -388,7 +388,7 @@ export default function RsvpView(props: RsvpViewProps) {
                       </p>
                     }
                   >
-                    <Table label={`Replies for ${section.event.name}`} class="font-body">
+                    <Table label={`Replies for ${section.event.name}`}>
                       <caption class="sr-only">RSVPs for {section.event.name}</caption>
                       <thead>
                         <tr>
@@ -397,7 +397,7 @@ export default function RsvpView(props: RsvpViewProps) {
                           <Th>Status</Th>
                           <Th>Dietary</Th>
                           <Show when={props.canEdit}>
-                            <Th class="text-right">
+                            <Th align="end">
                               <span class="sr-only">Actions</span>
                             </Th>
                           </Show>
@@ -408,7 +408,7 @@ export default function RsvpView(props: RsvpViewProps) {
                           {(row) => (
                             <>
                               <tr class="hover:[&>td]:bg-surface">
-                                <Td class="align-middle">
+                                <Td valign="middle">
                                   {row.firstName} {row.lastName}
                                   <Show when={row.consentSource === "organiser_attested"}>
                                     {" "}
@@ -420,15 +420,17 @@ export default function RsvpView(props: RsvpViewProps) {
                                     </span>
                                   </Show>
                                 </Td>
-                                <Td class="text-text-muted align-middle">{row.familyName}</Td>
-                                <Td class="align-middle">
+                                <Td tone="muted" valign="middle">
+                                  {row.familyName}
+                                </Td>
+                                <Td valign="middle">
                                   <span
                                     class={`font-body text-osn-xs tracking-osn-widest inline-block rounded-sm px-1.5 py-0.5 uppercase ${STATUS_META[row.status].class}`}
                                   >
                                     {STATUS_META[row.status].label}
                                   </span>
                                 </Td>
-                                <Td class="text-text-muted align-middle">
+                                <Td tone="muted" valign="middle">
                                   <Show
                                     when={row.dietary.trim().length > 0}
                                     fallback={<span class="text-text-muted">--</span>}
@@ -437,7 +439,7 @@ export default function RsvpView(props: RsvpViewProps) {
                                   </Show>
                                 </Td>
                                 <Show when={props.canEdit}>
-                                  <Td class="text-right align-middle">
+                                  <Td align="end" valign="middle">
                                     <Button
                                       variant="quiet"
                                       size="sm"

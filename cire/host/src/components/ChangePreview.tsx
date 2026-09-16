@@ -79,15 +79,15 @@ export function PlanCounts(props: { plan: ChangePlan }) {
   ];
 
   return (
-    <Table label="Diff counts" class="font-body">
+    <Table label="Diff counts">
       <thead>
         <tr>
           <Th>
             <span class="sr-only">Record type</span>
           </Th>
-          <Th class="text-right">Create</Th>
-          <Th class="text-right">Update</Th>
-          <Th class="text-right">Remove</Th>
+          <Th align="end">Create</Th>
+          <Th align="end">Update</Th>
+          <Th align="end">Remove</Th>
         </tr>
       </thead>
       <tbody>
@@ -95,13 +95,13 @@ export function PlanCounts(props: { plan: ChangePlan }) {
           {(r) => (
             <tr>
               <Td>{r.label}</Td>
-              <Td numeric class="text-text-muted">
+              <Td numeric tone="muted">
                 {r.create}
               </Td>
-              <Td numeric class="text-text-muted">
+              <Td numeric tone="muted">
                 {r.update}
               </Td>
-              <Td numeric class="text-text-muted">
+              <Td numeric tone="muted">
                 {r.remove}
               </Td>
             </tr>

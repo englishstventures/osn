@@ -146,6 +146,26 @@ describe("Chip", () => {
   });
 });
 
+describe("Table cells", () => {
+  it("keeps the native `align` attribute out of the way of the prop", () => {
+    // `<td align>` is a deprecated native attribute typed
+    // `"left" | "center" | "right"`. Intersecting rather than omitting it
+    // narrows the prop to the one value both unions share, so `align="end"`
+    // becomes a type error with a baffling message. This is the runtime half:
+    // the value reaches the class list, not the attribute.
+    const { getByRole } = render(() => (
+      <Table label="Budget">
+        <tbody>
+          <tr>
+            <Td align="end">1,240</Td>
+          </tr>
+        </tbody>
+      </Table>
+    ));
+    expect(getByRole("cell").getAttribute("align")).toBeNull();
+  });
+});
+
 describe("meterPct", () => {
   it("reports the share of the maximum", () => {
     expect(meterPct(25, 100)).toBe(25);

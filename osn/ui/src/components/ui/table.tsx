@@ -46,7 +46,7 @@ export function Table(props: TableProps) {
       tabindex="0"
       class={`base:border-osn-hairline base:overflow-x-auto base:rounded-osn-sm base:border${props.class ? ` ${props.class}` : ""}`}
     >
-      <table class="base:w-full base:border-separate base:border-spacing-0 base:text-left">
+      <table class="base:font-osn-body base:w-full base:border-separate base:border-spacing-0 base:text-left">
         {props.children}
       </table>
     </section>
@@ -54,14 +54,32 @@ export function Table(props: TableProps) {
   // oxlint-enable no-noninteractive-tabindex
 }
 
-export type ThProps = SafeProps<"th"> & {
-  /**
-   * Centre the heading over a column of checkboxes or icons. A prop rather than
-   * a passed `text-center`, because that would fight the `text-left` below on
-   * the same property — and two Tailwind utilities on one property resolve by
-   * stylesheet order, not by the order they appear in `class`.
-   */
-  align?: "start" | "center";
+/**
+ * Where a cell's contents sit across the column.
+ *
+ * A prop rather than a passed `text-center`, because that would fight the
+ * component's own `text-left` on the same property — and two Tailwind utilities
+ * on one property resolve by stylesheet order, not by the order they appear in
+ * `class`, so the call site's does not reliably win.
+ */
+export type CellAlign = "start" | "center" | "end";
+
+const ALIGN = {
+  start: "base:text-left",
+  center: "base:text-center",
+  end: "base:text-right",
+} satisfies Readonly<Record<CellAlign, string>>;
+
+/**
+ * `Omit<…, "align">` because `<th>` and `<td>` both carry a deprecated native
+ * `align` attribute typed `"left" | "center" | "right" | …`. Intersecting
+ * rather than omitting it silently narrows the prop to the one value the two
+ * unions share — `"center"` — so `align="end"` becomes a type error with a
+ * baffling message. The same collision `Input`'s `size` has.
+ */
+export type ThProps = Omit<SafeProps<"th">, "align"> & {
+  /** {@link CellAlign}. `end` for a column of figures, `center` for checkboxes or icons. */
+  align?: CellAlign;
 };
 
 /**
@@ -75,7 +93,7 @@ export function Th(props: ThProps) {
       scope="col"
       {...rest}
       class={`base:font-osn-body base:border-osn-hairline base:text-osn-accent-ink base:border-b base:px-4 base:py-3 ${
-        own.align === "center" ? "base:text-center" : "base:text-left"
+        ALIGN[own.align ?? "start"]
       } base:text-osn-xs base:font-normal base:tracking-osn-wider base:whitespace-nowrap base:uppercase${
         own.class ? ` ${own.class}` : ""
       }`}
@@ -83,18 +101,41 @@ export function Th(props: ThProps) {
   );
 }
 
-export type TdProps = SafeProps<"td"> & {
-  /** Figures: right-aligned, tabular, so the digits line up down the column. */
+export type TdProps = Omit<SafeProps<"td">, "align"> & {
+  /**
+   * Figures: right-aligned, tabular, so the digits line up down the column.
+   * Shorthand for `align="end"` plus the mono face, because those three always
+   * travel together on a number.
+   */
   numeric?: boolean;
+  /** {@link CellAlign}. Ignored when `numeric` is set, which already means `end`. */
+  align?: CellAlign;
+  /** `muted` for a cell that is context rather than content — a timestamp, a note. */
+  tone?: "default" | "muted";
+  /**
+   * `middle` for a row whose cells differ in height — one holding a control,
+   * its neighbour a single word. The default is the browser's, which is
+   * baseline, and that is right for a row of plain text.
+   */
+  valign?: "baseline" | "middle";
 };
 
+const TD_TONE = {
+  default: "base:text-osn-ink",
+  muted: "base:text-osn-ink-secondary",
+} as const;
+
 export function Td(props: TdProps) {
-  const [own, rest] = splitProps(props, ["numeric", "class"]);
+  const [own, rest] = splitProps(props, ["numeric", "align", "tone", "valign", "class"]);
   return (
     <td
       {...rest}
-      class={`base:border-osn-hairline/40 base:text-osn-ink base:border-b base:px-4 base:py-3 base:text-osn-base ${
-        own.numeric ? "base:text-right base:font-osn-mono base:tabular-nums" : ""
+      class={`base:border-osn-hairline/40 base:border-b base:px-4 base:py-3 base:text-osn-base ${
+        TD_TONE[own.tone ?? "default"]
+      } ${own.valign === "middle" ? "base:align-middle" : ""} ${
+        own.numeric
+          ? "base:text-right base:font-osn-mono base:tabular-nums"
+          : ALIGN[own.align ?? "start"]
       }${own.class ? ` ${own.class}` : ""}`}
     />
   );

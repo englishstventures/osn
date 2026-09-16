@@ -553,13 +553,14 @@ export default function InvitePage(props: InvitePageProps) {
                   {welcomeMessage()}
                 </p>
               </Show>
-              <button
+              <Button
+                variant="bare"
                 type="button"
                 onClick={handleSignOut}
-                class="font-body text-text-muted hover:text-gold-ink focus-visible:ring-gold/60 text-osn-sm rounded-sm underline underline-offset-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2"
+                class="focus-visible:ring-gold/60 underline duration-200 focus:outline-none focus-visible:ring-2"
               >
                 {signOutLabel()}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

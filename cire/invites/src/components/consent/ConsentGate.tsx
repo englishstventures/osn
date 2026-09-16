@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { type JSX, onMount, Show } from "solid-js";
 
 import { CATEGORY_META, type ConsentCategory } from "../../lib/consent/categories";
@@ -115,20 +116,24 @@ export function ConsentPlaceholder(props: { category: ConsentCategory; vendor: s
         servers, which lets them see your IP address and browser.
       </p>
       <div class="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-        <button
+        <Button
+          variant="cta"
+          size="sm"
           type="button"
           onClick={() => grantCategory(props.category)}
-          class="border-gold text-gold-ink hover:bg-gold hover:text-bg focus-visible:ring-gold/60 text-osn-xs tracking-osn-wider rounded-sm border px-4 py-1.5 uppercase transition-colors duration-200 focus:outline-none focus-visible:ring-2"
+          class="focus-visible:ring-gold/60 duration-200 focus:outline-none focus-visible:ring-2"
         >
           Allow {categoryTitle()}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="bare"
+          size="sm"
           type="button"
           onClick={openConsentPreferences}
-          class="font-body text-text-muted hover:text-gold-ink focus-visible:ring-gold/60 text-osn-xs rounded-sm underline underline-offset-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2"
+          class="focus-visible:ring-gold/60 underline duration-200 focus:outline-none focus-visible:ring-2"
         >
           Privacy choices
-        </button>
+        </Button>
       </div>
     </div>
   );

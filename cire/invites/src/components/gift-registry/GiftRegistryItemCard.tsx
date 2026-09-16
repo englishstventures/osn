@@ -262,14 +262,15 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
               </Button>
             </Show>
             <Show when={props.claim}>
-              <button
+              <Button
+                variant="bare"
                 type="button"
                 disabled={props.busy}
                 onClick={() => props.onRelease()}
-                class="font-body text-text-muted hover:text-gold-ink focus-visible:ring-gold/60 text-osn-sm rounded-sm px-1 underline underline-offset-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40"
+                class="focus-visible:ring-gold/60 underline duration-200 focus:outline-none focus-visible:ring-2"
               >
                 Release
-              </button>
+              </Button>
             </Show>
           </Show>
         </div>
@@ -325,14 +326,15 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
               <Button type="submit" variant="cta" disabled={props.busy}>
                 {props.busy ? "Saving" : "Confirm"}
               </Button>
-              <button
+              <Button
+                variant="bare"
                 type="button"
                 disabled={props.busy}
                 onClick={() => setOpen(false)}
-                class="font-body text-text-muted hover:text-gold-ink focus-visible:ring-gold/60 text-osn-sm rounded-sm px-1 underline underline-offset-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40"
+                class="focus-visible:ring-gold/60 underline duration-200 focus:outline-none focus-visible:ring-2"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
         </Show>

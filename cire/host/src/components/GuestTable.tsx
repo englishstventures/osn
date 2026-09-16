@@ -430,7 +430,7 @@ export default function GuestTable(props: GuestTableProps) {
         </Show>
 
         <Show when={visibleFamilies().length > 0}>
-          <Table label="Guests" class="font-body">
+          <Table label="Guests">
             <thead>
               <tr>
                 <Th>Guest Name</Th>
@@ -584,10 +584,10 @@ export default function GuestTable(props: GuestTableProps) {
                       <For each={visibleMembers()}>
                         {(member, index) => (
                           <tr class="hover:[&>td]:bg-surface">
-                            <Td class="pl-8 align-middle font-normal">
+                            <Td valign="middle" class="pl-8 font-normal">
                               {member.firstName} {member.lastName}
                             </Td>
-                            <Td class="align-middle">
+                            <Td valign="middle">
                               <div class="flex flex-wrap gap-1.5">
                                 <For each={member.events}>
                                   {(eventId) => (
@@ -604,7 +604,7 @@ export default function GuestTable(props: GuestTableProps) {
                                 </Show>
                               </div>
                             </Td>
-                            <Td class="text-text-muted tracking-osn-wide align-middle font-mono">
+                            <Td tone="muted" valign="middle" class="tracking-osn-wide font-mono">
                               <Show when={index() === 0}>{family.publicId}</Show>
                             </Td>
                           </tr>

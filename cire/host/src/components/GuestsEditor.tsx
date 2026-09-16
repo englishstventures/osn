@@ -559,7 +559,7 @@ function GuestRow(props: {
         </Td>
         <For each={props.events}>
           {(evt) => (
-            <Td class="text-center">
+            <Td align="center">
               <input
                 type="checkbox"
                 checked={props.guest.eventKeys.includes(evt.key)}
@@ -570,7 +570,7 @@ function GuestRow(props: {
             </Td>
           )}
         </For>
-        <Td class="text-right">
+        <Td align="end">
           <Button
             variant="bareDanger"
             size="sm"
