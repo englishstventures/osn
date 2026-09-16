@@ -43,6 +43,33 @@
    */
   pointer-events: none;
   max-width: min(100vw, 26rem);
+
+  /*
+   * Undo the user-agent styles a `popover` element carries, for the top-layer
+   * form (`topLayer` on `Toaster`). The UA sheet gives every popover
+   * `inset: 0; margin: auto; border: solid; background: canvas;
+   * color: canvastext; overflow: auto` — which would stretch this container
+   * across the viewport and paint a bordered white box behind toasts that each
+   * bring their own surface. Declared here rather than in a `[popover]` rule so
+   * the position modifiers below, at the same specificity and later in source,
+   * still win for the one or two insets they set.
+   */
+  inset: auto;
+  margin: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  overflow: visible;
+}
+
+/*
+ * A popover that is not open is `display: none` in the UA sheet — but
+ * `.osn-toaster` sets `display: flex`, and an author rule beats the UA one. So
+ * the hidden state has to be restated, or an empty container would be laid out
+ * (and outside the top layer) between toasts.
+ */
+.osn-toaster[popover]:not(:popover-open) {
+  display: none;
 }
 
 .osn-toaster--top-left {

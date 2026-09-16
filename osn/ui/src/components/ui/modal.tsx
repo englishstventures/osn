@@ -104,6 +104,20 @@ export type ModalProps = Omit<ComponentProps<"dialog">, "open" | "onClose" | "ch
   labelledBy?: string;
   /** Whether clicking the backdrop closes it. Default `true`; turn it off for a dialog with unsaved input. */
   dismissable?: boolean;
+  /**
+   * The panel is a non-scrolling frame and a child owns the scrollport.
+   *
+   * The default is the simple shape: the panel itself scrolls and carries the
+   * padding. That breaks the moment anything has to stay put while the body
+   * moves under it — a close button in the corner, a sticky action bar at the
+   * foot — because a child of the scrollport scrolls away with the content, and
+   * a `position: sticky` bottom bar resolves its offset against the scrollport
+   * rather than its parent. `frame` drops the panel's own padding and overflow
+   * so the caller can lay those out itself, and makes it a column flex
+   * container, which is what lets the scrolling child shrink under the panel's
+   * `max-height` (with its own `min-h-0`).
+   */
+  frame?: boolean;
   children: JSX.Element;
 };
 
@@ -256,6 +270,7 @@ export function Modal(props: ModalProps) {
     "label",
     "labelledBy",
     "dismissable",
+    "frame",
     "class",
     "children",
   ]);
@@ -332,8 +347,17 @@ export function Modal(props: ModalProps) {
    * whole test file it was cleaning up after, not just the modal.
    */
   function close(dialog: HTMLDialogElement): void {
-    if (typeof dialog.close === "function") dialog.close();
-    else dialog.removeAttribute("open");
+    if (typeof dialog.close === "function") {
+      dialog.close();
+      return;
+    }
+    // The attribute is only half of what `close()` does. The other half is the
+    // `close` event, which is the ONLY thing that tells a caller the dialog
+    // shut — so without dispatching it here the fallback closes silently and
+    // `open` desyncs, which is the exact failure the listener below exists to
+    // prevent.
+    dialog.removeAttribute("open");
+    dialog.dispatchEvent(new Event("close"));
   }
 
   /**
@@ -362,7 +386,14 @@ export function Modal(props: ModalProps) {
     // spot, and the animation this whole function exists for never plays.
     void dialog.offsetHeight;
 
-    await Promise.allSettled(dialog.getAnimations({ subtree: true }).map((a) => a.finished));
+    // Guarded for the same environments `open` and `close` are: jsdom has no
+    // Web Animations API at all, so an unguarded call is a `TypeError` on the
+    // close path. Nothing is animating there anyway — the element was never in
+    // the top layer — so an empty list is the honest answer rather than a
+    // fallback.
+    const running =
+      typeof dialog.getAnimations === "function" ? dialog.getAnimations({ subtree: true }) : [];
+    await Promise.allSettled(running.map((a) => a.finished));
 
     // A reopen, a second close, or an unmount happened while we waited. Any of
     // them owns the element now.
@@ -439,9 +470,18 @@ export function Modal(props: ModalProps) {
         // `m-auto` is what centres it there — the UA default is `margin: auto`
         // on a modal dialog, and a utility that overrode it would drop the
         // dialog to the top-left corner.
-        "base:m-auto base:max-h-[85vh] base:w-full base:max-w-osn-sm base:overflow-y-auto",
+        "base:m-auto base:max-h-[85vh] base:w-full base:max-w-osn-sm",
         "base:rounded-osn-lg base:border base:border-osn-hairline base:bg-osn-surface-raised",
-        "base:p-6 base:text-osn-ink base:shadow-[var(--osn-elev-2)]",
+        "base:text-osn-ink base:shadow-[var(--osn-elev-2)]",
+        // Two shapes, never both: see {@link ModalProps.frame}.
+        // `base:p-0` rather than simply omitting the padding: the user-agent
+        // stylesheet gives every `<dialog>` `padding: 1em`, and an author rule
+        // is what removes it. Left out, the frame keeps a 16px band the caller
+        // cannot see in its own markup — which is what put cire's sticky action
+        // bar 16px above the bottom edge it is supposed to sit on.
+        own.frame
+          ? "base:flex base:flex-col base:overflow-hidden base:p-0"
+          : "base:overflow-y-auto base:p-6",
         own.class,
       )}
       {...rest}

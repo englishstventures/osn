@@ -156,18 +156,16 @@ export default function InvitePage(props: InvitePageProps) {
   const [revealed, setRevealed] = createSignal(false);
 
   // Warm the chunks that are otherwise fetched mid-interaction: the unlock
-  // sequence (imported inside `handleClaimed`, i.e. after the claim resolves),
-  // the modal transitions (imported inside `AnimatedModal` on first open), and
-  // the post-claim components split out above — those are needed the instant
-  // the claim resolves, so without this the split would trade a slower first
-  // paint for a slower reveal. `lazy` exposes each one's loader as `.preload()`,
+  // sequence (imported inside `handleClaimed`, i.e. after the claim resolves)
+  // and the post-claim components split out above — those are needed the
+  // instant the claim resolves, so without this the split would trade a slower
+  // first paint for a slower reveal. `lazy` exposes each one's loader as `.preload()`,
   // which both fetches the chunk and primes the same cache the render reads, so
   // a warmed component renders without a suspense gap.
   // Hints only — every call site keeps its own import and its own fallback.
   onMount(() => {
     const cancels = [
       prefetchOnIdle(() => import("./UnlockReveal.motion")),
-      prefetchOnIdle(() => import("../../components/Modal.motion")),
       prefetchOnIdle(() => RsvpModal.preload()),
       prefetchOnIdle(() => DetailsModal.preload()),
       prefetchOnIdle(() => EventCard.preload()),
@@ -597,11 +595,19 @@ export default function InvitePage(props: InvitePageProps) {
           still open, and that sheet's sticky action bar owns the bottom edge. */}
       <Toaster
         position="top-center"
-        // The layer goes on as a CLASS. `@shared/toast` sets no `z-index` of
-        // its own — precisely so this works. (`solid-toast` spread a hardcoded
-        // `z-index: 9999` onto the same div's inline style, which beat any
-        // class and parked the toast ABOVE the consent layers; the only
-        // override that won was `containerStyle`. Two-sided bound asserted in
+        // The RSVP sheet is a `showModal()` dialog, which paints in the top
+        // layer — above every stacking context in the document, so no `z-index`
+        // here can reach over it. The save toast fires while that sheet is
+        // still open, so without this it is raised behind the reply it
+        // confirms. See `ToasterProps.topLayer`.
+        topLayer
+        // The layer still goes on as a CLASS, for everything that is NOT in the
+        // top layer — the consent banner above it, the page below.
+        // `@shared/toast` sets no `z-index` of its own, precisely so this
+        // works. (`solid-toast` spread a hardcoded `z-index: 9999` onto the
+        // same div's inline style, which beat any class and parked the toast
+        // ABOVE the consent layers; the only override that won was
+        // `containerStyle`. Two-sided bound asserted in
         // `InvitePage.browser.test.tsx`.)
         class={Z_CLASS.TOAST}
       />
