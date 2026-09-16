@@ -1,6 +1,6 @@
 ---
 name: retro
-description: Use when a piece of work has just finished — normally the step straight after `prep-pr` opens the pull request — to write and commit the session-metrics card for the branch, read what the session actually cost against the difficulty declared before it started, and turn that into concrete changes to the skills, `CLAUDE.md`, the wiki, the tests or the brief. Also the owner of the card: nothing else writes one carrying the pull request's identity.
+description: Use when running the retrospective on a piece of work that has just finished — the retro, normally the step straight after `prep-pr` opens the pull request — to write and commit the session-metrics card for the branch, read what the session actually cost against the difficulty declared before it started, and turn that into concrete changes to the skills, `CLAUDE.md`, the wiki, the tests or the brief. Also the owner of the card — nothing else writes one carrying the pull request's identity.
 ---
 
 Run the retrospective for the branch named in `$ARGUMENTS`, or the current
