@@ -36,7 +36,7 @@ export type ControlSize = "sm" | "md";
 const CONTROL_BASE =
   "base:border-osn-hairline-strong base:bg-osn-ground base:text-osn-ink " +
   "base:ring-offset-osn-ground base:placeholder:text-osn-ink-secondary " +
-  "base:w-full base:rounded-osn-md base:border " +
+  "base:w-full base:rounded-osn-control base:border " +
   "base:focus-visible:ring-osn-focus base:focus-visible:outline-none " +
   "base:focus-visible:ring-2 base:focus-visible:ring-offset-2 " +
   "base:aria-[invalid=true]:border-osn-danger " +

@@ -53,6 +53,12 @@ export const CONTRACT_SCALAR_TOKENS = {
     "--osn-radius-md",
     "--osn-radius-lg",
     "--osn-radius-pill",
+    // A role rather than a size, like `--osn-focus`. How round a control is
+    // turns out to be an app-level decision independent of how round a card
+    // is — musubi's house style is pill CTAs, cire's is a sharp 4px — and a
+    // shared control that picked a sized step instead gets overridden at every
+    // call site in at least one app.
+    "--osn-radius-control",
   ],
   fontFamily: ["--osn-font-body", "--osn-font-display", "--osn-font-mono"],
   focus: ["--osn-focus-width", "--osn-focus-offset"],

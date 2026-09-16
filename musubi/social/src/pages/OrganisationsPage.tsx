@@ -190,7 +190,7 @@ export function OrganisationsPage() {
                 type="button"
                 variant="secondary"
                 size="sm"
-                class="text-body rounded-pill max-md:h-10"
+                class="text-body max-md:h-10"
                 onClick={() => setShowCreate(false)}
               >
                 Cancel
@@ -198,7 +198,7 @@ export function OrganisationsPage() {
               <Button
                 type="submit"
                 size="sm"
-                class="text-body rounded-pill max-md:h-10"
+                class="text-body max-md:h-10"
                 disabled={creating() || !handle() || !name()}
               >
                 {creating() ? "Creating..." : "Create"}

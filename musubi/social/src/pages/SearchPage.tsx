@@ -56,7 +56,7 @@ export function SearchPage() {
             type="search"
             autocomplete="off"
             placeholder="Search by name or @handle"
-            class="rounded-pill h-11 pl-8"
+            class="h-11 pl-8"
             value={controller.query()}
             onInput={(event) => controller.setQuery(event.currentTarget.value)}
           />

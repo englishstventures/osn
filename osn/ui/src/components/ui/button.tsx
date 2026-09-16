@@ -3,7 +3,7 @@ import { clsx } from "clsx";
 import { splitProps, type Component, type ComponentProps } from "solid-js";
 
 const buttonVariants = cva(
-  "base:inline-flex base:cursor-pointer base:items-center base:justify-center base:gap-2 base:whitespace-nowrap base:rounded-md base:text-sm base:font-medium base:transition-colors base:focus-visible:outline-none base:focus-visible:ring-2 base:focus-visible:ring-osn-focus base:disabled:pointer-events-none base:disabled:opacity-50",
+  "base:inline-flex base:cursor-pointer base:items-center base:justify-center base:gap-2 base:whitespace-nowrap base:rounded-osn-control base:text-osn-base base:font-medium base:transition-colors base:focus-visible:outline-none base:focus-visible:ring-2 base:focus-visible:ring-osn-focus base:disabled:pointer-events-none base:disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -17,8 +17,8 @@ const buttonVariants = cva(
       },
       size: {
         default: "base:h-9 base:px-4 base:py-2",
-        sm: "base:h-8 base:rounded-md base:px-3 base:text-xs",
-        lg: "base:h-10 base:rounded-md base:px-8",
+        sm: "base:h-8 base:rounded-osn-control base:px-3 base:text-osn-sm",
+        lg: "base:h-10 base:rounded-osn-control base:px-8",
         icon: "base:h-9 base:w-9",
       },
     },

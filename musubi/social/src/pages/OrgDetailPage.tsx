@@ -142,7 +142,7 @@ export function OrgDetailPage() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  class="text-body rounded-pill max-md:h-10"
+                  class="text-body max-md:h-10"
                   onClick={openEdit}
                 >
                   Edit
@@ -253,17 +253,12 @@ export function OrgDetailPage() {
                 type="button"
                 variant="secondary"
                 size="sm"
-                class="text-body rounded-pill max-md:h-10"
+                class="text-body max-md:h-10"
                 onClick={() => setShowEdit(false)}
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                size="sm"
-                class="text-body rounded-pill max-md:h-10"
-                disabled={saving()}
-              >
+              <Button type="submit" size="sm" class="text-body max-md:h-10" disabled={saving()}>
                 {saving() ? "Saving..." : "Save"}
               </Button>
             </div>

@@ -132,7 +132,7 @@ export function GlobalSearch(props: { token: string }) {
           type="search"
           autocomplete="off"
           placeholder="Search"
-          class="rounded-pill h-9 pl-7"
+          class="h-9 pl-7"
           role="combobox"
           aria-expanded={showPanel()}
           aria-controls={LISTBOX_ID}

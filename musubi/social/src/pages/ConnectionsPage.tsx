@@ -254,7 +254,7 @@ export function ConnectionsPage() {
                       <div class="flex items-center gap-1.5">
                         <Button
                           size="sm"
-                          class="text-body rounded-pill h-7 max-md:h-10"
+                          class="text-body h-7 max-md:h-10"
                           onClick={() => acceptRequest(req.handle)}
                         >
                           Accept
@@ -340,7 +340,7 @@ export function ConnectionsPage() {
                   type="button"
                   variant="secondary"
                   size="sm"
-                  class="text-body rounded-pill max-md:h-10"
+                  class="text-body max-md:h-10"
                   onClick={() => setRemoveTarget(null)}
                 >
                   Cancel
@@ -349,7 +349,7 @@ export function ConnectionsPage() {
                   type="button"
                   variant="destructive"
                   size="sm"
-                  class="text-body rounded-pill max-md:h-10"
+                  class="text-body max-md:h-10"
                   onClick={() => {
                     void confirmRemove();
                   }}
@@ -383,7 +383,7 @@ export function ConnectionsPage() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        class="text-body rounded-pill h-7 max-md:h-10"
+                        class="text-body h-7 max-md:h-10"
                         onClick={() => unblock(profile.handle)}
                       >
                         Unblock

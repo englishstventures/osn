@@ -125,7 +125,7 @@ export function DiscoverPage() {
                       </span>
                       <Button
                         size="sm"
-                        class="text-body rounded-pill h-7 max-md:h-10"
+                        class="text-body h-7 max-md:h-10"
                         disabled={sending().has(suggestion.handle)}
                         onClick={() => connect(suggestion.handle)}
                       >

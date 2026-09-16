@@ -3,6 +3,7 @@
   "version": "0.22.58",
   "private": true,
   "description": "Pulse - Events platform for OSN",
+  "license": "GPL-3.0",
   "type": "module",
   "scripts": {
     "dev": "portless",
@@ -14,11 +15,6 @@
     "test:run": "bunx --bun vitest run --project unit",
     "test:browser": "bunx --bun vitest run --project browser"
   },
-  "portless": {
-    "name": "pulse",
-    "script": "dev:app"
-  },
-  "license": "GPL-3.0",
   "dependencies": {
     "@fontsource/geist-mono": "^5.3.0",
     "@fontsource/geist-sans": "^5.3.0",
@@ -53,5 +49,9 @@
     "vite": "^8.2.2",
     "vite-plugin-solid": "^2.11.14",
     "vitest": "^4.1.11"
+  },
+  "portless": {
+    "name": "pulse",
+    "script": "dev:app"
   }
 }

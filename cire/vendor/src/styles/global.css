@@ -361,6 +361,8 @@
   --osn-radius-md: var(--radius-md);
   --osn-radius-lg: var(--radius-md);
   --osn-radius-pill: var(--radius-pill);
+  /* Sharp, like every other control here: the house look is stationery. */
+  --osn-radius-control: var(--osn-radius-sm);
 
   /* No mono family is loaded here — `tabular-nums` on the body face is what
    * lines figures up in a column. The stack is named anyway so a shared

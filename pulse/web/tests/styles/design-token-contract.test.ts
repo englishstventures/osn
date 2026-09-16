@@ -58,4 +58,26 @@ describe("design-token contract", () => {
   it("imports the contract stylesheet, or the mapping is dead custom properties", () => {
     expect(CSS).toMatch(/@import\s+["']@shared\/design-tokens\/tokens\.css["']/);
   });
+
+  it("maps all seven type steps rather than leaving gaps for the fallback", () => {
+    // Pulse had none of these until the scale was written down, so every
+    // `text-osn-*` in a shared component resolved to the contract package's
+    // neutral default — a different type system showing through in the middle
+    // of this one, and invisible, because a fallback renders legibly.
+    for (const step of ["xs", "sm", "base", "md", "lg", "xl", "2xl"]) {
+      expect(CSS).toMatch(new RegExp(`--osn-text-${step}:`));
+    }
+  });
+
+  it("keeps the scale ascending, which is the one thing a list of sizes can get wrong", () => {
+    // Seven hand-written px values in source order. A transposed pair is not
+    // visible reading the block and produces a component whose "large" step is
+    // smaller than its "medium" one.
+    const sizes = ["xs", "sm", "base", "md", "lg", "xl", "2xl"].map((step) => {
+      const match = CSS.match(new RegExp(`--osn-text-${step}:\\s*([\\d.]+)px`));
+      if (!match) throw new Error(`--osn-text-${step} is not a px value`);
+      return Number.parseFloat(match[1]!);
+    });
+    expect(sizes).toEqual(sizes.toSorted((a, b) => a - b));
+  });
 });

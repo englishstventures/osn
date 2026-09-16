@@ -353,6 +353,8 @@
   --osn-radius-md: 6px;
   --osn-radius-lg: 6px;
   --osn-radius-pill: 999px;
+  /* Sharp, like every other control here: the house look is stationery. */
+  --osn-radius-control: var(--osn-radius-sm);
 
   --osn-font-body: var(--font-body);
   --osn-font-display: var(--font-display);

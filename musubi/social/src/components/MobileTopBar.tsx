@@ -43,7 +43,7 @@ export function MobileTopBar() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    class="text-body rounded-pill h-9"
+                    class="text-body h-9"
                     onClick={() => {
                       setShowRegister(false);
                       setShowSignIn(true);
@@ -53,7 +53,7 @@ export function MobileTopBar() {
                   </Button>
                   <Button
                     size="sm"
-                    class="text-body rounded-pill h-9"
+                    class="text-body h-9"
                     onClick={() => {
                       setShowSignIn(false);
                       setShowRegister(true);

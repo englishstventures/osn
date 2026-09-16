@@ -3,7 +3,7 @@ import { clsx } from "clsx";
 import { splitProps, type Component, type ComponentProps } from "solid-js";
 
 const badgeVariants = cva(
-  "base:inline-flex base:items-center base:rounded-full base:px-2.5 base:py-0.5 base:text-xs base:font-semibold base:transition-colors base:focus:outline-none base:focus:ring-2 base:focus:ring-osn-focus base:focus:ring-offset-2",
+  "base:inline-flex base:items-center base:rounded-osn-pill base:px-2.5 base:py-0.5 base:text-osn-sm base:font-semibold base:transition-colors base:focus:outline-none base:focus:ring-2 base:focus:ring-osn-focus base:focus:ring-offset-2",
   {
     variants: {
       variant: {

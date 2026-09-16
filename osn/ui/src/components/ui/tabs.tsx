@@ -20,7 +20,7 @@ const TabsTrigger: Component<{
     <KobalteTabs.Trigger
       value={local.value}
       class={clsx(
-        "base:rounded-md base:px-3 base:py-1.5 base:text-sm base:font-medium base:transition-colors",
+        "base:rounded-osn-md base:px-3 base:py-1.5 base:text-osn-base base:font-medium base:transition-colors",
         "base:text-osn-ink-secondary base:hover:bg-osn-surface-sunk",
         "base:data-[selected]:bg-osn-accent base:data-[selected]:text-osn-on-accent",
         local.class,

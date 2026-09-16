@@ -62,31 +62,31 @@ class attributes in the tree.
 
 ## The contract
 
-| Group | Tokens | Obligation |
-|---|---|---|
-| Grounds | `--osn-ground`, `--osn-ground-deep` | what other tokens are measured *against* |
-| Surfaces | `--osn-surface`, `--osn-surface-raised`, `--osn-surface-sunk` | also grounds, for contrast |
-| Edges | `--osn-hairline` | decoration, **no floor** |
-| | `--osn-hairline-strong` | 3:1 |
-| Ink | `--osn-ink`, `--osn-ink-secondary` | 4.5:1 against every ground and surface |
-| | `--osn-ink-tertiary` | 3:1 — large text, ornament, disabled only |
-| Accent | `--osn-accent`, `--osn-accent-strong` | fills; what sits on them is what is measured |
-| | `--osn-accent-soft` | a tint of the accent, **not** a neutral surface |
-| | `--osn-accent-ink` | 4.5:1 — the readable-on-a-ground variant |
-| | `--osn-on-accent` | 4.5:1 against the accent it sits on |
-| Status | `--osn-success`, `--osn-warn` | 4.5:1 |
-| | `--osn-danger`, `--osn-on-danger` | fill and its ink |
-| Focus | `--osn-focus` | 3:1 |
-| Radius | `--osn-radius-hair\|sm\|md\|lg\|pill` | — |
-| Type | `--osn-font-body\|display\|mono` | — |
-| Motion | `--osn-dur-fast\|base\|slow`, `--osn-ease-out\|in-out` | — |
-| Elevation | `--osn-elev-1\|2` | — |
+| Group     | Tokens                                                        | Obligation                                      |
+| --------- | ------------------------------------------------------------- | ----------------------------------------------- |
+| Grounds   | `--osn-ground`, `--osn-ground-deep`                           | what other tokens are measured _against_        |
+| Surfaces  | `--osn-surface`, `--osn-surface-raised`, `--osn-surface-sunk` | also grounds, for contrast                      |
+| Edges     | `--osn-hairline`                                              | decoration, **no floor**                        |
+|           | `--osn-hairline-strong`                                       | 3:1                                             |
+| Ink       | `--osn-ink`, `--osn-ink-secondary`                            | 4.5:1 against every ground and surface          |
+|           | `--osn-ink-tertiary`                                          | 3:1 — large text, ornament, disabled only       |
+| Accent    | `--osn-accent`, `--osn-accent-strong`                         | fills; what sits on them is what is measured    |
+|           | `--osn-accent-soft`                                           | a tint of the accent, **not** a neutral surface |
+|           | `--osn-accent-ink`                                            | 4.5:1 — the readable-on-a-ground variant        |
+|           | `--osn-on-accent`                                             | 4.5:1 against the accent it sits on             |
+| Status    | `--osn-success`, `--osn-warn`                                 | 4.5:1                                           |
+|           | `--osn-danger`, `--osn-on-danger`                             | fill and its ink                                |
+| Focus     | `--osn-focus`                                                 | 3:1                                             |
+| Radius    | `--osn-radius-hair\|sm\|md\|lg\|pill`                         | —                                               |
+| Type      | `--osn-font-body\|display\|mono`                              | —                                               |
+| Motion    | `--osn-dur-fast\|base\|slow`, `--osn-ease-out\|in-out`        | —                                               |
+| Elevation | `--osn-elev-1\|2`                                             | —                                               |
 
 Three surfaces is the minimum, not a preference: `musubi/social` and `pulse/web`
 both collapse shadcn's `secondary`/`muted`/`accent` onto one value and
 `card`/`popover`/`background` onto another, so a two-surface contract cannot
 express either without losing a distinction the app relies on. For the same
-reason, an app mapping shadcn's *neutral* `accent` must send it to a **surface**,
+reason, an app mapping shadcn's _neutral_ `accent` must send it to a **surface**,
 never to `--osn-accent-soft`, or it gets a coloured hover state where it wanted
 a grey one.
 
@@ -109,7 +109,7 @@ step up" a decision rather than a guess.
 
 ### Migrating onto them
 
-`SCALE_MIGRATION` in `src/index.ts` is the old→new table, and it is *derived*:
+`SCALE_MIGRATION` in `src/index.ts` is the old→new table, and it is _derived_:
 every value goes to its nearest step, with an exact tie resolving **up** (the
 failure mode of a too-small label is illegibility; of a too-large one, a
 slightly looser line). `tests/scales.test.ts` re-derives it and fails if the
@@ -138,7 +138,7 @@ contract defines, in every scope you name.
 
 It is a **rewrite** of `cire/host/tests/styles/tokens.test.ts`, not a move.
 That harness finds tokens by regex over literal `--name: oklch(…)`
-declarations, which works there because cire's ramps *are* literals. A contract
+declarations, which works there because cire's ramps _are_ literals. A contract
 mapping never is — it is `--osn-ink: var(--text)`, two or three hops from a
 value — so against a mapping the regex matches nothing and asserts about an
 empty set. A test that cannot fail. Hence the `var()` resolver, with cycle
@@ -176,7 +176,7 @@ inside the organiser's chrome. Without `inline` the alias resolves once at
 `:root` and every one of those silently shows the page theme.
 
 Nothing reads `--color-osn-*` from JavaScript — an app reads its own `--osn-*`
-or its own token — so the reason `cire/host` gives for keeping *its* theme block
+or its own token — so the reason `cire/host` gives for keeping _its_ theme block
 non-inline does not apply here.
 
 ## Why there is no `:root` block

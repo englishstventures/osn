@@ -15,7 +15,7 @@ const PopoverContent: ParentComponent<
     <KobaltePopover.Portal>
       <KobaltePopover.Content
         class={clsx(
-          "base:bg-osn-surface-raised base:text-osn-ink base:border-border base:z-50 base:w-60 base:rounded-md base:border base:p-2 base:text-xs base:shadow-md base:outline-none",
+          "base:bg-osn-surface-raised base:text-osn-ink base:border-border base:z-50 base:w-60 base:rounded-osn-md base:border base:p-2 base:text-osn-sm base:shadow-md base:outline-none",
           "base:data-[expanded]:animate-in base:data-[closed]:animate-out base:data-[closed]:fade-out-0 base:data-[expanded]:fade-in-0 base:data-[closed]:zoom-out-95 base:data-[expanded]:zoom-in-95",
           local.class,
         )}

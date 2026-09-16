@@ -6,7 +6,7 @@ const Avatar: Component<ComponentProps<"span">> = (props) => {
   return (
     <span
       class={clsx(
-        "base:relative base:flex base:shrink-0 base:overflow-hidden base:rounded-full",
+        "base:relative base:flex base:shrink-0 base:overflow-hidden base:rounded-osn-pill",
         local.class,
       )}
       {...others}

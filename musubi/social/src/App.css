@@ -7,7 +7,6 @@
 @import "@shared/toast/toast.css";
 @import "@shared/design-tokens/tokens.css";
 
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -41,8 +40,8 @@
 /* Type scale — locked to 12 / 13 / 14 / 24px. SF Pro, -0.15px tracking. */
 @theme {
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro",
-    "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Helvetica Neue",
+    Helvetica, Arial, sans-serif;
 
   --text-meta: 12px;
   --text-meta--line-height: 16px;
@@ -194,6 +193,8 @@
   --osn-radius-md: var(--radius-md);
   --osn-radius-lg: var(--radius-card);
   --osn-radius-pill: var(--radius-pill);
+  /* Pill CTAs are the house style — DESIGN.md. */
+  --osn-radius-control: var(--radius-pill);
 
   --osn-font-body: var(--font-sans);
   --osn-font-display: var(--font-sans);

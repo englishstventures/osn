@@ -52,19 +52,19 @@ const UsernameInput: Component<UsernameInputProps> = (props) => {
         />
       </div>
       <Show when={status() === "checking"}>
-        <span class="base:text-osn-ink-secondary base:text-xs">Checking…</span>
+        <span class="base:text-osn-ink-secondary base:text-osn-sm">Checking…</span>
       </Show>
       <Show when={status() === "available"}>
-        <span class="base:text-osn-success base:text-xs">@{local.value} is available</span>
+        <span class="base:text-osn-success base:text-osn-sm">@{local.value} is available</span>
       </Show>
       <Show when={status() === "taken"}>
-        <span class="base:text-osn-danger base:text-xs">@{local.value} is taken</span>
+        <span class="base:text-osn-danger base:text-osn-sm">@{local.value} is taken</span>
       </Show>
       <Show when={status() === "invalid" && local.invalidMessage}>
-        <span class="base:text-osn-danger base:text-xs">{local.invalidMessage}</span>
+        <span class="base:text-osn-danger base:text-osn-sm">{local.invalidMessage}</span>
       </Show>
       <Show when={status() === "error"}>
-        <span class="base:text-osn-danger base:text-xs">
+        <span class="base:text-osn-danger base:text-osn-sm">
           Couldn&apos;t check availability — try again
         </span>
       </Show>

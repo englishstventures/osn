@@ -20,7 +20,7 @@ const Checkbox: Component<CheckboxProps> = (props) => {
       {...others}
     >
       <KobalteCheckbox.Input />
-      <KobalteCheckbox.Control class="base:border-osn-hairline-strong base:bg-osn-ground base:data-[checked]:bg-osn-accent base:data-[checked]:text-osn-on-accent base:peer base:focus-visible:ring-osn-focus base:h-4 base:w-4 base:shrink-0 base:rounded-sm base:border base:transition-colors base:focus-visible:ring-2 base:focus-visible:outline-none">
+      <KobalteCheckbox.Control class="base:border-osn-hairline-strong base:bg-osn-ground base:data-[checked]:bg-osn-accent base:data-[checked]:text-osn-on-accent base:peer base:focus-visible:ring-osn-focus base:h-4 base:w-4 base:shrink-0 base:rounded-osn-sm base:border base:transition-colors base:focus-visible:ring-2 base:focus-visible:outline-none">
         <KobalteCheckbox.Indicator class="base:flex base:items-center base:justify-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -37,7 +37,7 @@ const Checkbox: Component<CheckboxProps> = (props) => {
         </KobalteCheckbox.Indicator>
       </KobalteCheckbox.Control>
       {local.label && (
-        <KobalteCheckbox.Label class="base:text-sm base:leading-none">
+        <KobalteCheckbox.Label class="base:text-osn-base base:leading-none">
           {local.label}
         </KobalteCheckbox.Label>
       )}

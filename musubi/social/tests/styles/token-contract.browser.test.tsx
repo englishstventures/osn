@@ -143,4 +143,30 @@ describe("the contract reaches the pixel", () => {
       paint(token("--osn-danger")),
     );
   });
+
+  it("gives a control the app's own radius, which here is a pill", () => {
+    // The reason `--osn-radius-control` exists rather than the Button picking
+    // one of the sized steps. musubi's house style is pill CTAs (DESIGN.md),
+    // and before this token that was `class="rounded-pill"` written out at
+    // eighteen call sites. A sized step would have been overridden at every one
+    // of them, which is what a missing token looks like from the outside.
+    const { getByRole } = render(() => <Button>Save</Button>);
+    const radius = Number.parseFloat(getComputedStyle(getByRole("button")).borderTopLeftRadius);
+
+    // A pill's computed radius is clamped to half the box's height, so the
+    // assertion is "fully round", not a literal 999px.
+    const height = getByRole("button").getBoundingClientRect().height;
+    expect(radius).toBeGreaterThanOrEqual(height / 2 - 0.5);
+  });
+
+  it("sizes a control from the contract's scale, not Tailwind's", () => {
+    // `text-sm` was Tailwind's 0.875rem until the primitives moved onto the
+    // contract. Now it is `--osn-text-base`, which this app maps to its own
+    // 14px title step — so a shared button is sized by musubi's type system
+    // rather than by the library's.
+    const { getByRole } = render(() => <Button>Save</Button>);
+    expect(getComputedStyle(getByRole("button")).fontSize).toBe(
+      getComputedStyle(document.documentElement).getPropertyValue("--osn-text-base").trim(),
+    );
+  });
 });

@@ -139,6 +139,18 @@
   --radius-osn-lg: var(--osn-radius-lg, 10px);
   --radius-osn-pill: var(--osn-radius-pill, 999px);
 
+  /* `control` is a role, not a size — the same way `focus` is its own colour
+   * rather than an alias of the accent. How round a BUTTON is turns out to be
+   * an app-level decision independent of how round a card is: musubi's house
+   * style is pill CTAs, cire's is a sharp 4px, and pulse sits between them. A
+   * shared control that picked one of the sized steps instead would be
+   * overridden at every call site in at least one of those apps, which is
+   * exactly what `<Button class="rounded-pill">` x16 in musubi was.
+   *
+   * It defaults to `md` rather than to a literal, so an app that has no opinion
+   * gets its own mid radius and not this package's. */
+  --radius-osn-control: var(--osn-radius-control, var(--osn-radius-md, 6px));
+
   /* ── Type families ────────────────────────────────────────────────────────
    * Families only — the sizes are the scale below. */
   --font-osn-body: var(--osn-font-body, ui-sans-serif, system-ui, sans-serif);
@@ -188,6 +200,10 @@
   /* ── Leading ──────────────────────────────────────────────────────────────
    * Five steps from 12 observed values; nothing moves more than 0.05.
    * `none` is not 1 — a display line still needs its descenders. */
+  /* `none` is 1.1 — a tight line, not literally no leading. A component that
+     wants `line-height: 1` on a single-line label (a badge, a checkbox's word)
+     reaches for Tailwind's own `leading-none`, which is a structural choice
+     rather than a step on a type scale. */
   --leading-osn-none: var(--osn-leading-none, 1.1);
   --leading-osn-tight: var(--osn-leading-tight, 1.2);
   --leading-osn-snug: var(--osn-leading-snug, 1.4);

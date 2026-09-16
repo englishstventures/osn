@@ -85,7 +85,7 @@ export function Sidebar() {
               <div class="flex flex-col gap-1.5">
                 <Button
                   size="sm"
-                  class="text-body rounded-pill w-full"
+                  class="text-body w-full"
                   onClick={() => {
                     setShowSignIn(false);
                     setShowRegister(true);
@@ -96,7 +96,7 @@ export function Sidebar() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  class="text-body rounded-pill w-full"
+                  class="text-body w-full"
                   onClick={() => {
                     setShowRegister(false);
                     setShowSignIn(true);

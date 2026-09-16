@@ -115,7 +115,7 @@ const OtpInput: Component<OtpInputProps> = (props) => {
             onBlur={() => setFocusedIndex(-1)}
             aria-label={`Digit ${i() + 1}`}
             class={clsx(
-              "base:h-12 base:w-12 base:rounded-md base:border-2 base:bg-osn-ground base:text-center base:text-lg base:font-medium base:text-osn-ink base:outline-none base:transition-colors base:disabled:cursor-not-allowed base:disabled:opacity-70",
+              "base:h-12 base:w-12 base:rounded-osn-md base:border-2 base:bg-osn-ground base:text-center base:text-osn-md base:font-medium base:text-osn-ink base:outline-none base:transition-colors base:disabled:cursor-not-allowed base:disabled:opacity-70",
               borderClass(i()),
             )}
           />

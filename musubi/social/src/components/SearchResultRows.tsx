@@ -133,7 +133,7 @@ export function PersonAction(props: {
     >
       <Button
         size="sm"
-        class="text-body rounded-pill h-7 shrink-0 max-md:h-9"
+        class="text-body h-7 shrink-0 max-md:h-9"
         disabled={props.busy}
         onClick={() => (props.status === "none" ? props.onConnect() : props.onAccept())}
       >

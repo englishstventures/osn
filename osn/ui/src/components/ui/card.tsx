@@ -6,7 +6,7 @@ const Card: Component<ComponentProps<"div">> = (props) => {
   return (
     <div
       class={clsx(
-        "base:bg-osn-surface base:text-osn-ink base:rounded-xl base:border base:border-border",
+        "base:bg-osn-surface base:text-osn-ink base:rounded-osn-lg base:border base:border-border",
         local.class,
       )}
       {...others}
@@ -29,7 +29,7 @@ const CardTitle: Component<ComponentProps<"h3">> = (props) => {
   return (
     <h3
       class={clsx(
-        "base:text-osn-ink base:text-base base:font-semibold base:leading-none base:tracking-tight",
+        "base:text-osn-ink base:text-osn-md base:font-semibold base:leading-none base:tracking-osn-tight",
         local.class,
       )}
       {...others}
@@ -41,7 +41,9 @@ const CardTitle: Component<ComponentProps<"h3">> = (props) => {
 
 const CardDescription: Component<ComponentProps<"p">> = (props) => {
   const [local, others] = splitProps(props, ["class"]);
-  return <p class={clsx("base:text-osn-ink-secondary base:text-sm", local.class)} {...others} />;
+  return (
+    <p class={clsx("base:text-osn-ink-secondary base:text-osn-base", local.class)} {...others} />
+  );
 };
 
 const CardContent: Component<ComponentProps<"div">> = (props) => {

@@ -12,7 +12,7 @@ const RadioGroup: Component<RadioGroupProps> = (props) => {
   const [local, others] = splitProps(props, ["class", "value", "onChange", "name"]);
   return (
     <KobalteRadioGroup
-      class={clsx("base:flex base:gap-2 base:text-sm", local.class)}
+      class={clsx("base:flex base:gap-2 base:text-osn-base", local.class)}
       value={local.value}
       onChange={local.onChange}
       name={local.name}
@@ -35,10 +35,10 @@ const RadioGroupItem: Component<RadioGroupItemProps> = (props) => {
       {...others}
     >
       <KobalteRadioGroup.ItemInput />
-      <KobalteRadioGroup.ItemControl class="base:border-osn-hairline-strong base:bg-osn-ground base:data-[checked]:border-osn-accent base:focus-visible:ring-osn-focus base:aspect-square base:h-4 base:w-4 base:rounded-full base:border base:transition-colors base:focus-visible:ring-2 base:focus-visible:outline-none">
+      <KobalteRadioGroup.ItemControl class="base:border-osn-hairline-strong base:bg-osn-ground base:data-[checked]:border-osn-accent base:focus-visible:ring-osn-focus base:aspect-square base:h-4 base:w-4 base:rounded-osn-pill base:border base:transition-colors base:focus-visible:ring-2 base:focus-visible:outline-none">
         <KobalteRadioGroup.ItemIndicator class="base:after:bg-osn-accent base:flex base:items-center base:justify-center base:after:block base:after:h-2.5 base:after:w-2.5 base:after:rounded-full" />
       </KobalteRadioGroup.ItemControl>
-      <KobalteRadioGroup.ItemLabel class="base:text-sm base:leading-none">
+      <KobalteRadioGroup.ItemLabel class="base:text-osn-base base:leading-none">
         {local.label}
       </KobalteRadioGroup.ItemLabel>
     </KobalteRadioGroup.Item>

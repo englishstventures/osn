@@ -8,7 +8,7 @@ const Label: Component<LabelProps> = (props) => {
   return (
     <label
       class={clsx(
-        "base:text-sm base:font-medium base:leading-none base:peer-disabled:cursor-not-allowed base:peer-disabled:opacity-70",
+        "base:text-osn-base base:font-medium base:leading-none base:peer-disabled:cursor-not-allowed base:peer-disabled:opacity-70",
         local.class,
       )}
       {...others}
