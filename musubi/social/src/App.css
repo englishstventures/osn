@@ -5,9 +5,8 @@
  */
 @import "tailwindcss";
 @import "@shared/toast/toast.css";
-@source "../../../osn/ui/src";
+@import "@shared/design-tokens/tokens.css";
 
-@custom-variant base (:where(&));
 
 @theme inline {
   --color-background: var(--background);
@@ -97,7 +96,14 @@
   --muted-foreground: #a3a3a3;
   --subtle: #7a7a7a;
   --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: #ffffff;
+  /* Ink, not paper, on the dark ramp's destructive fill. shadcn lightens the
+     fill in dark mode so it still reads as red against a dark page, and white
+     on that lightened red is 2.89:1 — below the 4.5:1 floor, on the one
+     control where a misread is destructive. Near-black gives 5.89:1 and keeps
+     the fill's brightness, where darkening the fill to rescue white text
+     (4.72:1 at L=0.58) would dull the button against the page it has to stand
+     out from. Found by the design-token conformance test. */
+  --destructive-foreground: #1c1c1c;
   --border: #333333;
   --input: #3a3a3a;
   --ring: #a3a3a3;
@@ -132,6 +138,113 @@
 .dark {
   --toast-accent-success: oklch(78% 0.13 150);
   --toast-accent-warn: oklch(80% 0.12 75);
+}
+
+/* ── Design-token contract ───────────────────────────────────────────────────
+ * `@shared/design-tokens` names the roles a shared component reads; this block
+ * says which of musubi's colours plays each one. Every `@osn/ui` primitive
+ * renders through these, so the app's own vocabulary stays untouched — nothing
+ * below changes a single `bg-card` or `text-muted-foreground` in the app.
+ *
+ * Aliases rather than literals, so `.dark` carries the whole mapping with it:
+ * the contract names point at shadcn names, and the shadcn names are what
+ * `.dark` already overrides.
+ *
+ * Two mappings worth stating, because the obvious reading is wrong:
+ *
+ * `--osn-accent-soft` takes `--muted`, not `--accent`. The contract's
+ * `accent-soft` is a TINT OF THE ACCENT, and shadcn's `--accent` here is a
+ * neutral grey (`#f4f4f4`) that happens to share the word. Sending the neutral
+ * to `accent-soft` would give components a grey where they asked for a wash of
+ * the brand. musubi's accent IS ink, so a tint of it is precisely `--muted`.
+ *
+ * `--osn-ground-deep` takes `--secondary`, the surface the page recedes to
+ * behind a sticky bar. It is not "the darker background" — in dark mode it is
+ * lighter than the page.
+ */
+:root {
+  --osn-ground: var(--background);
+  --osn-ground-deep: var(--secondary);
+  --osn-surface: var(--card);
+  --osn-surface-raised: var(--popover);
+  --osn-surface-sunk: var(--muted);
+
+  --osn-hairline: var(--border);
+  --osn-hairline-strong: var(--input);
+
+  --osn-ink: var(--foreground);
+  --osn-ink-secondary: var(--muted-foreground);
+  --osn-ink-tertiary: var(--subtle);
+
+  --osn-accent: var(--primary);
+  --osn-accent-strong: var(--primary-hover);
+  --osn-accent-soft: var(--muted);
+  --osn-accent-ink: var(--primary);
+  --osn-on-accent: var(--primary-foreground);
+
+  --osn-success: var(--toast-accent-success);
+  --osn-warn: var(--toast-accent-warn);
+  --osn-danger: var(--destructive);
+  --osn-on-danger: var(--destructive-foreground);
+
+  --osn-focus: var(--ring);
+
+  --osn-radius-hair: 2px;
+  --osn-radius-sm: var(--radius-sm);
+  --osn-radius-md: var(--radius-md);
+  --osn-radius-lg: var(--radius-card);
+  --osn-radius-pill: var(--radius-pill);
+
+  --osn-font-body: var(--font-sans);
+  --osn-font-display: var(--font-sans);
+  --osn-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* The type scale, in musubi's sizes rather than the contract's defaults.
+   *
+   * The app's own scale is four steps (`--text-meta` 12 / `--text-body` 13 /
+   * `--text-title` 14 / `--text-display` 24) and that is deliberate — see
+   * DESIGN.md. The contract has seven, because shared components need a
+   * display range musubi's own surfaces never reach. So the four are mapped
+   * where they belong and the gaps are filled by continuing musubi's own
+   * progression, not by importing the contract's defaults: a shared component
+   * rendering here must look like musubi, not like the fallback greyscale.
+   *
+   * `px` and not `rem` because that is what the rest of this file uses; the
+   * contract asks for one unit per scale, not for a particular one. */
+  --osn-text-xs: var(--text-meta);
+  --osn-text-sm: var(--text-body);
+  --osn-text-base: var(--text-title);
+  --osn-text-md: 16px;
+  --osn-text-lg: 20px;
+  --osn-text-xl: var(--text-display);
+  --osn-text-2xl: 32px;
+
+  /* musubi tracks everything at -0.15px, which is a house rule rather than a
+   * scale — so the contract's steps all resolve to it except the two the
+   * uppercase idiom needs, which musubi does not use and which therefore keep
+   * the contract's own values. */
+  --osn-tracking-tight: -0.15px;
+  --osn-tracking-normal: -0.15px;
+  --osn-tracking-wide: 0em;
+
+  --osn-leading-none: 1.1;
+  --osn-leading-tight: 1.25;
+  --osn-leading-snug: 1.4;
+  --osn-leading-normal: 1.5;
+  --osn-leading-relaxed: 1.65;
+}
+
+/* The accent's pressed/hover state. shadcn expresses this as `bg-primary/90`
+ * at each call site rather than as a token, so the contract — which needs a
+ * name, not an opacity — has nothing to point at until one exists. Full black
+ * and full white: musubi's accent IS ink, so "stronger" is the end of the
+ * ramp rather than a different hue. */
+:root {
+  --primary-hover: #000000;
+}
+
+.dark {
+  --primary-hover: #ffffff;
 }
 
 /* Safe-area utilities (viewport-fit=cover exposes the notch / home-indicator

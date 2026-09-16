@@ -156,12 +156,12 @@ describe("checkContractConformance", () => {
     expect(failures.some((f) => f.reason.includes("not mapped"))).toBe(true);
   });
 
-  it("honours an explicit `unmapped` waiver", () => {
+  it("honours an explicit waiver", () => {
     const css = stylesheet().replace("--osn-ink: var(--body);", "");
     const failures = checkContractConformance({
       css,
       scopes: ONE_SCOPE,
-      unmapped: { "--osn-ink": "deliberately absent, for this test" },
+      waived: { "--osn-ink": "deliberately absent, for this test" },
     });
     expect(failures.some((f) => f.fg === "--osn-ink")).toBe(false);
   });

@@ -2,7 +2,7 @@
   "name": "@musubi/social",
   "version": "0.15.0",
   "private": true,
-  "description": "Musubi — identity and social graph app, built on OSN",
+  "description": "Musubi \u2014 identity and social graph app, built on OSN",
   "type": "module",
   "scripts": {
     "dev": "portless",
@@ -21,6 +21,7 @@
   "dependencies": {
     "@osn/client": "workspace:*",
     "@osn/ui": "workspace:*",
+    "@shared/design-tokens": "workspace:*",
     "@shared/legal": "workspace:*",
     "@shared/toast": "workspace:*",
     "@simplewebauthn/browser": "^13.3.0",

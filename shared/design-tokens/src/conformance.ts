@@ -57,13 +57,27 @@ export interface ConformanceOptions {
   /** The themes to check. An app with one theme passes one scope. */
   scopes: readonly ConformanceScope[];
   /**
-   * Tokens this app deliberately does not map, with the reason.
+   * Tokens this app is not asserted about, each with the reason why.
    *
-   * An escape hatch that costs something to use: the reason is required, and
-   * it shows up in the failure message of any pair that referenced the token,
-   * so "we never got round to it" reads as exactly that in CI output.
+   * Two different situations, deliberately sharing one escape hatch:
+   *
+   * - **Not mapped.** The app has no colour that plays this role.
+   * - **Mapped, but below the floor.** The app has one and it does not clear
+   *   WCAG — usually a defect that predates the contract. `@musubi/social`'s
+   *   input boundary is 1.30:1 against its own page; the contract did not
+   *   introduce that, it revealed it.
+   *
+   * Both are waivers, and both cost the same thing to use: a reason, in prose,
+   * which is printed in the failure output of any pair that referenced the
+   * token. "We never got round to it" therefore reads as exactly that in CI,
+   * and a waiver carrying a tracker reference stays attached to the thing it
+   * excuses rather than living in a comment someone deletes.
+   *
+   * What a waiver does NOT do is change what components render. A waived
+   * `--osn-hairline-strong` still needs mapping, or every shared component
+   * that draws a control boundary falls back to this package's neutral grey.
    */
-  unmapped?: Readonly<Record<string, string>>;
+  waived?: Readonly<Record<string, string>>;
 }
 
 export interface ConformanceFailure {
@@ -192,14 +206,14 @@ function over(fg: Oklch, bg: Oklch): Oklch {
  * each is an afternoon.
  */
 export function checkContractConformance(options: ConformanceOptions): ConformanceFailure[] {
-  const { css, scopes, unmapped = {} } = options;
+  const { css, scopes, waived = {} } = options;
   const failures: ConformanceFailure[] = [];
 
   for (const scope of scopes) {
     const decls = collect(css, scope.selectors);
 
     for (const { fg, bg, min } of contrastPairs()) {
-      const skip = unmapped[fg] ?? unmapped[bg];
+      const skip = waived[fg] ?? waived[bg];
       if (skip !== undefined) continue;
 
       const fgRaw = decls.get(fg);
@@ -216,7 +230,7 @@ export function checkContractConformance(options: ConformanceOptions): Conforman
             bg,
             ratio: null,
             required: min,
-            reason: `\`${token}\` is not mapped in this scope. Map it, or declare it in \`unmapped\` with a reason.`,
+            reason: `\`${token}\` is not mapped in this scope. Map it, or declare it in \`waived\` with a reason.`,
           });
         }
       }
