@@ -10,8 +10,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
-    "test": "bunx --bun vitest",
-    "test:run": "bunx --bun vitest run"
+    "test": "bunx --bun vitest --project unit",
+    "test:run": "bunx --bun vitest run --project unit",
+    "test:browser": "bunx --bun vitest run --project browser"
   },
   "portless": {
     "name": "musubi",
@@ -34,8 +35,11 @@
     "@shared/dev-urls": "workspace:*",
     "@shared/typescript-config": "workspace:*",
     "@solidjs/testing-library": "^0.8.10",
+    "@vitest/browser": "4.1.11",
+    "@vitest/browser-playwright": "4.1.11",
     "@vitest/coverage-istanbul": "^4.1.11",
     "happy-dom": "^20.12.2",
+    "playwright": "^1.62.1",
     "typescript": "^6.0.3",
     "vite": "^8.2.2",
     "vite-plugin-solid": "^2.11.14",
