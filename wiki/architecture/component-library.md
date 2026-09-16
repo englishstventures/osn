@@ -329,6 +329,76 @@ for.
 > does not play. Put the `Show` *inside* the modal instead, or hold the last
 > value in a signal.
 
+#### `frame`, for a panel that must not scroll
+
+The default shape is the simple one: the panel scrolls and the panel is padded.
+That breaks the moment something has to stay put while the body moves under it —
+a close button in the corner, a sticky action bar at the foot — because a child
+of the scrollport scrolls away with the content, and a `position: sticky` bottom
+bar resolves its offset against the scrollport rather than against its parent.
+
+`frame` drops the panel's own padding and overflow and makes it a column flex
+container, so a child owns the scrollport and the furniture sits beside it. The
+child needs its own `min-h-0`, or it cannot shrink under the panel's
+`max-height` and nothing scrolls.
+
+One detail worth carrying: `frame` sets `p-0` rather than merely omitting the
+padding. **The user-agent stylesheet gives every `<dialog>` `padding: 1em`**, so
+a component that writes no padding rule ships a 16px band its caller cannot see
+in its own markup.
+
+#### What has to sit above a modal — and why a `z-index` will not do it
+
+The top layer is the reason to use `Modal`, and it is also the trap. It paints
+above every stacking context **by definition**, so nothing outside it can be
+raised over an open dialog at any number. Anything that must appear over a sheet
+has to join the top layer, and there are exactly two doors:
+
+| Element | Enters the top layer by | Painting order |
+|---|---|---|
+| A dialog | `showModal()` | Entry order — later entries paint on top |
+| Anything else | `showPopover()` on a `popover` element | Same |
+
+So a menu or a toast raised *after* a dialog opened paints above it. That is the
+whole mechanism, and it is enough for paint.
+
+> [!warning]
+> **The top layer is no exemption from `inert`.** A modal dialog makes every
+> node outside it inert — not hit-testable, not reachable by assistive
+> technology — however it is painted. A popover shown outside the dialog is
+> therefore *visible and dead*.
+>
+> Only a descendant of the dialog escapes that. A menu opened from inside a
+> sheet must render **in place**, with `popover` doing the job a `<Portal>` used
+> to: out of every ancestor stacking context, without leaving the dialog. A
+> container mounted once at the page root — a toaster — cannot be a descendant
+> of anything, so a toast raised over a modal is seen and nothing more, and has
+> to be a confirmation the dialog itself also states.
+
+Both of these are live in `cire/invites`: `AddToCalendar` renders in place as a
+popover, and `@shared/toast`'s `Toaster` takes a `topLayer` flag that shows the
+container as a popover while it has something to show
+([[wiki/systems/toast]] §`topLayer`). `cire/invites/src/lib/z-index.ts`
+documents what is left for numbers to decide, which is everything that is not a
+dialog.
+
+Three consequences for tests, all of which cost a debugging session here:
+
+- **jsdom implements no part of `<dialog>`.** `showModal` is `undefined`, not
+  inert; `Modal` degrades to a non-modal dialog, and Escape, the backdrop,
+  modality and the focus restore cannot be asserted at all. Assert the wiring by
+  dispatching the `close` event the platform would have fired, and put the
+  gestures in the browser tier ([[wiki/conventions/browser-tests]]).
+- **A dialog left open outlives its test.** `document.querySelector("dialog")`
+  then finds the previous test's sheet rather than this one's, so a browser file
+  rendering dialogs needs `afterEach(cleanup)`.
+- **`getBoundingClientRect()` is post-transform**, and `Modal` animates in from
+  `translateY(24px) scale(0.98)`. A rect read before the entry transition
+  finishes is the layout box moved and scaled, and every comparison against
+  `clientWidth` or `offsetLeft` is wrong by that much. Wait it out —
+  `await Promise.allSettled(panel.getAnimations({ subtree: true }).map((a) => a.finished))`
+  — after one frame, so the transition has actually started.
+
 The motion itself is benched in `@tools/lab` under **osn/ui/overlays →
 ModalMotion**, with the two durations on sliders. Whether a curve looks right is
 not a question a test can answer; whether the exit *runs*, and whether the

@@ -8,7 +8,7 @@ related:
   - "[[cire-invite-builder]]"
   - "[[browser-tests]]"
   - "[[component-lab]]"
-last-reviewed: 2026-09-09
+last-reviewed: 2026-09-16
 ---
 # Toasts — `@shared/toast` and the `--toast-*` contract
 
@@ -177,17 +177,45 @@ The portal makes it robust by construction.
 
 The package sets **no `z-index`**. Pass the layer as a class —
 `class={Z_CLASS.TOAST}` — so it participates in the consumer's own stacking
-order. For cire that order is `MODAL (100) < TOAST (150) < CONSENT (200)`; see
-`cire/invites/src/lib/z-index.ts`.
+order. For cire that order is `STICKY_RAIL (20) < TOAST (150) < CONSENT (200)`;
+see `cire/invites/src/lib/z-index.ts`.
+
+### `topLayer`, for an app with `showModal()` dialogs
+
+A z-index is only half the ordering once an app has a `<dialog>` opened with
+`showModal()` — which is every app using `@osn/ui`'s `Modal`. Such a dialog
+paints in the **top layer**, above every stacking context in the document by
+definition, so no number on the container reaches over it. Cire's RSVP save
+toast fires while the sheet is still open for its dwell, and was raised behind
+the reply it confirms.
+
+`topLayer` makes the container a `popover` and shows it whenever there is a
+toast to show, so it enters the top layer **after** any dialog that was already
+open — top-layer order is entry order. It is off by default, because it changes
+how the container is painted and an app with no top-layer dialogs gains nothing
+from it. The `z-index` still decides everything outside the top layer, so pass
+both.
+
+> [!warning]
+> **It buys paint, not reach.** A modal dialog makes every node outside it inert
+> — not hit-testable, not announced by assistive technology — and the top layer
+> is no exemption. While such a dialog is open the toast is *seen and nothing
+> more*: its close button does not respond, and a screen reader never reads it.
+> Only a descendant of the dialog escapes that, and a container mounted once at
+> the page root cannot be one.
+>
+> So a toast raised over a modal has to be a confirmation the dialog **itself**
+> also states, never the only place something is said. Cire's RSVP sheet flips
+> its own button to "Saved" for exactly this reason.
 
 Current mounts:
 
 | App | Position | Notes |
 |---|---|---|
-| `@cire/invites` | `top-center` | Per design pack; `Z_CLASS.TOAST`, 4s dwell. The RSVP sheet's sticky bar owns the bottom edge |
-| `@cire/host`, `@cire/vendor` | `bottom-right` | — |
-| `@musubi/social` | responsive | `top-center` on mobile with a `top` offset clearing the 3rem bar + `env(safe-area-inset-top)` |
-| `@pulse/web` | `bottom-right` | — |
+| `@cire/invites` | `top-center` | Per design pack; `Z_CLASS.TOAST` + `topLayer`, 4s dwell. The RSVP sheet's sticky bar owns the bottom edge |
+| `@cire/host`, `@cire/vendor` | `bottom-right` | `topLayer` — both apps' dialogs are `@osn/ui` `Modal`s |
+| `@musubi/social` | responsive | `top-center` on mobile with a `top` offset clearing the 3rem bar + `env(safe-area-inset-top)`. No `topLayer`: its dialogs are Kobalte's, which are not top-layer |
+| `@pulse/web` | `bottom-right` | As musubi — Kobalte dialogs, no `topLayer` |
 
 ## Testing
 

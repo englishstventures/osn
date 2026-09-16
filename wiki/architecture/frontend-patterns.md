@@ -21,7 +21,7 @@ related:
 packages:
   - "@pulse/web"
   - "@osn/ui"
-last-reviewed: 2026-09-09
+last-reviewed: 2026-09-16
 ---
 
 # Frontend Patterns
@@ -179,6 +179,22 @@ with a negative margin" trick inverts on a sticky element: a negative bottom mar
 A full-bleed sticky action bar must instead have the scroll container drop its own
 bottom padding and let the bar own the edge, plus its `env(safe-area-inset-bottom)`
 — the `flushBottom` prop on `AnimatedModal`, used by cire's `RsvpModal`.
+
+For that to work the panel around the scrollport must not itself scroll, which is
+`Modal`'s `frame` — see [[wiki/architecture/component-library]] §Overlays, which
+also covers the `<dialog>` user-agent padding that put this exact bar 16px above
+the edge it seats on.
+
+### The top layer is above every `z-index`, and outside it everything is `inert`
+
+A `<dialog>` opened with `showModal()` paints above every stacking context in the
+document by definition, so nothing outside the top layer can be raised over it at
+any number — and a modal dialog additionally makes every node outside itself
+inert, so a popover or toast shown out there is *visible and dead*. Both halves
+matter the moment an app adopts `@osn/ui`'s `Modal`, and the second one is the
+half a `z-index` guard cannot see. The mechanism, the two doors into the top
+layer, and what it means for a menu opened from inside a sheet are in
+[[wiki/architecture/component-library]] §What has to sit above a modal.
 
 ### A width-only reflow guard cannot see a drag that only changes height
 
