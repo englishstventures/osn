@@ -109,6 +109,7 @@
         "@fontsource/cormorant-garamond": "^5.3.0",
         "@fontsource/lato": "^5.3.0",
         "@cire/ui": "workspace:*",
+        "@osn/ui": "workspace:*",
         "@shared/design-tokens": "workspace:*",
         "@shared/legal": "workspace:*",
         "@shared/rp-auth": "workspace:*",

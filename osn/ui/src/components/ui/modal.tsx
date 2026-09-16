@@ -324,6 +324,19 @@ export function Modal(props: ModalProps) {
   }
 
   /**
+   * The other half of {@link open}, and it needs its own guard for the same
+   * reason: jsdom gives `<dialog>` an `open` property that reflects the
+   * attribute, so `dialog.open` reads true there, while `close()` is missing
+   * entirely. Every path that shuts the element goes through here — a bare
+   * `ref.close()` in the unmount handler was a `TypeError` that took down the
+   * whole test file it was cleaning up after, not just the modal.
+   */
+  function close(dialog: HTMLDialogElement): void {
+    if (typeof dialog.close === "function") dialog.close();
+    else dialog.removeAttribute("open");
+  }
+
+  /**
    * Close the dialog, but not until whatever is animating it has finished.
    *
    * `close()` removes a dialog from the top layer immediately, so an exit
@@ -356,10 +369,7 @@ export function Modal(props: ModalProps) {
     if (token !== closingToken || !dialog.isConnected) return;
 
     dialog.removeAttribute("data-closing");
-    if (dialog.open) {
-      if (typeof dialog.close === "function") dialog.close();
-      else dialog.removeAttribute("open");
-    }
+    if (dialog.open) close(dialog);
     setRendered(false);
   }
 
@@ -392,7 +402,7 @@ export function Modal(props: ModalProps) {
     // animate on an element that is about to be removed, and `closingToken`
     // moving is what tells any in-flight close to stand down.
     closingToken++;
-    if (ref?.open) ref.close();
+    if (ref?.open) close(ref);
   });
 
   return (

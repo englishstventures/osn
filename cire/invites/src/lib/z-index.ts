@@ -18,7 +18,6 @@
  * | `MODAL_POPOVER` | 110 | Popover launched *from inside* a modal (AddToCalendar). |
  * | `TOAST`         | 150 | Confirmation toasts (`@shared/toast` `<Toaster>`).       |
  * | `CONSENT`       | 200 | Site-wide consent banner (`ConsentBanner`).             |
- * | `CONSENT_DIALOG`| 210 | Consent preferences dialog, opened from the banner.     |
  *
  * ## The invariants
  *
@@ -43,14 +42,18 @@
  * did — so `InvitePage.browser.test.tsx` asserts the measured value against
  * BOTH bounds rather than just "above the modal".
  *
- * The consent layers sit above EVERYTHING, deliberately and with a wide gap.
- * The banner is the guest's only route to granting — or later withdrawing —
- * permission for third-party content, and the gated embeds themselves live
- * inside the details modal. So "manage privacy choices", clicked from a blocked
- * embed inside that modal, must open a dialog that is not buried behind it. A
- * consent control the guest cannot reach is worse than no control at all,
- * because the stored record would then assert a freely-given choice they had no
- * practical way to change.
+ * The consent banner sits above EVERYTHING, deliberately and with a wide gap.
+ * It is the guest's only route to granting — or later withdrawing — permission
+ * for third-party content, and the gated embeds themselves live inside the
+ * details modal. A consent control the guest cannot reach is worse than no
+ * control at all, because the stored record would then assert a freely-given
+ * choice they had no practical way to change.
+ *
+ * The preferences dialog the banner opens has no layer here at all, and that is
+ * the stronger version of the same guarantee rather than a gap in it: it is an
+ * `@osn/ui` `Modal`, so it renders in the TOP LAYER, which paints above every
+ * stacking context in the document by definition. There is no number to get
+ * wrong and nothing for a future overlay to outbid.
  *
  * ## Tailwind v4 note
  *
@@ -102,8 +105,6 @@ export const Z_LAYER = {
   TOAST: 150,
   /** Site-wide consent banner. Above every page overlay, including modals. */
   CONSENT: 200,
-  /** Consent preferences dialog. Must be > CONSENT (it is opened from it). */
-  CONSENT_DIALOG: 210,
 } as const;
 
 export type ZLayer = keyof typeof Z_LAYER;
@@ -120,5 +121,4 @@ export const Z_CLASS = {
   MODAL_POPOVER: "z-110",
   TOAST: "z-150",
   CONSENT: "z-200",
-  CONSENT_DIALOG: "z-210",
 } as const satisfies Record<ZLayer, string>;

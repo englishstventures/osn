@@ -27,11 +27,12 @@
 # why the distinction matters.
 #
 # All four cire apps joined the token contract with their thresholds unchanged,
-# so their headroom TIGHTENED — ~7.4 KB (host), ~4.3 KB (vendor), ~8.8 KB
-# (invites) — rather than the ~11.7 KB default. That is the right direction:
-# the rule caps headroom (it must stay smaller than the smallest mistake the
-# guard exists to catch) and does not require any, so raising a ceiling to
-# restore the default would only make the guard looser.
+# so their headroom TIGHTENED — ~7.4 KB (host), ~4.3 KB (vendor), ~7.6 KB
+# (invites, which tightened again by ~0.6 KB when its consent dialog took on
+# `@osn/ui`'s `Modal`) — rather than the ~11.7 KB default. That is the right
+# direction: the rule caps headroom (it must stay smaller than the smallest
+# mistake the guard exists to catch) and does not require any, so raising a
+# ceiling to restore the default would only make the guard looser.
 #
 # `cire/landing` went the other way and so its threshold moved. Converting its
 # demo sheet to `@osn/ui`'s `Modal` deleted the one module importing `motion`,
@@ -42,7 +43,7 @@
 #
 # Blank lines and lines starting with # are ignored.
 
-cire/invites   worker  175000   # measured 166779
+cire/invites   worker  175000   # measured 167384
 cire/host      static  238617   # measured 231255
 cire/vendor    static  81644    # measured 77305
 cire/landing   static  176547   # measured 164847

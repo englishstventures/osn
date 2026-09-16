@@ -1,4 +1,5 @@
-import { createSignal, createUniqueId, For, type JSX, onCleanup, onMount, Show } from "solid-js";
+import { Modal } from "@osn/ui/ui/modal";
+import { createSignal, createUniqueId, For, type JSX, Show } from "solid-js";
 
 import {
   CATEGORY_LIST,
@@ -18,15 +19,6 @@ import {
   gatedVendorsInCategory,
   ungatedVendorsInCategory,
 } from "../../lib/consent/vendors";
-import { Z_CLASS } from "../../lib/z-index";
-
-/** Selector for the tab-order-relevant focusable descendants of the panel. */
-const FOCUSABLE_SELECTOR = [
-  "a[href]",
-  "button:not([disabled])",
-  "input:not([disabled])",
-  '[tabindex]:not([tabindex="-1"])',
-].join(",");
 
 /**
  * The "Choose" layer — per-category toggles, with the vendors each one governs
@@ -53,95 +45,40 @@ export function ConsentPreferences() {
 
   const [draft, setDraft] = createSignal<ConsentGrants>({ ...currentGrants() });
 
-  let panelRef: HTMLDivElement | undefined;
-  let previouslyFocused: HTMLElement | null = null;
-
-  function focusables(): HTMLElement[] {
-    if (!panelRef) return [];
-    return Array.from(panelRef.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-  }
-
-  // Escape closes; Tab is trapped inside the panel. Same contract as
-  // AnimatedModal — the consent dialog is a modal dialog and has to behave like
-  // one, but it deliberately does not reuse AnimatedModal: that component
-  // applies the invite's per-section theme variables and sits at the modal
-  // layer, and this dialog also has to render on the legal pages, which have no
-  // invite theme and no modal beneath it.
-  function onKeyDown(event: KeyboardEvent) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeConsentPreferences();
-      return;
-    }
-    if (event.key !== "Tab") return;
-
-    const items = focusables();
-    if (items.length === 0) {
-      event.preventDefault();
-      panelRef?.focus();
-      return;
-    }
-
-    const first = items[0]!;
-    const last = items[items.length - 1]!;
-    const active = document.activeElement as HTMLElement | null;
-
-    if (event.shiftKey && (active === first || !panelRef?.contains(active))) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-
-  onMount(() => {
-    previouslyFocused = document.activeElement as HTMLElement | null;
-    document.addEventListener("keydown", onKeyDown);
-    // Focus the panel itself rather than the first control, so a screen reader
-    // announces the dialog's name and purpose before its options.
-    panelRef?.focus();
-  });
-
-  onCleanup(() => {
-    document.removeEventListener("keydown", onKeyDown);
-    previouslyFocused?.focus?.();
-  });
-
   function toggle(category: ConsentCategory, next: boolean) {
     if (isRequiredCategory(category)) return;
     setDraft((current) => ({ ...current, [category]: next }));
   }
 
   return (
-    <div
-      class={`fixed inset-0 ${Z_CLASS.CONSENT_DIALOG} flex items-end justify-center sm:items-center`}
+    // Was a hand-rolled `fixed inset-0` overlay with its own backdrop div, its
+    // own `Tab` trap and its own Escape handler. `Modal` is the platform's
+    // `<dialog>`, so all three come from `showModal()`, and the top layer
+    // removes the z-index rank this dialog had to be given.
+    //
+    // It still does not reuse `AnimatedModal`, for the reason that component's
+    // own comment gives: `AnimatedModal` applies the invite's per-section theme
+    // variables, and this dialog also renders on `/privacy` and `/terms`, which
+    // have no invite theme at all.
+    //
+    // Dismissing without saving stays the behaviour a backdrop click has — a
+    // dismissal is not a decision, so the draft is discarded and the banner
+    // stays up — and it is `Modal`'s backdrop doing it now rather than a div.
+    <Modal
+      open
+      onClose={closeConsentPreferences}
+      labelledBy={titleId}
+      aria-describedby={descriptionId}
+      class="base:border-border base:bg-bg base:mt-auto base:mb-0 base:max-h-[85vh] base:w-full base:max-w-lg base:overflow-y-auto base:rounded-t-lg base:rounded-b-none sm:base:m-auto sm:base:rounded-lg"
     >
-      {/* Backdrop. Clicking it closes WITHOUT saving — a dismissal is not a
-          decision, so the draft is discarded and the banner stays up. */}
-      <div
-        class="absolute inset-0 bg-black/70"
-        aria-hidden="true"
-        onClick={closeConsentPreferences}
-      />
-
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={descriptionId}
-        tabindex="-1"
-        class="border-border bg-bg relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-lg border p-6 focus:outline-none sm:rounded-lg"
-      >
-        <h2 id={titleId} class="font-display text-text text-osn-lg leading-tight font-light">
-          Your privacy choices
-        </h2>
-        <p id={descriptionId} class="font-body text-text-muted text-osn-sm mt-2 leading-relaxed">
-          Choose what this invite is allowed to load. You can change this at any time from the link
-          in the footer of any page.
-        </p>
-        {/* Turning off a category whose content already ran this
+      <h2 id={titleId} class="font-display text-text text-osn-lg leading-tight font-light">
+        Your privacy choices
+      </h2>
+      <p id={descriptionId} class="font-body text-text-muted text-osn-sm mt-2 leading-relaxed">
+        Choose what this invite is allowed to load. You can change this at any time from the link in
+        the footer of any page.
+      </p>
+      {/* Turning off a category whose content already ran this
             visit reloads the page — see `saveConsent` in
             `lib/consent/store.ts` — so that company's code is cleared, not
             just stopped from running again. Stated here rather than left
@@ -150,41 +87,40 @@ export function ConsentPreferences() {
             happens when there is something to clear: a guest who never
             opened an event's details sheet loaded no embed, and reloading them
             would cost a full page load to clear nothing. */}
-        <p class="font-body text-text-muted/80 text-osn-sm mt-1.5 leading-relaxed">
-          Switching something off takes effect straight away. If content from that company already
-          loaded during this visit, the page reloads to clear it.
-        </p>
+      <p class="font-body text-text-muted/80 text-osn-sm mt-1.5 leading-relaxed">
+        Switching something off takes effect straight away. If content from that company already
+        loaded during this visit, the page reloads to clear it.
+      </p>
 
-        <div class="mt-5 flex flex-col gap-4">
-          <For each={CATEGORY_LIST}>
-            {(category) => (
-              <CategoryRow
-                id={category.id}
-                title={category.title}
-                summary={category.summary}
-                required={category.required}
-                checked={draft()[category.id]}
-                onChange={(next) => toggle(category.id, next)}
-              />
-            )}
-          </For>
-        </div>
+      <div class="mt-5 flex flex-col gap-4">
+        <For each={CATEGORY_LIST}>
+          {(category) => (
+            <CategoryRow
+              id={category.id}
+              title={category.title}
+              summary={category.summary}
+              required={category.required}
+              checked={draft()[category.id]}
+              onChange={(next) => toggle(category.id, next)}
+            />
+          )}
+        </For>
+      </div>
 
-        <div class="border-border/70 mt-6 flex flex-col gap-2 border-t pt-5 sm:flex-row sm:justify-between">
-          {/* Reject and Accept are rendered as siblings with identical weight.
+      <div class="border-border/70 mt-6 flex flex-col gap-2 border-t pt-5 sm:flex-row sm:justify-between">
+        {/* Reject and Accept are rendered as siblings with identical weight.
               A refusal that is visually harder to reach than an acceptance is
               not a free choice, and is the specific dark pattern the "reject
               must be as easy as accept" rule targets. */}
-          <div class="flex gap-2">
-            <ChoiceButton onClick={rejectAllConsent}>Reject all</ChoiceButton>
-            <ChoiceButton onClick={acceptAllConsent}>Accept all</ChoiceButton>
-          </div>
-          <ChoiceButton primary onClick={() => saveConsent(draft())}>
-            Save choices
-          </ChoiceButton>
+        <div class="flex gap-2">
+          <ChoiceButton onClick={rejectAllConsent}>Reject all</ChoiceButton>
+          <ChoiceButton onClick={acceptAllConsent}>Accept all</ChoiceButton>
         </div>
+        <ChoiceButton primary onClick={() => saveConsent(draft())}>
+          Save choices
+        </ChoiceButton>
       </div>
-    </div>
+    </Modal>
   );
 }
 
