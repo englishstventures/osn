@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { Toaster } from "@shared/toast";
 import {
   batch,
@@ -495,9 +496,11 @@ export default function InvitePage(props: InvitePageProps) {
                   controls={(handle) => (turnstile = handle)}
                   class="flex justify-center"
                 />
-                <button
+                <Button
                   type="submit"
-                  class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg disabled:hover:text-gold-ink w-full rounded-sm border bg-transparent px-6 py-3.5 text-[0.88rem] tracking-[0.12em] uppercase transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                  variant="cta"
+                  size="lg"
+                  class="w-full"
                   disabled={
                     claim.loading() ||
                     !claim.code().trim() ||
@@ -505,7 +508,7 @@ export default function InvitePage(props: InvitePageProps) {
                   }
                 >
                   {claim.loading() ? "Checking…" : "Open Invitation"}
-                </button>
+                </Button>
               </form>
             </div>
 

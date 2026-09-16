@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { createEffect, createMemo, createSignal, Show } from "solid-js";
 
 import {
@@ -258,14 +259,9 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
           </Show>
           <Show when={props.canClaim && !open()}>
             <Show when={canReserveMore()}>
-              <button
-                type="button"
-                disabled={props.busy}
-                onClick={openForm}
-                class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg disabled:hover:text-gold-ink rounded-sm border bg-transparent px-4 py-2.5 text-[0.8rem] tracking-[0.12em] uppercase transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-              >
+              <Button variant="cta" disabled={props.busy} onClick={openForm}>
                 {props.claim ? "Change" : "Reserve"}
-              </button>
+              </Button>
             </Show>
             <Show when={props.claim}>
               <button
@@ -328,13 +324,9 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
             </label>
 
             <div class="flex flex-wrap gap-3">
-              <button
-                type="submit"
-                disabled={props.busy}
-                class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg disabled:hover:text-gold-ink rounded-sm border bg-transparent px-4 py-2.5 text-[0.8rem] tracking-[0.12em] uppercase transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-              >
+              <Button type="submit" variant="cta" disabled={props.busy}>
                 {props.busy ? "Saving" : "Confirm"}
-              </button>
+              </Button>
               <button
                 type="button"
                 disabled={props.busy}

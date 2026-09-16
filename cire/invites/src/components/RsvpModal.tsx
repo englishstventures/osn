@@ -631,15 +631,17 @@ export function RsvpModal(props: RsvpModalProps) {
                 closes and this one is not. What stays here is the label swap
                 and the lock, so the sheet still visibly holds its result for
                 the dwell (`savedDwellMs`) rather than just vanishing. */}
+            {/* Deliberately not `@cire/ui`'s `Button`.
+                That component fades anything carrying `aria-disabled`, on the
+                reading that the attribute marks a control someone cannot press
+                and should be told why. Here it marks a control that has already
+                DONE its job — "Saved" — and the one state that must look most
+                alive is exactly the one it would grey out. The fade below is
+                keyed on `loading()` instead, which is the state that earns it. */}
             <button
               type="submit"
               class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg disabled:hover:text-gold-ink flex-1 rounded-sm border bg-transparent px-4 py-3 text-[0.82rem] tracking-[0.1em] uppercase transition-colors duration-200 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               classList={{
-                // The in-flight fade, spelled out rather than left to
-                // `disabled:opacity-40`: the confirmed state also needs the
-                // button non-submittable, and a variant keyed on `disabled`
-                // would drag a 40% fade onto the one state that must look
-                // most alive.
                 "opacity-40": loading(),
                 "cursor-pointer": !saved(),
                 "cursor-default": saved(),

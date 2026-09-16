@@ -36,13 +36,19 @@ import { splitProps } from "solid-js";
  * Anything that needs a different colour or padding wants a new variant.
  */
 
-export type ButtonVariant = "primary" | "outline" | "quiet" | "danger";
-export type ButtonSize = "sm" | "md" | "icon";
+export type ButtonVariant = "primary" | "cta" | "outline" | "quiet" | "danger";
+export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 const BASE =
   "base:font-osn-body base:inline-flex base:items-center base:justify-center base:gap-2 " +
   "base:rounded-osn-sm base:border base:whitespace-nowrap base:uppercase " +
   "base:transition-colors base:duration-100 base:ease-out " +
+  // Its own focus ring, from the contract's own token. A library component
+  // cannot assume its host declares a blanket `:focus-visible` rule: the two
+  // portals and `@cire/invites` do, `@cire/landing` does not, and the nine
+  // guest-site call sites this replaces each wrote one out by hand. The values
+  // match what the portals' global rule already draws, so nothing moves there.
+  "base:focus-visible:outline-2 base:focus-visible:outline-offset-2 base:focus-visible:outline-osn-focus " +
   "base:disabled:pointer-events-none base:disabled:opacity-40 " +
   // `aria-disabled` is the other way to say it: the control stays in the tab
   // order and keeps its description reachable, and the click is swallowed below
@@ -55,6 +61,20 @@ const BASE =
 const VARIANT = {
   primary:
     "base:border-osn-accent base:bg-osn-accent base:text-osn-on-accent base:hover:bg-osn-accent-strong",
+  /**
+   * Outline at rest, primary on hover — the guest site's call to action, at
+   * nine call sites across `@cire/invites` and `@cire/landing`: the claim-code
+   * submit, the RSVP commit, both gift-registry actions, the consent banner's
+   * accept.
+   *
+   * Not a second `outline`. An invite is restrained enough that a solid gold
+   * fill at rest would be the loudest thing on a page whose job is a
+   * photograph and a date, so the *primary* action is drawn as an outline and
+   * promotes on hover. The portals have the opposite problem — a dashboard
+   * needs its commit to be findable — so there `primary` is filled from the
+   * start and `outline` stays a wash. Both products need both.
+   */
+  cta: "base:border-osn-accent base:text-osn-accent-ink base:bg-transparent base:hover:bg-osn-accent base:hover:text-osn-on-accent base:disabled:hover:bg-transparent base:disabled:hover:text-osn-accent-ink",
   outline:
     "base:border-osn-accent/40 base:text-osn-accent-ink base:hover:border-osn-accent base:hover:bg-osn-accent-soft",
   quiet:
@@ -66,6 +86,10 @@ const VARIANT = {
 const SIZE = {
   sm: "base:px-3 base:py-1.5 base:text-osn-xs base:tracking-osn-wider",
   md: "base:px-4 base:py-2 base:text-osn-sm base:tracking-osn-wider",
+  // For a control that is the only thing to do on the screen it is on — a
+  // claim-code submit, an RSVP commit. Also the minimum comfortable touch
+  // target on a phone, which is where most invites are opened.
+  lg: "base:px-6 base:py-3.5 base:text-osn-base base:tracking-osn-wider",
   // Square, for a single glyph. No tracking — there is nothing to track.
   icon: "base:h-8 base:w-8 base:shrink-0 base:p-0 base:text-osn-base",
 } satisfies Readonly<Record<ButtonSize, string>>;

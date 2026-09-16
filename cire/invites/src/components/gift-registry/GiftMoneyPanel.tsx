@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { createMemo, createSignal, For, Show } from "solid-js";
 
 import {
@@ -211,13 +212,9 @@ export function GiftMoneyPanel(props: GiftMoneyPanelProps) {
           </label>
         </div>
 
-        <button
-          type="submit"
-          disabled={amountMinor() === null || busy()}
-          class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg rounded-sm border bg-transparent px-6 py-3 text-[0.85rem] tracking-[0.12em] uppercase transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--invite-focus)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-        >
+        <Button type="submit" variant="cta" size="lg" disabled={amountMinor() === null || busy()}>
           {busy() ? "Taking you to pay…" : "Continue to payment"}
-        </button>
+        </Button>
 
         {/* Said before they press, not after: where they are about to go, and
             who sees what they just typed. */}

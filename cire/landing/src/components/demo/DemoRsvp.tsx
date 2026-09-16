@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { createMemo, createSignal, createUniqueId, For, Show } from "solid-js";
 
 import { DemoModal } from "./DemoModal";
@@ -88,13 +89,9 @@ export function DemoRsvp() {
                 <p class="font-body text-text-muted mb-4 text-[0.85rem] leading-[1.6] font-light">
                   {event.description}
                 </p>
-                <button
-                  type="button"
-                  class="border-gold font-body text-gold hover:bg-gold hover:text-bg min-h-11 rounded-sm border bg-transparent px-5 py-2.5 text-[0.8rem] tracking-[0.12em] uppercase transition-colors duration-200"
-                  onClick={() => setRsvpEvent(event)}
-                >
+                <Button variant="cta" class="min-h-11" onClick={() => setRsvpEvent(event)}>
                   Respond
-                </button>
+                </Button>
               </article>
             )}
           </For>
@@ -179,13 +176,9 @@ function DemoRsvpModal(props: DemoRsvpModalProps) {
               On a real Cire invitation, your reply would be on its way to the couple and counted in
               their live guest dashboard. Here, nothing is saved. It&rsquo;s just a taste.
             </p>
-            <button
-              type="button"
-              class="border-gold font-body text-gold hover:bg-gold hover:text-bg rounded-sm border bg-transparent px-6 py-3 text-[0.82rem] tracking-[0.1em] uppercase transition-colors duration-200"
-              onClick={() => props.onClose()}
-            >
+            <Button variant="cta" size="lg" onClick={() => props.onClose()}>
               Close
-            </button>
+            </Button>
           </div>
         }
       >
@@ -271,12 +264,9 @@ function DemoRsvpModal(props: DemoRsvpModalProps) {
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              class="border-gold font-body text-gold hover:bg-gold hover:text-bg flex-1 cursor-pointer rounded-sm border bg-transparent px-4 py-3 text-[0.82rem] tracking-[0.1em] uppercase transition-colors duration-200"
-            >
+            <Button type="submit" variant="cta" class="flex-1">
               Send RSVP
-            </button>
+            </Button>
           </div>
         </form>
       </Show>

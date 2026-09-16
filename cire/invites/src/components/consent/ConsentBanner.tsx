@@ -1,3 +1,4 @@
+import Button from "@cire/ui/button";
 import { onCleanup, onMount, Show } from "solid-js";
 
 import {
@@ -96,13 +97,9 @@ export function ConsentBanner() {
  */
 function BannerButton(props: { onClick: () => void; children: string }) {
   return (
-    <button
-      type="button"
-      onClick={props.onClick}
-      class="border-gold text-gold-ink hover:bg-gold hover:text-bg focus-visible:ring-gold/60 rounded-sm border px-4 py-1.5 text-[0.7rem] tracking-[0.12em] uppercase transition-colors duration-200 focus:outline-none focus-visible:ring-2"
-    >
+    <Button variant="cta" size="sm" onClick={props.onClick}>
       {props.children}
-    </button>
+    </Button>
   );
 }
 

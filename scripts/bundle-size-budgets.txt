@@ -25,7 +25,7 @@
 #
 # A re-measure is not automatically a re-baseline. All four cire apps joined the
 # token contract with their thresholds unchanged, so their headroom is now
-# ~7.1 KB (host), ~4.4 KB (vendor), ~10.0 KB (invites) and ~6.9 KB (landing)
+# ~7.1 KB (host), ~4.4 KB (vendor), ~8.7 KB (invites) and ~3.8 KB (landing)
 # rather than ~11.7 KB. That is the
 # right direction: the rule caps headroom (it must stay smaller than the
 # smallest mistake the guard exists to catch), it does not require any. Raising
@@ -33,9 +33,9 @@
 #
 # Blank lines and lines starting with # are ignored.
 
-cire/invites   worker  175000   # measured 165028
+cire/invites   worker  175000   # measured 166341
 cire/host      static  238617   # measured 231558
 cire/vendor    static  81644    # measured 77222
-cire/landing   static  189324   # measured 182382
+cire/landing   static  189324   # measured 185488
 musubi/landing static  26865    # measured 15206
 pulse/landing  static  28366    # measured 16683
