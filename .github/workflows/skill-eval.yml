@@ -292,7 +292,20 @@ jobs:
             --label "PR #${PR_NUMBER} — ${SKILLS}" \
             --json)
           echo "$OUT"
-          ID=$(echo "$OUT" | bun -e 'const d=JSON.parse(await Bun.stdin.text()); console.log(d.data?.id ?? d.id ?? "")')
+          # Three things about that payload, each of which has silently cost a
+          # run id. It is an ARRAY, one entry per submitted run. Its key is
+          # `evalRunId`, not `id`. And `--json` still prints a plain
+          # `{"event":"eval-run-quote","estimatedCredits":N}` line before it, so
+          # parsing the whole of stdout throws. Slice from the first `[`, take
+          # the first entry, and keep the older key names as fallbacks.
+          ID=$(echo "$OUT" | bun -e '
+            const text = await Bun.stdin.text();
+            const start = text.indexOf("[");
+            if (start === -1) { console.log(""); process.exit(0); }
+            const runs = JSON.parse(text.slice(start));
+            const run = Array.isArray(runs) ? runs[0] : runs;
+            console.log(run?.evalRunId ?? run?.data?.id ?? run?.id ?? "");
+          ')
           if [ -z "$ID" ]; then echo "::warning::could not read a run id; no eval was submitted"; exit 1; fi
           echo "id=$ID" >> "$GITHUB_OUTPUT"
 
