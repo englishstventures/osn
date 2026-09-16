@@ -74,3 +74,25 @@ export function CardCta(props: { children: JSX.Element }) {
     </span>
   );
 }
+
+/**
+ * The same line, when it is the thing you press.
+ *
+ * `CardCta` is a `<span>`, because on most cards the whole card is the control
+ * and a nested button inside it would be a second tab stop over the same
+ * destination. Where the card is NOT a button — a card whose body is a chart or
+ * a list, with one action underneath — the line has to be the control itself,
+ * and every such call site was writing the same `<button type="button"
+ * class="self-start">` wrapper by hand.
+ *
+ * The `self-start` belongs on the button, not the span: a flex child stretches
+ * to the column's width by default, so without it the hit area runs the full
+ * width of the card and a click anywhere along that line fires it.
+ */
+export function CardCtaButton(props: { onClick: () => void; children: JSX.Element }) {
+  return (
+    <button type="button" class="base:cursor-pointer base:self-start" onClick={props.onClick}>
+      <CardCta>{props.children}</CardCta>
+    </button>
+  );
+}

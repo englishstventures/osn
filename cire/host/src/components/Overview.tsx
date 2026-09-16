@@ -1,4 +1,4 @@
-import Card, { CardCta, CardEyebrow, cardClass } from "@cire/ui/card";
+import Card, { CardCtaButton, CardEyebrow, cardClass } from "@cire/ui/card";
 import { Meter } from "@osn/ui/ui/meter";
 import { Stat } from "@osn/ui/ui/stat";
 import { useAuth } from "@shared/rp-auth/solid";
@@ -473,13 +473,9 @@ export default function Overview(props: {
                       <p class="font-display text-text text-osn-lg leading-tight font-light">
                         No date yet
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => props.onNavigate("settings", "wedding")}
-                        class="self-start"
-                      >
-                        <CardCta>Set your wedding date</CardCta>
-                      </button>
+                      <CardCtaButton onClick={() => props.onNavigate("settings", "wedding")}>
+                        Set your wedding date
+                      </CardCtaButton>
                     </>
                   }
                 >
@@ -590,13 +586,9 @@ export default function Overview(props: {
                             </Show>
                           </ul>
                         </Show>
-                        <button
-                          type="button"
-                          onClick={() => props.onNavigate("guests", "rsvps")}
-                          class="self-start"
-                        >
-                          <CardCta>See replies per event</CardCta>
-                        </button>
+                        <CardCtaButton onClick={() => props.onNavigate("guests", "rsvps")}>
+                          See replies per event
+                        </CardCtaButton>
                       </>
                     );
                   })()}
@@ -622,13 +614,9 @@ export default function Overview(props: {
                     </div>
                   </Show>
                 </dl>
-                <button
-                  type="button"
-                  onClick={() => props.onNavigate("guests", "list")}
-                  class="self-start"
-                >
-                  <CardCta>Open the guest list</CardCta>
-                </button>
+                <CardCtaButton onClick={() => props.onNavigate("guests", "list")}>
+                  Open the guest list
+                </CardCtaButton>
               </Card>
 
               {/* ── Checklist snapshot (Phase 1 — live open-task count) ─────── */}

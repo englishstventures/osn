@@ -538,20 +538,13 @@ export default function RsvpView(props: RsvpViewProps) {
         </Show>
 
         <div class="flex items-center gap-2">
-          <button
-            type="submit"
-            class="bg-gold text-bg text-osn-sm tracking-osn-wider rounded-sm px-3 py-1.5 uppercase disabled:opacity-50"
-            disabled={saving()}
-          >
+          {/* Both at the default size, which they were not: Cancel was already a
+              `<Button>` at `md` and Save was hand-written at `px-3 py-1.5`, so
+              the two controls in this one row were different heights. */}
+          <Button variant="primary" type="submit" disabled={saving()}>
             {saving() ? "Saving…" : "Save reply"}
-          </button>
-          <Button
-            variant="quiet"
-            type="button"
-
-            onClick={closeEditor}
-            disabled={saving()}
-          >
+          </Button>
+          <Button variant="quiet" type="button" onClick={closeEditor} disabled={saving()}>
             Cancel
           </Button>
         </div>
