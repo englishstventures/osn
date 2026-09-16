@@ -20,6 +20,7 @@ import {
 import { InfoPopover } from "@osn/ui/ui/info-popover";
 import { Input } from "@osn/ui/ui/input";
 import { Label } from "@osn/ui/ui/label";
+import { Modal } from "@osn/ui/ui/modal";
 import { Popover, PopoverContent, PopoverTrigger } from "@osn/ui/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@osn/ui/ui/tabs";
 import { createSignal } from "solid-js";
@@ -143,3 +144,86 @@ export const TabsStory = () => (
     </TabsContent>
   </Tabs>
 );
+
+/**
+ * `Modal` is the other dialog, and it is not Kobalte.
+ *
+ * It is the platform's `<dialog>` + `showModal()`, which gives the focus trap,
+ * Escape, background inertness and a `::backdrop` for nothing — Kobalte's
+ * `Dialog` costs 15.3 KB gzip, against roughly 11.7 KB of headroom in each of
+ * the two cire apps that carry no Kobalte at all.
+ *
+ * The bench below is the part worth seeing. A `showModal()` dialog renders in
+ * the **top layer**, so it is above every stacking context in the document by
+ * definition — including the deliberately hostile one here, which has a
+ * `transform` and the largest `z-index` there is. That ancestor is exactly the
+ * shape Motion One leaves behind on anything it animates, and it is what put
+ * cire's RSVP toast underneath the sheet it fired beneath. Nine hand-rolled
+ * `position: fixed` overlays in this repository are one animated ancestor away
+ * from the same bug; this one cannot be captured that way.
+ */
+export const NativeModal = () => {
+  const [open, setOpen] = createSignal(false);
+  const [guarded, setGuarded] = createSignal(false);
+
+  return (
+    <div class="flex flex-col gap-8">
+      <div class="flex flex-wrap items-center gap-3">
+        <Button variant="outline" onClick={() => setOpen(true)}>
+          Open modal
+        </Button>
+        <Button variant="outline" onClick={() => setGuarded(true)}>
+          Open one with unsaved input
+        </Button>
+      </div>
+
+      {/* The hostile ancestor: transformed, `position: relative`, and at the
+          top of the z-index range. Anything `position: fixed` inside it is
+          trapped; the dialog is not. */}
+      <div
+        class="border-border relative rounded-lg border border-dashed p-6"
+        style={{ transform: "translateZ(0)", "z-index": 2147483647 }}
+      >
+        <p class="text-meta text-subtle">
+          Transformed, stacking-context-creating ancestor. The modal opens from in here.
+        </p>
+      </div>
+
+      <Modal open={open()} onClose={() => setOpen(false)} label="Leave this event?">
+        <h2 class="text-title font-semibold">Leave this event?</h2>
+        <p class="text-body text-muted-foreground mt-2">
+          Your RSVP is removed and the host is told. Press Escape, click the backdrop, or use the
+          button — all three close it, and all three report the close.
+        </p>
+        <div class="mt-6 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setOpen(false)}>
+            Stay
+          </Button>
+          <Button variant="destructive" onClick={() => setOpen(false)}>
+            Leave
+          </Button>
+        </div>
+      </Modal>
+
+      {/* `dismissable={false}`: the backdrop stops closing it, Escape still
+          does. That asymmetry is the platform's, and it is the right one —
+          Escape is a deliberate act, a backdrop click is usually a near-miss. */}
+      <Modal
+        open={guarded()}
+        onClose={() => setGuarded(false)}
+        dismissable={false}
+        label="Unsaved changes"
+      >
+        <h2 class="text-title font-semibold">Unsaved changes</h2>
+        <p class="text-body text-muted-foreground mt-2">
+          Clicking the backdrop does nothing here. Escape still closes it, from the platform.
+        </p>
+        <div class="mt-6 flex justify-end">
+          <Button variant="outline" onClick={() => setGuarded(false)}>
+            Discard
+          </Button>
+        </div>
+      </Modal>
+    </div>
+  );
+};

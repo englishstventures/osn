@@ -3,6 +3,7 @@ import { Badge } from "@osn/ui/ui/badge";
 import { Button } from "@osn/ui/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@osn/ui/ui/card";
 import { Checkbox } from "@osn/ui/ui/checkbox";
+import { Chip } from "@osn/ui/ui/chip";
 import {
   Dialog,
   DialogContent,
@@ -17,11 +18,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@osn/ui/ui/dropdown-menu";
+import { EmptyState } from "@osn/ui/ui/empty-state";
+import { Field } from "@osn/ui/ui/field";
 import { Input } from "@osn/ui/ui/input";
 import { Label } from "@osn/ui/ui/label";
+import { Meter } from "@osn/ui/ui/meter";
+import { Modal } from "@osn/ui/ui/modal";
+import { Notice } from "@osn/ui/ui/notice";
 import { OtpInput } from "@osn/ui/ui/otp-input";
 import { Popover, PopoverContent, PopoverTrigger } from "@osn/ui/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@osn/ui/ui/radio-group";
+import { Select } from "@osn/ui/ui/select";
+import { Stat } from "@osn/ui/ui/stat";
+import { Table, Td, Th } from "@osn/ui/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@osn/ui/ui/tabs";
 import { Textarea } from "@osn/ui/ui/textarea";
 import { UsernameInput } from "@osn/ui/ui/username-input";
@@ -55,14 +64,16 @@ export const Everything = () => {
   const [visibility, setVisibility] = createSignal("friends");
   const [handle, setHandle] = createSignal("ada");
   const [code, setCode] = createSignal("1234");
+  const [modalOpen, setModalOpen] = createSignal(false);
 
   return (
     <div class="mx-auto max-w-3xl pb-16">
       <header class="pb-2">
         <h1 class="text-display font-semibold">@osn/ui</h1>
         <p class="text-body text-muted-foreground mt-1">
-          Fifteen components, shared across every surface on the network. Each row shows one state —
-          the per-component stories carry the rest.
+          Every component shared across the surfaces on the network, each row in one state — the
+          per-component stories carry the rest. Everything below is written against the token
+          contract, so the light · dark toggle re-themes all of it at once.
         </p>
       </header>
 
@@ -152,6 +163,94 @@ export const Everything = () => {
             <p class="text-body text-muted-foreground">Four are undecided.</p>
           </TabsContent>
         </Tabs>
+      </Entry>
+
+      <Entry name="Field" from="@osn/ui/ui/field">
+        <div class="w-72">
+          <Field label="Wedding name" hint="Shown to guests">
+            {(field) => <Input {...field} value="Ada & Grace" />}
+          </Field>
+        </div>
+      </Entry>
+
+      <Entry name="Select" from="@osn/ui/ui/select">
+        <Select class="w-64">
+          <option>Australia/Sydney</option>
+          <option>Pacific/Auckland</option>
+        </Select>
+      </Entry>
+
+      <Entry name="Notice" from="@osn/ui/ui/notice">
+        <div class="w-full max-w-md">
+          <Notice tone="warn">Three guests have no email address.</Notice>
+        </div>
+      </Entry>
+
+      <Entry name="Chip" from="@osn/ui/ui/chip">
+        <Chip>draft</Chip>
+        <Chip tone="success">live</Chip>
+        <Chip tone="pending">awaiting reply</Chip>
+        <Chip tone="accent">quoted</Chip>
+      </Entry>
+
+      <Entry name="Stat" from="@osn/ui/ui/stat">
+        <Stat value="84" label="Replied" hint="of 120 invited" />
+      </Entry>
+
+      <Entry name="Meter" from="@osn/ui/ui/meter">
+        <div class="w-64">
+          <Meter value={68} max={100} label="Budget spent" />
+        </div>
+      </Entry>
+
+      <Entry name="EmptyState" from="@osn/ui/ui/empty-state">
+        <div class="w-full max-w-md">
+          <EmptyState title="No guests yet" description="Add one, or import a spreadsheet." />
+        </div>
+      </Entry>
+
+      <Entry name="Table" from="@osn/ui/ui/table">
+        <Table label="Guests">
+          <thead>
+            <tr>
+              <Th>Name</Th>
+              <Th>Reply</Th>
+              <Th align="center">Seats</Th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <Td>Ada Lovelace</Td>
+              <Td>Going</Td>
+              <Td numeric>2</Td>
+            </tr>
+            <tr>
+              <Td>Grace Hopper</Td>
+              <Td>Awaiting</Td>
+              <Td numeric>1</Td>
+            </tr>
+          </tbody>
+        </Table>
+      </Entry>
+
+      {/* `Modal` is a `<dialog>` in the top layer rather than a portal, so
+          unlike the three below it needs no z-index and cannot be trapped by a
+          transformed ancestor. It still leaves the preview pane when open. */}
+      <Entry name="Modal" from="@osn/ui/ui/modal">
+        <Button variant="outline" onClick={() => setModalOpen(true)}>
+          Open modal
+        </Button>
+        <Modal open={modalOpen()} onClose={() => setModalOpen(false)} label="Leave this event?">
+          <h2 class="text-title font-semibold">Leave this event?</h2>
+          <p class="text-body text-muted-foreground mt-2">
+            Your RSVP is removed and the host is told.
+          </p>
+          <div class="mt-6 flex justify-end">
+            <Button variant="ghost" onClick={() => setModalOpen(false)}>
+              Stay
+            </Button>
+          </div>
+        </Modal>
       </Entry>
 
       {/* The three portalled components. Their content leaves the preview pane

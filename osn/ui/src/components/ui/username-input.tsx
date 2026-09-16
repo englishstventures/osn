@@ -1,13 +1,15 @@
 import { clsx } from "clsx";
-import { Show, splitProps, type Component, type ComponentProps } from "solid-js";
+import { Show, splitProps, type Component } from "solid-js";
 
-import { Input } from "./input";
+import { Input, type InputProps } from "./input";
 
 /** Availability/validation state of a typed username — mirrors the
  *  register/create-profile handle-check flow this component replaces. */
 type UsernameInputStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 
-interface UsernameInputProps extends Omit<ComponentProps<"input">, "value" | "onInput" | "class"> {
+/** Extends {@link InputProps} rather than the raw element props, so `size` here
+ *  is the shared control size and reaches the box it names. */
+interface UsernameInputProps extends Omit<InputProps, "value" | "onInput" | "class"> {
   value: string;
   onInput: (value: string) => void;
   status?: UsernameInputStatus;
@@ -53,7 +55,7 @@ const UsernameInput: Component<UsernameInputProps> = (props) => {
         <span class="base:text-osn-ink-secondary base:text-xs">Checking…</span>
       </Show>
       <Show when={status() === "available"}>
-        <span class="base:text-xs base:text-green-600">@{local.value} is available</span>
+        <span class="base:text-osn-success base:text-xs">@{local.value} is available</span>
       </Show>
       <Show when={status() === "taken"}>
         <span class="base:text-osn-danger base:text-xs">@{local.value} is taken</span>

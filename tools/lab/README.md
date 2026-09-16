@@ -22,18 +22,20 @@ Open **`osn/ui` → Everything** for every component `@osn/ui` exports on one
 page, each with the import path to copy. That is the "what do we already have"
 view. For a component's full range of variants and states, open its own group:
 
-| Group             | Covers                                                                   |
-| ----------------- | ------------------------------------------------------------------------ |
-| `osn/ui`          | Everything, one state each                                               |
-| `osn/ui/Button`   | All variants, all sizes, live playground                                 |
-| `osn/ui/display`  | Badge, Avatar, Card                                                      |
-| `osn/ui/forms`    | Input, Label, Textarea, Checkbox, RadioGroup, UsernameInput, OtpInput    |
-| `osn/ui/overlays` | Dialog, DropdownMenu, Popover, Tabs                                      |
-| `pulse/Icon`      | The Pulse glyph set, every icon at every size                            |
-| `shared/toast`    | Tones, positions, stacking, actions/promises, overflow                   |
-| `shared/sortable` | Drag feel, the shift/settle animation, grip hover/focus, multi-container |
+| Group             | Covers                                                                          |
+| ----------------- | ------------------------------------------------------------------------------- |
+| `osn/ui`          | Everything, one state each                                                      |
+| `osn/ui/Button`   | All variants, all sizes, live playground                                        |
+| `osn/ui/display`  | Badge, Avatar, Card                                                             |
+| `osn/ui/forms`    | Input, Label, Textarea, Select, Field, Fieldset, Checkbox, RadioGroup, UsernameInput, OtpInput |
+| `osn/ui/feedback` | Notice, Chip, EmptyState, Stat                                                  |
+| `osn/ui/data`     | Table, Meter                                                                    |
+| `osn/ui/overlays` | Dialog, Modal, DropdownMenu, Popover, Tabs                                      |
+| `pulse/Icon`      | The Pulse glyph set, every icon at every size                                   |
+| `shared/toast`    | Tones, positions, stacking, actions/promises, overflow                          |
+| `shared/sortable` | Drag feel, the shift/settle animation, grip hover/focus, multi-container        |
 
-The last two are benches for behaviour no test tier can see. `@shared/toast`'s
+`shared/toast` and `shared/sortable` are benches for behaviour no test tier can see. `@shared/toast`'s
 suite asserts the queue and the DOM contract; `@shared/sortable`'s asserts drop
 semantics against stubbed geometry, because happy-dom computes no layout. Neither
 can tell you whether a drag tracks the pointer, whether the rows shift aside to
