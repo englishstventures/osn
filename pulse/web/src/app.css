@@ -152,9 +152,8 @@
   src: url('@fontsource/instrument-serif/files/instrument-serif-latin-400-italic.woff2') format('woff2');
   unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 }
-@source "../../../osn/ui/src";
+@import "@shared/design-tokens/tokens.css";
 
-@custom-variant base (:where(&));
 
 @theme inline {
   --color-background: var(--background);
@@ -196,7 +195,13 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.92 0.006 70);
   --input: oklch(0.92 0.006 70);
-  --ring: oklch(0.7 0.01 60);
+  /* Darkened from L=0.7, which measured 2.38:1 against `--background` — below
+     the 3:1 floor a focus indicator has to clear (WCAG 2.2 SC 1.4.11). A ring
+     nobody can see is the one component where failing contrast removes the
+     feature outright: a keyboard user has no other way to tell where they are.
+     L=0.58 gives 3.82:1 on the worst ground and still reads as a ring rather
+     than a border. Found by the design-token conformance test. */
+  --ring: oklch(0.58 0.01 60);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.17 0.01 60);
   --accent: oklch(0.97 0 0);
@@ -238,12 +243,19 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(0.28 0.008 60);
   --input: oklch(0.28 0.008 60);
-  --ring: oklch(0.5 0.01 60);
+  /* Lightened from L=0.5 (2.66:1 on `--background`) to clear the same 3:1 focus
+     floor as the light ramp. 4.39:1 on the worst dark ground. */
+  --ring: oklch(0.62 0.01 60);
   --popover: oklch(0.22 0.008 60);
   --popover-foreground: oklch(0.97 0.004 80);
   --accent: oklch(0.25 0.008 60);
   --accent-foreground: oklch(0.97 0.004 80);
-  --destructive-foreground: oklch(0.985 0 0);
+  /* Ink, not paper, on the dark ramp's destructive fill. The fill is lightened
+     in dark mode so it still reads as red against a dark page, and near-white
+     on that lightened red is 2.77:1 — under the 4.5:1 floor, on the one control
+     where a misread is destructive. Near-black gives 6.62:1 and keeps the
+     fill's brightness. Same defect and same remedy as @musubi/social. */
+  --destructive-foreground: oklch(0.17 0.008 60);
 
   --pulse-accent-fg: oklch(0.17 0.008 60);
   --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.4);
@@ -287,4 +299,87 @@ body {
 .dark {
   --toast-accent-success: oklch(78% 0.13 150);
   --toast-accent-warn: oklch(80% 0.12 75);
+}
+
+/* ── Design-token contract ───────────────────────────────────────────────────
+ * `@shared/design-tokens` names the roles a shared component reads; this block
+ * says which of pulse's colours plays each one. App code is untouched — every
+ * `bg-card`, `text-pulse-accent` and `shadow-md` stays exactly as written.
+ *
+ * ## `--osn-accent` is `--primary`, not `--pulse-accent`
+ *
+ * Pulse carries two accents: shadcn's `--primary`, a near-black used as the
+ * filled-CTA ground, and `--pulse-accent`, the coral that is the product's
+ * brand. The contract has one, and it means "the ground of a primary button" —
+ * which here is `--primary`. Sending the coral instead would repaint every
+ * shared `<Button>` in the app: a redesign wearing the costume of a refactor.
+ *
+ * The coral keeps its own names and stays app-level, which is where it is used
+ * from today. Nothing in `@osn/ui` has ever asked for it.
+ *
+ * ## `--osn-accent-soft` is `--muted`
+ *
+ * The contract's `accent-soft` is a tint of whatever `--osn-accent` is. That is
+ * the near-black `--primary`, so its tint is the neutral `--muted`.
+ * `--pulse-accent-soft` is a tint of the CORAL — the right answer to a
+ * different mapping, and wrong here by exactly the amount coral differs from
+ * ink.
+ */
+:root {
+  --osn-ground: var(--background);
+  --osn-ground-deep: var(--secondary);
+  --osn-surface: var(--card);
+  --osn-surface-raised: var(--popover);
+  --osn-surface-sunk: var(--muted);
+
+  --osn-hairline: var(--border);
+  --osn-hairline-strong: var(--input);
+
+  --osn-ink: var(--foreground);
+  --osn-ink-secondary: var(--muted-foreground);
+  --osn-ink-tertiary: var(--subtle);
+
+  --osn-accent: var(--primary);
+  --osn-accent-strong: var(--primary-hover);
+  --osn-accent-soft: var(--muted);
+  --osn-accent-ink: var(--primary);
+  --osn-on-accent: var(--primary-foreground);
+
+  --osn-success: var(--toast-accent-success);
+  --osn-warn: var(--toast-accent-warn);
+  --osn-danger: var(--destructive);
+  --osn-on-danger: var(--destructive-foreground);
+
+  --osn-focus: var(--ring);
+
+  --osn-radius-hair: 2px;
+  --osn-radius-sm: calc(var(--radius) - 4px);
+  --osn-radius-md: var(--radius);
+  --osn-radius-lg: calc(var(--radius) + 4px);
+  --osn-radius-pill: 9999px;
+
+  --osn-font-body: var(--font-sans);
+  --osn-font-display: var(--font-serif);
+  --osn-font-mono: var(--font-mono);
+}
+
+/* Two roles shadcn's ramp has no name for.
+ *
+ * `--primary-hover`: shadcn expresses the pressed state as `bg-primary/90` at
+ * each call site rather than as a token, so a named role has nothing to point
+ * at. Pulse's primary is ink, so "stronger" is further along the ramp rather
+ * than a different hue.
+ *
+ * `--subtle`: pulse has no tertiary ink — `--muted-foreground` is its faintest
+ * and that one carries the 4.5:1 body-copy contract. Ornament and disabled
+ * states want a third step, and it has to clear 3:1 against the darkest ground
+ * it can land on, which is `--muted`. */
+:root {
+  --primary-hover: oklch(0.12 0 0);
+  --subtle: oklch(0.58 0.01 60);
+}
+
+.dark {
+  --primary-hover: oklch(0.92 0 0);
+  --subtle: oklch(0.6 0.008 60);
 }
