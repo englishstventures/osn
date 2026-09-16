@@ -60,7 +60,7 @@ describe("the guest sheet, in a real engine", () => {
 
   it("closes on Escape and says so, without the caller wiring a key handler", async () => {
     const onClose = vi.fn();
-    const { getByRole } = render(() => (
+    render(() => (
       <AnimatedModal onClose={onClose} label="Event details">
         <p>body</p>
       </AnimatedModal>
@@ -69,7 +69,9 @@ describe("the guest sheet, in a real engine", () => {
     // `requestClose()` rather than a synthetic keydown: Escape on a modal
     // dialog is the user agent's own behaviour, so no dispatched key event
     // triggers it. This is the platform entry point for the same sequence.
-    getByRole("dialog").requestClose();
+    // Queried as `dialog` rather than by role, because that is the element type
+    // the method is on.
+    document.querySelector("dialog")!.requestClose();
     await afterTheCloseEvent();
 
     expect(onClose).toHaveBeenCalledTimes(1);
