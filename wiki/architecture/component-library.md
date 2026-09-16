@@ -20,7 +20,7 @@ related:
 packages:
   - "@osn/ui"
   - "@pulse/web"
-last-reviewed: 2026-09-14
+last-reviewed: 2026-09-16
 ---
 
 # Component Library (Zaidan)
@@ -277,6 +277,63 @@ import { Card } from "@osn/ui/ui/card";
   <Input id="email" type="email" class="mt-1" />
 </Card>
 ```
+
+### Overlays: `Modal`, and why its exit is deferred
+
+`@osn/ui`'s `Modal` is the platform's `<dialog>` with `showModal()`. The focus
+trap, Escape-to-close, background inertness and `::backdrop` all come from the
+browser, and the element renders in the **top layer** — above every stacking
+context in the document by definition, which is what makes it immune to the
+`transform`-traps-`position: fixed` bug documented in
+[[wiki/architecture/frontend-patterns]]. It therefore needs **no `z-index` and
+no portal**.
+
+Its motion is split, and the split is not arbitrary:
+
+| | How | Why there |
+|---|---|---|
+| **Entry** | `@starting-style`, pure CSS | The browser takes the from-state when the element is first rendered. No JavaScript at all. Safari has had it since 17.5; older engines show the dialog immediately, which degrades rather than breaks. |
+| **Exit** | JavaScript defers `close()` | `close()` drops a dialog out of the top layer *immediately*, so an exit transition has nothing left to paint. |
+
+**The CSS-only exit does not work cross-browser, and this is the thing to know
+before reaching for it.** The platform's own answer is the `overlay` property
+with `transition-behavior: allow-discrete`, which defers that removal so the
+transition can run. `overlay` is **Chrome and Edge only** — unsupported in
+Safari and Firefox. On cire's guest site, where most traffic is mobile Safari, a
+CSS-only exit means the dialog blinking away for nearly everyone who sees it.
+
+So `Modal` sets `data-closing`, lets its own stylesheet run the exit, and calls
+`close()` once the element's animations have finished. It waits on
+`getAnimations({ subtree: true })` rather than a named transition, so an app
+animating the panel with Motion One or the Web Animations API is waited out the
+same way — the hook is animation-library-agnostic without naming a library.
+
+Timing is two custom properties, so an app retimes rather than restyles:
+
+```css
+:root {
+  --osn-modal-enter: 350ms;
+  --osn-modal-exit: 200ms;
+}
+```
+
+`prefers-reduced-motion` drops both to 1ms rather than `none`: the exit is
+*awaited*, and a transition that never started is one there is nothing to wait
+for.
+
+> [!important]
+> **Keep the modal mounted across the close.** `Modal` can only animate its exit
+> while the element is still in the document, so drive `open` and leave the
+> component where it is. `<Show when={sheet()}>{() => <Modal open …>}</Show>`
+> unmounts the dialog the instant the value goes null, and the exit silently
+> does not play. Put the `Show` *inside* the modal instead, or hold the last
+> value in a signal.
+
+The motion itself is benched in `@tools/lab` under **osn/ui/overlays →
+ModalMotion**, with the two durations on sliders. Whether a curve looks right is
+not a question a test can answer; whether the exit *runs*, and whether the
+dialog stays in the top layer until it finishes, are — and
+`osn/ui/tests/components/modal.browser.test.tsx` asserts both.
 
 ## CSS Theme Variables
 

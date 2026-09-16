@@ -39,6 +39,28 @@
  * It also means **no `z-index` and no portal**: the top layer paints above every
  * stacking context in the document by definition, and the element may live
  * wherever it is written.
+ *
+ * ## Keep it mounted across the close
+ *
+ * The one thing a caller has to get right. `Modal` animates its exit, and it
+ * can only do that while the element is still in the document — so drive
+ * {@link ModalProps.open} and leave the component mounted:
+ *
+ * ```tsx
+ * // Right: the modal stays, `open` moves.
+ * <Modal open={sheet() !== null} onClose={() => setSheet(null)} label="…">
+ *   <Show when={sheet()}>{(s) => <Body sheet={s()} />}</Show>
+ * </Modal>
+ *
+ * // Wrong: `Show` unmounts the dialog the instant `sheet()` goes null, so the
+ * // exit has nothing left to play and the sheet blinks away.
+ * <Show when={sheet()}>{(s) => <Modal open onClose={…}>…</Modal>}</Show>
+ * ```
+ *
+ * The wrong form is not broken — it closes, restores focus and leaves nothing
+ * inert — it just loses the animation, silently. If the content genuinely
+ * cannot render without the value that just became null, hold the last one:
+ * that is one `createSignal` against an exit that plays.
  */
 
 import { clsx } from "clsx";
@@ -72,31 +94,110 @@ export type ModalProps = Omit<ComponentProps<"dialog">, "open" | "onClose" | "ch
 };
 
 /**
- * The backdrop is styled through `::backdrop`, which cannot be targeted by a
- * Tailwind utility on the element, so it is a real stylesheet rule. Scoped to
- * the class below rather than to `dialog::backdrop` so an app's own `<dialog>`
- * elements are left alone.
+ * The stylesheet `Modal` injects once per document.
  *
- * `color-mix` against the contract's ground rather than a flat `black/50`: on a
- * light theme a black scrim reads as a hole punched in the page, and on a dark
- * one it is nearly invisible. Mixing the app's own ground keeps the scrim in the
- * same family as whatever it is dimming.
+ * Two things live here rather than in Tailwind utilities. The backdrop is a
+ * `::backdrop` pseudo-element, which cannot be targeted by a class on the
+ * element; and the entry/exit choreography needs `@starting-style`, which has
+ * no utility form either. Both are scoped to `.osn-modal` rather than to
+ * `dialog` so an app's own `<dialog>` elements are left alone.
+ *
+ * ## The backdrop mixes the app's ground rather than using black
+ *
+ * `color-mix` against `--osn-ground-deep`: on a light theme a black scrim reads
+ * as a hole punched in the page, and on a dark one it is nearly invisible.
+ * Mixing the app's own ground keeps the scrim in the same family as whatever it
+ * is dimming.
+ *
+ * ## Entry is pure CSS. Exit cannot be.
+ *
+ * Entry is `@starting-style`, which needs no JavaScript at all: the browser
+ * takes the from-state at the moment the element is first rendered. Safari has
+ * had it since 17.5; older engines simply show the dialog immediately, which is
+ * a degradation rather than a broken state.
+ *
+ * Exit is the part that has to be held open from JavaScript, and it is worth
+ * saying exactly why, because the CSS-only answer looks like it should work.
+ * `close()` removes the dialog from the top layer *immediately*, so an exit
+ * transition has nothing left to paint. The platform's fix is the `overlay`
+ * property with `transition-behavior: allow-discrete`, which defers that
+ * removal — and `overlay` is **Chrome and Edge only**, unsupported in Safari
+ * and Firefox. On the surface this component was built for, cire's guest site,
+ * most traffic is mobile Safari, so a CSS-only exit would mean the dialog
+ * blinking away for nearly everyone who sees it.
+ *
+ * So `close()` is deferred in `Modal` instead: it sets `data-closing`, lets
+ * these rules run, and calls `close()` once the element's own animations have
+ * finished. No `overlay`, no `allow-discrete`, and the same behaviour in every
+ * engine.
+ *
+ * ## The durations are tokens
+ *
+ * An app that wants different timing sets `--osn-modal-enter` / `--osn-modal-exit`
+ * rather than restyling the component. The defaults are cire's existing modal
+ * choreography, which is the only hand-rolled one this replaces.
  */
-const BACKDROP_STYLE = `
+const MODAL_STYLE = `
 .osn-modal::backdrop {
   background-color: color-mix(in srgb, var(--osn-ground-deep, #18181b) 72%, transparent);
+  opacity: 0;
+  transition: opacity var(--osn-modal-exit, 200ms) ease-in;
+}
+.osn-modal[open]::backdrop {
+  opacity: 1;
+  transition: opacity var(--osn-modal-enter, 250ms) ease-out;
+}
+@starting-style {
+  .osn-modal[open]::backdrop { opacity: 0; }
+}
+
+.osn-modal {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--osn-modal-enter, 250ms) cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--osn-modal-enter, 350ms) cubic-bezier(0.22, 1, 0.36, 1);
+}
+@starting-style {
+  .osn-modal[open] {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+}
+
+/* After \`[open]\` in source order, so it wins on equal specificity. This is the
+   state \`Modal\` holds the element in while it waits for the exit to finish. */
+.osn-modal[data-closing] {
+  opacity: 0;
+  transform: translateY(24px) scale(0.98);
+  transition:
+    opacity var(--osn-modal-exit, 200ms) ease-in,
+    transform var(--osn-modal-exit, 200ms) ease-in;
+}
+
+/* Near-zero rather than \`none\`: the exit is awaited, and a transition that was
+   never started is one there is nothing to wait for. 1ms keeps the code path
+   identical and the motion imperceptible. */
+@media (prefers-reduced-motion: reduce) {
+  .osn-modal,
+  .osn-modal[open],
+  .osn-modal[data-closing],
+  .osn-modal::backdrop,
+  .osn-modal[open]::backdrop {
+    transition-duration: 1ms;
+  }
 }
 `;
 
 let styleInjected = false;
 
-function injectBackdropStyle(): void {
+function injectModalStyle(): void {
   // Once per document, not once per instance: several modals mounted at the
   // same time would otherwise each add an identical rule.
   if (styleInjected || typeof document === "undefined") return;
   const style = document.createElement("style");
   style.dataset.osnModal = "";
-  style.textContent = BACKDROP_STYLE;
+  style.textContent = MODAL_STYLE;
   document.head.append(style);
   styleInjected = true;
 }
@@ -114,7 +215,18 @@ export function Modal(props: ModalProps) {
 
   let ref: HTMLDialogElement | undefined;
 
-  injectBackdropStyle();
+  injectModalStyle();
+
+  /**
+   * Which close this component is currently waiting out.
+   *
+   * A token rather than a boolean, so a reopen during an exit can invalidate
+   * the pending close without cancelling anything: the awaiting code compares
+   * the token it captured against this one and does nothing if they differ.
+   * Without it, opening a dialog again while it is still fading out would let
+   * the old close land a moment later and shut the newly-opened dialog.
+   */
+  let closingToken = 0;
 
   createEffect(() => {
     const dialog = ref;
@@ -123,9 +235,52 @@ export function Modal(props: ModalProps) {
     // `showModal()` on an already-open dialog throws, and `close()` on a closed
     // one is a silent no-op that still fires nothing — so both directions are
     // guarded by the element's own state rather than by tracking our own.
-    if (own.open && !dialog.open) dialog.showModal();
-    else if (!own.open && dialog.open) dialog.close();
+    if (own.open) {
+      // Reopening cancels any exit still in flight, and clears the attribute so
+      // the entry rules apply to an element that is not still mid-fade.
+      closingToken++;
+      dialog.removeAttribute("data-closing");
+      if (!dialog.open) dialog.showModal();
+    } else if (dialog.open) {
+      void closeWhenAnimationsFinish(dialog);
+    }
   });
+
+  /**
+   * Close the dialog, but not until whatever is animating it has finished.
+   *
+   * `close()` removes a dialog from the top layer immediately, so an exit
+   * animation has nothing left to paint. The platform's own answer is the
+   * `overlay` property with `transition-behavior: allow-discrete`, which defers
+   * that removal — and `overlay` is Chrome and Edge only. Deferring the call
+   * instead gets the same result in every engine.
+   *
+   * `getAnimations({ subtree: true })` rather than a `transitionend` listener,
+   * and deliberately not tied to CSS: it returns whatever is actually running
+   * on the element and its descendants, so an app animating the panel with
+   * Motion One or the Web Animations API is waited out exactly the same way as
+   * this component's own transitions. That is what keeps the hook
+   * animation-library-agnostic without naming a library.
+   */
+  async function closeWhenAnimationsFinish(dialog: HTMLDialogElement): Promise<void> {
+    const token = ++closingToken;
+    dialog.setAttribute("data-closing", "");
+
+    // Reading a layout property flushes the pending style change, so the exit
+    // transition has actually STARTED by the time we ask what is running. Skip
+    // this and `getAnimations()` comes back empty, the dialog closes on the
+    // spot, and the animation this whole function exists for never plays.
+    void dialog.offsetHeight;
+
+    await Promise.allSettled(dialog.getAnimations({ subtree: true }).map((a) => a.finished));
+
+    // A reopen, a second close, or an unmount happened while we waited. Any of
+    // them owns the element now.
+    if (token !== closingToken || !dialog.isConnected) return;
+
+    dialog.removeAttribute("data-closing");
+    if (dialog.open) dialog.close();
+  }
 
   createEffect(() => {
     const dialog = ref;
@@ -151,7 +306,11 @@ export function Modal(props: ModalProps) {
 
   onCleanup(() => {
     // A dialog unmounted while open leaves the document inert — every click
-    // outside it swallowed, with nothing visible to explain why.
+    // outside it swallowed, with nothing visible to explain why. This closes
+    // straight away rather than waiting out an exit: there is nothing left to
+    // animate on an element that is about to be removed, and `closingToken`
+    // moving is what tells any in-flight close to stand down.
+    closingToken++;
     if (ref?.open) ref.close();
   });
 

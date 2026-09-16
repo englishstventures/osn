@@ -98,13 +98,19 @@ describe("Modal", () => {
     expect(open()).toBe(false);
   });
 
-  it("reopens after closing, rather than throwing", () => {
+  it("reopens after closing, rather than throwing", async () => {
     // `showModal()` on an already-open dialog throws `InvalidStateError`, so the
     // effect is guarded on the element's own state. This is the round trip that
     // would surface a wrong guard.
+    //
+    // The wait is not incidental: closing is deferred until the exit animation
+    // finishes, so `open` is still true on the line after `setOpen(false)`. A
+    // reopen DURING that window is a different claim, and it has its own test
+    // under "Modal — the exit".
     const { setOpen, dialog } = mount();
     setOpen(false);
-    expect(dialog().open).toBe(false);
+    while (dialog().open) await new Promise((r) => requestAnimationFrame(r));
+
     setOpen(true);
     expect(dialog().matches(":modal")).toBe(true);
   });
@@ -200,5 +206,124 @@ describe("Modal", () => {
     expect(el.contains(top)).toBe(true);
 
     trap.remove();
+  });
+});
+
+/**
+ * The exit animation, which is the one thing about `<dialog>` the platform does
+ * NOT hand you cross-browser.
+ *
+ * `close()` removes a dialog from the top layer immediately, so an exit
+ * transition has nothing left to paint. The platform's own fix is the `overlay`
+ * property with `transition-behavior: allow-discrete` — Chrome and Edge only,
+ * unsupported in Safari and Firefox, which is most of the traffic on the
+ * surface this component was built for. So `Modal` defers `close()` instead,
+ * and these are the claims that deferral has to keep.
+ *
+ * Every one of them is invisible to a DOM shim: happy-dom parses no stylesheet,
+ * runs no transition, and `getAnimations()` returns nothing there, so a unit
+ * test of this would assert that a function was called and prove none of it.
+ */
+describe("Modal — the exit", () => {
+  /** Wait until the dialog has actually left, or fail loudly rather than hang. */
+  async function waitForClosed(dialog: HTMLDialogElement, budgetMs = 2000) {
+    const deadline = performance.now() + budgetMs;
+    while (dialog.open) {
+      if (performance.now() > deadline) throw new Error("dialog never closed");
+      await new Promise((r) => requestAnimationFrame(r));
+    }
+  }
+
+  it("stays open, and in the top layer, while the exit runs", async () => {
+    // The whole point. If `close()` were called on the spot, the element would
+    // be out of the top layer before a single frame of the exit was painted.
+    const { setOpen, dialog } = mount();
+    setOpen(false);
+
+    await new Promise((r) => requestAnimationFrame(r));
+    expect(dialog().open).toBe(true);
+    expect(dialog().matches(":modal")).toBe(true);
+    expect(dialog().hasAttribute("data-closing")).toBe(true);
+
+    await waitForClosed(dialog());
+  });
+
+  it("is actually animating while it waits, not merely sitting there", async () => {
+    // `data-closing` present proves an attribute was set. This proves the
+    // stylesheet the component injects turned that attribute into running
+    // animations — which is what `close()` is being deferred FOR.
+    const { setOpen, dialog } = mount();
+    setOpen(false);
+    await new Promise((r) => requestAnimationFrame(r));
+
+    expect(dialog().getAnimations({ subtree: true }).length).toBeGreaterThan(0);
+    await waitForClosed(dialog());
+  });
+
+  it("closes once the exit finishes, and tells the caller", async () => {
+    const { open, setOpen, dialog } = mount();
+    setOpen(false);
+    await waitForClosed(dialog());
+
+    expect(dialog().open).toBe(false);
+    expect(dialog().hasAttribute("data-closing")).toBe(false);
+    // `onClose` is wired to the element's own `close` event, so it fires from
+    // the deferred call rather than from the caller's `setOpen`.
+    expect(open()).toBe(false);
+  });
+
+  it("lets a reopen during the exit win, rather than the stale close landing", async () => {
+    // The race this component would otherwise lose: somebody dismisses a sheet
+    // and immediately reopens it. Without a token, the first close resolves a
+    // moment later and shuts the dialog they just opened — a bug that only
+    // appears under a fast hand and is untraceable when it does.
+    const { setOpen, dialog } = mount();
+    setOpen(false);
+    await new Promise((r) => requestAnimationFrame(r));
+    setOpen(true);
+
+    expect(dialog().hasAttribute("data-closing")).toBe(false);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(dialog().open).toBe(true);
+    expect(dialog().matches(":modal")).toBe(true);
+  });
+
+  it("animates in from a starting style rather than appearing at full opacity", async () => {
+    // `@starting-style` is what gives the entry a from-state with no
+    // JavaScript. Read on the frame it opens, the dialog should not yet be at
+    // its resting values.
+    const { dialog } = mount();
+    const entering = dialog().getAnimations({ subtree: true });
+    expect(entering.length).toBeGreaterThan(0);
+  });
+
+  it("waits out an animation this component did not start", async () => {
+    // The claim that makes the hook animation-library-agnostic. An app driving
+    // the panel with Motion One or the Web Animations API gets waited out the
+    // same way, because what is awaited is whatever is RUNNING on the element
+    // — not a transition this component knows the name of.
+    const { setOpen, dialog } = mount();
+    const slow = dialog().animate([{ opacity: 1 }, { opacity: 0 }], { duration: 600 });
+
+    setOpen(false);
+    await new Promise((r) => setTimeout(r, 300));
+    expect(dialog().open).toBe(true);
+
+    await slow.finished.catch(() => {});
+    await waitForClosed(dialog());
+    expect(dialog().open).toBe(false);
+  });
+
+  it("does not leave the page inert when it unmounts mid-exit", async () => {
+    // An exit that is still being awaited when the component goes away must not
+    // strand a `showModal()` dialog in the document: every click outside it
+    // would be swallowed with nothing on screen to explain why.
+    const { setOpen, unmount, dialog } = mount();
+    const el = dialog();
+    setOpen(false);
+    await new Promise((r) => requestAnimationFrame(r));
+    unmount();
+
+    expect(el.open).toBe(false);
   });
 });

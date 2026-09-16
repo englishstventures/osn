@@ -25,6 +25,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@osn/ui/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@osn/ui/ui/tabs";
 import { createSignal } from "solid-js";
 
+import type { Story, StoryArgs } from "../../lab/types.ts";
+
 export const meta = { title: "osn/ui/overlays", layout: "padded" as const };
 
 /**
@@ -226,4 +228,64 @@ export const NativeModal = () => {
       </Modal>
     </div>
   );
+};
+
+/**
+ * The modal's motion, which is the part no test tier can judge.
+ *
+ * `osn/ui`'s browser suite asserts that the exit is *running* and that the
+ * dialog stays in the top layer until it finishes. Whether 350ms of
+ * `cubic-bezier(0.22, 1, 0.36, 1)` rising 24px looks right is a question for
+ * eyes, and this is where they go.
+ *
+ * Two things worth doing here rather than reading about:
+ *
+ * **Watch the close, not the open.** Entry is `@starting-style` — pure CSS, no
+ * JavaScript. Exit cannot be: `close()` drops a dialog out of the top layer
+ * immediately, and the platform's fix for that (`overlay` with
+ * `transition-behavior: allow-discrete`) is Chrome and Edge only. `Modal`
+ * defers the `close()` call instead, which is why the sheet fades out here the
+ * same way it would in Safari.
+ *
+ * **Drag the durations to zero** and the close still works — that is the
+ * reduced-motion path, which each app reaches through its own global clamp.
+ */
+export const ModalMotion: Story<{ enter: number; exit: number } & StoryArgs> = {
+  args: { enter: 350, exit: 200 },
+  controls: {
+    enter: { kind: "range", min: 0, max: 1200 },
+    exit: { kind: "range", min: 0, max: 1200 },
+  },
+  render: (args) => {
+    const [open, setOpen] = createSignal(false);
+    return (
+      <div
+        class="flex flex-col gap-4"
+        style={{
+          "--osn-modal-enter": `${args.enter}ms`,
+          "--osn-modal-exit": `${args.exit}ms`,
+        }}
+      >
+        <Button variant="outline" onClick={() => setOpen(true)}>
+          Open
+        </Button>
+        <p class="text-meta text-subtle max-w-sm">
+          Enter {args.enter}ms · exit {args.exit}ms. The custom properties are set on the wrapper,
+          so they reach the dialog through the cascade rather than through a prop.
+        </p>
+
+        <Modal open={open()} onClose={() => setOpen(false)} label="Motion bench">
+          <h2 class="text-title font-semibold">Motion bench</h2>
+          <p class="text-body text-muted-foreground mt-2">
+            Escape, the backdrop and the button below all take the same exit.
+          </p>
+          <div class="mt-6 flex justify-end">
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Close
+            </Button>
+          </div>
+        </Modal>
+      </div>
+    );
+  },
 };
