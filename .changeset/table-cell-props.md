@@ -1,27 +1,19 @@
 ---
 "@osn/ui": minor
-"@cire/host": patch
-"@cire/invites": patch
 ---
 
-Table cells get `align`, `tone` and `valign`; `cire/invites` converts 11 more raw buttons
+Table cells get `align`, `tone` and `valign`, and stop colliding with the native attribute
 
-21 class overrides on `Th` and `Td` across `cire/host` become props. Each was
-fighting the component on the same CSS property, which two Tailwind utilities
-resolve by stylesheet order rather than by their order in `class` — so
+`Th` and `Td` take alignment, a muted tone and vertical alignment as props. A
+class override was never really an override: two Tailwind utilities on one CSS
+property resolve by stylesheet order rather than by their order in `class`, so
 `<Td class="text-right">` against the component's own `text-left` was a coin
-flip, not an override.
+flip. 21 such overrides in `cire/host` are props now.
 
-`Th` and `Td` now `Omit` the native `align` attribute rather than intersecting
-it. `<td align>` is a deprecated native attribute typed
-`"left" | "center" | "right"`, and intersecting narrows the prop to the one
-value both unions share — so `align="end"` became a type error with a baffling
-message. The same collision `Input`'s `size` has, and the type checker is what
-found it.
+Both types `Omit` the native `align` attribute rather than intersecting it.
+`<td align>` is a deprecated attribute typed `"left" | "center" | "right"`, and
+intersecting narrows the prop to the one value both unions share — so
+`align="end"` failed with `Type '"end"' is not assignable to type '"center"'`,
+which points nowhere near the cause. The same collision `Input`'s `size` has.
 
-`Table` sets `font-osn-body` itself, which three call sites were adding.
-
-11 more raw buttons in `cire/invites` are `<Button>`. The codemod now refuses to
-touch a `<button>` carrying a "Deliberately not `@cire/ui`'s `Button`" comment —
-it had already converted the RSVP modal's submit back, undoing a documented
-decision about `aria-disabled` on a confirmed state.
+`Table` sets `font-osn-body` itself, which three call sites were adding by hand.
