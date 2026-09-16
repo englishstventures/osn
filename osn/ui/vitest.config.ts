@@ -17,6 +17,7 @@
  * that name, so every file lands in exactly one project.
  */
 
+import tailwindcss from "@tailwindcss/vite";
 import { playwright } from "@vitest/browser-playwright";
 import solid from "vite-plugin-solid";
 import { defineConfig } from "vitest/config";
@@ -44,7 +45,10 @@ export default defineConfig({
         },
       },
       {
-        plugins: [solid()],
+        // Tailwind here and not in `unit`: the browser tier asserts painted
+        // colour, and without a real build every contract utility resolves to
+        // nothing while every string assertion still passes.
+        plugins: [solid(), tailwindcss()],
         test: {
           name: "browser",
           include: ["tests/**/*.browser.test.{ts,tsx}"],

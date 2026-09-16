@@ -15,6 +15,8 @@ import { describe, expect, it } from "vitest";
 
 import { Modal } from "../../src/components/ui/modal";
 
+import "../test-support/tailwind.css";
+
 /**
  * Mount a modal whose `open` is driven by a signal, as a caller's would be, and
  * hand back THAT dialog rather than whichever one `document.querySelector`
