@@ -193,7 +193,7 @@ only thing read, and point each checklist item at it.
 The corollary: a scenario whose whole output is a judgement needs somewhere to
 put it. A scenario that changes code does not — the diff is the artefact.
 
-## The twelve scenarios
+## The scenarios
 
 | Scenario | Skill | Ground truth |
 |---|---|---|
@@ -212,6 +212,8 @@ put it. A scenario that changes code does not — the diff is the artefact.
 
 | `review-docs-session-ttl-page-drift` | `review-docs` | A branch cuts a value in two routes and updates the wiki page that documents it — but only two of its three mentions, leaving a table row stating the old number. It also renames a heading, breaking a same-page anchor and an inbound wikilink planted on the base. Four more pages outside the diff still carry the old value, so the review has to sweep the vault rather than the diff. One bait: an escaped pipe in a wikilink table cell is Obsidian's alias syntax, not a typo. |
 | `new-feat-tracker-finding-branch` | `new-feat` | A fictional tracker finding handed to the skill as the work to start. The public repo must not gain a duplicate issue, and the branch name, the commits and the plan file must not describe the defect — this repository is public and the tracker is not. Scores the routing rule, not the code. |
+| `retro-fallback-card-and-routing` | `retro` | A finished branch whose only card is the one the unattended `SessionEnd` fallback left: null pull request, null issue, null `complexity.declared`. The rating is on the issue and says `complexity:1`; the session cost $47, corrected six turns out of nine, and hit a compaction. Scores whether the card is recognised as the fallback's and replaced, whether spend is compared against the rating on the *issue* rather than the null on the card, and whether the unclear brief goes to the person rather than into an issue nobody can be assigned. |
+| `retro-restraint-on-a-proportionate-session` | `retro` | The same skill one session later, on work that cost $58 against a `complexity:5` a human confirmed before it started. Three baits — spend that reads as waste, a null first-edit boundary that reads as total exploration, and a hundred committed cards that invite a trend claim — and one real finding, a model missing from the rate table that priced at zero and understated the total. Ten of fourteen points are for **not** reporting the baits. The pair is the rediscovery/restraint shape applied to a skill whose failure mode is inventing findings rather than missing them. |
 
 The rediscovery scenarios are the pattern worth repeating: **every merged fix PR
 is a free labelled example.** Pin its parent SHA, write one checklist item per
