@@ -26,43 +26,39 @@ CLI warns on any extra field. Weight the items that carry the scenario's point,
 and put a prohibition in the description as "MUST NOT ...", since there is no
 category field to say it for you. `tessl eval lint .claude` checks this.
 
-## Before the first run — the project link is per-checkout
+## Before the first run — where the scenarios directory sits
 
 The plugin lives at `.claude/`, and that is deliberate: a `tessl.json` at the
-repo root is not on the changeset allowlist and would force a changeset on
-every pull request that touched it.
+repo root is not on the changeset allowlist and would force a changeset on every
+pull request that touched it.
 
-**The committed `.claude/tessl.json` is the plugin manifest, not the project
-link.** It carries a name, a mode and a dependency map, and no project id. The
-link between this directory and the `osn-agent-skills` project in the `musubi`
-workspace is local state that tessl keeps outside the repository, keyed to the
-directory — so it does not travel with a clone, and **it does not travel to a
-new worktree either.** Cut a worktree, run an eval in it, and tessl answers:
+**`tessl eval run` resolves the project from its scenarios argument, so that
+argument has to sit inside `.claude/`.** Point it anywhere else — a temp
+directory, the repository root, `$RUNNER_TEMP` — and it answers:
 
 ```
 ✘ No Tessl project found. Run tessl init from your project root, then rerun this command.
 ```
 
-Do not run `tessl init`, whatever that message says — it would make a second
-project and split this suite's history across two scoreboards. Diagnose and
-relink instead, from `.claude/`:
+Do not run `tessl init`, whatever that message says: it would make a second
+project and split this suite's history across two scoreboards. Move the
+scenarios instead. `subset --out .claude/eval-subset`, then
+`cd .claude && tessl eval run eval-subset --context .`.
 
-```bash
-tessl project repair --json     # prints sourceMatches and the exact relink command
-tessl project repair --relink --workspace musubi --project osn-agent-skills --yes
-```
-
-`repair` matches on the git remote and the `.claude` subpath, so on a checkout
-of this repository the right project is already in `sourceMatches` and the
-relink is a formality. It writes nothing into the repository — `git status` is
-unchanged afterwards.
-
-**CI is the same case, and that is what kept the eval half inert.** A fresh
-runner is a fresh directory, so `tesslio/setup-tessl` authenticates the token
-without linking anything, and every submit died on the message above while the
-quality gate two jobs up passed on the same credentials. `skill-eval.yml` now
-runs the relink between the two, for the same reason and with the same command.
-Never `tessl init` there either: a second project splits the scoreboard.
+> [!warning] The message names the wrong cause, and that cost this repository
+> six months of an inert eval loop.
+> It reads as a missing or broken project link, and every remedy that follows
+> from that reading — `tessl project repair`, checking the token's workspace,
+> committing something into `tessl.json` — changes nothing. On a CI runner
+> `tessl project repair --json` prints `"status": "match"`, `"Linked project
+> matches this directory."`, with the right project id, immediately before the
+> same command fails with the message above. Locally, a relink made no
+> difference either; moving the scenarios directory did, on the next attempt.
+>
+> The committed `.claude/tessl.json` is the plugin manifest and carries no
+> project id, which makes the link look like the suspect. It is not. One
+> variable separates every failing run from every passing one, and it is where
+> the scenarios are.
 
 ## Running
 
