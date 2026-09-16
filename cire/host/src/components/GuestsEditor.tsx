@@ -1,6 +1,7 @@
 import Button from "@cire/ui/button";
 import { EmptyState } from "@osn/ui/ui/empty-state";
 import { Input } from "@osn/ui/ui/input";
+import { heldWhileClosing, Modal } from "@osn/ui/ui/modal";
 import { Notice } from "@osn/ui/ui/notice";
 import { Table, Td, Th } from "@osn/ui/ui/table";
 import { useAuth } from "@shared/rp-auth/solid";
@@ -60,6 +61,7 @@ export default function GuestsEditor(props: { weddingId: string }) {
   const [saveError, setSaveError] = createSignal<string | null>(null);
   const [busy, setBusy] = createSignal(false);
   const [preview, setPreview] = createSignal<PreviewResponse | null>(null);
+  const shownPreview = heldWhileClosing(preview);
 
   const changesUrl = (op: string) =>
     apiUrl(`/api/organiser/weddings/${props.weddingId}/changes/${op}`);
@@ -289,40 +291,45 @@ export default function GuestsEditor(props: { weddingId: string }) {
 
       {/* Preview modal (the shared ChangePreview) — shown after a successful
           preview, gates the apply. */}
-      <Show when={preview()}>
-        {(p) => (
-          /* Portalled to document.body: the dashboard shell sets `container-type`
-             on its layout boxes, which brings `contain: layout` with it and makes
-             them the containing block for `position: fixed` descendants. */
-          <Portal>
-            <div
-              class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Review changes before applying"
-            >
-              <div class="bg-bg border-border max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-sm border p-6 shadow-xl">
-                <ChangePreview
-                  plan={p().plan}
-                  warnings={p().warnings}
-                  busy={busy()}
-                  confirmLabel="Confirm & save"
-                  onConfirm={() => void handleApply()}
-                  onCancel={() => setPreview(null)}
-                />
-                {/* An apply error has to render HERE as well as in the sticky
-                    bar: the bar sits behind this modal's overlay, so a failed
-                    apply otherwise looked like nothing happened at all. */}
-                <Show when={saveError()}>
-                  <Notice tone="danger" alert class="mt-4">
-                    {saveError()}
-                  </Notice>
-                </Show>
-              </div>
-            </div>
-          </Portal>
-        )}
-      </Show>
+      {/* Was a `fixed inset-0 z-50` scrim in a `<Portal>`, portalled because the
+          dashboard shell sets `container-type` on its layout boxes, which brings
+          `contain: layout` and makes them the containing block for
+          `position: fixed` descendants. A top-layer dialog is outside every
+          stacking context, so there is nothing to escape and nothing to portal
+          past — and it brings the focus trap and Escape this never had.
+
+          `heldWhileClosing` because the body cannot render without a plan, and
+          confirming sets `preview()` null: without it the modal would fade out
+          as an empty box. */}
+      <Modal
+        open={preview() !== null}
+        onClose={() => setPreview(null)}
+        label="Review changes before applying"
+        class="base:max-h-[85vh] base:w-full base:max-w-lg base:overflow-y-auto"
+      >
+        <Show when={shownPreview()}>
+          {(p) => (
+            <>
+              <ChangePreview
+                plan={p().plan}
+                warnings={p().warnings}
+                busy={busy()}
+                confirmLabel="Confirm & save"
+                onConfirm={() => void handleApply()}
+                onCancel={() => setPreview(null)}
+              />
+              {/* An apply error has to render HERE as well as in the sticky
+                  bar: the bar sits behind this dialog, so a failed apply
+                  otherwise looked like nothing happened at all. */}
+              <Show when={saveError()}>
+                <Notice tone="danger" alert class="mt-4">
+                  {saveError()}
+                </Notice>
+              </Show>
+            </>
+          )}
+        </Show>
+      </Modal>
 
       {/* Sticky unsaved-changes bar (§8) — only while dirty. */}
       <Show when={store.loaded() && store.dirty()}>

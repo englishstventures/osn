@@ -48,9 +48,7 @@
  *
  * ```tsx
  * // Right: the modal stays, `open` moves.
- * <Modal open={sheet() !== null} onClose={() => setSheet(null)} label="…">
- *   <Show when={sheet()}>{(s) => <Body sheet={s()} />}</Show>
- * </Modal>
+ * <Modal open={sheet() !== null} onClose={() => setSheet(null)} label="…">…</Modal>
  *
  * // Wrong: `Show` unmounts the dialog the instant `sheet()` goes null, so the
  * // exit has nothing left to play and the sheet blinks away.
@@ -58,13 +56,29 @@
  * ```
  *
  * The wrong form is not broken — it closes, restores focus and leaves nothing
- * inert — it just loses the animation, silently. If the content genuinely
- * cannot render without the value that just became null, hold the last one:
- * that is one `createSignal` against an exit that plays.
+ * inert — it just loses the animation, silently.
+ *
+ * **The children are not mounted while it is closed.** That falls out of the
+ * rule above rather than contradicting it: the `<dialog>` stays, its contents
+ * do not. Without it, a modal that is merely *available* renders its body into
+ * every page that offers it — which in `cire/host` meant a live invite preview
+ * rendering twice, once in the sticky side pane and once inside a closed
+ * dialog, competing for the same accessible name. The children mount when
+ * `open` goes true and unmount once the exit has finished, so an expensive body
+ * costs nothing until it is asked for and is still there to be animated away.
  */
 
 import { clsx } from "clsx";
-import { createEffect, onCleanup, splitProps, type ComponentProps, type JSX } from "solid-js";
+import {
+  createEffect,
+  createSignal,
+  onCleanup,
+  Show,
+  splitProps,
+  type Accessor,
+  type ComponentProps,
+  type JSX,
+} from "solid-js";
 
 export type ModalProps = Omit<ComponentProps<"dialog">, "open" | "onClose" | "children"> & {
   /** Whether the dialog is showing. Reactive — set it false to close. */
@@ -202,6 +216,39 @@ function injectModalStyle(): void {
   styleInjected = true;
 }
 
+/**
+ * Keep the last value a modal's body was built from, so the body survives the
+ * modal's own exit.
+ *
+ * The case: `const [plan, setPlan] = createSignal<Plan | null>(null)`, a modal
+ * open when `plan()` is set, and a body that cannot render without it.
+ * Confirming sets it null — which closes the modal, correctly, and unmounts the
+ * body on the same tick, so what animates away is an empty bordered box.
+ *
+ * ```tsx
+ * const shown = heldWhileClosing(plan);
+ * <Modal open={plan() !== null} onClose={() => setPlan(null)} label="…">
+ *   <Show when={shown()}>{(p) => <Body plan={p()} />}</Show>
+ * </Modal>
+ * ```
+ *
+ * Only needed when the body depends on a value that goes away. A modal whose
+ * contents stand on their own needs nothing: `Modal` already holds its children
+ * until the exit finishes.
+ */
+export function heldWhileClosing<T>(
+  source: Accessor<T | null | undefined>,
+): Accessor<T | undefined> {
+  const [held, setHeld] = createSignal<T | undefined>(source() ?? undefined);
+  createEffect(() => {
+    const value = source();
+    // Only ever written forward: a null means "closing", and the point is that
+    // the previous value is still there to render while that happens.
+    if (value != null) setHeld(() => value);
+  });
+  return held;
+}
+
 export function Modal(props: ModalProps) {
   const [own, rest] = splitProps(props, [
     "open",
@@ -228,6 +275,14 @@ export function Modal(props: ModalProps) {
    */
   let closingToken = 0;
 
+  /**
+   * Whether the children should be in the document: open, or still animating
+   * out. Separate from `open` because the exit needs a body to animate, and
+   * separate from the element's own `.open` because that is DOM state read at
+   * effect time rather than something the view can track.
+   */
+  const [rendered, setRendered] = createSignal(props.open);
+
   createEffect(() => {
     const dialog = ref;
     if (!dialog) return;
@@ -239,6 +294,7 @@ export function Modal(props: ModalProps) {
       // Reopening cancels any exit still in flight, and clears the attribute so
       // the entry rules apply to an element that is not still mid-fade.
       closingToken++;
+      setRendered(true);
       dialog.removeAttribute("data-closing");
       if (!dialog.open) dialog.showModal();
     } else if (dialog.open) {
@@ -280,6 +336,7 @@ export function Modal(props: ModalProps) {
 
     dialog.removeAttribute("data-closing");
     if (dialog.open) dialog.close();
+    setRendered(false);
   }
 
   createEffect(() => {
@@ -355,7 +412,7 @@ export function Modal(props: ModalProps) {
       )}
       {...rest}
     >
-      {own.children}
+      <Show when={rendered()}>{own.children}</Show>
     </dialog>
   );
 }

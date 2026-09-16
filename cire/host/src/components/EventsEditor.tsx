@@ -2,6 +2,7 @@ import Button from "@cire/ui/button";
 import { EmptyState } from "@osn/ui/ui/empty-state";
 import { Field, Fieldset } from "@osn/ui/ui/field";
 import { Input } from "@osn/ui/ui/input";
+import { heldWhileClosing, Modal } from "@osn/ui/ui/modal";
 import { Notice } from "@osn/ui/ui/notice";
 import { Select } from "@osn/ui/ui/select";
 import { Textarea } from "@osn/ui/ui/textarea";
@@ -88,6 +89,7 @@ export default function EventsEditor(props: { weddingId: string }) {
   const [saveError, setSaveError] = createSignal<string | null>(null);
   const [busy, setBusy] = createSignal(false);
   const [preview, setPreview] = createSignal<PreviewResponse | null>(null);
+  const shownPreview = heldWhileClosing(preview);
   /** The draft key of the event whose drawer is open, or null when closed. */
   const [editingKey, setEditingKey] = createSignal<string | null>(null);
 
@@ -375,32 +377,32 @@ export default function EventsEditor(props: { weddingId: string }) {
       </Show>
 
       {/* Preview modal (the shared ChangePreview). */}
-      <Show when={preview()}>
-        {(p) => (
-          /* Portalled to document.body: the dashboard shell sets `container-type`
-             on its layout boxes, which brings `contain: layout` with it and makes
-             them the containing block for `position: fixed` descendants. */
-          <Portal>
-            <div
-              class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Review changes before applying"
-            >
-              <div class="bg-bg border-border max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-sm border p-6 shadow-xl">
-                <ChangePreview
-                  plan={p().plan}
-                  warnings={p().warnings}
-                  busy={busy()}
-                  confirmLabel="Confirm & save"
-                  onConfirm={() => void handleApply()}
-                  onCancel={() => setPreview(null)}
-                />
-              </div>
-            </div>
-          </Portal>
-        )}
-      </Show>
+      {/* Was a `fixed inset-0 z-50` scrim in a `<Portal>` — see `GuestsEditor`
+          for the containment reason. A top-layer dialog needs neither, and
+          brings the focus trap and Escape this never had.
+
+          `heldWhileClosing` because the body cannot render without a plan, and
+          confirming sets `preview()` null: without it the modal would fade out
+          as an empty box. */}
+      <Modal
+        open={preview() !== null}
+        onClose={() => setPreview(null)}
+        label="Review changes before applying"
+        class="base:max-h-[85vh] base:w-full base:max-w-lg base:overflow-y-auto"
+      >
+        <Show when={shownPreview()}>
+          {(p) => (
+            <ChangePreview
+              plan={p().plan}
+              warnings={p().warnings}
+              busy={busy()}
+              confirmLabel="Confirm & save"
+              onConfirm={() => void handleApply()}
+              onCancel={() => setPreview(null)}
+            />
+          )}
+        </Show>
+      </Modal>
 
       {/* Sticky unsaved-changes bar (§8) — only while dirty. */}
       <Show when={store.loaded() && store.dirty()}>
@@ -691,238 +693,234 @@ function EventDrawer(props: {
     });
 
   return (
-    /* Portalled: see the preview modal above — `container-type` on the shell
-       makes it the containing block for `position: fixed` descendants. */
-    <Portal>
-      <div class="fixed inset-0 z-50 flex justify-end bg-black/60" onClick={props.onClose}>
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Edit event"
-          class="bg-bg border-border h-full w-full max-w-md overflow-y-auto border-l p-6 shadow-xl"
-          onClick={(e) => e.stopPropagation()}
+    /* A right-hand drawer rather than a centred sheet, so it overrides the
+       UA's `margin: auto` on a modal dialog: `ml-auto mr-0` pins it to the
+       edge, and a full height with no max keeps it a drawer rather than a card.
+       Everything else it used to hand-roll — the scrim, the `z-50`, the portal
+       past the shell's `container-type`, the dialog ARIA — is the element's. */
+    <Modal
+      open
+      onClose={props.onClose}
+      label="Edit event"
+      class="base:border-border base:my-0 base:ml-auto base:mr-0 base:h-full base:max-h-none base:w-full base:max-w-md base:overflow-y-auto base:rounded-none base:border-l base:p-6"
+    >
+      <div class="mb-6 flex items-center justify-between">
+        <h2 class="font-display text-gold-dim text-osn-lg">Event details</h2>
+        <Button
+          variant="bare"
+          type="button"
+          onClick={props.onClose}
+          aria-label="Close"
+          class="text-osn-lg"
         >
-          <div class="mb-6 flex items-center justify-between">
-            <h2 class="font-display text-gold-dim text-osn-lg">Event details</h2>
-            <Button
-              variant="bare"
-              type="button"
-              onClick={props.onClose}
-              aria-label="Close"
-              class="text-osn-lg"
-            >
-              ✕
-            </Button>
-          </div>
+          ✕
+        </Button>
+      </div>
 
-          <Show when={props.errors.length > 0}>
-            <Notice tone="danger" alert class="mb-5">
-              <For each={props.errors}>{(msg) => <p>{msg}</p>}</For>
-            </Notice>
-          </Show>
+      <Show when={props.errors.length > 0}>
+        <Notice tone="danger" alert class="mb-5">
+          <For each={props.errors}>{(msg) => <p>{msg}</p>}</For>
+        </Notice>
+      </Show>
 
-          <div class="flex flex-col gap-5">
-            <Field label="Event name">
-              {(field) => (
-                <Input
-                  {...field}
-                  value={props.event.name}
-                  onInput={(e) => props.onPatch({ name: e.currentTarget.value })}
-                />
-              )}
-            </Field>
+      <div class="flex flex-col gap-5">
+        <Field label="Event name">
+          {(field) => (
+            <Input
+              {...field}
+              value={props.event.name}
+              onInput={(e) => props.onPatch({ name: e.currentTarget.value })}
+            />
+          )}
+        </Field>
 
-            {/* Timezone FIRST — it governs both the Start and the End below, and
+        {/* Timezone FIRST — it governs both the Start and the End below, and
                 it is the one field a new event arrives with already answered
                 (the organiser's own zone). The UTC offset each timestamp carries
                 is derived from this, never typed: an offset is a fact about a
                 zone on a particular date, so asking for it separately only
                 created a way for the two to disagree. */}
-            <Field label="Timezone" hint={zoneHint()}>
-              {(field) => (
-                <Select
-                  {...field}
-                  value={props.event.timezone}
-                  onChange={(e) => setTimezone(e.currentTarget.value)}
-                >
-                  <Show when={zoneUnset()}>
-                    <option value="">Select a timezone…</option>
-                  </Show>
-                  <For each={zoneGroups()}>
-                    {(group) => (
-                      <optgroup label={group.label}>
-                        <For each={group.zones}>
-                          {(zone) => <option value={zone}>{zone}</option>}
-                        </For>
-                      </optgroup>
-                    )}
-                  </For>
-                </Select>
-              )}
-            </Field>
+        <Field label="Timezone" hint={zoneHint()}>
+          {(field) => (
+            <Select
+              {...field}
+              value={props.event.timezone}
+              onChange={(e) => setTimezone(e.currentTarget.value)}
+            >
+              <Show when={zoneUnset()}>
+                <option value="">Select a timezone…</option>
+              </Show>
+              <For each={zoneGroups()}>
+                {(group) => (
+                  <optgroup label={group.label}>
+                    <For each={group.zones}>{(zone) => <option value={zone}>{zone}</option>}</For>
+                  </optgroup>
+                )}
+              </For>
+            </Select>
+          )}
+        </Field>
 
-            {/* Start: date + time, in the zone above. */}
-            <Fieldset legend="Start">
-              <DatePicker
-                label="Start date"
-                value={start().date || null}
-                onChange={(v) => setStart("date", v)}
-              />
-              <div class="flex flex-wrap items-end gap-3">
-                {/* The visible label is "Time" — the legend above says which time.
+        {/* Start: date + time, in the zone above. */}
+        <Fieldset legend="Start">
+          <DatePicker
+            label="Start date"
+            value={start().date || null}
+            onChange={(v) => setStart("date", v)}
+          />
+          <div class="flex flex-wrap items-end gap-3">
+            {/* The visible label is "Time" — the legend above says which time.
                     An `aria-label` names it in full anyway: a legend is only
                     reliably announced for a radio group, and "Time" on its own is
                     the same word as the end field's. Keeping the visible text
                     inside the spoken name is what WCAG 2.5.3 asks for. */}
-                <Field label="Time">
-                  {(field) => (
-                    <Input
-                      {...field}
-                      type="time"
-                      value={start().time}
-                      aria-label="Start time"
-                      onInput={(e) => setStart("time", e.currentTarget.value)}
-                    />
-                  )}
-                </Field>
-              </div>
-            </Fieldset>
-
-            {/* End (optional). */}
-            <Fieldset legend="End (optional)">
-              <DatePicker
-                label="End date"
-                value={end().date || null}
-                onChange={(v) => setEnd("date", v)}
-              />
-              <div class="flex flex-wrap items-end gap-3">
-                <Field label="Time">
-                  {(field) => (
-                    <Input
-                      {...field}
-                      type="time"
-                      value={end().time}
-                      aria-label="End time"
-                      onInput={(e) => setEnd("time", e.currentTarget.value)}
-                    />
-                  )}
-                </Field>
-              </div>
-            </Fieldset>
-
-            <Field label="Address">
+            <Field label="Time">
               {(field) => (
                 <Input
                   {...field}
-                  value={props.event.address ?? ""}
-                  onInput={(e) =>
-                    props.onPatch({
-                      address: e.currentTarget.value.length > 0 ? e.currentTarget.value : null,
-                    })
-                  }
+                  type="time"
+                  value={start().time}
+                  aria-label="Start time"
+                  onInput={(e) => setStart("time", e.currentTarget.value)}
                 />
               )}
             </Field>
-
-            <Field label="Dress code description">
-              {(field) => (
-                <Textarea
-                  {...field}
-                  value={props.event.dressCodeDescription ?? ""}
-                  rows={2}
-                  onInput={(e) =>
-                    props.onPatch({
-                      dressCodeDescription:
-                        e.currentTarget.value.length > 0 ? e.currentTarget.value : null,
-                    })
-                  }
-                  // This editor is a module view, and every module view
-                  // renders inside `ModuleShell`'s auto-sized frame, whose
-                  // reflow guard keys on width only. A vertically resizable
-                  // textarea holds its width steady while its height changes,
-                  // so the guard reads that as a content swap — keep textareas
-                  // in an auto-sized panel `resize-none`.
-                  resize="none"
-                />
-              )}
-            </Field>
-
-            {/* Dress-code palette — each swatch a name + a ColorPicker. */}
-            <div class="flex flex-col gap-2">
-              <span class={fieldLabel}>Dress code palette</span>
-              <For each={props.event.dressCodePalette}>
-                {(swatch, i) => (
-                  <div class="flex flex-wrap items-end gap-2">
-                    <Field labelHidden label={`Swatch ${i() + 1} name`} class="flex-1">
-                      {(field) => (
-                        <Input
-                          {...field}
-                          value={swatch.name}
-                          placeholder="Blush"
-                          onInput={(e) => updateSwatch(i(), { name: e.currentTarget.value })}
-                        />
-                      )}
-                    </Field>
-                    <ColorPicker
-                      label={`Swatch ${i() + 1} colour`}
-                      value={swatch.color}
-                      onChange={(c) => updateSwatch(i(), { color: c })}
-                    />
-                    <Button
-                      variant="bareDanger"
-                      size="sm"
-                      type="button"
-                      onClick={() => removeSwatch(i())}
-                      aria-label={`Remove swatch ${i() + 1}`}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                )}
-              </For>
-              <Button variant="outline" size="sm" onClick={addSwatch} class="self-start">
-                Add swatch
-              </Button>
-            </div>
-
-            <Field label="Pinterest URL">
-              {(field) => (
-                <Input
-                  {...field}
-                  type="url"
-                  value={props.event.pinterestUrl ?? ""}
-                  placeholder="https://www.pinterest.com/…"
-                  onInput={(e) =>
-                    props.onPatch({
-                      pinterestUrl: e.currentTarget.value.length > 0 ? e.currentTarget.value : null,
-                    })
-                  }
-                />
-              )}
-            </Field>
-
-            <Field label="Maps URL">
-              {(field) => (
-                <Input
-                  {...field}
-                  type="url"
-                  value={props.event.mapsUrl ?? ""}
-                  placeholder="https://maps.google.com/…"
-                  onInput={(e) =>
-                    props.onPatch({
-                      mapsUrl: e.currentTarget.value.length > 0 ? e.currentTarget.value : null,
-                    })
-                  }
-                />
-              )}
-            </Field>
-
-            <Button variant="primary" onClick={props.onClose} class="mt-2 self-start">
-              Done
-            </Button>
           </div>
+        </Fieldset>
+
+        {/* End (optional). */}
+        <Fieldset legend="End (optional)">
+          <DatePicker
+            label="End date"
+            value={end().date || null}
+            onChange={(v) => setEnd("date", v)}
+          />
+          <div class="flex flex-wrap items-end gap-3">
+            <Field label="Time">
+              {(field) => (
+                <Input
+                  {...field}
+                  type="time"
+                  value={end().time}
+                  aria-label="End time"
+                  onInput={(e) => setEnd("time", e.currentTarget.value)}
+                />
+              )}
+            </Field>
+          </div>
+        </Fieldset>
+
+        <Field label="Address">
+          {(field) => (
+            <Input
+              {...field}
+              value={props.event.address ?? ""}
+              onInput={(e) =>
+                props.onPatch({
+                  address: e.currentTarget.value.length > 0 ? e.currentTarget.value : null,
+                })
+              }
+            />
+          )}
+        </Field>
+
+        <Field label="Dress code description">
+          {(field) => (
+            <Textarea
+              {...field}
+              value={props.event.dressCodeDescription ?? ""}
+              rows={2}
+              onInput={(e) =>
+                props.onPatch({
+                  dressCodeDescription:
+                    e.currentTarget.value.length > 0 ? e.currentTarget.value : null,
+                })
+              }
+              // This editor is a module view, and every module view
+              // renders inside `ModuleShell`'s auto-sized frame, whose
+              // reflow guard keys on width only. A vertically resizable
+              // textarea holds its width steady while its height changes,
+              // so the guard reads that as a content swap — keep textareas
+              // in an auto-sized panel `resize-none`.
+              resize="none"
+            />
+          )}
+        </Field>
+
+        {/* Dress-code palette — each swatch a name + a ColorPicker. */}
+        <div class="flex flex-col gap-2">
+          <span class={fieldLabel}>Dress code palette</span>
+          <For each={props.event.dressCodePalette}>
+            {(swatch, i) => (
+              <div class="flex flex-wrap items-end gap-2">
+                <Field labelHidden label={`Swatch ${i() + 1} name`} class="flex-1">
+                  {(field) => (
+                    <Input
+                      {...field}
+                      value={swatch.name}
+                      placeholder="Blush"
+                      onInput={(e) => updateSwatch(i(), { name: e.currentTarget.value })}
+                    />
+                  )}
+                </Field>
+                <ColorPicker
+                  label={`Swatch ${i() + 1} colour`}
+                  value={swatch.color}
+                  onChange={(c) => updateSwatch(i(), { color: c })}
+                />
+                <Button
+                  variant="bareDanger"
+                  size="sm"
+                  type="button"
+                  onClick={() => removeSwatch(i())}
+                  aria-label={`Remove swatch ${i() + 1}`}
+                >
+                  Remove
+                </Button>
+              </div>
+            )}
+          </For>
+          <Button variant="outline" size="sm" onClick={addSwatch} class="self-start">
+            Add swatch
+          </Button>
         </div>
+
+        <Field label="Pinterest URL">
+          {(field) => (
+            <Input
+              {...field}
+              type="url"
+              value={props.event.pinterestUrl ?? ""}
+              placeholder="https://www.pinterest.com/…"
+              onInput={(e) =>
+                props.onPatch({
+                  pinterestUrl: e.currentTarget.value.length > 0 ? e.currentTarget.value : null,
+                })
+              }
+            />
+          )}
+        </Field>
+
+        <Field label="Maps URL">
+          {(field) => (
+            <Input
+              {...field}
+              type="url"
+              value={props.event.mapsUrl ?? ""}
+              placeholder="https://maps.google.com/…"
+              onInput={(e) =>
+                props.onPatch({
+                  mapsUrl: e.currentTarget.value.length > 0 ? e.currentTarget.value : null,
+                })
+              }
+            />
+          )}
+        </Field>
+
+        <Button variant="primary" onClick={props.onClose} class="mt-2 self-start">
+          Done
+        </Button>
       </div>
-    </Portal>
+    </Modal>
   );
 }
