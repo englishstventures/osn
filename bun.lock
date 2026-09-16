@@ -476,6 +476,17 @@
         "vitest": "^4.1.11",
       },
     },
+    "shared/design-tokens": {
+      "name": "@shared/design-tokens",
+      "version": "0.1.0",
+      "dependencies": {
+        "@shared/color": "workspace:*",
+      },
+      "devDependencies": {
+        "@shared/typescript-config": "workspace:*",
+        "vitest": "^4.1.11",
+      },
+    },
     "shared/dev-urls": {
       "name": "@shared/dev-urls",
       "version": "0.1.5",
@@ -1465,6 +1476,7 @@
 
     "@shared/db-utils": ["@shared/db-utils@workspace:shared/db-utils"],
 
+    "@shared/design-tokens": ["@shared/design-tokens@workspace:shared/design-tokens"],
     "@shared/dev-urls": ["@shared/dev-urls@workspace:shared/dev-urls"],
 
     "@shared/email": ["@shared/email@workspace:shared/email"],
