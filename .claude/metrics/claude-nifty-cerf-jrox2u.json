@@ -4,8 +4,8 @@
     "number": null,
     "branch": "claude/nifty-cerf-jrox2u",
     "base_sha": "b5f9c8f4c3701ae6e3a08529c86db40f1ca563ac",
-    "head_sha": "78f33490a9b87717826784853673c72306a3b6e3",
-    "generated_at": "2026-09-16T14:32:31.487Z",
+    "head_sha": "9cb6926d3c7db35619ffc4c2200c8c24726fe863",
+    "generated_at": "2026-09-16T17:29:02.571Z",
     "merged_at": null,
     "phase": "at-open"
   },
@@ -21,33 +21,33 @@
   "window": {
     "sessions": 1,
     "first_ts": "2026-09-16T05:09:08.130Z",
-    "last_ts": "2026-09-16T14:28:13.389Z",
-    "span_seconds": 33545,
-    "active_seconds": 20208,
-    "compactions": 1
+    "last_ts": "2026-09-16T17:25:07.027Z",
+    "span_seconds": 44159,
+    "active_seconds": 28717,
+    "compactions": 2
   },
   "spend": {
-    "usd_equivalent": 223.2374485000002,
+    "usd_equivalent": 322.53443400000003,
     "tokens": {
-      "input": 2720,
-      "output": 655249,
-      "thinking": 160271,
+      "input": 3562,
+      "output": 908520,
+      "thinking": 230487,
       "cache_write_5m": 380631,
-      "cache_write_1h": 3307686,
-      "cache_read": 333510610
+      "cache_write_1h": 3854270,
+      "cache_read": 508500931
     },
     "by_model": {
       "claude-opus-5": {
         "tokens": {
-          "input": 1596,
-          "output": 653585,
-          "thinking": 160271,
+          "input": 2438,
+          "output": 906856,
+          "thinking": 230487,
           "cache_write_5m": 0,
-          "cache_write_1h": 3307686,
-          "cache_read": 329099908
+          "cache_write_1h": 3854270,
+          "cache_read": 504090229
         },
-        "usd_equivalent": 213.97441900000024,
-        "messages": 798
+        "usd_equivalent": 313.2714045000001,
+        "messages": 1219
       },
       "<synthetic>": {
         "tokens": {
@@ -77,15 +77,15 @@
     "by_actor": {
       "main": {
         "tokens": {
-          "input": 1596,
-          "output": 653585,
-          "thinking": 160271,
+          "input": 2438,
+          "output": 906856,
+          "thinking": 230487,
           "cache_write_5m": 0,
-          "cache_write_1h": 3307686,
-          "cache_read": 329099908
+          "cache_write_1h": 3854270,
+          "cache_read": 504090229
         },
-        "usd_equivalent": 213.97441900000024,
-        "messages": 801
+        "usd_equivalent": 313.2714045000001,
+        "messages": 1222
       },
       "subagent": {
         "tokens": {
@@ -101,38 +101,38 @@
       }
     },
     "effort": {
-      "high": 835
+      "high": 1256
     },
     "unpriced_models": []
   },
   "diff": {
     "files": {
-      "generated": 22,
-      "test": 28,
-      "docs": 5,
+      "generated": 36,
+      "test": 43,
+      "docs": 7,
       "config": 15,
-      "source": 203
+      "source": 218
     },
     "loc": {
       "generated": {
-        "added": 740,
-        "deleted": 0
+        "added": 1031,
+        "deleted": 2
       },
       "test": {
-        "added": 3063,
-        "deleted": 680
+        "added": 3780,
+        "deleted": 974
       },
       "docs": {
-        "added": 350,
-        "deleted": 17
+        "added": 472,
+        "deleted": 25
       },
       "config": {
-        "added": 358,
-        "deleted": 31
+        "added": 366,
+        "deleted": 38
       },
       "source": {
-        "added": 5274,
-        "deleted": 2526
+        "added": 7291,
+        "deleted": 4221
       }
     },
     "packages": [
@@ -142,24 +142,24 @@
       "cire/theme",
       "cire/ui",
       "cire/vendor",
-      "cire/{host",
       "cire/{vendor",
       "osn/ui",
       "pulse/web",
       "shared/color",
       "shared/design-tokens",
+      "shared/toast",
       "tools/lab"
     ],
     "touches_migration": false,
-    "commits": 20
+    "commits": 31
   },
   "interaction": {
-    "user_turns": 38,
-    "corrective_turns": 37,
+    "user_turns": 42,
+    "corrective_turns": 41,
     "tokens_before_first_edit": 1930078,
     "sessions_with_observed_edit": 1,
     "tool_calls": {
-      "Bash": 757,
+      "Bash": 1177,
       "mcp__github__issue_write": 28,
       "Write": 18,
       "ToolSearch": 14,
@@ -169,7 +169,7 @@
       "AskUserQuestion": 7,
       "WebSearch": 6,
       "WebFetch": 4,
-      "Read": 3,
+      "Read": 4,
       "Skill": 2,
       "Agent": 2,
       "SubagentHandback": 2,
