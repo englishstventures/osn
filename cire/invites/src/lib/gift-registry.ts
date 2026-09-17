@@ -459,20 +459,25 @@ export function giftRegistryRemaining(item: GiftRegistryItem): number {
 }
 
 /**
- * Why the quantity box will not take a larger number, said where the guest is
- * typing it.
+ * Why the quantity box will not take a larger number — said only where the
+ * answer would otherwise be a surprise.
  *
- * The box carries a real `max`, but a ceiling a guest cannot see only turns
- * into a number silently clamped on submit. This is the reason beside the
- * control — read by a guest who has already decided to reserve and is choosing
- * how many, never on the card, where it would rank one gift against another.
+ * A ceiling is worth explaining when it sits BELOW what the couple asked for,
+ * which is to say when someone else has already taken some. That is the number
+ * a guest cannot work out from the page: the couple wanted three, three is what
+ * the card is for, and the box stops at two.
  *
- * `null` where there is nothing to explain: at the wedding-wide ceiling nothing
- * about this gift constrains them, and below 1 there is no form to be in.
+ * Where the ceiling IS the couple's ask, it explains nothing — "You can reserve
+ * up to 3" under a gift they asked three of is the page repeating itself, and a
+ * hint that appears on every form is one nobody reads. Single-quantity gifts,
+ * which are most of them, fall here and stay silent.
+ *
+ * `null` means render no hint. The input's own `max` bounds the control either
+ * way; this is the explanation, never the guard.
  */
-export function giftRegistryQuantityHint(max: number): string | null {
+export function giftRegistryQuantityHint(max: number, wanted: number): string | null {
   if (!Number.isFinite(max) || max < 1) return null;
-  if (max >= GIFT_REGISTRY_MAX_QUANTITY) return null;
+  if (!Number.isFinite(wanted) || max >= wanted) return null;
   return max === 1 ? "You can reserve 1." : `You can reserve up to ${max}.`;
 }
 

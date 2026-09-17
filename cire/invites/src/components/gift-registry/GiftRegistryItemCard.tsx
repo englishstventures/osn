@@ -121,10 +121,13 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
   const canReserveMore = createMemo(() => maxQuantity() >= 1);
 
   /**
-   * Why the box will not take a larger number. `null` where the ceiling is the
-   * wedding-wide one and there is nothing about this gift to explain.
+   * Why the box will not take a larger number. `null` unless the ceiling has
+   * been pushed below what the couple asked for, which is the only case a guest
+   * cannot read off the card.
    */
-  const quantityHint = createMemo(() => giftRegistryQuantityHint(maxQuantity()));
+  const quantityHint = createMemo(() =>
+    giftRegistryQuantityHint(maxQuantity(), props.item.quantityWanted),
+  );
   const quantityHintId = createUniqueId();
 
   /**

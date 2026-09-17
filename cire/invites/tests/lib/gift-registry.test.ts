@@ -307,22 +307,31 @@ describe("counts", () => {
 });
 
 describe("the reserve-ceiling hint", () => {
-  it("names the ceiling the quantity box enforces", () => {
-    expect(giftRegistryQuantityHint(2)).toBe("You can reserve up to 2.");
-    expect(giftRegistryQuantityHint(1)).toBe("You can reserve 1.");
+  it("names the ceiling once someone else has taken some", () => {
+    expect(giftRegistryQuantityHint(2, 3)).toBe("You can reserve up to 2.");
+    expect(giftRegistryQuantityHint(1, 3)).toBe("You can reserve 1.");
   });
 
-  it("says nothing where the ceiling is the wedding-wide one", () => {
-    // Nothing about THIS gift is bounding them there, so there is nothing to
-    // explain — and a hint on every form is a hint nobody reads.
-    expect(giftRegistryQuantityHint(GIFT_REGISTRY_MAX_QUANTITY)).toBeNull();
-    expect(giftRegistryQuantityHint(GIFT_REGISTRY_MAX_QUANTITY + 1)).toBeNull();
+  it("says nothing where the ceiling IS what the couple asked for", () => {
+    // Nothing has been taken, so the number is not a surprise and repeating it
+    // explains nothing. A single-quantity gift lives here, and most gifts are
+    // single-quantity — a hint on every form is a hint nobody reads.
+    expect(giftRegistryQuantityHint(1, 1)).toBeNull();
+    expect(giftRegistryQuantityHint(3, 3)).toBeNull();
+  });
+
+  it("still speaks where the claim cap bites below the couple's ask", () => {
+    // A row asking for more than any one claim may carry. The ceiling is real
+    // and is not the couple's number, so it is explained like any other.
+    expect(giftRegistryQuantityHint(GIFT_REGISTRY_MAX_QUANTITY, 200)).toBe(
+      "You can reserve up to 99.",
+    );
   });
 
   it("says nothing below 1, where there is no form to be in", () => {
-    expect(giftRegistryQuantityHint(0)).toBeNull();
-    expect(giftRegistryQuantityHint(-2)).toBeNull();
-    expect(giftRegistryQuantityHint(Number.NaN)).toBeNull();
+    expect(giftRegistryQuantityHint(0, 2)).toBeNull();
+    expect(giftRegistryQuantityHint(-2, 2)).toBeNull();
+    expect(giftRegistryQuantityHint(Number.NaN, 2)).toBeNull();
   });
 });
 

@@ -220,19 +220,37 @@ describe("the ceiling hint", () => {
     expect(input.closest("label")?.textContent).not.toContain("You can reserve");
   });
 
-  it("says it for a single-quantity gift too, where the box only takes 1", () => {
-    renderCard();
-    fireEvent.click(screen.getByRole("button", { name: "Reserve" }));
-    expect(screen.getByText("You can reserve 1.")).toBeTruthy();
-  });
-
-  it("says nothing, and describes nothing, at the wedding-wide ceiling", () => {
-    const { container } = renderCard({ item: { quantityWanted: 99, quantityClaimed: 0 } });
+  it("says nothing on a single-quantity gift, and describes nothing", () => {
+    // Most gifts are this one, and the box already permits exactly 1. A hint
+    // here would put a line under every open form on the page, which is how a
+    // hint stops being read at all.
+    const { container } = renderCard();
     fireEvent.click(screen.getByRole("button", { name: "Reserve" }));
 
     const input = container.querySelector('input[type="number"]') as HTMLInputElement;
-    // An `aria-describedby` naming an id that is not in the DOM describes nothing.
+    expect(input.max).toBe("1");
+    expect(container.textContent).not.toContain("You can reserve");
+    // And an `aria-describedby` naming an id that is not in the DOM would
+    // describe nothing, so the attribute goes with the hint.
     expect(input.getAttribute("aria-describedby")).toBeNull();
+  });
+
+  it("says nothing on a multi-quantity gift nobody has touched", () => {
+    const untouched = renderCard({ item: { quantityWanted: 3, quantityClaimed: 0 } });
+    fireEvent.click(screen.getByRole("button", { name: "Reserve" }));
+    expect(
+      (untouched.container.querySelector('input[type="number"]') as HTMLInputElement).max,
+    ).toBe("3");
+    expect(untouched.container.textContent).not.toContain("You can reserve");
+
+    cleanup();
+    // Nor when the whole ask is THIS household's own: the upsert lets them
+    // keep all of it, so the ceiling is still the couple's number.
+    const { container } = renderCard({
+      item: { quantityWanted: 2, quantityClaimed: 2 },
+      claim: { itemId: "gi-1", quantity: 2, status: "reserved", note: null, displayName: null },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Change" }));
     expect(container.textContent).not.toContain("You can reserve");
   });
 });
