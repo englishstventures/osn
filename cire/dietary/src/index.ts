@@ -174,12 +174,21 @@ export function parsePresets(stored: string): DietaryPreset[] {
  *
  * Shared by the CSV export and the host dashboard so the sheet and the screen
  * never disagree about what a row says.
+ *
+ * Same canonicalisation {@link serialisePresets} performs — one `Set`, one pass
+ * in declaration order, duplicates collapsed — rather than calling it and
+ * splitting the string back apart. This runs once per guest × event while the
+ * CSV is built, on a Worker with a 10 ms CPU budget per invocation.
  */
 export function presetLabels(keys: readonly DietaryPreset[]): string[] {
-  return serialisePresets(keys)
-    .split(",")
-    .filter((key) => key !== "")
-    .map((key) => DIETARY_PRESET_LABEL[key as DietaryPreset]);
+  // The empty case first, and it is the common one: a guest with prose and no
+  // presets, and every non-responder row on the organiser's dashboard. Without
+  // the guard an empty selection still walks all sixteen keys.
+  if (keys.length === 0) return [];
+  const chosen = new Set(keys);
+  const labels: string[] = [];
+  for (const key of DIETARY_PRESETS) if (chosen.has(key)) labels.push(DIETARY_PRESET_LABEL[key]);
+  return labels;
 }
 
 /**

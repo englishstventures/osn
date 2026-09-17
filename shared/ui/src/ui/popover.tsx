@@ -32,7 +32,12 @@ const PopoverClose = KobaltePopover.CloseButton;
  */
 function portalMount(): HTMLElement | undefined {
   if (typeof document === "undefined") return undefined;
-  return document.querySelector<HTMLElement>("dialog:modal") ?? undefined;
+  // The LAST modal dialog in document order, not the first. With two open, the
+  // top layer stacks in promotion order and a panel mounted into the earlier
+  // one is painted under the later one — the same invisible-and-unclickable
+  // failure this function exists to remove, one nesting level up.
+  const modals = document.querySelectorAll<HTMLElement>("dialog:modal");
+  return modals.item(modals.length - 1) ?? undefined;
 }
 
 const PopoverContent: ParentComponent<

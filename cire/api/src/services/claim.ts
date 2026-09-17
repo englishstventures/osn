@@ -21,6 +21,7 @@ import type {
   DressSwatch,
 } from "../schemas/claim";
 import { decodeCrop, type ImageCrop } from "../schemas/invite";
+import { DIETARY_CONSENT_VERSION } from "../schemas/rsvp";
 import { eventImagePath, versionFromKey } from "./event-image";
 
 export class InvalidCredentials extends Data.TaggedError("InvalidCredentials") {}
@@ -204,7 +205,7 @@ function buildClaimResponse(family: FamilyRow): Effect.Effect<ClaimResponse, nev
               status: rsvps.status,
               dietary: rsvps.dietary,
               dietaryPresets: rsvps.dietaryPresets,
-              dietaryConsentAt: rsvps.dietaryConsentAt,
+              dietaryConsentVersion: rsvps.dietaryConsentVersion,
             })
             .from(rsvps)
             .innerJoin(guests, eq(rsvps.guestId, guests.id))
@@ -295,13 +296,15 @@ function buildClaimResponse(family: FamilyRow): Effect.Effect<ClaimResponse, nev
       preview: family.kind === "host",
       members: Array.from(memberMap.values()),
       events: eventList,
-      // The stored key list becomes an array, and the consent stamp an ISO
-      // string, at the boundary — the sheet re-lights its picker from the first
-      // and decides whether its consent box may open ticked from the second.
-      rsvps: rsvpRows.map((row) => ({
+      // The stored key list becomes an array at the boundary, and the stored
+      // consent VERSION collapses to "is this the copy we show now?" — the sheet
+      // re-lights its picker from the first and decides whether its consent box
+      // may open ticked from the second. Consent given against superseded
+      // wording is not consent to the current wording.
+      rsvps: rsvpRows.map(({ dietaryConsentVersion, ...row }) => ({
         ...row,
         dietaryPresets: parsePresets(row.dietaryPresets),
-        dietaryConsentAt: row.dietaryConsentAt?.toISOString() ?? null,
+        dietaryConsentCurrent: dietaryConsentVersion === DIETARY_CONSENT_VERSION,
       })),
       // Resolved server-side so the banner the guest reads and the 403 the
       // write path returns are computed by the same function — the client

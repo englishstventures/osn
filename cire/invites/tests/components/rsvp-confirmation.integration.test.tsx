@@ -78,7 +78,7 @@ const savedRow: RsvpSummary = {
   status: "attending",
   dietary: "",
   dietaryPresets: [],
-  dietaryConsentAt: null,
+  dietaryConsentCurrent: false,
 };
 
 /** The Respond button on the card — the control the confirmation plays on. */
@@ -313,7 +313,7 @@ describe("RSVP confirmation — RsvpModal ↔ EventCard", () => {
       status: "declined",
       dietary: "",
       dietaryPresets: [],
-      dietaryConsentAt: null,
+      dietaryConsentCurrent: false,
     };
     let call = 0;
     vi.stubGlobal(

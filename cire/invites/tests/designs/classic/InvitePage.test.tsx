@@ -93,7 +93,7 @@ const claim: ClaimResult = {
       status: "attending",
       dietary: "Vegetarian",
       dietaryPresets: [],
-      dietaryConsentAt: "2026-06-17T00:00:00.000Z",
+      dietaryConsentCurrent: true,
     },
   ],
 };
@@ -837,7 +837,7 @@ describe("InvitePage", () => {
         status: "declined",
         dietary: "",
         dietaryPresets: [],
-        dietaryConsentAt: null,
+        dietaryConsentCurrent: false,
       },
     ];
     (props.onSubmitted as (r: RsvpSummary[]) => void)(updated);
@@ -1413,7 +1413,7 @@ describe("InvitePage", () => {
             status: "attending",
             dietary: "",
             dietaryPresets: [],
-            dietaryConsentAt: null,
+            dietaryConsentCurrent: false,
           },
         ]);
 
@@ -1537,7 +1537,7 @@ describe("InvitePage", () => {
           status: "attending",
           dietary: "",
           dietaryPresets: [],
-          dietaryConsentAt: null,
+          dietaryConsentCurrent: false,
         },
       ];
       (capturedProps.value!.onSubmitted as (r: RsvpSummary[]) => void)(recorded);

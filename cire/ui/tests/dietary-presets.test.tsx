@@ -3,46 +3,18 @@ import "@testing-library/jest-dom/vitest";
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import DietaryPresets from "../src/dietary-presets";
 
 /*
- * The picker's contract.
+ * The inline picker's contract: every option visible, nothing to open.
  *
- * Which shell renders is a real fork, so no test here leaves it to chance.
- * happy-dom answers `matchMedia` from a 1024px window, so the DEFAULT here is
- * the wide shell — a consumer's unit test that mounts a form containing this and
- * reaches straight for a checkbox finds a trigger button instead. {@link mockViewport}
- * makes the choice explicit in both directions.
- *
- * The popover's own behaviour — placement, dismiss, focus return — is Kobalte's
- * and is tested there; what matters here is that the trigger names the selection
- * and that the fields render at all.
+ * This entry point has no viewport fork and imports no popover — that is the
+ * bundle boundary `dietary-presets-popover.tsx` exists to hold — so nothing here
+ * needs to stub `matchMedia`. The trigger and the wide shell are tested beside
+ * the file that owns them.
  */
-
-/**
- * Pin the viewport the picker asks about.
- *
- * A whole `MediaQueryList` rather than `{ matches }` alone: the picker
- * subscribes with `addEventListener`, and a stub without one throws at mount.
- */
-function mockViewport(wide: boolean) {
-  const original = window.matchMedia;
-  window.matchMedia = ((query: string) => ({
-    matches: wide,
-    media: query,
-    onchange: null,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => false,
-    addListener: () => {},
-    removeListener: () => {},
-  })) as typeof window.matchMedia;
-  return () => {
-    window.matchMedia = original;
-  };
-}
 
 function Harness(props: { initial?: readonly DietaryPreset[] }) {
   const [value, setValue] = createSignal<readonly DietaryPreset[]>(props.initial ?? []);
@@ -56,18 +28,9 @@ function Harness(props: { initial?: readonly DietaryPreset[] }) {
 
 const valueOf = () => screen.getByTestId("value").textContent;
 
-let restoreViewport = () => {};
-afterEach(() => {
-  restoreViewport();
-  restoreViewport = () => {};
-  cleanup();
-});
+afterEach(cleanup);
 
-describe("DietaryPresets — narrow, the fields inline", () => {
-  beforeEach(() => {
-    restoreViewport = mockViewport(false);
-  });
-
+describe("DietaryPresets", () => {
   it("renders every preset in the vocabulary as a checkbox", () => {
     render(() => <Harness />);
     expect(screen.getAllByRole("checkbox")).toHaveLength(DIETARY_PRESETS.length);
@@ -132,51 +95,18 @@ describe("DietaryPresets — narrow, the fields inline", () => {
     expect(screen.getByText("Allergies")).toBeTruthy();
   });
 
-  it("mounts where matchMedia does not exist rather than throwing", () => {
-    restoreViewport();
-    restoreViewport = () => {};
-    // jsdom has none, and that is what every consumer's unit suite runs on. An
-    // unguarded `window.matchMedia(...)` here would fail at the first mount of
-    // any form containing the picker — not just this package's own tests — so
-    // the absence is asserted rather than assumed.
+  it("asks nothing of matchMedia at all", () => {
+    // The property that keeps this entry point safe for every consumer's unit
+    // suite, and the reason the viewport fork lives in the other file: mounting
+    // must not depend on a DOM global jsdom does not provide.
     const original = window.matchMedia;
     // @ts-expect-error — deleting a DOM global is the situation being reproduced.
     delete window.matchMedia;
     try {
       expect(() => render(() => <Harness />)).not.toThrow();
-      // And it falls back to the shell that needs no viewport question answered.
       expect(screen.getAllByRole("checkbox")).toHaveLength(DIETARY_PRESETS.length);
     } finally {
       window.matchMedia = original;
     }
-  });
-});
-
-describe("DietaryPresets — wide, the fields behind a trigger", () => {
-  beforeEach(() => {
-    restoreViewport = mockViewport(true);
-  });
-
-  it("collapses to a trigger rather than sixteen pills across the form", () => {
-    render(() => <Harness />);
-    expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
-    expect(screen.getByRole("button", { name: /add dietary requirements/i })).toBeTruthy();
-  });
-
-  it("names the current selection on the closed trigger", () => {
-    // A closed control that says only "Dietary requirements" makes a guest open
-    // it to find out what they already picked, every single time.
-    render(() => <Harness initial={["vegetarian", "nuts"]} />);
-    expect(screen.getByRole("button", { name: /vegetarian, nuts/i })).toBeTruthy();
-  });
-
-  it("truncates a long selection so the trigger cannot outgrow its row", () => {
-    render(() => <Harness initial={["vegetarian", "nuts", "gluten", "egg"]} />);
-    expect(screen.getByRole("button", { name: /vegetarian, nuts \+2/i })).toBeTruthy();
-  });
-
-  it("disables the trigger when the form is locked", () => {
-    render(() => <DietaryPresets value={[]} onChange={() => {}} disabled />);
-    expect((screen.getByRole("button") as HTMLButtonElement).disabled).toBe(true);
   });
 });

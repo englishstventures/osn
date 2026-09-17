@@ -80,11 +80,19 @@ export const RsvpRecord = Schema.Struct({
   status: Schema.String,
   dietary: Schema.String,
   dietaryPresets: Schema.Array(Schema.Literals(DIETARY_PRESETS)),
-  // When this row's Art. 9(2)(a) consent was stamped, or null if it carries no
-  // dietary data. The sheet needs it to decide whether its single consent
-  // checkbox may open ticked: one member's prior consent can never stand in for
-  // another's, so a household containing anyone without a record renders it
-  // unticked. ISO-8601, because it crosses the wire.
-  dietaryConsentAt: Schema.NullOr(Schema.String),
+  // Whether this row's Art. 9(2)(a) consent was given against the copy that is
+  // current NOW — not merely whether a record exists.
+  //
+  // The sheet needs it to decide whether its single consent checkbox may open
+  // ticked. A stored consent against superseded wording is not consent to the
+  // current wording, and a pre-ticked box is not consent at all (Art. 4(11)),
+  // so a version change must re-ask rather than inherit.
+  //
+  // A boolean rather than the timestamp and version themselves: the client only
+  // ever branches on it, and the comparison belongs on the server that owns
+  // `DIETARY_CONSENT_VERSION` anyway. It also keeps a millisecond-precision
+  // "when this guest last recorded dietary data" off a credential the whole
+  // household shares.
+  dietaryConsentCurrent: Schema.Boolean,
 });
 export type RsvpRecord = Schema.Schema.Type<typeof RsvpRecord>;

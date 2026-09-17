@@ -8,12 +8,17 @@
  * `z-index` is: rendered, measurable, announced by a screen reader, and
  * completely unclickable.
  *
- * Nothing below this tier can catch it. happy-dom has no top layer and no
+ * `PopoverContent` answers it by portalling into the open `dialog:modal` rather
+ * than into `<body>`, so the panel inherits the dialog's own top-layer
+ * promotion and Kobalte's positioning is left alone. Promoting the panel
+ * separately, with the native `popover` attribute, was tried and does not work:
+ * Kobalte positions with `position: absolute`, whose containing block changes
+ * the moment an element is promoted, and the panel ends up painted where the
+ * hit test never reaches.
+ *
+ * Nothing below this tier can catch any of it. happy-dom has no top layer and no
  * layout, so every DOM assertion about the panel passes while the real thing is
- * invisible. It is also not a hypothetical: cire hit exactly this with its
- * Add-to-Calendar menu, which now escapes by promoting itself into the top layer
- * with the native `popover` attribute. This file is why that workaround does not
- * have to be repeated at every call site.
+ * invisible.
  */
 
 import { cleanup, render, screen } from "@solidjs/testing-library";
@@ -45,8 +50,6 @@ function mount(props: { frame?: boolean } = {}) {
   return { ...result, setOpen, dialog };
 }
 
-/** A `showModal()` dialog survives an `afterEach` that only empties the render
- *  container, so close it explicitly or the next test mounts behind it. */
 afterEach(() => {
   // A `showModal()` dialog is in the top layer, so it survives an `afterEach`
   // that only empties the render container — and the next test then mounts

@@ -5,35 +5,27 @@ import {
   type DietaryBand,
   type DietaryPreset,
 } from "@cire/dietary";
-import { Popover, PopoverContent, PopoverTrigger } from "@shared/ui/ui/popover";
-import { createMemo, createSignal, createUniqueId, For, onCleanup, Show, type JSX } from "solid-js";
+import { createMemo, For, Show, type JSX } from "solid-js";
 
 /**
- * The dietary-requirement picker: one multi-select, two presentations.
+ * The dietary-requirement picker, inline: every option visible, nothing to open.
  *
- * Every surface that collects dietary requirements renders this — the guest
- * invite, the host's record-a-reply editor, the marketing demo — so the
- * vocabulary a caterer eventually reads is decided in exactly one place.
+ * Every surface that collects dietary requirements renders this or the popover
+ * that wraps it, so the vocabulary a caterer eventually reads is decided in
+ * exactly one place.
  *
- * ## One fieldset, two shells
+ * On a phone this is the whole control — answering is a tap, and something you
+ * must open first is a tap spent before you can start. The checkboxes sit in a
+ * horizontally scrolling track.
  *
- * Below `md:` the checkboxes sit inline in a horizontally scrolling track: on a
- * phone the whole point is that answering is a tap, and a control you must open
- * first is a tap you have to spend before you can start. At `md:` and up the
- * same checkboxes move into a popover behind a trigger that names the current
- * selection, because sixteen pills across a desktop form is a wall.
+ * ## Why this file imports no popover
  *
- * The **checkboxes are rendered once**, and the shell is chosen at runtime
- * rather than in CSS. A CSS fork would need the fields in the tree twice —
- * Solid evaluates a JSX expression once, so the same nodes placed in two parents
- * MOVE rather than duplicate — and two controls with the same accessible name is
- * a worse problem than one media query.
- *
- * `matchMedia` is guarded and defaults to the narrow shell, because jsdom
- * provides none and an unguarded read would take out every unit test that mounts
- * a form containing this. The `change` listener is not optional: a signal seeded
- * from `.matches` alone never updates, so a window resized across the breakpoint
- * would strand the guest with a popover trigger that no longer opens anything.
+ * `@cire/ui/dietary-presets-popover` is a separate entry point, and the split is
+ * a bundle boundary rather than a tidying. A static top-level import is what a
+ * bundler follows, so a single component that *could* be either shell shipped
+ * Kobalte to the guest invite — which renders the inline shell only — and put
+ * that app 8 KB gzip over its size guard. A `<Show>` around the JSX does not
+ * help: the cost is the import, not the render.
  *
  * ## Why the trigger is not a `<select>`
  *
@@ -55,9 +47,9 @@ import { createMemo, createSignal, createUniqueId, For, onCleanup, Show, type JS
  * ## The "Other" box is the caller's
  *
  * This renders the presets and nothing else. The free-text box belongs to the
- * form, below this control, because it has to stay reachable while the popover
- * is closed — and a guest who has typed something must be able to see it without
- * reopening anything.
+ * form, below this control, because it has to stay reachable while a popover
+ * shell is closed — and a guest who has typed something must be able to see it
+ * without reopening anything.
  */
 
 const BAND_LABEL = {
@@ -78,14 +70,9 @@ export interface DietaryPresetsProps {
   disabled?: boolean;
   /** Names whose requirements these are, for the group's accessible name. */
   label?: string;
-  /** Extra classes for the popover panel, for a caller with its own layering. */
-  panelClass?: string;
-  /**
-   * Pin the fields inline at every width instead of collapsing them into a
-   * popover above the breakpoint. For a caller whose surface has no room for a
-   * panel, or which wants every option visible at once.
-   */
-  shell?: "auto" | "inline";
+  /** Wrap the pills into a column instead of a scrolling row. The popover shell
+   *  sets it; inline callers leave it off. */
+  wrap?: boolean;
 }
 
 function toggle(
@@ -99,20 +86,6 @@ function toggle(
   // Canonical order, so the value this hands back is the order it renders and
   // the order the column stores. Nothing downstream has to re-sort.
   return DIETARY_PRESETS.filter((k) => next.has(k));
-}
-
-/**
- * What the collapsed trigger says.
- *
- * The selection itself, never a static "Dietary requirements" — a closed control
- * that does not say what it holds makes a guest open it to check, every time.
- * Truncated at two so a long selection cannot outgrow the button.
- */
-function summarise(value: readonly DietaryPreset[]): string {
-  if (value.length === 0) return "Add dietary requirements";
-  const shown = value.slice(0, 2).map((k) => DIETARY_PRESET_LABEL[k]);
-  const rest = value.length - shown.length;
-  return rest > 0 ? `${shown.join(", ")} +${rest}` : shown.join(", ");
 }
 
 function PresetCheckbox(props: {
@@ -142,38 +115,30 @@ function PresetCheckbox(props: {
   );
 }
 
-/** Matches the `md:` breakpoint the rest of cire's invite sheet forks at. */
-const WIDE_QUERY = "(min-width: 48rem)";
-
-function createIsWide() {
-  const [wide, setWide] = createSignal(false);
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return wide;
-  const query = window.matchMedia(WIDE_QUERY);
-  setWide(query.matches);
-  const onChange = (event: MediaQueryListEvent) => setWide(event.matches);
-  query.addEventListener("change", onChange);
-  onCleanup(() => query.removeEventListener("change", onChange));
-  return wide;
-}
+/**
+ * The bands, grouped once at module load.
+ *
+ * Reads only module constants, so a `createMemo` per instance computed the same
+ * three groups again for every mounted picker and could never recompute — and a
+ * household sheet mounts one per attending member.
+ */
+export const BANDED_PRESETS = BANDS.map((band) => ({
+  band,
+  presets: DIETARY_PRESETS.filter((k) => DIETARY_PRESET_BAND[k] === band),
+}));
 
 export default function DietaryPresets(props: DietaryPresetsProps): JSX.Element {
-  const groupId = createUniqueId();
   const selected = createMemo(() => new Set(props.value));
-  const wide = createIsWide();
 
-  const bands = createMemo(() =>
-    BANDS.map((band) => ({
-      band,
-      presets: DIETARY_PRESETS.filter((k) => DIETARY_PRESET_BAND[k] === band),
-    })),
-  );
-
-  // `wide` decides the layout outright rather than a `md:` variant doing it:
-  // the same fields render in a scrolling row on a phone and in a wrapped column
-  // inside the popover, and by the time they are in the popover the viewport is
-  // already known to be wide. A media variant here would be a second, redundant
-  // answer to a question the shell has already asked.
-  const fields = () => (
+  /**
+   * `wrap` is the caller's, not a media query's.
+   *
+   * Inline on a phone the track scrolls sideways; inside a popover panel the
+   * same fields wrap into a column. The shell already knows which it is, so
+   * asking a second time here would be a redundant answer — and it is what let
+   * this component reach for a popover it did not always render.
+   */
+  return (
     <fieldset
       aria-label={props.label ?? "Dietary requirements"}
       // A fieldset carries a border, padding and margin by default; this is a
@@ -186,17 +151,17 @@ export default function DietaryPresets(props: DietaryPresetsProps): JSX.Element 
       <div
         classList={{
           "flex min-w-0 gap-4": true,
-          "snap-x snap-proximity overflow-x-auto pb-1": !wide(),
-          "flex-col gap-3": wide(),
+          "snap-x snap-proximity overflow-x-auto pb-1": !props.wrap,
+          "flex-col gap-3": props.wrap,
         }}
       >
-        <For each={bands()}>
+        <For each={BANDED_PRESETS}>
           {(group) => (
             <div
               classList={{
                 "flex gap-2": true,
-                "shrink-0 items-center": !wide(),
-                "flex-col items-start": wide(),
+                "shrink-0 items-center": !props.wrap,
+                "flex-col items-start": props.wrap,
               }}
             >
               <Show when={BAND_LABEL[group.band] !== ""}>
@@ -204,7 +169,9 @@ export default function DietaryPresets(props: DietaryPresetsProps): JSX.Element 
                   {BAND_LABEL[group.band]}
                 </p>
               </Show>
-              <div classList={{ "flex gap-2": true, "shrink-0": !wide(), "flex-wrap": wide() }}>
+              <div
+                classList={{ "flex gap-2": true, "shrink-0": !props.wrap, "flex-wrap": props.wrap }}
+              >
                 <For each={group.presets}>
                   {(preset) => (
                     <PresetCheckbox
@@ -221,29 +188,5 @@ export default function DietaryPresets(props: DietaryPresetsProps): JSX.Element 
         </For>
       </div>
     </fieldset>
-  );
-
-  return (
-    <Show when={wide() && props.shell !== "inline"} fallback={fields()}>
-      {/* Kobalte owns placement, dismiss, focus return and the ARIA contract.
-          Its content carries `data-kb-top-layer`, which is what keeps the panel
-          reachable from inside a modal that marks everything outside itself
-          `aria-hidden` — the guest invite opens this from exactly there. */}
-      <Popover gutter={6} placement="bottom-start">
-        <PopoverTrigger
-          id={groupId}
-          disabled={props.disabled}
-          class="font-body border-ui-hairline text-ui-ink hover:border-ui-accent-soft focus-visible:ring-ui-focus rounded-ui-sm flex w-full cursor-pointer items-center justify-between gap-2 border bg-transparent px-3 py-2.5 text-left text-[0.88rem] transition-colors duration-200 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <span classList={{ "text-ui-ink-muted": props.value.length === 0 }}>
-            {summarise(props.value)}
-          </span>
-          <span aria-hidden="true" class="text-ui-ink-muted text-[0.7em]">
-            ▾
-          </span>
-        </PopoverTrigger>
-        <PopoverContent class="base:w-auto base:max-w-[22rem] base:p-4">{fields()}</PopoverContent>
-      </Popover>
-    </Show>
   );
 }

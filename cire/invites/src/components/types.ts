@@ -65,16 +65,15 @@ export interface RsvpSummary {
   dietary: string;
   dietaryPresets: readonly DietaryPreset[];
   /**
-   * When this row's Art. 9(2)(a) consent was stamped, or null if it carries no
-   * dietary data.
+   * Whether this row's Art. 9(2)(a) consent was given against the copy shown now.
    *
    * The sheet asks for consent once per submission rather than once per guest,
-   * so it has to know which members already have a record: one person's prior
+   * so it has to know which members are already covered: one person's prior
    * consent can never stand in for another's, and a household where anyone is
-   * new to consent must be asked afresh. Non-empty `dietary` used to imply this,
-   * but a row can now carry presets and no text at all.
+   * new to consent — or whose record predates a consent-copy change — must be
+   * asked afresh. The server computes it, because the server owns the version.
    */
-  dietaryConsentAt: string | null;
+  dietaryConsentCurrent: boolean;
 }
 
 /**

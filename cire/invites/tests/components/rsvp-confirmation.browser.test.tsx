@@ -75,7 +75,7 @@ const row = (guestId: string): RsvpSummary => ({
   status: "attending",
   dietary: "",
   dietaryPresets: [],
-  dietaryConsentAt: null,
+  dietaryConsentCurrent: false,
 });
 
 /**

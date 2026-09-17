@@ -177,7 +177,7 @@ describe("RsvpModal", () => {
             status: "attending",
             dietary: "Coeliac — strictly gluten free.",
             dietaryPresets: [],
-            dietaryConsentAt: "2026-06-17T00:00:00.000Z",
+            dietaryConsentCurrent: true,
           },
         ]}
         apiUrl="https://api.test"
@@ -243,7 +243,7 @@ describe("RsvpModal", () => {
         status: "attending",
         dietary: "",
         dietaryPresets: [],
-        dietaryConsentAt: null,
+        dietaryConsentCurrent: false,
       },
     ];
     const fetchSpy = vi.fn().mockResolvedValue(
@@ -301,7 +301,7 @@ describe("RsvpModal", () => {
         status: "attending",
         dietary: "Vegetarian",
         dietaryPresets: [],
-        dietaryConsentAt: "2026-06-17T00:00:00.000Z",
+        dietaryConsentCurrent: true,
       },
       {
         guestId: "guest-raj",
@@ -309,7 +309,7 @@ describe("RsvpModal", () => {
         status: "declined",
         dietary: "",
         dietaryPresets: [],
-        dietaryConsentAt: null,
+        dietaryConsentCurrent: false,
       },
     ];
     const fetchSpy = vi.fn().mockResolvedValue(
@@ -404,7 +404,7 @@ describe("RsvpModal", () => {
         status: "attending",
         dietary: "",
         dietaryPresets: [],
-        dietaryConsentAt: null,
+        dietaryConsentCurrent: false,
       },
       {
         guestId: "guest-raj",
@@ -412,7 +412,7 @@ describe("RsvpModal", () => {
         status: "attending",
         dietary: "",
         dietaryPresets: [],
-        dietaryConsentAt: null,
+        dietaryConsentCurrent: false,
       },
     ];
     vi.stubGlobal(
@@ -459,7 +459,7 @@ describe("RsvpModal", () => {
         status: "attending",
         dietary: "",
         dietaryPresets: [],
-        dietaryConsentAt: null,
+        dietaryConsentCurrent: false,
       },
       {
         guestId: "guest-raj",
@@ -467,7 +467,7 @@ describe("RsvpModal", () => {
         status: "attending",
         dietary: "",
         dietaryPresets: [],
-        dietaryConsentAt: null,
+        dietaryConsentCurrent: false,
       },
     ];
     vi.stubGlobal(
@@ -642,7 +642,7 @@ describe("RsvpModal", () => {
         status: "attending",
         dietary: "Vegan",
         dietaryPresets: [],
-        dietaryConsentAt: "2026-06-17T00:00:00.000Z",
+        dietaryConsentCurrent: true,
       },
       {
         guestId: "guest-raj",
@@ -650,7 +650,7 @@ describe("RsvpModal", () => {
         status: "declined",
         dietary: "",
         dietaryPresets: [],
-        dietaryConsentAt: null,
+        dietaryConsentCurrent: false,
       },
     ];
 
@@ -682,7 +682,7 @@ describe("RsvpModal", () => {
         status: "maybe",
         dietary: "",
         dietaryPresets: [],
-        dietaryConsentAt: null,
+        dietaryConsentCurrent: false,
       },
     ];
 
@@ -761,7 +761,7 @@ describe("RsvpModal", () => {
             status: "attending",
             dietary: "",
             dietaryPresets: ["vegan"],
-            dietaryConsentAt: "2026-06-17T00:00:00.000Z",
+            dietaryConsentCurrent: true,
           },
         ]}
         apiUrl="https://api.test"
@@ -780,6 +780,70 @@ describe("RsvpModal", () => {
     expect((consentBox() as HTMLInputElement).checked).toBe(false);
   });
 
+  it("lets a pre-ticked consent box be unticked, and then blocks submit", async () => {
+    // Withdrawal. The box opens ticked because Priya's saved reply is already
+    // covered; unticking it has to actually untick it. Under a derived
+    // `given() || alreadyCovers()` the click was a no-op write, the binding
+    // never re-ran, and the guest was left looking at an unticked box while the
+    // request carried `dietaryConsent: true`.
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { getByText } = render(() => (
+      <RsvpModal
+        event={event}
+        members={[priya]}
+        existingRsvps={[
+          {
+            guestId: "guest-priya",
+            eventId: "event-1",
+            status: "attending",
+            dietary: "",
+            dietaryPresets: ["vegan"],
+            dietaryConsentCurrent: true,
+          },
+        ]}
+        apiUrl="https://api.test"
+        onClose={() => {}}
+      />
+    ));
+
+    const box = consentBox() as HTMLInputElement;
+    expect(box.checked).toBe(true);
+
+    fireEvent.click(box);
+    expect((consentBox() as HTMLInputElement).checked).toBe(false);
+
+    fireEvent.click(getByText("Save"));
+    await waitFor(() => expect(getByText(/tick the box/i)).toBeTruthy());
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("re-asks when the stored consent predates the current copy", () => {
+    // `dietaryConsentCurrent` is the server's verdict, not "a record exists".
+    // Consent given against superseded wording is not consent to the wording on
+    // screen, and a pre-ticked box is not consent at all.
+    render(() => (
+      <RsvpModal
+        event={event}
+        members={[priya]}
+        existingRsvps={[
+          {
+            guestId: "guest-priya",
+            eventId: "event-1",
+            status: "attending",
+            dietary: "",
+            dietaryPresets: ["vegan"],
+            dietaryConsentCurrent: false,
+          },
+        ]}
+        apiUrl="https://api.test"
+        onClose={() => {}}
+      />
+    ));
+    expect((consentBox() as HTMLInputElement).checked).toBe(false);
+  });
+
   it("blocks submit when a newly-covered member has no prior consent (C-H2)", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
@@ -795,7 +859,7 @@ describe("RsvpModal", () => {
             status: "attending",
             dietary: "",
             dietaryPresets: ["vegan"],
-            dietaryConsentAt: "2026-06-17T00:00:00.000Z",
+            dietaryConsentCurrent: true,
           },
         ]}
         apiUrl="https://api.test"
@@ -873,7 +937,7 @@ describe("RsvpModal", () => {
         status: "attending",
         dietary: "Vegan",
         dietaryPresets: [],
-        dietaryConsentAt: "2026-06-17T00:00:00.000Z",
+        dietaryConsentCurrent: true,
       },
     ];
     render(() => (
@@ -1071,7 +1135,7 @@ describe("RsvpModal", () => {
             status: "attending",
             dietary: "Vegan",
             dietaryPresets: [],
-            dietaryConsentAt: "2026-06-17T00:00:00.000Z",
+            dietaryConsentCurrent: true,
           },
         ]}
         apiUrl="https://api.test"
@@ -1118,7 +1182,7 @@ describe("RsvpModal", () => {
             status: "attending",
             dietary: "",
             dietaryPresets: [],
-            dietaryConsentAt: null,
+            dietaryConsentCurrent: false,
           },
         ]}
         apiUrl="https://api.test"
@@ -1151,7 +1215,7 @@ describe("RsvpModal", () => {
             status: "attending",
             dietary: "",
             dietaryPresets: [],
-            dietaryConsentAt: null,
+            dietaryConsentCurrent: false,
           },
         ]}
         apiUrl="https://api.test"
@@ -1232,7 +1296,7 @@ describe("RsvpModal", () => {
           status: "attending",
           dietary: "",
           dietaryPresets: [],
-          dietaryConsentAt: null,
+          dietaryConsentCurrent: false,
         },
       ];
       const fetchSpy = vi.fn().mockResolvedValue(
@@ -1303,7 +1367,7 @@ describe("RsvpModal", () => {
           status: "attending",
           dietary: "",
           dietaryPresets: [],
-          dietaryConsentAt: null,
+          dietaryConsentCurrent: false,
         },
       ];
       vi.stubGlobal(
@@ -1379,7 +1443,7 @@ describe("RsvpModal", () => {
           status: "attending",
           dietary: "",
           dietaryPresets: [],
-          dietaryConsentAt: null,
+          dietaryConsentCurrent: false,
         },
       ];
       return () =>
@@ -1453,7 +1517,7 @@ describe("RsvpModal", () => {
           status: "attending",
           dietary: "",
           dietaryPresets: [],
-          dietaryConsentAt: null,
+          dietaryConsentCurrent: false,
         },
       ];
       vi.stubGlobal(
@@ -1556,7 +1620,7 @@ describe("RsvpModal", () => {
           status: "attending",
           dietary: "",
           dietaryPresets: [],
-          dietaryConsentAt: null,
+          dietaryConsentCurrent: false,
         },
       ];
       vi.stubGlobal(
@@ -1597,7 +1661,7 @@ describe("RsvpModal", () => {
           status: "attending",
           dietary: "",
           dietaryPresets: [],
-          dietaryConsentAt: null,
+          dietaryConsentCurrent: false,
         },
         {
           guestId: "guest-raj",
@@ -1605,7 +1669,7 @@ describe("RsvpModal", () => {
           status: "declined",
           dietary: "",
           dietaryPresets: [],
-          dietaryConsentAt: null,
+          dietaryConsentCurrent: false,
         },
       ];
       vi.stubGlobal(
@@ -1649,7 +1713,7 @@ describe("RsvpModal", () => {
           status: "attending",
           dietary: "",
           dietaryPresets: [],
-          dietaryConsentAt: null,
+          dietaryConsentCurrent: false,
         },
         {
           guestId: "guest-raj",
@@ -1657,7 +1721,7 @@ describe("RsvpModal", () => {
           status: "declined",
           dietary: "",
           dietaryPresets: [],
-          dietaryConsentAt: null,
+          dietaryConsentCurrent: false,
         },
       ];
       vi.stubGlobal(
@@ -1682,7 +1746,7 @@ describe("RsvpModal", () => {
               status: "declined",
               dietary: "",
               dietaryPresets: [],
-              dietaryConsentAt: null,
+              dietaryConsentCurrent: false,
             },
           ]}
           apiUrl="https://api.test"
@@ -1783,7 +1847,7 @@ describe("RsvpModal", () => {
           status: "attending",
           dietary: "",
           dietaryPresets: [],
-          dietaryConsentAt: null,
+          dietaryConsentCurrent: false,
         },
       ];
       vi.stubGlobal(
@@ -1839,7 +1903,7 @@ describe("RsvpModal", () => {
                   status: "attending",
                   dietary: "",
                   dietaryPresets: [],
-                  dietaryConsentAt: null,
+                  dietaryConsentCurrent: false,
                 },
               ],
             }),
@@ -1887,7 +1951,7 @@ describe("RsvpModal", () => {
           status: "attending",
           dietary: "",
           dietaryPresets: [],
-          dietaryConsentAt: null,
+          dietaryConsentCurrent: false,
         },
       ];
       vi.stubGlobal(
@@ -1940,7 +2004,7 @@ describe("RsvpModal", () => {
             status: "attending",
             dietary: "",
             dietaryPresets: [],
-            dietaryConsentAt: null,
+            dietaryConsentCurrent: false,
           },
         ];
         vi.stubGlobal(

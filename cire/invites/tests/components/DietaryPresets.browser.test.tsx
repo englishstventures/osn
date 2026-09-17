@@ -22,9 +22,10 @@ import type { EventSummary, FamilyMember } from "../../src/components/types";
  * Modal, whose dialog is `overflow-hidden`. `@shared/ui`'s popover mounts its
  * panel into the open dialog — which is what clears the top layer a
  * `showModal()` dialog occupies — and inside a `frame` dialog that puts it in
- * the clip instead. `RsvpModal` therefore pins `shell="inline"` until
- * xchromo/osn#1089 lands, and this is where that is checked against a real
- * viewport rather than a stubbed `matchMedia`.
+ * the clip instead. `RsvpModal` therefore imports `@cire/ui/dietary-presets`,
+ * the entry point with no popover in it, rather than the popover shell the host
+ * portal uses. This is where that is checked against a real viewport rather than
+ * a stubbed `matchMedia`.
  */
 
 /** Wide enough to clear the picker's 48rem query with room to spare. */
@@ -98,9 +99,9 @@ describe("dietary picker, in the sheet", () => {
   });
 
   it("stays inline on a desktop viewport, because the sheet is a `frame` modal", async () => {
-    // Not the shell the picker uses elsewhere. Shipping the trigger here would
-    // ship a control whose panel opens inside the dialog's `overflow-hidden`
-    // and cannot be clicked — see xchromo/osn#1089.
+    // Not the entry point the host portal imports. Rendering the trigger here
+    // would ship a control whose panel opens inside the dialog's
+    // `overflow-hidden` and cannot be clicked — see xchromo/osn#1089.
     await page.viewport(...WIDE);
     const { fieldset } = openAttending();
     expect(within(fieldset).getAllByRole("checkbox").length).toBeGreaterThan(0);

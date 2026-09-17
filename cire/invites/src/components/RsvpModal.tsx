@@ -148,10 +148,11 @@ export function RsvpModal(props: RsvpModalProps) {
         attending,
         dietary: existing?.dietary ?? "",
         dietaryPresets: existing?.dietaryPresets ?? [],
-        // The server's own record, not an inference from the text. A row can
+        // The server's own verdict, not an inference from the text. A row can
         // carry presets and no text at all, so "they typed something, therefore
-        // they consented" stopped being a safe proxy.
-        hadConsent: existing?.dietaryConsentAt != null,
+        // they consented" stopped being a safe proxy — and a record against
+        // superseded consent wording is not consent to the wording on screen.
+        hadConsent: existing?.dietaryConsentCurrent === true,
       };
     }
     return map;
@@ -191,13 +192,38 @@ export function RsvpModal(props: RsvpModalProps) {
     return covered.every((m) => responses()[m.guestId]?.hadConsent === true);
   });
 
-  const [consentGiven, setConsentGiven] = createSignal(false);
+  /**
+   * The consent checkbox's state. ONE signal, and the box's only source.
+   *
+   * Emphatically not `consentGiven() || consentAlreadyCovers()`. Under that
+   * form a pre-ticked box could not be unticked: `consentGiven` is already
+   * `false`, so `setConsentGiven(false)` is a no-op write, Solid's equality
+   * check suppresses the notification, the `checked` binding never re-runs, and
+   * the DOM keeps the browser's own unticked state while the derived value stays
+   * `true`. The guest sees an unticked box and the request carries
+   * `dietaryConsent: true` — an Art. 9(2)(a) record stamped against an
+   * affirmation that was actively withdrawn, and no way to withdraw it short of
+   * deleting every dietary answer in the household (Art. 7(3)).
+   */
+  const [consented, setConsented] = createSignal(false);
 
   /**
-   * The box's state: ticked by hand, or ticked because every member it covers
-   * had already consented and nothing about that changed.
+   * Seed and re-ask, as the set of covered members changes.
+   *
+   * Ticks the box when every member it covers already consented against the
+   * CURRENT copy, and un-ticks it the moment that stops being true — a member
+   * newly offering dietary data, or one whose record predates a consent-copy
+   * change. Writing the signal rather than deriving it is what keeps the box
+   * untickable by hand; the effect only reacts to the covered set changing, so
+   * it never fights a guest who has just made a choice about the same set.
    */
-  const consented = () => consentGiven() || consentAlreadyCovers();
+  let lastCovered: boolean | null = null;
+  createEffect(() => {
+    const covered = consentAlreadyCovers();
+    if (covered === lastCovered) return;
+    lastCovered = covered;
+    setConsented(covered);
+  });
 
   const [error, setError] = createSignal<string | null>(null);
   const [loading, setLoading] = createSignal(false);
@@ -593,11 +619,6 @@ export function RsvpModal(props: RsvpModalProps) {
                       onChange={(next) => setDietaryPresets(guestId, next)}
                       disabled={locked()}
                       label={`Dietary requirements for ${member.firstName}`}
-                      // This sheet is a `frame` Modal, whose dialog is
-                      // `overflow-hidden` — and the popover panel mounts inside
-                      // that dialog to clear the top layer, so it lands inside
-                      // the clip. Inline until xchromo/osn#1089 lands.
-                      shell="inline"
                     />
                   </div>
 
@@ -649,7 +670,7 @@ export function RsvpModal(props: RsvpModalProps) {
               type="checkbox"
               class="accent-gold mt-0.5 h-4 w-4 shrink-0 cursor-pointer"
               checked={consented()}
-              onChange={(e) => setConsentGiven(e.currentTarget.checked)}
+              onChange={(e) => setConsented(e.currentTarget.checked)}
               disabled={locked()}
             />
             <span>
