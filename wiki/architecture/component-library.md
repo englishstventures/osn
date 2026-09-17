@@ -349,44 +349,12 @@ its own caller — silently, with every string assertion still passing.
 <Modal class="base:max-w-lg base:bg-bg" …>
 ```
 
-It cost nine call sites across three apps. The consent preferences dialog was
-the worst of them: 480px instead of 512px, and painted on
-`--osn-surface-raised` instead of the page ground, which put the panel on the
-same colour as the `bg-surface-raised/40` rows inside it, so the rows stopped
-reading as rows. `cire/invites/tests/components/consent/consent-dialog-surface.browser.test.tsx`
-is the guard, and it has to be a browser test — the defect is invisible to
-anything that reads the class attribute.
-
-Same rule for any `base:`-styled component, not just `Modal`. The prefix belongs
-to a component's own defaults; a caller writes plain utilities.
-
-#### Overriding a `Modal` default: plain utilities, never `base:` ones
-
-`Modal`'s defaults are `base:`-prefixed, which compiles to `:where(…)` and
-therefore **zero specificity** — the whole point being that a caller's utility
-wins. That only holds when the caller's utility is *plain*.
-
-A `base:` one on the same property ties, and a tie is resolved by **Tailwind's
-stylesheet order**, which is neither the order of the `class` attribute nor
-anything the call site can see. Measured in `cire/invites`' built CSS,
-`.base\:max-w-osn-sm` is emitted after `.base\:max-w-lg`, so the component beat
-its own caller — silently, with every string assertion still passing.
-
-```tsx
-// Right: a plain utility beats `:where(…)` every time.
-<Modal class="max-w-lg bg-bg" …>
-
-// Wrong: ties with Modal's own, resolved by stylesheet order.
-<Modal class="base:max-w-lg base:bg-bg" …>
-```
-
-It cost nine call sites across three apps. The consent preferences dialog was
-the worst of them: 480px instead of 512px, and painted on
-`--osn-surface-raised` instead of the page ground, which put the panel on the
-same colour as the `bg-surface-raised/40` rows inside it, so the rows stopped
-reading as rows. `cire/invites/tests/components/consent/consent-dialog-surface.browser.test.tsx`
-is the guard, and it has to be a browser test — the defect is invisible to
-anything that reads the class attribute.
+`house/no-base-variant-at-call-site` reports it at `error`, so the mistake is
+caught rather than remembered. Where a dialog's rendered size or surface is
+load-bearing, pin it in the browser tier as well — the defect is invisible to
+anything that reads a class attribute, and
+`cire/invites/tests/components/consent/consent-dialog-surface.browser.test.tsx`
+is the worked example.
 
 Same rule for any `base:`-styled component, not just `Modal`. The prefix belongs
 to a component's own defaults; a caller writes plain utilities.
@@ -444,7 +412,8 @@ container as a popover while it has something to show
 documents what is left for numbers to decide, which is everything that is not a
 dialog.
 
-Three consequences for tests, all of which cost a debugging session here:
+Three consequences for tests, each of which fails in a way that reads as a
+component bug:
 
 - **jsdom implements no part of `<dialog>`.** `showModal` is `undefined`, not
   inert; `Modal` degrades to a non-modal dialog, and Escape, the backdrop,

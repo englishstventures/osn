@@ -26,13 +26,11 @@ Two token vocabularies were in use across ten frontends: shadcn's semantic names
 `@cire/*` app. A component cannot be shared across that split, because it has to
 name a colour to paint one.
 
-Everything that tried went the same way. `shared/toast/src/toast.css` was
-written in plain CSS keyed off its own custom properties specifically to route
-around it. The cire invite carried `!bg-surface-raised !text-text !border-border
-!font-body` on a toast — four `!important`s whose only job was beating a
-library's defaults. `cire/host` and `cire/vendor` kept duplicate copies of
-`Button`, `Card`, `Field`, `Notice` and `EmptyState`, and a duplicated contrast
-test, because neither could import the other's.
+Without a shared vocabulary there are only three ways out, and a codebase that
+lacks one ends up using all of them: write the component in plain CSS keyed off
+its own custom properties, beat the library's defaults with `!important` at
+every call site, or keep a duplicate component per app. The contract exists so
+that none of the three is ever the answer.
 
 ## The shape
 
