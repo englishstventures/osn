@@ -290,7 +290,7 @@
 
   /* The shadcn semantic names — `--color-background`, `--color-primary` and
      sixteen more — used to sit here, mapped onto the ramp against the day a
-     shared component layer arrived. It arrived reading `--osn-*` instead, so
+     shared component layer arrived. It arrived reading `--ui-*` instead, so
      they became eighteen aliases nothing read, and a misleading set at that:
      the block sent `primary` to the brand green while the house primary is
      gold, and `accent` to a neutral surface. The contract mapping below is
@@ -298,7 +298,7 @@
 }
 
 /* ── The token contract ─────────────────────────────────────────────────────
- * `@shared/ui` and `@cire/ui` are written against `--osn-*`, not against the
+ * `@shared/ui` and `@cire/ui` are written against `--ui-*`, not against the
  * ramp above. This block is the whole of their integration, and it is
  * value-for-value identical to `cire/host`'s for the reason the ramp itself is
  * duplicated: the two portals are two doors into the same product, and a
@@ -306,7 +306,7 @@
  *
  * Aliases onto the ramp, never literals — the same rule the rest of this file
  * follows, and for the same reason: `data-theme` re-points the ramp, and every
- * `--osn-*` name follows it with no rebuild and no second mapping for light.
+ * `--ui-*` name follows it with no rebuild and no second mapping for light.
  *
  * ## The accent is gold, not the brand green
  *

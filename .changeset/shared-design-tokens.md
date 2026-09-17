@@ -6,7 +6,7 @@ New `@shared/design-tokens`: the token contract every shared component reads,
 and the conformance harness that makes it a contract rather than a naming
 convention.
 
-`tokens.css` declares the `--osn-*` names as `@theme inline` aliases with
+`tokens.css` declares the `--ui-*` names as `@theme inline` aliases with
 inline fallbacks, plus the `@source` and `@custom-variant base` directives
 consumers would otherwise each have to remember. `inline` is what lets a
 subtree redefine a token and have shared components follow it — a theme story

@@ -14,7 +14,7 @@ house style is genuinely the product's — `Button` (four gold variants,
 uppercase, tracked), `Card` and `Loading` — plus `UsernameInput`, whose raw-prop
 API a combobox needs and whose controlled `@shared/ui` twin cannot provide.
 
-**`@cire/ui` writes `osn-*` like any library.** That is what makes it
+**`@cire/ui` writes `ui-*` like any library.** That is what makes it
 renderable in all four cire apps rather than the two that happen to declare
 `--gold`: `cire/host`'s Button used `duration-(--dur-fast)`, and `--dur-fast`
 exists in neither `cire/invites` nor `cire/landing`. Transitions here are plain

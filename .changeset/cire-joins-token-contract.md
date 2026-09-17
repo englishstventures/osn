@@ -7,13 +7,13 @@
 cire's two portals join the token contract, and it finds three contrast defects
 
 `cire/host` and `cire/vendor` now import `@shared/design-tokens` and map their
-ramp onto the `--osn-*` roles. The accent is **gold, not the brand green**:
+ramp onto the `--ui-*` roles. The accent is **gold, not the brand green**:
 counted across both portals' components, gold appears in 422 colour utilities
 and the green in 8, so gold is what a shared component means by "accent".
 
 The eighteen shadcn semantic aliases each portal carried are gone. They were
 mapped against the day a shared component layer arrived; it arrived reading
-`--osn-*` instead, so they had become aliases nothing read — and a misleading
+`--ui-*` instead, so they had become aliases nothing read — and a misleading
 set, sending `primary` to the green and `accent` to a neutral surface.
 
 **The conformance harness found three defects the hand-written pair table

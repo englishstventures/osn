@@ -6,6 +6,7 @@ tags:
   - tokens
 related:
   - "[[component-library]]"
+  - "[[component-lab]]"
   - "[[frontend-patterns]]"
   - "[[browser-tests]]"
   - "[[toast]]"
@@ -100,7 +101,7 @@ which name a new package, token or identifier takes.
 
 Scales, each spelled as a Tailwind utility: `text-ui-xs` … `2xl`,
 `tracking-ui-tight` … `ultra`, `leading-ui-none` … `relaxed`,
-`radius-ui-hair` … `pill` plus `radius-ui-control`, `font-ui-body` /
+`rounded-ui-hair` … `pill` plus `rounded-ui-control`, `font-ui-body` /
 `-display` / `-mono`, and the measure scale `max-w-ui-xs` … `3xl` — declared
 as `--container-ui-*`, which is the namespace Tailwind reads a `max-w-*` from.
 
@@ -134,6 +135,13 @@ The reason `cire/host` gives for keeping _its own_ theme block non-inline does
 not transfer: there the JS-read name is `--color-gold`. Here nothing reads
 `--color-ui-*` from JavaScript — an app that wants a value in JS reads its own
 `--ui-*`, or its own token, with `getComputedStyle`.
+
+The lab shows the property directly. `design-system/theming` in `@tools/lab`
+renders the same `@shared/ui` components three times: under musubi's mapping,
+inside a `div` carrying cire's ramp as inline `--ui-*` custom properties, and
+inside one that sets every token to `initial` so the fallbacks show. Only
+`inline` makes the second and third columns differ from the first — see
+[[component-lab]].
 
 ### Fallbacks inline, and no `:root` in the package
 
@@ -190,6 +198,11 @@ see removes the feature outright for a keyboard user.
 > never compiled. Those need the browser tier
 > ([[wiki/conventions/browser-tests]]), and in the case of raw palette colours,
 > `@shadcn/lint`'s `no-raw-colors`.
+
+The same pairs can be *looked at*: `design-system/contrast` in the lab lays them
+out as a matrix and measures each ratio from the painted cell in whichever theme
+is on, which is the reading the harness — working from the stylesheet — cannot
+take. See [[component-lab]].
 
 ## Where the pieces live
 
