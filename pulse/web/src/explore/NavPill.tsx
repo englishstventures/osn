@@ -32,7 +32,7 @@ export function NavPill(
   return (
     <button
       type="button"
-      class={`text-osn-sm relative inline-flex h-9 items-center gap-2 rounded-full border px-3.5 font-medium ${TONE[tone]}`}
+      class={`text-ui-sm relative inline-flex h-9 items-center gap-2 rounded-full border px-3.5 font-medium ${TONE[tone]}`}
       {...rest}
     >
       {children}

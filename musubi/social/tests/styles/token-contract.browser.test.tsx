@@ -3,7 +3,7 @@
  *
  * Every other check in this repo stops short of this one. The conformance test
  * reads the stylesheet and does arithmetic on values it parses; the unit tier
- * asserts a component carries `base:bg-osn-accent` as a string. Neither can see
+ * asserts a component carries `base:bg-ui-accent` as a string. Neither can see
  * whether that class **generated any CSS**, whether it survived the cascade, or
  * what colour a browser finally painted.
  *
@@ -14,12 +14,12 @@
  *
  * So these tests read `getComputedStyle` in a real engine and compare each
  * primitive's painted colour against the app's OWN token, resolved the same
- * way. That is the claim "`@osn/ui` renders identically after the re-key"
+ * way. That is the claim "`@shared/ui` renders identically after the re-key"
  * reduced to something falsifiable: not "the class is present" but "the colour
- * `bg-osn-accent` paints is the colour `--primary` holds".
+ * `bg-ui-accent` paints is the colour `--primary` holds".
  */
 
-import { Button } from "@osn/ui/ui/button";
+import { Button } from "@shared/ui/ui/button";
 import { render } from "@solidjs/testing-library";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
@@ -138,14 +138,12 @@ describe("the contract reaches the pixel", () => {
     // `base:` compiles to `:where(…)`. If that ever stopped being true, every
     // existing `class=` override in both apps would silently stop applying —
     // and no string assertion anywhere would notice.
-    const { getByRole } = render(() => <Button class="bg-osn-danger">Save</Button>);
-    expect(getComputedStyle(getByRole("button")).backgroundColor).toBe(
-      paint(token("--osn-danger")),
-    );
+    const { getByRole } = render(() => <Button class="bg-ui-danger">Save</Button>);
+    expect(getComputedStyle(getByRole("button")).backgroundColor).toBe(paint(token("--ui-danger")));
   });
 
   it("gives a control the app's own radius, which here is a pill", () => {
-    // The reason `--osn-radius-control` exists rather than the Button picking
+    // The reason `--ui-radius-control` exists rather than the Button picking
     // one of the sized steps. musubi's house style is pill CTAs (DESIGN.md),
     // and before this token that was `class="rounded-pill"` written out at
     // eighteen call sites. A sized step would have been overridden at every one
@@ -161,12 +159,12 @@ describe("the contract reaches the pixel", () => {
 
   it("sizes a control from the contract's scale, not Tailwind's", () => {
     // `text-sm` was Tailwind's 0.875rem until the primitives moved onto the
-    // contract. Now it is `--osn-text-base`, which this app maps to its own
+    // contract. Now it is `--ui-text-base`, which this app maps to its own
     // 14px title step — so a shared button is sized by musubi's type system
     // rather than by the library's.
     const { getByRole } = render(() => <Button>Save</Button>);
     expect(getComputedStyle(getByRole("button")).fontSize).toBe(
-      getComputedStyle(document.documentElement).getPropertyValue("--osn-text-base").trim(),
+      getComputedStyle(document.documentElement).getPropertyValue("--ui-text-base").trim(),
     );
   });
 });

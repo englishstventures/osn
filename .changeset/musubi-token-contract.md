@@ -8,9 +8,9 @@ dark-mode contrast failure the conformance test found on first contact.
 The mapping is aliases onto the existing shadcn ramp, so `.dark` carries the
 whole contract with it and not a single `bg-card` or `text-muted-foreground`
 in the app changes. Two mappings are deliberately not the obvious ones:
-`--osn-accent-soft` takes `--muted` rather than `--accent`, because shadcn's
+`--ui-accent-soft` takes `--muted` rather than `--accent`, because shadcn's
 `--accent` here is a neutral grey and the contract's `accent-soft` means a tint
-of the *accent*; and `--osn-ground-deep` takes `--secondary`, the surface the
+of the *accent*; and `--ui-ground-deep` takes `--secondary`, the surface the
 page recedes to, which in dark mode is lighter than the page rather than
 darker.
 

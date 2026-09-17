@@ -1,5 +1,5 @@
 ---
-"@osn/ui": minor
+"@shared/ui": minor
 ---
 
 Table cells get `align`, `tone` and `valign`, and stop colliding with the native attribute
@@ -16,4 +16,4 @@ intersecting narrows the prop to the one value both unions share — so
 `align="end"` failed with `Type '"end"' is not assignable to type '"center"'`,
 which points nowhere near the cause. The same collision `Input`'s `size` has.
 
-`Table` sets `font-osn-body` itself, which three call sites were adding by hand.
+`Table` sets `font-ui-body` itself, which three call sites were adding by hand.

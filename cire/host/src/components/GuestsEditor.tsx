@@ -1,11 +1,11 @@
 import Button from "@cire/ui/button";
-import { EmptyState } from "@osn/ui/ui/empty-state";
-import { Input } from "@osn/ui/ui/input";
-import { heldWhileClosing, Modal } from "@osn/ui/ui/modal";
-import { Notice } from "@osn/ui/ui/notice";
-import { Table, Td, Th } from "@osn/ui/ui/table";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
+import { EmptyState } from "@shared/ui/ui/empty-state";
+import { Input } from "@shared/ui/ui/input";
+import { heldWhileClosing, Modal } from "@shared/ui/ui/modal";
+import { Notice } from "@shared/ui/ui/notice";
+import { Table, Td, Th } from "@shared/ui/ui/table";
 import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import { Portal } from "solid-js/web";
 
@@ -339,7 +339,7 @@ export default function GuestsEditor(props: { weddingId: string }) {
         <Portal>
           <div class="border-border bg-surface/95 fixed inset-x-0 bottom-0 z-40 border-t backdrop-blur">
             <div class="page-frame flex flex-wrap items-center justify-between gap-3 py-3">
-              <span class="font-body text-text-muted text-osn-sm">
+              <span class="font-body text-text-muted text-ui-sm">
                 <Show when={hasErrors()} fallback="You have unsaved changes.">
                   <span class="text-error">
                     Fix {store.errors().length} {store.errors().length === 1 ? "error" : "errors"}{" "}
@@ -413,7 +413,7 @@ function FamilyCard(props: {
     <div class="border-border bg-surface/30 flex flex-col gap-4 rounded-sm border p-4">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <label class="flex flex-1 flex-col gap-1">
-          <span class="font-body text-text-muted text-osn-xs tracking-osn-widest uppercase">
+          <span class="font-body text-text-muted text-ui-xs tracking-ui-widest uppercase">
             Household name
           </span>
           <input
@@ -422,20 +422,20 @@ function FamilyCard(props: {
             aria-label="Household name"
             aria-invalid={famErrors().length > 0}
             onInput={(e) => props.store.renameFamily(props.family.key, e.currentTarget.value)}
-            class="border-border bg-bg font-display text-text focus:border-gold text-osn-md rounded-sm border px-3 py-1.5 outline-none"
+            class="border-border bg-bg font-display text-text focus:border-gold text-ui-md rounded-sm border px-3 py-1.5 outline-none"
           />
         </label>
         <div class="flex items-center gap-3">
           <Show
             when={props.family.publicId}
             fallback={
-              <span class="font-body text-gold/70 border-gold/30 text-osn-xs tracking-osn-widest rounded-sm border px-1.5 py-0.5 uppercase not-italic">
+              <span class="font-body text-gold/70 border-gold/30 text-ui-xs tracking-ui-widest rounded-sm border px-1.5 py-0.5 uppercase not-italic">
                 New — code minted on save
               </span>
             }
           >
             <span
-              class="text-text-muted text-osn-xs font-mono"
+              class="text-text-muted text-ui-xs font-mono"
               title="This household's claim code — deleting the household disables it."
             >
               {props.family.publicId}
@@ -456,7 +456,7 @@ function FamilyCard(props: {
         </div>
       </div>
 
-      <For each={famErrors()}>{(msg) => <p class="text-error text-osn-sm">{msg}</p>}</For>
+      <For each={famErrors()}>{(msg) => <p class="text-error text-ui-sm">{msg}</p>}</For>
 
       {/* The shared `Table`, which also makes the sideways scroll reachable from
           a keyboard — the bare `overflow-x-auto` div it replaces could only be
@@ -495,7 +495,7 @@ function FamilyCard(props: {
           keeps its claim code) until it is deleted on purpose, so say so rather
           than rendering a bare header row. */}
       <Show when={props.family.guests.length === 0}>
-        <p class="font-body text-text-muted text-osn-sm">
+        <p class="font-body text-text-muted text-ui-sm">
           No guests in this household yet — its invite code won’t show anyone.
         </p>
       </Show>
@@ -592,7 +592,7 @@ function GuestRow(props: {
       <Show when={props.errors.length > 0}>
         <tr>
           <td colspan={3 + props.events.length + 1} class="px-2 pb-2">
-            <For each={props.errors}>{(msg) => <p class="text-error text-osn-sm">{msg}</p>}</For>
+            <For each={props.errors}>{(msg) => <p class="text-error text-ui-sm">{msg}</p>}</For>
           </td>
         </tr>
       </Show>

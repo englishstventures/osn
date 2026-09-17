@@ -17,7 +17,7 @@ app mapping written inside `@layer base`.
 
 `conformance.ts` is a rewrite of `cire/host/tests/styles/tokens.test.ts`, not
 a move. That harness finds tokens by regex over literal `--name: oklch(…)`
-declarations, which a contract mapping never is — it is `--osn-ink:
+declarations, which a contract mapping never is — it is `--ui-ink:
 var(--text)`, two or three hops from a literal. Against a mapping the old
 approach matches nothing and asserts about an empty set, so the substance
 here is a `var()` resolver that follows the chain across theme scopes, plus

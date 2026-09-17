@@ -1,12 +1,12 @@
 import Button from "@cire/ui/button";
-import { EmptyState } from "@osn/ui/ui/empty-state";
-import { Field } from "@osn/ui/ui/field";
-import { Input } from "@osn/ui/ui/input";
-import { Notice } from "@osn/ui/ui/notice";
-import { Table, Td, Th } from "@osn/ui/ui/table";
 import { tokeniseQuery, tokensPrefixName } from "@shared/db-utils/search";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
+import { EmptyState } from "@shared/ui/ui/empty-state";
+import { Field } from "@shared/ui/ui/field";
+import { Input } from "@shared/ui/ui/input";
+import { Notice } from "@shared/ui/ui/notice";
+import { Table, Td, Th } from "@shared/ui/ui/table";
 import { createSignal, onCleanup, onMount, Show, For, createMemo } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -405,7 +405,7 @@ export default function GuestTable(props: GuestTableProps) {
 
       <Show when={!loading() && !error() && hasGuests()}>
         <div class="flex flex-wrap items-end justify-between gap-3">
-          <p class="font-body text-text-muted text-osn-sm">
+          <p class="font-body text-text-muted text-ui-sm">
             {guests().length} {guests().length === 1 ? "guest" : "guests"} across{" "}
             {families().length} {families().length === 1 ? "household" : "households"}
           </p>
@@ -424,7 +424,7 @@ export default function GuestTable(props: GuestTableProps) {
         </div>
 
         <Show when={visibleFamilies().length === 0}>
-          <p class="font-body text-text-muted text-osn-sm italic">
+          <p class="font-body text-text-muted text-ui-sm italic">
             No guests match “{search().trim()}”.
           </p>
         </Show>
@@ -466,11 +466,11 @@ export default function GuestTable(props: GuestTableProps) {
                           }`}
                         >
                           <div class="flex flex-wrap items-center justify-between gap-3">
-                            <span class="font-display text-gold-dim text-osn-md flex items-center gap-2">
+                            <span class="font-display text-gold-dim text-ui-md flex items-center gap-2">
                               {family.familyName}
                               <Show when={isDeactivated(family)}>
                                 <span
-                                  class="font-body border-error/40 text-error text-osn-xs tracking-osn-widest rounded-sm border px-1.5 py-0.5 uppercase not-italic"
+                                  class="font-body border-error/40 text-error text-ui-xs tracking-ui-widest rounded-sm border px-1.5 py-0.5 uppercase not-italic"
                                   title="Deactivated — this household's code no longer opens the invite. Reactivate to restore it."
                                 >
                                   Deactivated — code disabled
@@ -486,7 +486,7 @@ export default function GuestTable(props: GuestTableProps) {
                                   fallback={
                                     <Show when={isShared(family)}>
                                       <span
-                                        class="font-body text-gold/80 border-gold/30 text-osn-xs tracking-osn-widest rounded-sm border px-1.5 py-0.5 uppercase not-italic"
+                                        class="font-body text-gold/80 border-gold/30 text-ui-xs tracking-ui-widest rounded-sm border px-1.5 py-0.5 uppercase not-italic"
                                         title="Sent — you copied this family's invite message"
                                       >
                                         Sent
@@ -495,7 +495,7 @@ export default function GuestTable(props: GuestTableProps) {
                                   }
                                 >
                                   <span
-                                    class="font-body bg-gold text-bg text-osn-xs tracking-osn-widest rounded-sm px-1.5 py-0.5 uppercase not-italic"
+                                    class="font-body bg-gold text-bg text-ui-xs tracking-ui-widest rounded-sm px-1.5 py-0.5 uppercase not-italic"
                                     title={`Opened — a guest opened this invite (code used) on ${formatOpenedDate(
                                       family.firstOpenedAt!,
                                     )}`}
@@ -537,14 +537,14 @@ export default function GuestTable(props: GuestTableProps) {
                                         </Button>
                                       }
                                     >
-                                      <span class="font-body text-text-muted text-osn-xs tracking-osn-wide">
+                                      <span class="font-body text-text-muted text-ui-xs tracking-ui-wide">
                                         Disable this code?
                                       </span>
                                       <button
                                         type="button"
                                         onClick={() => void toggleDeactivated(family, true)}
                                         disabled={togglingId() === family.familyId}
-                                        class="border-error bg-error font-body text-bg text-osn-xs tracking-osn-wider rounded-sm border px-2.5 py-1 uppercase transition hover:opacity-90 disabled:opacity-40"
+                                        class="border-error bg-error font-body text-bg text-ui-xs tracking-ui-wider rounded-sm border px-2.5 py-1 uppercase transition hover:opacity-90 disabled:opacity-40"
                                       >
                                         {togglingId() === family.familyId
                                           ? "Deactivating…"
@@ -592,7 +592,7 @@ export default function GuestTable(props: GuestTableProps) {
                                 <For each={member.events}>
                                   {(eventId) => (
                                     <span
-                                      class="bg-gold/10 text-gold text-osn-xs tracking-osn-wide inline-block rounded-sm px-2 py-0.5 uppercase"
+                                      class="bg-gold/10 text-gold text-ui-xs tracking-ui-wide inline-block rounded-sm px-2 py-0.5 uppercase"
                                       title={eventId}
                                     >
                                       {eventNameById().get(eventId) ?? eventId}
@@ -600,11 +600,11 @@ export default function GuestTable(props: GuestTableProps) {
                                   )}
                                 </For>
                                 <Show when={member.events.length === 0}>
-                                  <span class="text-text-muted text-osn-sm">--</span>
+                                  <span class="text-text-muted text-ui-sm">--</span>
                                 </Show>
                               </div>
                             </Td>
-                            <Td tone="muted" valign="middle" class="tracking-osn-wide font-mono">
+                            <Td tone="muted" valign="middle" class="tracking-ui-wide font-mono">
                               <Show when={index() === 0}>{family.publicId}</Show>
                             </Td>
                           </tr>

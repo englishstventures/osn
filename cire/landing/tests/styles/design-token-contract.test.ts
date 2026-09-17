@@ -47,13 +47,13 @@ describe("design-token contract", () => {
   });
 
   it("maps the contract through aliases rather than literals", () => {
-    const mapping = CSS.slice(CSS.indexOf("--osn-ground:"), CSS.indexOf("--osn-radius-hair:"));
-    expect([...mapping.matchAll(/(--osn-[\w-]+):\s*(oklch|#)/gi)].map((m) => m[1])).toEqual([]);
+    const mapping = CSS.slice(CSS.indexOf("--ui-ground:"), CSS.indexOf("--ui-radius-hair:"));
+    expect([...mapping.matchAll(/(--ui-[\w-]+):\s*(oklch|#)/gi)].map((m) => m[1])).toEqual([]);
   });
 
   it("maps all seven type steps rather than leaving gaps for the fallback", () => {
     for (const step of ["xs", "sm", "base", "md", "lg", "xl", "2xl"]) {
-      expect(CSS).toMatch(new RegExp(`--osn-text-${step}:`));
+      expect(CSS).toMatch(new RegExp(`--ui-text-${step}:`));
     }
   });
 });

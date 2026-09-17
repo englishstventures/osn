@@ -1,9 +1,9 @@
 import { buttonClass } from "@cire/ui/button";
 import { cardClass } from "@cire/ui/card";
 import Loading from "@cire/ui/loading";
-import { EmptyState } from "@osn/ui/ui/empty-state";
-import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
+import { EmptyState } from "@shared/ui/ui/empty-state";
+import { Notice } from "@shared/ui/ui/notice";
 import { createResource, createSignal, For, Show } from "solid-js";
 
 import { friendlyError } from "../lib/api";
@@ -58,7 +58,7 @@ export default function OrgPicker(props: OrgPickerProps) {
 
       <Show when={(orgs() ?? []).length > 0}>
         <div class="flex flex-col gap-3">
-          <h2 class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
+          <h2 class="font-body text-gold text-ui-xs tracking-ui-widest uppercase">
             Your organisations
           </h2>
           {/* One column until there is room for two whole cards. An org row is
@@ -78,7 +78,7 @@ export default function OrgPicker(props: OrgPickerProps) {
                     class={`${cardClass({ interactive: true })} gap-1`}
                   >
                     <span class="font-body text-text font-medium">{org.name}</span>
-                    <span class="font-body text-text-muted text-osn-sm">@{org.handle}</span>
+                    <span class="font-body text-text-muted text-ui-sm">@{org.handle}</span>
                   </button>
                 </li>
               )}

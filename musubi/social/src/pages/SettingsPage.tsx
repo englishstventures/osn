@@ -1,10 +1,10 @@
+import { ProfileOnboarding } from "@osn/auth-ui/ProfileOnboarding";
 import { useAuth } from "@osn/client/solid";
-import { ProfileOnboarding } from "@osn/ui/auth/ProfileOnboarding";
-import { Avatar, AvatarFallback, AvatarImage } from "@osn/ui/ui/avatar";
-import { Button } from "@osn/ui/ui/button";
-import { Card } from "@osn/ui/ui/card";
-import { Input } from "@osn/ui/ui/input";
-import { Label } from "@osn/ui/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@shared/ui/ui/avatar";
+import { Button } from "@shared/ui/ui/button";
+import { Card } from "@shared/ui/ui/card";
+import { Input } from "@shared/ui/ui/input";
+import { Label } from "@shared/ui/ui/label";
 import { useLocation, useNavigate } from "@solidjs/router";
 import { createMemo, lazy, Show, Suspense } from "solid-js";
 

@@ -1,5 +1,5 @@
 ---
-"@osn/ui": patch
+"@shared/ui": patch
 ---
 
 `Modal`'s reduced-motion behaviour gets a browser test, and a `prefers-reduced-motion` command to write it with

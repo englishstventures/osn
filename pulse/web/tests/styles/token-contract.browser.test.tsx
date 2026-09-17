@@ -3,7 +3,7 @@
  *
  * The same claim `@musubi/social` makes, and worth making twice: the two apps
  * map the contract onto genuinely different ramps, and the mapping decision
- * that matters here — `--osn-accent` is the neutral `--primary`, not the coral
+ * that matters here — `--ui-accent` is the neutral `--primary`, not the coral
  * `--pulse-accent` — is one a stylesheet-level test can only check by string.
  * This checks it by colour.
  *
@@ -14,7 +14,7 @@
  * string-level assertion still passes.
  */
 
-import { Button } from "@osn/ui/ui/button";
+import { Button } from "@shared/ui/ui/button";
 import { render } from "@solidjs/testing-library";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
@@ -117,10 +117,8 @@ describe("the contract reaches the pixel", () => {
     // `base:` compiles to `:where(…)`. If that stopped being true, every
     // existing `class=` override in this app would silently stop applying, and
     // no string assertion anywhere would notice.
-    const { getByRole } = render(() => <Button class="bg-osn-danger">Save</Button>);
-    expect(getComputedStyle(getByRole("button")).backgroundColor).toBe(
-      paint(token("--osn-danger")),
-    );
+    const { getByRole } = render(() => <Button class="bg-ui-danger">Save</Button>);
+    expect(getComputedStyle(getByRole("button")).backgroundColor).toBe(paint(token("--ui-danger")));
   });
   it("emits `text-success` and `text-warn`, which the app had no utility for", () => {
     // These are new, and they are the reason five call sites could stop writing

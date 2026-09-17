@@ -125,9 +125,9 @@ describe("RsvpModal", () => {
     // makes iOS Safari zoom the page when the field is focused.
     expect(input.className).toContain("text-base");
     // The smaller visual size only applies from the `sm:` breakpoint up.
-    // `text-osn-base` rather than the `[0.9rem]` this used to spell: the value
+    // `text-ui-base` rather than the `[0.9rem]` this used to spell: the value
     // is unchanged, it is a contract step now instead of a one-off.
-    expect(input.className).toContain("sm:text-osn-base");
+    expect(input.className).toContain("sm:text-ui-base");
   });
 
   it("blocks submit and shows an error when nobody in the party has answered", async () => {

@@ -1,4 +1,4 @@
-import { Modal } from "@osn/ui/ui/modal";
+import { Modal } from "@shared/ui/ui/modal";
 import { createSignal, onCleanup, onMount, type JSX } from "solid-js";
 
 import { filterThemeVars } from "./invite-theme";
@@ -37,7 +37,7 @@ interface AnimatedModalProps {
 
 /**
  * The guest site's bottom-sheet modal: the invite's own theming and chrome
- * around `@osn/ui`'s {@link Modal}.
+ * around `@shared/ui`'s {@link Modal}.
  *
  * ## What the platform owns
  *

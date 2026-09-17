@@ -5,10 +5,11 @@ related:
   - "[[index]]"
   - "[[drag-and-drop]]"
   - "[[component-library]]"
+  - "[[design-tokens]]"
   - "[[cire-invite-builder]]"
   - "[[browser-tests]]"
   - "[[component-lab]]"
-last-reviewed: 2026-09-16
+last-reviewed: 2026-09-17
 ---
 # Toasts — `@shared/toast` and the `--toast-*` contract
 
@@ -95,6 +96,7 @@ its vocabulary onto them once:
 | `--toast-ink` | Message colour |
 | `--toast-border` | Border |
 | `--toast-radius`, `--toast-shadow`, `--toast-font`, `--toast-font-size` | Shape and type |
+| `--toast-enter-duration`, `--toast-exit-duration` | The in/out animation, 160ms each by default |
 | `--toast-focus` | Focus ring on the action/close buttons |
 | `--toast-accent-success` / `-error` / `-warn` / `-info` | The tone glyph's colour |
 
@@ -109,12 +111,20 @@ its vocabulary onto them once:
 --toast-accent-error: var(--toast-error);      /* note the alias; see below */
 ```
 
-**Styled in plain CSS, not Tailwind.** Only `pulse/web` and `musubi/social` declare
-`@custom-variant base (:where(&))`, and none of the three cire apps declares
-`@source` for a workspace package. Utilities in the package would mean threading
-Tailwind config into five apps across two vocabularies; a stylesheet keyed off
-custom properties needs none of it. Each app adds one line —
-`@import "@shared/toast/toast.css";` — to its global CSS.
+**Styled in plain CSS, not Tailwind.** Everything the toast paints reads a
+`--toast-*` with a neutral fallback, so the package compiles no utilities and a
+consumer needs no Tailwind config for it — one line,
+`@import "@shared/toast/toast.css";`, in its global CSS, plus the mapping.
+Utilities would instead put the package's classes inside every consumer's
+content scan, across two token vocabularies; that is the problem the `ui-*`
+contract solves for the shared packages that do spell them, and
+[[design-tokens]] is where that arrangement is written down.
+
+Class names, for a test or a rare app-side override: the container is
+`.ui-toaster` with a `.ui-toaster--<position>` modifier, and a toast is
+`.ui-toast` with `.ui-toast--<tone>` plus `.ui-toast--leaving` while it animates
+out. Its parts are `.ui-toast__glyph`, `.ui-toast__sr`, `.ui-toast__message`,
+`.ui-toast__action` and `.ui-toast__close`.
 
 ## Contrast, and the gap this closed
 
@@ -183,7 +193,7 @@ see `cire/invites/src/lib/z-index.ts`.
 ### `topLayer`, for an app with `showModal()` dialogs
 
 A z-index is only half the ordering once an app has a `<dialog>` opened with
-`showModal()` — which is every app using `@osn/ui`'s `Modal`. Such a dialog
+`showModal()` — which is every app using `@shared/ui`'s `Modal`. Such a dialog
 paints in the **top layer**, above every stacking context in the document by
 definition, so no number on the container reaches over it. Cire's RSVP save
 toast fires while the sheet is still open for its dwell, and was raised behind
@@ -219,7 +229,7 @@ Current mounts:
 | App | Position | Notes |
 |---|---|---|
 | `@cire/invites` | `top-center` | Per design pack; `Z_CLASS.TOAST` + `topLayer`, 4s dwell. The RSVP sheet's sticky bar owns the bottom edge |
-| `@cire/host`, `@cire/vendor` | `bottom-right` | `topLayer` — both apps' dialogs are `@osn/ui` `Modal`s |
+| `@cire/host`, `@cire/vendor` | `bottom-right` | `topLayer` — both apps' dialogs are `@shared/ui` `Modal`s |
 | `@musubi/social` | responsive | `top-center` on mobile with a `top` offset clearing the 3rem bar + `env(safe-area-inset-top)`. No `topLayer`: its dialogs are Kobalte's, which are not top-layer |
 | `@pulse/web` | `bottom-right` | As musubi — Kobalte dialogs, no `topLayer` |
 
@@ -233,9 +243,10 @@ Unit: mock `@shared/toast`. Two shared factories exist —
 `cire/invites/tests/designs/InvitePage.browser.test.tsx` finds a toast with
 `[...document.querySelectorAll("div")].find(d => d.textContent === message)` and
 then walks parents until `position: fixed`. So the message must live in an
-element whose `textContent` is **exactly** the message — the tone glyph and its
-`sr-only` word are siblings *outside* it, deliberately. Fold them in and the
-lookup breaks, taking the z-index regression guard with it.
+element whose `textContent` is **exactly** the message — that is
+`.ui-toast__message`, and the tone glyph (`.ui-toast__glyph`) and its `sr-only`
+word (`.ui-toast__sr`) are siblings *outside* it, deliberately. Fold them in and
+the lookup breaks, taking the z-index regression guard with it.
 
 `document.elementFromPoint` is useless against the container: it is
 `pointer-events: none` and hit-testing sees straight through it. Assert computed

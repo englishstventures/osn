@@ -1,4 +1,4 @@
-import { Button } from "@osn/ui/ui/button";
+import { Button } from "@shared/ui/ui/button";
 import { createResource, createSignal, For, Show } from "solid-js";
 
 import { connectionsClient } from "../lib/authClients";

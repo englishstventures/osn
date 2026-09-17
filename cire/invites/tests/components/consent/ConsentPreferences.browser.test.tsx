@@ -19,7 +19,7 @@ import { resetConsentForTest } from "../../../src/lib/consent/testing";
  * meaningless there.
  *
  * This is the half that needs an engine. It is the consent-specific pairing
- * that matters here, not the gestures themselves — `@osn/ui`'s own modal suite
+ * that matters here, not the gestures themselves — `@shared/ui`'s own modal suite
  * covers those — because a dismissal reaching `closeConsentPreferences` without
  * a stored record is the whole difference between a choice and a nag.
  */

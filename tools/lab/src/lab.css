@@ -1,13 +1,13 @@
 /* The lab borrows @musubi/social's stylesheet wholesale rather than keeping its
  * own copy of the design tokens. That file is the source of truth for
  * `--background`, `--foreground`, the `.dark` block and the `base:` variant
- * that every @osn/ui component's classes are written against, so importing it
+ * that every @shared/ui component's classes are written against, so importing it
  * is what makes those components render here exactly as they render in the
  * app. A second copy would drift within a week. */
 @import "../../../musubi/social/src/App.css";
 
 /* Tailwind only generates classes it can see. App.css already scans
- * osn/ui/src; these add the lab's own chrome and any story file living next
+ * shared/ui/src; these add the lab's own chrome and any story file living next
  * to the component it exercises. Gitignored paths are skipped, so
  * node_modules costs nothing here. */
 @source "../";

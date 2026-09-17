@@ -1,6 +1,6 @@
-import { Button } from "@osn/ui/ui/button";
-import { Card } from "@osn/ui/ui/card";
 import { toast } from "@shared/toast";
+import { Button } from "@shared/ui/ui/button";
+import { Card } from "@shared/ui/ui/card";
 import { createResource, createSignal, For, Show } from "solid-js";
 
 import {

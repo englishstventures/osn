@@ -1,5 +1,5 @@
 ---
-"@osn/ui": patch
+"@shared/ui": patch
 "@musubi/social": patch
 "@pulse/web": patch
 ---
@@ -25,8 +25,8 @@ tokens read 5.38:1 to 10.09:1.
 *Measured 2026-09-17 — `contrastRatio` from `@shared/color`, each value against
 `--background` in both themes.*
 
-In `@osn/ui`, `OtpInput`'s red/green/blue borders and two auth views become
+In `@shared/ui`, `OtpInput`'s red/green/blue borders and two auth views become
 contract tokens, and ten `border-border` / `bg-border` in the primitives become
-`border-osn-hairline`. An app-vocabulary name inside a library package is the
+`border-ui-hairline`. An app-vocabulary name inside a library package is the
 thing the contract exists to stop; every app happens to define `--color-border`
 today, so this was a latent break rather than a live one.

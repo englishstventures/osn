@@ -16,7 +16,7 @@
     "@cire/theme": "workspace:*",
     "@cire/ui": "workspace:*",
     "@kobalte/core": "^0.13.14",
-    "@osn/ui": "workspace:*",
+    "@shared/ui": "workspace:*",
     "@shared/design-tokens": "workspace:*",
     "@shared/rp-auth": "workspace:*",
     "@shared/toast": "workspace:*",

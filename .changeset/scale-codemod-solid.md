@@ -11,5 +11,5 @@ Arbitrary type values move onto the contract's scales
 `@shared/design-tokens`.
 
 `FilterRail`'s drift guard named the old `text-[13px]` and now names
-`text-osn-sm`, which is the same size on the scale; the glyphs it counts are
+`text-ui-sm`, which is the same size on the scale; the glyphs it counts are
 unchanged.

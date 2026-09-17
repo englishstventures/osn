@@ -37,7 +37,7 @@ test("rewrites a real file in place", async () => {
   const { exitCode, stdout } = await run(dir);
   expect(exitCode).toBe(0);
   expect(stdout).toContain("1 value(s) across 1 file(s)");
-  expect(await readFile(join(dir, "src/Card.tsx"), "utf8")).toBe('<p class="text-osn-xs">x</p>');
+  expect(await readFile(join(dir, "src/Card.tsx"), "utf8")).toBe('<p class="text-ui-xs">x</p>');
   await rm(dir, { recursive: true });
 });
 

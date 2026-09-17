@@ -1,5 +1,5 @@
-import { Badge } from "@osn/ui/ui/badge";
-import { Card } from "@osn/ui/ui/card";
+import { Badge } from "@shared/ui/ui/badge";
+import { Card } from "@shared/ui/ui/card";
 import { A } from "@solidjs/router";
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
 
@@ -105,7 +105,7 @@ export function VenueEventCarousel(props: Props) {
                     </Badge>
                   </div>
                   <p class="line-clamp-2 text-sm font-semibold">{event.title}</p>
-                  <p class="text-muted-foreground text-osn-xs mt-1 font-mono tracking-wide">
+                  <p class="text-muted-foreground text-ui-xs mt-1 font-mono tracking-wide">
                     {formatCardDate(event.startTime)}
                   </p>
                 </div>

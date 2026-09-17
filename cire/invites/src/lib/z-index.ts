@@ -21,7 +21,7 @@
  *
  * ## There is no modal layer, and that is the point
  *
- * The details and RSVP sheets are `@osn/ui`'s `Modal`, a `<dialog>` opened with
+ * The details and RSVP sheets are `@shared/ui`'s `Modal`, a `<dialog>` opened with
  * `showModal()`, and such a dialog paints in the **top layer** — above every
  * stacking context in the document, by definition, whatever number anything
  * else carries. So no entry here can rank against a sheet, and one that
@@ -68,7 +68,7 @@
  * looking at right then.
  *
  * The preferences DIALOG is unaffected, and is in a stronger position than a
- * number could put it: it is an `@osn/ui` `Modal` too, so opening it from
+ * number could put it: it is an `@shared/ui` `Modal` too, so opening it from
  * inside a sheet makes it the blocking dialog and the sheet goes inert beneath
  * it. It has no layer here because it has nothing left to rank against.
  *

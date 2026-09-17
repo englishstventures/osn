@@ -3,11 +3,11 @@
  * and for the same reason.
  *
  * The `unit` project's environment parses no stylesheet and computes no layout.
- * It can assert that an element carries `base:bg-osn-accent`, but never that the
+ * It can assert that an element carries `base:bg-ui-accent`, but never that the
  * class emitted any CSS, that it won the cascade, or what colour actually
  * reached the pixel. Since the design-token contract landed, that gap is the
  * whole question: a contract utility is three hops from a value
- * (`bg-osn-accent` → `--color-osn-accent` → `--osn-accent` → `--primary`), and
+ * (`bg-ui-accent` → `--color-ui-accent` → `--ui-accent` → `--primary`), and
  * every one of those hops can be broken in a way the fast tier reports as green.
  * A class Tailwind cannot generate emits nothing at all, silently.
  *

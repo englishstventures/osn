@@ -92,7 +92,7 @@ export function Toaster(props: ToasterProps) {
       <div
         ref={ref}
         popover={props.topLayer ? "manual" : undefined}
-        class={`osn-toaster osn-toaster--${position()}${props.class ? ` ${props.class}` : ""}`}
+        class={`ui-toaster ui-toaster--${position()}${props.class ? ` ${props.class}` : ""}`}
         style={props.style}
       >
         <For each={visible()}>{(t) => <ToastItem toast={t} class={props.toastClass} />}</For>

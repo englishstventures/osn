@@ -1,5 +1,5 @@
 ---
-"@osn/ui": patch
+"@shared/ui": patch
 "@pulse/web": patch
 ---
 
@@ -16,11 +16,11 @@ already cleared to zero rather than tolerated.
 The rule has two conditions and needs both. The tag must start upper-case — a
 `base:` on a plain `<div>` is a component styling its own markup, which is the
 entire point of the variant. And the component must be **ours**, resolved
-through its import: `@osn/ui`, `@cire/ui`, or a relative path. A wrapper handing
+through its import: `@shared/ui`, `@osn/auth-ui`, `@cire/ui`, or a relative path. A wrapper handing
 `base:fixed` down to Kobalte's `Dialog.Overlay` is not a tie at all, because
 Kobalte sets no `base:` defaults — that wrapper is declaring the zero-specificity
 default its own consumer will override. Without the second condition the rule
-reports 199 sites, essentially all of `@osn/ui`, and says nothing true about any
+reports 199 sites, essentially every component in the shared layers, and says nothing true about any
 of them.
 
 Forty real sites, all fixed here: `ShareEventButton` in pulse (23, including a

@@ -28,7 +28,7 @@ import { describe, expect, it } from "vitest";
  * `--on-gold` and `--gold-hi` are the tokens that fixed the first two.
  *
  * What stays here is what the contract has no name for. cire carries two accent
- * families, `--osn-accent` is the gold one, and the brand green survives for
+ * families, `--ui-accent` is the gold one, and the brand green survives for
  * this product's own use — so this file still owns the green's pairs, and the
  * ramp's *shape* (which is not a contrast question at all).
  */
@@ -71,15 +71,15 @@ describe("design-token contract", () => {
     // shadcn block it replaced would get backwards — `--color-primary` used to
     // be `--brand`. Counted across both portals' components, gold appears in 422
     // colour utilities and the green in 8.
-    expect(CSS).toMatch(/--osn-accent:\s*var\(--gold\)/);
-    expect(CSS).not.toMatch(/--osn-accent:\s*var\(--brand\)/);
+    expect(CSS).toMatch(/--ui-accent:\s*var\(--gold\)/);
+    expect(CSS).not.toMatch(/--ui-accent:\s*var\(--brand\)/);
   });
 
   it("maps the contract through aliases, so `data-theme` carries it", () => {
     // A literal would pin the dark value into light, and the failure would
     // surface much later as "light mode ignores the theme".
-    const mapping = CSS.slice(CSS.indexOf("--osn-ground:"), CSS.indexOf("--osn-radius-hair:"));
-    expect([...mapping.matchAll(/(--osn-[\w-]+):\s*(oklch|#)/gi)].map((m) => m[1])).toEqual([]);
+    const mapping = CSS.slice(CSS.indexOf("--ui-ground:"), CSS.indexOf("--ui-radius-hair:"));
+    expect([...mapping.matchAll(/(--ui-[\w-]+):\s*(oklch|#)/gi)].map((m) => m[1])).toEqual([]);
   });
 
   it("maps all seven type steps rather than leaving gaps for the fallback", () => {
@@ -87,7 +87,7 @@ describe("design-token contract", () => {
     // package's neutral default — a different type system showing through in
     // the middle of this one.
     for (const step of ["xs", "sm", "base", "md", "lg", "xl", "2xl"]) {
-      expect(CSS).toMatch(new RegExp(`--osn-text-${step}:`));
+      expect(CSS).toMatch(new RegExp(`--ui-text-${step}:`));
     }
   });
 });
@@ -106,7 +106,7 @@ const LIGHT_SYSTEM = ramp(":root:not([data-theme])");
 /**
  * The brand green, which the contract does not name.
  *
- * `--osn-accent` is gold, so nothing in the harness above measures this family.
+ * `--ui-accent` is gold, so nothing in the harness above measures this family.
  * It is still in the ramp and still in use, so its pairs are asserted here.
  * Every one is opaque, which is why there is no compositing step: the harness
  * owns that now, and the translucent tokens are all on its side of the line.

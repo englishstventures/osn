@@ -36,9 +36,9 @@ import {
   typographyVars,
 } from "@cire/theme";
 import Button from "@cire/ui/button";
-import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
+import { Notice } from "@shared/ui/ui/notice";
 import {
   createEffect,
   createMemo,
@@ -815,9 +815,9 @@ export default function InviteBuilder(props: InviteBuilderProps) {
       class="border-border bg-surface/30 @container/builder flex flex-col gap-8 rounded-sm border p-6"
     >
       <header class="flex flex-col gap-1">
-        <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">Invite Builder</p>
-        <h2 class="font-display text-text text-osn-lg font-light">Customise your invite</h2>
-        <p class="font-body text-text-muted text-osn-sm">
+        <p class="font-body text-gold text-ui-xs tracking-ui-widest uppercase">Invite Builder</p>
+        <h2 class="font-display text-text text-ui-lg font-light">Customise your invite</h2>
+        <p class="font-body text-text-muted text-ui-sm">
           Use the tabs below to move between sections of the guest invite, in the order guests see
           them — images, copy and colours together. Events and guests still come from your
           spreadsheet import.
@@ -827,7 +827,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
       <Show
         when={data()}
         fallback={
-          <p class="font-body text-text-muted text-osn-base tracking-osn-wider animate-pulse uppercase">
+          <p class="font-body text-text-muted text-ui-base tracking-ui-wider animate-pulse uppercase">
             Loading invite…
           </p>
         }
@@ -917,11 +917,11 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                     </span>
                     <span
                       aria-hidden
-                      class="text-text-muted text-osn-xs tracking-osn-widest flex shrink-0 items-center gap-2 tabular-nums"
+                      class="text-text-muted text-ui-xs tracking-ui-widest flex shrink-0 items-center gap-2 tabular-nums"
                     >
                       {activeIndex() + 1}/{NAV_SECTIONS.length}
                       <span
-                        class="text-gold text-osn-sm inline-block tracking-normal transition-transform duration-(--dur-fast)"
+                        class="text-gold text-ui-sm inline-block tracking-normal transition-transform duration-(--dur-fast)"
                         classList={{ "rotate-180": sectionMenuOpen() }}
                       >
                         ▾
@@ -960,7 +960,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                             onKeyDown={(e) => onSectionTabKeyDown(e, item.id)}
                             // `min-h-11` is a 44px touch target in the menu; the
                             // wide row keeps the compact pill it has always been.
-                            class={`font-body text-osn-xs tracking-osn-wider flex min-h-11 w-full shrink-0 items-center gap-1.5 rounded-sm px-3 py-2 text-left uppercase transition-colors @3xl/builder:min-h-0 @3xl/builder:w-auto @3xl/builder:px-2.5 @3xl/builder:py-1 ${
+                            class={`font-body text-ui-xs tracking-ui-wider flex min-h-11 w-full shrink-0 items-center gap-1.5 rounded-sm px-3 py-2 text-left uppercase transition-colors @3xl/builder:min-h-0 @3xl/builder:w-auto @3xl/builder:px-2.5 @3xl/builder:py-1 ${
                               active()
                                 ? "bg-gold/12 text-gold"
                                 : "text-text-muted hover:text-text hover:bg-surface/60"
@@ -1362,7 +1362,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                         }
                       />
                     </Show>
-                    <p class="font-body text-text-muted text-osn-sm italic">
+                    <p class="font-body text-text-muted text-ui-sm italic">
                       Uses the colours you picked for Code Entry &amp; Welcome — the closing note is
                       you speaking to your guests, same as the greeting.
                     </p>
@@ -1447,14 +1447,14 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                   <Show
                     when={isDirty()}
                     fallback={
-                      <span class="font-body text-text-muted text-osn-sm">All changes saved</span>
+                      <span class="font-body text-text-muted text-ui-sm">All changes saved</span>
                     }
                   >
-                    <span role="status" class="font-body text-gold text-osn-sm">
+                    <span role="status" class="font-body text-gold text-ui-sm">
                       Unsaved changes
                     </span>
                   </Show>
-                  <span class="font-body text-text-muted text-osn-sm">
+                  <span class="font-body text-text-muted text-ui-sm">
                     Copy, colours, fonts and hero display save together. Images, crops and the
                     design apply as soon as you change them.
                   </span>
@@ -1499,7 +1499,7 @@ function ToneField(props: {
   } satisfies Record<SectionTone, string>;
   return (
     <div class="flex flex-col gap-1.5">
-      <span class="font-body text-text-muted text-osn-sm">Section background</span>
+      <span class="font-body text-text-muted text-ui-sm">Section background</span>
       <div
         class="flex flex-wrap gap-2"
         role="group"
@@ -1522,7 +1522,7 @@ function ToneField(props: {
         </For>
       </div>
       <Show when={props.hint}>
-        <span class="font-body text-text-muted text-osn-xs italic">{props.hint}</span>
+        <span class="font-body text-text-muted text-ui-xs italic">{props.hint}</span>
       </Show>
     </div>
   );

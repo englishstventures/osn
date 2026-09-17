@@ -1,10 +1,10 @@
 import Button from "@cire/ui/button";
-import { EmptyState } from "@osn/ui/ui/empty-state";
-import { Field } from "@osn/ui/ui/field";
-import { Input } from "@osn/ui/ui/input";
-import { Notice } from "@osn/ui/ui/notice";
-import { Table, Td, Th } from "@osn/ui/ui/table";
 import { useAuth } from "@shared/rp-auth/solid";
+import { EmptyState } from "@shared/ui/ui/empty-state";
+import { Field } from "@shared/ui/ui/field";
+import { Input } from "@shared/ui/ui/input";
+import { Notice } from "@shared/ui/ui/notice";
+import { Table, Td, Th } from "@shared/ui/ui/table";
 import {
   createEffect,
   createMemo,
@@ -61,7 +61,7 @@ const STATUS_META = {
 const CHIP_CLASS =
   "border-border hover:border-gold focus-visible:border-gold focus-visible:ring-gold/40 " +
   "font-body text-text-muted aria-pressed:border-gold aria-pressed:text-gold " +
-  "flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-osn-sm tracking-osn-wide " +
+  "flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-ui-sm tracking-ui-wide " +
   "uppercase transition outline-none focus-visible:ring-2";
 
 /** Identifies the row being edited (event + guest) so only one form is open. */
@@ -322,7 +322,7 @@ export default function RsvpView(props: RsvpViewProps) {
                     onClick={() => setFilter(chip.key)}
                   >
                     {chip.label}
-                    <span class="text-text text-osn-xs font-mono">{counts()[chip.key]}</span>
+                    <span class="text-text text-ui-xs font-mono">{counts()[chip.key]}</span>
                   </button>
                 )}
               </For>
@@ -330,7 +330,7 @@ export default function RsvpView(props: RsvpViewProps) {
           </div>
           {/* Two readings of one fact: the printed count updates as you type,
               the announced one waits for you to stop. */}
-          <p class="font-body text-text-muted text-osn-sm">
+          <p class="font-body text-text-muted text-ui-sm">
             <Show when={filtering()}>
               Showing {shownCount()} of {counts().all} guest rows.
             </Show>
@@ -345,28 +345,28 @@ export default function RsvpView(props: RsvpViewProps) {
             {(section) => (
               <section class="border-border bg-surface/30 flex flex-col gap-4 rounded-sm border p-5">
                 <header class="flex flex-wrap items-end justify-between gap-3">
-                  <h3 class="font-display text-text text-osn-lg leading-none font-light">
+                  <h3 class="font-display text-text text-ui-lg leading-none font-light">
                     {section.event.name}
                   </h3>
-                  <dl class="font-body text-text-muted text-osn-sm flex flex-wrap gap-x-4 gap-y-1">
+                  <dl class="font-body text-text-muted text-ui-sm flex flex-wrap gap-x-4 gap-y-1">
                     <div class="flex items-center gap-1.5">
-                      <dt class="text-gold tracking-osn-wider uppercase">Attending</dt>
+                      <dt class="text-gold tracking-ui-wider uppercase">Attending</dt>
                       <dd class="text-text font-mono">{section.event.attending}</dd>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <dt class="tracking-osn-wider uppercase">Declined</dt>
+                      <dt class="tracking-ui-wider uppercase">Declined</dt>
                       <dd class="text-text font-mono">{section.event.declined}</dd>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <dt class="tracking-osn-wider uppercase">Maybe</dt>
+                      <dt class="tracking-ui-wider uppercase">Maybe</dt>
                       <dd class="text-text font-mono">{section.event.maybe}</dd>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <dt class="tracking-osn-wider uppercase">No reply</dt>
+                      <dt class="tracking-ui-wider uppercase">No reply</dt>
                       <dd class="text-text font-mono">{section.event.noResponse}</dd>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <dt class="tracking-osn-wider uppercase">Invited</dt>
+                      <dt class="tracking-ui-wider uppercase">Invited</dt>
                       <dd class="text-text font-mono">{section.event.invited}</dd>
                     </div>
                   </dl>
@@ -375,7 +375,7 @@ export default function RsvpView(props: RsvpViewProps) {
                 <Show
                   when={section.rows().length > 0}
                   fallback={
-                    <p class="font-body text-text-muted text-osn-sm italic">
+                    <p class="font-body text-text-muted text-ui-sm italic">
                       No guests to show for this event.
                     </p>
                   }
@@ -383,7 +383,7 @@ export default function RsvpView(props: RsvpViewProps) {
                   <Show
                     when={section.visible().length > 0}
                     fallback={
-                      <p class="font-body text-text-muted text-osn-sm italic">
+                      <p class="font-body text-text-muted text-ui-sm italic">
                         No guests match this filter.
                       </p>
                     }
@@ -413,7 +413,7 @@ export default function RsvpView(props: RsvpViewProps) {
                                   <Show when={row.consentSource === "organiser_attested"}>
                                     {" "}
                                     <span
-                                      class="border-gold/40 text-gold text-osn-xs tracking-osn-wider ml-1 inline-block rounded-sm border px-1.5 py-0.5 uppercase"
+                                      class="border-gold/40 text-gold text-ui-xs tracking-ui-wider ml-1 inline-block rounded-sm border px-1.5 py-0.5 uppercase"
                                       title="Recorded by a host (phone/paper RSVP)"
                                     >
                                       Host-entered
@@ -425,7 +425,7 @@ export default function RsvpView(props: RsvpViewProps) {
                                 </Td>
                                 <Td valign="middle">
                                   <span
-                                    class={`font-body text-osn-xs tracking-osn-widest inline-block rounded-sm px-1.5 py-0.5 uppercase ${STATUS_META[row.status].class}`}
+                                    class={`font-body text-ui-xs tracking-ui-widest inline-block rounded-sm px-1.5 py-0.5 uppercase ${STATUS_META[row.status].class}`}
                                   >
                                     {STATUS_META[row.status].label}
                                   </span>
@@ -484,17 +484,17 @@ export default function RsvpView(props: RsvpViewProps) {
           void save();
         }}
       >
-        <p class="font-body text-text text-osn-sm">
+        <p class="font-body text-text text-ui-sm">
           Recording for{" "}
           <span class="text-gold">
             {guest.firstName} {guest.lastName}
           </span>
         </p>
 
-        <label class="font-body text-text-muted text-osn-sm tracking-osn-wide flex flex-col gap-1 uppercase">
+        <label class="font-body text-text-muted text-ui-sm tracking-ui-wide flex flex-col gap-1 uppercase">
           Status
           <select
-            class="border-border bg-bg text-text text-osn-base rounded-sm border px-2.5 py-1.5 normal-case"
+            class="border-border bg-bg text-text text-ui-base rounded-sm border px-2.5 py-1.5 normal-case"
             value={formStatus()}
             onChange={(e) => setFormStatus(e.currentTarget.value as RsvpStatus)}
             disabled={saving()}
@@ -505,10 +505,10 @@ export default function RsvpView(props: RsvpViewProps) {
           </select>
         </label>
 
-        <label class="font-body text-text-muted text-osn-sm tracking-osn-wide flex flex-col gap-1 uppercase">
+        <label class="font-body text-text-muted text-ui-sm tracking-ui-wide flex flex-col gap-1 uppercase">
           Dietary requirements (optional)
           <textarea
-            class="border-border bg-bg text-text text-osn-base rounded-sm border px-2.5 py-1.5 normal-case"
+            class="border-border bg-bg text-text text-ui-base rounded-sm border px-2.5 py-1.5 normal-case"
             rows={2}
             maxlength={500}
             value={formDietary()}
@@ -518,7 +518,7 @@ export default function RsvpView(props: RsvpViewProps) {
         </label>
 
         <Show when={formDietary().trim().length > 0}>
-          <label class="font-body text-text-muted text-osn-sm flex items-start gap-2.5 leading-relaxed normal-case">
+          <label class="font-body text-text-muted text-ui-sm flex items-start gap-2.5 leading-relaxed normal-case">
             <input
               type="checkbox"
               class="accent-gold mt-0.5 h-4 w-4 shrink-0 cursor-pointer"
@@ -534,7 +534,7 @@ export default function RsvpView(props: RsvpViewProps) {
         </Show>
 
         <Show when={formError()}>
-          <p class="text-error text-osn-sm">{formError()}</p>
+          <p class="text-error text-ui-sm">{formError()}</p>
         </Show>
 
         <div class="flex items-center gap-2">

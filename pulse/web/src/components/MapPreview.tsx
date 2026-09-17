@@ -1,5 +1,5 @@
-import { Button } from "@osn/ui/ui/button";
-import { Card } from "@osn/ui/ui/card";
+import { Button } from "@shared/ui/ui/button";
+import { Card } from "@shared/ui/ui/card";
 import type * as Leaflet from "leaflet";
 import { onCleanup, onMount, Show } from "solid-js";
 

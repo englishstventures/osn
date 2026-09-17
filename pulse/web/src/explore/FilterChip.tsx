@@ -14,7 +14,7 @@ import type { JSX } from "solid-js";
  * same in both states. `aria-pressed` is the state in words; the inversion stays
  * as the visual carrier for everyone else.
  *
- * ## Not `@osn/ui`'s `Chip`
+ * ## Not `@shared/ui`'s `Chip`
  *
  * That one is a `<span>` that *names* a state — "live", "quoted" — and is not
  * interactive at all. Same word, different component: this one is a toggle.
@@ -30,7 +30,7 @@ export function FilterChip(props: {
     <button
       type="button"
       aria-pressed={props.pressed}
-      class={`text-osn-sm inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 font-medium transition-colors ${
+      class={`text-ui-sm inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 font-medium transition-colors ${
         props.pressed
           ? "border-foreground bg-foreground text-background"
           : `border-border bg-card hover:bg-secondary ${

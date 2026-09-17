@@ -35,7 +35,7 @@
 # raising a ceiling to restore the default would only make the guard looser.
 #
 # `cire/landing` went the other way and so its threshold moved. Converting its
-# demo sheet to `@osn/ui`'s `Modal` deleted the one module importing `motion`,
+# demo sheet to `@shared/ui`'s `Modal` deleted the one module importing `motion`,
 # and the library left the bundle with it: 185,383 -> 164,847 bytes. Leaving
 # 189,324 in place would have banked a 24.5 KB gap, which is larger than the
 # mistake this guard exists to catch, so the threshold followed the measurement

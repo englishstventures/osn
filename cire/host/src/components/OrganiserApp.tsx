@@ -1,6 +1,6 @@
-import { Notice } from "@osn/ui/ui/notice";
 import { AuthProvider, useAuth } from "@shared/rp-auth/solid";
 import { Toaster } from "@shared/toast";
+import { Notice } from "@shared/ui/ui/notice";
 import {
   createEffect,
   createResource,
@@ -49,7 +49,7 @@ type WeddingsState =
 
 function Loading(props: { label: string }) {
   return (
-    <p class="font-body text-text-muted text-osn-base tracking-osn-wider animate-pulse uppercase">
+    <p class="font-body text-text-muted text-ui-base tracking-ui-wider animate-pulse uppercase">
       {props.label}
     </p>
   );
@@ -440,7 +440,7 @@ export default function OrganiserApp() {
         <Dashboard />
       </RequireAuth>
       {/* `topLayer` because this app's dialogs are `showModal()` dialogs
-          (`@osn/ui`'s `Modal`), which paint in the top layer — above every
+          (`@shared/ui`'s `Modal`), which paint in the top layer — above every
           stacking context, so no `z-index` on the toast container could reach
           over one. See `ToasterProps.topLayer`. */}
       <Toaster position="bottom-right" topLayer />

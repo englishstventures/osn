@@ -30,9 +30,9 @@
  */
 
 import Button from "@cire/ui/button";
-import { Input } from "@osn/ui/ui/input";
-import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
+import { Input } from "@shared/ui/ui/input";
+import { Notice } from "@shared/ui/ui/notice";
 import { createEffect, createSignal, For, onCleanup, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -326,7 +326,7 @@ export default function RegistryImageField(props: {
 
   return (
     <div class="flex flex-col gap-2">
-      <span class="font-body text-text-muted text-osn-sm" id={`${props.idPrefix}-picture-label`}>
+      <span class="font-body text-text-muted text-ui-sm" id={`${props.idPrefix}-picture-label`}>
         Picture
       </span>
 
@@ -334,7 +334,7 @@ export default function RegistryImageField(props: {
         <div class="flex flex-wrap items-center gap-3">
           <Show
             when={thumb()}
-            fallback={<span class="text-text-muted text-osn-sm italic">Picture saved.</span>}
+            fallback={<span class="text-text-muted text-ui-sm italic">Picture saved.</span>}
           >
             {(src) => (
               // Decorative, as in `invite/ImageField.tsx`: the field's own label
@@ -402,17 +402,14 @@ export default function RegistryImageField(props: {
             if (file) void upload(file);
             e.currentTarget.value = "";
           }}
-          class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-osn-sm file:text-osn-sm file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5"
+          class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-ui-sm file:text-ui-sm file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5"
         />
       </Show>
 
       <Show when={mode() === "link"}>
         <div class="flex flex-col gap-2">
           <div class="flex flex-wrap items-end gap-2">
-            <label
-              class="font-body text-text-muted text-osn-sm"
-              for={`${props.idPrefix}-shop-link`}
-            >
+            <label class="font-body text-text-muted text-ui-sm" for={`${props.idPrefix}-shop-link`}>
               Shop link
             </label>
             <Input
@@ -438,7 +435,7 @@ export default function RegistryImageField(props: {
           {/* Fetching a shop page takes seconds. Say so, and say it in a live
               region — a field that simply sits there reads as broken. */}
           <Show when={busy() === "preview"}>
-            <p class="text-text-muted text-osn-sm" role="status">
+            <p class="text-text-muted text-ui-sm" role="status">
               Looking for pictures on that page…
             </p>
           </Show>
@@ -452,7 +449,7 @@ export default function RegistryImageField(props: {
 
           <Show when={candidates().length > 0}>
             <div class="flex flex-col gap-2">
-              <p class="text-text-muted text-osn-sm" id={`${props.idPrefix}-candidates-label`}>
+              <p class="text-text-muted text-ui-sm" id={`${props.idPrefix}-candidates-label`}>
                 Choose the picture for this gift.
               </p>
               <div
@@ -510,7 +507,7 @@ export default function RegistryImageField(props: {
                 >
                   {busy() === "save" ? "Saving…" : "Use this picture"}
                 </Button>
-                <span class="text-text-muted text-osn-xs">
+                <span class="text-text-muted text-ui-xs">
                   We keep our own copy, so it stays on your list even if the shop changes the page.
                 </span>
               </div>
@@ -520,7 +517,7 @@ export default function RegistryImageField(props: {
       </Show>
 
       <Show when={busy() === "save" && mode() !== "link"}>
-        <p class="text-text-muted text-osn-sm" role="status">
+        <p class="text-text-muted text-ui-sm" role="status">
           Saving that picture…
         </p>
       </Show>

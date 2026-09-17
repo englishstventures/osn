@@ -11,8 +11,8 @@
  *
  * It cost nine `Modal` call sites across three cire apps before anything
  * noticed, the worst of them the consent preferences dialog: it asked for
- * `base:max-w-lg` and `base:bg-bg` and got the component's `base:max-w-osn-sm`
- * and `base:bg-osn-surface-raised`, because `.base\:max-w-osn-sm` happens to be
+ * `base:max-w-lg` and `base:bg-bg` and got the component's `base:max-w-ui-sm`
+ * and `base:bg-ui-surface-raised`, because `.base\:max-w-ui-sm` happens to be
  * emitted later. 480px instead of 512px, on the wrong surface, with every
  * string assertion in the suite still green.
  *
@@ -21,19 +21,20 @@
  * The tag must start upper-case: `base:` on a plain `<div>` is a component
  * styling its own markup, which is the entire point of the variant.
  *
- * And the component must be **ours** — imported from `@osn/ui`, from `@cire/ui`
- * or through a relative path. A wrapper passing `base:fixed` down to Kobalte's
- * `Dialog.Overlay` is not a tie at all: Kobalte sets no `base:` defaults, so
- * the wrapper is declaring the zero-specificity default that ITS consumer will
- * override. Without this half the rule reports 199 sites, essentially all of
- * `@osn/ui`, and says nothing true about any of them.
+ * And the component must be **ours** — imported from `@shared/ui`,
+ * `@osn/auth-ui` or `@cire/ui`, or through a relative path. A wrapper passing
+ * `base:fixed` down to Kobalte's `Dialog.Overlay` is not a tie at all: Kobalte
+ * sets no `base:` defaults, so the wrapper is declaring the zero-specificity
+ * default that ITS consumer will override. Without this half the rule reports
+ * 199 sites, essentially every component in the shared layers, and says nothing
+ * true about any of them.
  */
 
 import { defineRule } from "@oxlint/plugins";
 import type { ESTree } from "@oxlint/plugins";
 
 /** Import sources whose components carry `base:` defaults of their own. */
-const OURS = /^(@osn\/ui|@cire\/ui)(\/|$)|^\.{1,2}\//;
+const OURS = /^(@shared\/ui|@osn\/auth-ui|@cire\/ui)(\/|$)|^\.{1,2}\//;
 
 /** A JSX tag name that starts upper-case is a component, not an element. */
 function isComponentName(name: ESTree.JSXElementName): boolean {

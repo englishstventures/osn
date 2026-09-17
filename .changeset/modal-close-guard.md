@@ -1,5 +1,5 @@
 ---
-"@osn/ui": patch
+"@shared/ui": patch
 ---
 
 `Modal` guards `close()` the same way it already guarded `showModal()`

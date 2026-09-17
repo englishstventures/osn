@@ -1,12 +1,12 @@
 import { useAuth } from "@osn/client/solid";
-import { Avatar, AvatarFallback, AvatarImage } from "@osn/ui/ui/avatar";
-import { Badge } from "@osn/ui/ui/badge";
-import { Button } from "@osn/ui/ui/button";
-import { Dialog, DialogHeader, DialogTitle } from "@osn/ui/ui/dialog";
-import { Input } from "@osn/ui/ui/input";
-import { Label } from "@osn/ui/ui/label";
-import { Textarea } from "@osn/ui/ui/textarea";
 import { toast } from "@shared/toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@shared/ui/ui/avatar";
+import { Badge } from "@shared/ui/ui/badge";
+import { Button } from "@shared/ui/ui/button";
+import { Dialog, DialogHeader, DialogTitle } from "@shared/ui/ui/dialog";
+import { Input } from "@shared/ui/ui/input";
+import { Label } from "@shared/ui/ui/label";
+import { Textarea } from "@shared/ui/ui/textarea";
 import { useParams, useNavigate } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
 

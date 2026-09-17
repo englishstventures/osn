@@ -1,15 +1,15 @@
 import Button from "@cire/ui/button";
 import Card, { CardEyebrow } from "@cire/ui/card";
 import Loading from "@cire/ui/loading";
-import { Checkbox } from "@osn/ui/ui/checkbox";
-import { Chip } from "@osn/ui/ui/chip";
-import { Field, Fieldset } from "@osn/ui/ui/field";
-import { Input } from "@osn/ui/ui/input";
-import { Notice } from "@osn/ui/ui/notice";
-import { Select } from "@osn/ui/ui/select";
-import { Textarea } from "@osn/ui/ui/textarea";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
+import { Checkbox } from "@shared/ui/ui/checkbox";
+import { Chip } from "@shared/ui/ui/chip";
+import { Field, Fieldset } from "@shared/ui/ui/field";
+import { Input } from "@shared/ui/ui/input";
+import { Notice } from "@shared/ui/ui/notice";
+import { Select } from "@shared/ui/ui/select";
+import { Textarea } from "@shared/ui/ui/textarea";
 import { createEffect, createMemo, createResource, createSignal, For, Show } from "solid-js";
 
 import { friendlyError } from "../lib/api";
@@ -172,7 +172,7 @@ export default function ListingEditor(props: ListingEditorProps) {
       <div class="flex items-start justify-between gap-4">
         <div class="flex min-w-0 flex-col gap-0.5">
           <CardEyebrow>Directory listing</CardEyebrow>
-          <h2 class="font-display text-text text-osn-lg leading-tight font-light">
+          <h2 class="font-display text-text text-ui-lg leading-tight font-light">
             {props.orgName}
           </h2>
         </div>

@@ -1,5 +1,5 @@
 ---
-"@osn/ui": minor
+"@shared/ui": minor
 ---
 
 `Modal` gains `frame`, and stops leaking the user agent's dialog padding

@@ -1,9 +1,9 @@
 import Button from "@cire/ui/button";
-import { Field } from "@osn/ui/ui/field";
-import { Input } from "@osn/ui/ui/input";
-import { Notice } from "@osn/ui/ui/notice";
-import { Select } from "@osn/ui/ui/select";
 import { useAuth } from "@shared/rp-auth/solid";
+import { Field } from "@shared/ui/ui/field";
+import { Input } from "@shared/ui/ui/input";
+import { Notice } from "@shared/ui/ui/notice";
+import { Select } from "@shared/ui/ui/select";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -341,12 +341,12 @@ export default function VendorsView(props: VendorsViewProps) {
 
       <Show
         when={(vendors() ?? []).length > 0}
-        fallback={<p class="text-text-muted text-osn-sm italic">No vendors yet.</p>}
+        fallback={<p class="text-text-muted text-ui-sm italic">No vendors yet.</p>}
       >
         <For each={grouped()}>
           {(group) => (
             <section class="flex flex-col gap-2">
-              <h3 class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
+              <h3 class="text-gold-dim font-body text-ui-xs tracking-ui-widest uppercase">
                 {group.status.label}
               </h3>
               <ul class="flex flex-col gap-1">
@@ -354,15 +354,15 @@ export default function VendorsView(props: VendorsViewProps) {
                   {(v) => (
                     <li class="border-border bg-surface/10 flex flex-col gap-2 rounded-sm border px-3 py-2">
                       <div class="flex flex-wrap items-center gap-3">
-                        <span class="text-text text-osn-base min-w-[10rem] flex-1 font-medium">
+                        <span class="text-text text-ui-base min-w-[10rem] flex-1 font-medium">
                           {v.name}
                         </span>
                         {/* Category chip */}
-                        <span class="bg-surface/60 text-text-muted text-osn-xs rounded-full px-2 py-0.5">
+                        <span class="bg-surface/60 text-text-muted text-ui-xs rounded-full px-2 py-0.5">
                           {categoryLabel(v.category)}
                         </span>
                         <Show when={v.contactName ?? v.email ?? v.phone}>
-                          <span class="text-text-muted text-osn-sm">
+                          <span class="text-text-muted text-ui-sm">
                             {v.contactName}
                             {v.contactName && (v.email || v.phone) ? " · " : ""}
                             {v.email}
@@ -371,7 +371,7 @@ export default function VendorsView(props: VendorsViewProps) {
                           </span>
                         </Show>
                         <Show when={v.quotedMinor != null}>
-                          <span class="text-text text-osn-sm">
+                          <span class="text-text text-ui-sm">
                             {fmtMinor(v.quotedMinor!, props.currency ?? "AUD")}
                           </span>
                         </Show>
@@ -463,11 +463,11 @@ export default function VendorsView(props: VendorsViewProps) {
                             }
                           >
                             <div class="flex flex-col gap-2">
-                              <p class="text-text text-osn-sm">
+                              <p class="text-text text-ui-sm">
                                 Listed! Share this claim link with {v.name}:
                               </p>
                               <div class="border-border bg-bg flex items-center gap-2 rounded-sm border px-3 py-2">
-                                <span class="text-text-muted text-osn-sm grow truncate font-mono">
+                                <span class="text-text-muted text-ui-sm grow truncate font-mono">
                                   {claimUrl()}
                                 </span>
                                 <Button

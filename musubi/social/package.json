@@ -21,7 +21,8 @@
   "license": "GPL-3.0",
   "dependencies": {
     "@osn/client": "workspace:*",
-    "@osn/ui": "workspace:*",
+    "@osn/auth-ui": "workspace:*",
+    "@shared/ui": "workspace:*",
     "@shared/design-tokens": "workspace:*",
     "@shared/legal": "workspace:*",
     "@shared/toast": "workspace:*",

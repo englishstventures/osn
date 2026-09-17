@@ -1,6 +1,6 @@
 import Button from "@cire/ui/button";
-import { Meter } from "@osn/ui/ui/meter";
 import { useAuth } from "@shared/rp-auth/solid";
+import { Meter } from "@shared/ui/ui/meter";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -228,15 +228,15 @@ export default function GettingStarted(props: {
 
           <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 pr-8">
             <div class="flex flex-col gap-1">
-              <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
+              <p class="font-body text-gold text-ui-xs tracking-ui-widest uppercase">
                 {allDone() ? "You're all set" : "Getting started"}
               </p>
-              <h2 class="font-display text-text text-osn-lg font-light">
+              <h2 class="font-display text-text text-ui-lg font-light">
                 {allDone() ? "Everything's ready for your guests" : "Four steps to your invite"}
               </h2>
               <Show when={!allDone() && nextStep()}>
                 {(step) => (
-                  <p class="font-body text-text-muted text-osn-sm leading-relaxed">
+                  <p class="font-body text-text-muted text-ui-sm leading-relaxed">
                     Next: <span class="text-text">{step().todo}</span>
                   </p>
                 )}
@@ -245,7 +245,7 @@ export default function GettingStarted(props: {
             {/* Read out, not hidden. The rail beneath used to carry the count in
               its own `aria-valuenow`; the shared Meter reports a percentage
               instead, so "two of four" now lives here or nowhere. */}
-            <span class="font-body text-gold-dim text-osn-sm tracking-osn-wider shrink-0 uppercase tabular-nums">
+            <span class="font-body text-gold-dim text-ui-sm tracking-ui-wider shrink-0 uppercase tabular-nums">
               {completed()} / {total()} done
             </span>
           </div>
@@ -269,7 +269,7 @@ export default function GettingStarted(props: {
                     <StepMarker n={i() + 1} complete={step.complete} />
                     <span class="flex flex-col gap-0.5">
                       <span
-                        class="font-body text-osn-base"
+                        class="font-body text-ui-base"
                         classList={{
                           "text-text": !step.complete,
                           "text-text-muted": step.complete,
@@ -277,7 +277,7 @@ export default function GettingStarted(props: {
                       >
                         {step.label}
                       </span>
-                      <span class="font-body text-text-muted text-osn-sm leading-snug">
+                      <span class="font-body text-text-muted text-ui-sm leading-snug">
                         {step.complete ? step.done : step.todo}
                       </span>
                     </span>
@@ -300,7 +300,7 @@ function StepMarker(props: { n: number; complete: boolean }) {
   return (
     <span
       aria-hidden
-      class="font-body text-osn-sm mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors"
+      class="font-body text-ui-sm mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors"
       classList={{
         "border-gold bg-gold text-bg": props.complete,
         "border-gold/40 text-gold-dim group-hover:border-gold/70": !props.complete,

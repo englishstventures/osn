@@ -12,7 +12,7 @@ import { AnimatedModal } from "../../src/components/AnimatedModal";
  * None of what is below can be asserted there: jsdom implements no part of
  * `<dialog>`, so there is no top layer, no modality, no Escape, no focusing
  * steps and no focus restore — the four things this component stopped
- * hand-rolling when it moved onto `@osn/ui`'s `Modal`, and therefore the four
+ * hand-rolling when it moved onto `@shared/ui`'s `Modal`, and therefore the four
  * worth proving still happen.
  */
 describe("the guest sheet, in a real engine", () => {

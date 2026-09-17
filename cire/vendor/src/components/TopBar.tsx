@@ -124,13 +124,13 @@ export default function TopBar(props: {
         >
           <span
             aria-hidden="true"
-            class="text-gold group-hover:text-gold-ink text-osn-sm leading-none transition-colors duration-(--dur-fast)"
+            class="text-gold group-hover:text-gold-ink text-ui-sm leading-none transition-colors duration-(--dur-fast)"
           >
             ✦
           </span>
           <span
             aria-hidden="true"
-            class="font-display text-text text-osn-md tracking-osn-wide leading-none font-light"
+            class="font-display text-text text-ui-md tracking-ui-wide leading-none font-light"
           >
             Cire
           </span>

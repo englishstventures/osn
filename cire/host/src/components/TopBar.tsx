@@ -80,13 +80,13 @@ export default function TopBar(props: {
         >
           <span
             aria-hidden="true"
-            class="text-gold group-hover:text-gold-ink text-osn-sm leading-none transition-colors duration-(--dur-fast)"
+            class="text-gold group-hover:text-gold-ink text-ui-sm leading-none transition-colors duration-(--dur-fast)"
           >
             ✦
           </span>
           <span
             aria-hidden="true"
-            class="font-display text-text text-osn-md tracking-osn-wide leading-none font-light"
+            class="font-display text-text text-ui-md tracking-ui-wide leading-none font-light"
           >
             Cire
           </span>
@@ -97,7 +97,7 @@ export default function TopBar(props: {
         <Show
           when={props.wedding}
           fallback={
-            <span class="font-body text-text-muted text-osn-xs tracking-osn-widest min-w-0 truncate px-2 uppercase">
+            <span class="font-body text-text-muted text-ui-xs tracking-ui-widest min-w-0 truncate px-2 uppercase">
               {props.sectionLabel}
             </span>
           }
@@ -113,7 +113,7 @@ export default function TopBar(props: {
               <Show when={badge()}>
                 {(role) => (
                   <span
-                    class="border-gold-dim text-gold-ink font-body text-osn-xs tracking-osn-widest hidden shrink-0 rounded-full border px-2 py-0.5 uppercase @2xl/frame:inline"
+                    class="border-gold-dim text-gold-ink font-body text-ui-xs tracking-ui-widest hidden shrink-0 rounded-full border px-2 py-0.5 uppercase @2xl/frame:inline"
                     title={role().title}
                   >
                     {role().label}
@@ -134,12 +134,12 @@ export default function TopBar(props: {
             onClick={() => props.onOpenPalette()}
             class="bg-surface/40 flex h-9 items-center gap-2"
           >
-            <span aria-hidden="true" class="text-osn-sm leading-none">
+            <span aria-hidden="true" class="text-ui-sm leading-none">
               ⌕
             </span>
             <span
               aria-hidden="true"
-              class="font-body text-osn-xs tracking-osn-wider hidden @2xl/frame:inline"
+              class="font-body text-ui-xs tracking-ui-wider hidden @2xl/frame:inline"
             >
               ⌘K
             </span>

@@ -1,9 +1,9 @@
 import Button from "@cire/ui/button";
-import { Field } from "@osn/ui/ui/field";
-import { Input } from "@osn/ui/ui/input";
-import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
+import { Field } from "@shared/ui/ui/field";
+import { Input } from "@shared/ui/ui/input";
+import { Notice } from "@shared/ui/ui/notice";
 import { createSignal, onMount, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -38,8 +38,8 @@ interface WeddingProfile {
 /** Kept for the two blocks that are NOT a control: the read-only invite link,
  *  and the standing notes beside a DatePicker (which draws its own label). Every
  *  real input on this panel goes through `Field`. */
-const labelClass = "font-body text-text-muted text-osn-xs tracking-osn-wider uppercase";
-const hintClass = "font-body text-text-muted text-osn-sm leading-snug";
+const labelClass = "font-body text-text-muted text-ui-xs tracking-ui-wider uppercase";
+const hintClass = "font-body text-text-muted text-ui-sm leading-snug";
 
 /** The RSVP-by half of the settings PUT body — on its own it is the whole patch
  *  an editor co-host may send. */
@@ -324,7 +324,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 
             <div class="flex flex-col gap-1.5">
               <span class={labelClass}>Invite link</span>
-              <p class="font-body text-text border-border bg-bg/50 text-osn-base rounded-sm border px-3 py-2 opacity-70">
+              <p class="font-body text-text border-border bg-bg/50 text-ui-base rounded-sm border px-3 py-2 opacity-70">
                 {slug()}
               </p>
               <span class={hintClass}>

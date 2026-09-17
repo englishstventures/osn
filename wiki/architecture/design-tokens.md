@@ -13,10 +13,11 @@ related:
 last-reviewed: 2026-09-17
 ---
 
-# Design tokens — `@shared/design-tokens` and the `osn-*` contract
+# Design tokens — `@shared/design-tokens` and the `ui-*` contract
 
-One neutral vocabulary that every shared package writes and every app maps onto
-once. Colour roles, plus type, tracking, leading, radius and measure scales.
+One neutral vocabulary that the shared component packages write and every app
+maps onto once. Colour roles, plus type, tracking, leading, radius and measure
+scales.
 
 ## The problem it solves
 
@@ -37,18 +38,22 @@ that none of the three is ever the answer.
 ```
   app vocabulary          contract              component
   ──────────────          ────────              ─────────
-  --card         ──map──▶ --osn-surface  ──────▶ bg-osn-surface
-  --gold         ──map──▶ --osn-accent   ──────▶ bg-osn-accent
+  --card         ──map──▶ --ui-surface  ──────▶ bg-ui-surface
+  --gold         ──map──▶ --ui-accent   ──────▶ bg-ui-accent
 ```
 
 Three rules, and they are the whole design:
 
-1. **The contract is library-facing.** `@osn/ui`, `@cire/ui`, `@shared/toast`
-   and `@shared/sortable` write `osn-*` utilities. Application code never does —
-   every `bg-card` in pulse and `text-gold` in cire stays exactly as written.
-2. **An app maps once.** A `:root` block naming each `--osn-*` in the app's own
-   vocabulary. That is the entire integration; the package carries its own
-   `@source` and `@custom-variant`, so no app declares them.
+1. **The contract is library-facing.** `@shared/ui`, `@cire/ui` and
+   `@osn/auth-ui` write `ui-*` utilities. Application code never does — every
+   `bg-card` in pulse and `text-gold` in cire stays exactly as written.
+   `@shared/toast` reaches the same end by a different route: it compiles no
+   utilities at all and reads its own `--toast-*` properties from plain CSS
+   ([[toast]]).
+2. **An app maps once.** A `:root` block naming each `--ui-*` in the app's own
+   vocabulary. That is the entire integration; the package carries the
+   `@source` and `@custom-variant base` the components need, so no app declares
+   either.
 3. **The namespace is what makes it real.** Nothing an app writes can collide
    with a contract utility, and nothing a contract utility reads depends on an
    app's naming.
@@ -60,12 +65,26 @@ Adopting it is two lines:
 @import "@shared/design-tokens/tokens.css";
 
 :root {
-  --osn-surface: var(--card);
-  --osn-ink: var(--foreground);
-  --osn-accent: var(--primary);
+  --ui-surface: var(--card);
+  --ui-ink: var(--foreground);
+  --ui-accent: var(--primary);
   /* … */
 }
 ```
+
+### Why the prefix is `ui-`
+
+A prefix has one job here: keep a library's vocabulary from colliding with an
+app's. What it needs to be is short, unclaimed by Tailwind, and descriptive of
+what the names are for — and what these names are for is user interface.
+
+It also gets read as a claim about ownership, which is the part worth getting
+right. Nothing in `tokens.css` belongs to the identity system: no
+implementation has to spell `--ui-surface` to interoperate with anything, and
+the surfaces reading these tokens include cire's guest site and the marketing
+pages, which never touch an OSN ceremony. An `osn-` prefix therefore asserted a
+relationship the components do not have. [[osn-and-musubi]] is what decides
+which name a new package, token or identifier takes.
 
 ## The tokens
 
@@ -73,15 +92,26 @@ Adopting it is two lines:
 | -------- | ------------------------------------------------------------------- |
 | Grounds  | `ground`, `ground-deep`                                             |
 | Surfaces | `surface`, `surface-raised`, `surface-sunk`                         |
-| Lines    | `hairline`, `hairline-strong`                                       |
+| Edges    | `hairline`, `hairline-strong`                                       |
 | Ink      | `ink`, `ink-secondary`, `ink-tertiary`                              |
 | Accent   | `accent`, `accent-strong`, `accent-soft`, `accent-ink`, `on-accent` |
 | Status   | `success`, `warn`, `danger`, `on-danger`                            |
 | Focus    | `focus`                                                             |
 
-Scales: `text-osn-xs` … `2xl`, `tracking-osn-tight` … `ultra`,
-`leading-osn-none` … `relaxed`, `radius-osn-hair` … `pill` plus
-`radius-osn-control`.
+Scales, each spelled as a Tailwind utility: `text-ui-xs` … `2xl`,
+`tracking-ui-tight` … `ultra`, `leading-ui-none` … `relaxed`,
+`radius-ui-hair` … `pill` plus `radius-ui-control`, `font-ui-body` /
+`-display` / `-mono`, and the measure scale `max-w-ui-xs` … `3xl` — declared
+as `--container-ui-*`, which is the namespace Tailwind reads a `max-w-*` from.
+
+Three groups sit outside `@theme` as plain custom properties, because a
+component consumes them inside its own rule rather than as a utility:
+`--ui-focus-width` / `--ui-focus-offset`, the motion tokens
+(`--ui-dur-fast|base|slow`, `--ui-ease-out|in-out`) and `--ui-elev-1|2`.
+Aliasing those would generate utilities nobody spells. `CONTRACT_COLOR_TOKENS`
+and `CONTRACT_SCALAR_TOKENS` in `src/index.ts` are the enumerable form of both
+lists, and `tests/tokens-css-agrees.test.ts` fails if they and `tokens.css`
+drift apart.
 
 Two names are worth reading twice. **`ground-deep` is not "darker"** — it is
 what the page recedes _to_, behind a sticky bar or under a scrim, and on a dark
@@ -89,11 +119,11 @@ theme it is lighter. **`accent-ink` is not `on-accent`**: `accent-ink` is accent
 text on the page, `on-accent` is the label on a filled accent ground, and the
 two have opposite contrast requirements.
 
-## Three decisions that are easy to get wrong
+## Four decisions that are easy to get wrong
 
 ### `@theme inline`, not plain `@theme`
 
-`inline` makes `bg-osn-surface` compile to `var(--osn-surface, …)` resolved **at
+`inline` makes `bg-ui-surface` compile to `var(--ui-surface, …)` resolved **at
 the element**, not at `:root`. A subtree that redefines a token is then followed
 correctly — a theme story showing light and dark side by side, a themed section
 on a landing page, cire's invite preview rendering a wedding's palette inside
@@ -102,11 +132,12 @@ and every one of those silently shows the page theme instead.
 
 The reason `cire/host` gives for keeping _its own_ theme block non-inline does
 not transfer: there the JS-read name is `--color-gold`. Here nothing reads
-`--color-osn-*` from JavaScript.
+`--color-ui-*` from JavaScript — an app that wants a value in JS reads its own
+`--ui-*`, or its own token, with `getComputedStyle`.
 
 ### Fallbacks inline, and no `:root` in the package
 
-Every read is `var(--osn-x, <fallback>)` written at the use site. There is
+Every read is `var(--ui-x, <fallback>)` written at the use site. There is
 deliberately **no `:root` block in `tokens.css`**: a package-level `:root` is
 unlayered and lands at the import site, so it would beat an app mapping written
 inside `@layer base` or a later `@theme` — the app would set a token and
@@ -123,6 +154,22 @@ and a tie resolves by Tailwind's stylesheet order — not by class-attribute
 order, and not by anything visible at the call site. See
 [[wiki/architecture/component-library]] §Overriding a `Modal` default, which is
 where that cost nine call sites.
+
+### What `@source` names, and what it leaves out
+
+`tokens.css` declares four paths — `../../ui/src`, `../../../osn/auth-ui/src`,
+`../../toast/src`, `../../sortable/src` — so importing the contract is enough
+to scan every shared package that renders inside an app. They resolve against
+the file's own real path rather than through the `node_modules` symlink, which
+is what lets one of them reach out of `shared/` into `osn/`. `@shared/toast`
+and `@shared/sortable` spell no contract utility today; the entries cost a
+directory walk and mean neither has to edit five apps' CSS the first time one
+does.
+
+`@cire/ui` is not among them. It is one product's house layer, and the four
+cire apps each declare `@source "../../../ui/src"` for it in their own global
+CSS. A path to it in the shared contract would instead make musubi and pulse
+scan cire's components on every build.
 
 ## The conformance harness
 
@@ -150,8 +197,10 @@ see removes the feature outright for a keyboard user.
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@shared/design-tokens` | `tokens.css` (the contract), the conformance harness, and `CONTRACT_SCALES` / `SCALE_MIGRATION` which the scale codemod reads                       |
 | `@shared/color`         | The OKLCH maths — parsing, conversion, contrast, `ensureContrast`. Lifted out of `@cire/theme` so no `@shared/*` package depends on a `@cire/*` one |
-| `@osn/ui`               | The shadcn-vocabulary primitives, re-keyed onto the contract                                                                                        |
+| `@shared/ui`            | The primitives — `Button`, `Card`, `Modal`, `Field`, the rest — painted entirely in `ui-*` utilities                                                |
+| `@osn/auth-ui`          | The OSN auth views. Built out of `@shared/ui` primitives, so it inherits the contract through them — but its own class attributes still name the shadcn vocabulary, so it renders correctly only in an app that speaks it. `@musubi/social` is the one consumer today |
 | `@cire/ui`              | cire's house components — see [[wiki/architecture/component-library]] for why two layers rather than one                                            |
+| `@shared/toast`         | Its own `--toast-*` properties in plain CSS, mapped once per app — the arrangement this contract generalises. See [[toast]]                         |
 
 `scripts/codemod-scale.ts` is the migration tool: it rewrites static arbitrary
 values (`text-[13px]`) onto the nearest scale step and **skips computed ones**

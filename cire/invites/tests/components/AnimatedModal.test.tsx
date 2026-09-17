@@ -1,7 +1,7 @@
 /**
  * What this tier can and cannot see.
  *
- * The sheet is `@osn/ui`'s `Modal` now, so Escape, the backdrop, the focus trap
+ * The sheet is `@shared/ui`'s `Modal` now, so Escape, the backdrop, the focus trap
  * and the focus restore are the platform's — and jsdom implements no part of
  * `<dialog>`: `showModal` is `undefined`, nothing is focused on open, and every
  * box measures zero. `Modal` degrades to a non-modal dialog there, which is

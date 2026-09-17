@@ -28,7 +28,7 @@
   /* The control boundary. Written out at every form control as `border-text/55`
      before it had a name — the guest site's claim-code box and its
      gift-registry fields — which is a token by any other measure, and one the
-     contract needs by name (`--osn-hairline-strong`) to hold it to its 3:1
+     contract needs by name (`--ui-hairline-strong`) to hold it to its 3:1
      floor. */
   --color-border-strong: oklch(94.62% 0.0111 89.72 / 0.55);
   /* Solid, not `text / 0.5`. The alpha form measured 4.24:1 composited over
@@ -308,7 +308,7 @@
 }
 
 /* ── The token contract ─────────────────────────────────────────────────────
- * `@osn/ui` and `@cire/ui` are written against `--osn-*`, not against the theme
+ * `@shared/ui` and `@cire/ui` are written against `--osn-*`, not against the theme
  * block above. This says which of the marketing site's colours plays each role,
  * and it is the same mapping `cire/invites` declares — the point of the brand
  * block above is that the site and the invites it advertises read as one brand,
@@ -318,69 +318,69 @@
  * single page ground, and a single muted ink.
  */
 :root {
-  --osn-ground: var(--color-bg);
-  --osn-ground-deep: var(--color-bg);
-  --osn-surface: var(--color-surface);
-  --osn-surface-raised: var(--color-surface-raised);
-  --osn-surface-sunk: var(--color-bg);
+  --ui-ground: var(--color-bg);
+  --ui-ground-deep: var(--color-bg);
+  --ui-surface: var(--color-surface);
+  --ui-surface-raised: var(--color-surface-raised);
+  --ui-surface-sunk: var(--color-bg);
 
-  --osn-hairline: var(--color-border);
-  --osn-hairline-strong: var(--color-border-strong);
+  --ui-hairline: var(--color-border);
+  --ui-hairline-strong: var(--color-border-strong);
 
-  --osn-ink: var(--color-text);
-  --osn-ink-secondary: var(--color-text-muted);
-  --osn-ink-tertiary: var(--color-text-muted);
+  --ui-ink: var(--color-text);
+  --ui-ink-secondary: var(--color-text-muted);
+  --ui-ink-tertiary: var(--color-text-muted);
 
   /* No `--color-gold-ink` here: this site carries no gold that is read at body
      size, so the metal and the readable variant are the same colour. They part
      company on a paler scheme, which is why the contract names both. */
-  --osn-accent: var(--color-gold);
-  --osn-accent-strong: var(--color-gold);
-  --osn-accent-soft: var(--color-gold-dim);
-  --osn-accent-ink: var(--color-gold);
-  --osn-on-accent: var(--color-bg);
+  --ui-accent: var(--color-gold);
+  --ui-accent-strong: var(--color-gold);
+  --ui-accent-soft: var(--color-gold-dim);
+  --ui-accent-ink: var(--color-gold);
+  --ui-on-accent: var(--color-bg);
 
-  --osn-success: var(--color-success);
-  --osn-warn: var(--color-gold);
-  --osn-danger: var(--color-error);
-  --osn-on-danger: var(--color-bg);
+  --ui-success: var(--color-success);
+  --ui-warn: var(--color-gold);
+  --ui-danger: var(--color-error);
+  --ui-on-danger: var(--color-bg);
 
-  --osn-focus: var(--color-gold);
+  --ui-focus: var(--color-gold);
 
   /* No `lg`. The house rule is "nothing rounder than 6px except pills". */
-  --osn-radius-hair: 2px;
-  --osn-radius-sm: 4px;
-  --osn-radius-md: 6px;
-  --osn-radius-lg: 6px;
-  --osn-radius-pill: 999px;
+  --ui-radius-hair: 2px;
+  --ui-radius-sm: 4px;
+  --ui-radius-md: 6px;
+  --ui-radius-lg: 6px;
+  --ui-radius-pill: 999px;
   /* Sharp, like every other control here: the house look is stationery. */
-  --osn-radius-control: var(--osn-radius-sm);
+  --ui-radius-control: var(--ui-radius-sm);
 
-  --osn-font-body: var(--font-body);
-  --osn-font-display: var(--font-display);
-  --osn-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ui-font-body: var(--font-body);
+  --ui-font-display: var(--font-display);
+  --ui-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* The type scale, in the sizes cire already uses — the same seven steps the
      two portals map, so a shared component is the same size on every cire
      surface. */
-  --osn-text-xs: 0.72rem;
-  --osn-text-sm: 0.82rem;
-  --osn-text-base: 0.9rem;
-  --osn-text-md: 1.05rem;
-  --osn-text-lg: 1.3rem;
-  --osn-text-xl: 1.75rem;
-  --osn-text-2xl: 2.5rem;
+  --ui-text-xs: 0.72rem;
+  --ui-text-sm: 0.82rem;
+  --ui-text-base: 0.9rem;
+  --ui-text-md: 1.05rem;
+  --ui-text-lg: 1.3rem;
+  --ui-text-xl: 1.75rem;
+  --ui-text-2xl: 2.5rem;
 
-  --osn-tracking-tight: -0.02em;
-  --osn-tracking-normal: 0em;
-  --osn-tracking-wide: 0.04em;
-  --osn-tracking-wider: 0.1em;
-  --osn-tracking-widest: 0.16em;
-  --osn-tracking-ultra: 0.2em;
+  --ui-tracking-tight: -0.02em;
+  --ui-tracking-normal: 0em;
+  --ui-tracking-wide: 0.04em;
+  --ui-tracking-wider: 0.1em;
+  --ui-tracking-widest: 0.16em;
+  --ui-tracking-ultra: 0.2em;
 
-  --osn-leading-none: 1.1;
-  --osn-leading-tight: 1.2;
-  --osn-leading-snug: 1.4;
-  --osn-leading-normal: 1.6;
-  --osn-leading-relaxed: 1.75;
+  --ui-leading-none: 1.1;
+  --ui-leading-tight: 1.2;
+  --ui-leading-snug: 1.4;
+  --ui-leading-normal: 1.6;
+  --ui-leading-relaxed: 1.75;
 }

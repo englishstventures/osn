@@ -2,7 +2,7 @@
 "@cire/landing": patch
 ---
 
-The demo sheet becomes `@osn/ui`'s `Modal`, and `motion` leaves the bundle
+The demo sheet becomes `@shared/ui`'s `Modal`, and `motion` leaves the bundle
 
 `DemoModal` was a 130-line port of `cire/invites`' `AnimatedModal`: a scrim, a
 40-line `Tab` focus trap, Escape handling, a scroll lock, focus restore and an

@@ -14,7 +14,7 @@
     "test:run": "bunx --bun vitest run"
   },
   "dependencies": {
-    "@osn/ui": "workspace:*",
+    "@shared/ui": "workspace:*",
     "@shared/design-tokens": "workspace:*"
   },
   "devDependencies": {

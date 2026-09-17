@@ -5,7 +5,7 @@
  * The app's half of the contract: `@shared/design-tokens` says what the roles
  * owe, this asserts pulse's colours pay it. A shared component rendered here
  * reads the contract, so a mapping that puts secondary ink under 4.5:1 makes
- * every `@osn/ui` primitive illegible in this app and in no other.
+ * every `@shared/ui` primitive illegible in this app and in no other.
  */
 
 import { readFileSync } from "node:fs";
@@ -29,7 +29,7 @@ const SCOPES = [
  * falling back to the package's neutral grey.
  */
 const WAIVED = {
-  "--osn-hairline-strong": [
+  "--ui-hairline-strong": [
     "`--input` measures 1.13-1.27:1 in light and 1.10-1.31:1 in dark against",
     "pulse's own grounds, versus a 3:1 floor. Same class of defect as",
     "@musubi/social's and the same decision: darken the border and lose the",
@@ -44,15 +44,15 @@ describe("design-token contract", () => {
     expect(failures.map((f) => `[${f.scope}] ${f.fg} on ${f.bg} — ${f.reason}`)).toEqual([]);
   });
 
-  it("sends the coral to nothing — `--osn-accent` is the neutral `--primary`", () => {
+  it("sends the coral to nothing — `--ui-accent` is the neutral `--primary`", () => {
     // Pulse has two accents. The contract has one, and it means "the ground of
     // a primary button", which here is the near-black. Mapping the coral would
     // repaint every shared <Button> in the app — a redesign disguised as a
     // refactor, and exactly the kind of thing "renders identically" is meant to
     // rule out.
-    expect(CSS).toMatch(/--osn-accent:\s*var\(--primary\)/);
-    expect(CSS).not.toMatch(/--osn-accent:\s*var\(--pulse-accent\)/);
-    expect(CSS).not.toMatch(/--osn-accent-soft:\s*var\(--pulse-accent-soft\)/);
+    expect(CSS).toMatch(/--ui-accent:\s*var\(--primary\)/);
+    expect(CSS).not.toMatch(/--ui-accent:\s*var\(--pulse-accent\)/);
+    expect(CSS).not.toMatch(/--ui-accent-soft:\s*var\(--pulse-accent-soft\)/);
   });
 
   it("imports the contract stylesheet, or the mapping is dead custom properties", () => {
@@ -65,7 +65,7 @@ describe("design-token contract", () => {
     // neutral default — a different type system showing through in the middle
     // of this one, and invisible, because a fallback renders legibly.
     for (const step of ["xs", "sm", "base", "md", "lg", "xl", "2xl"]) {
-      expect(CSS).toMatch(new RegExp(`--osn-text-${step}:`));
+      expect(CSS).toMatch(new RegExp(`--ui-text-${step}:`));
     }
   });
 
@@ -74,8 +74,8 @@ describe("design-token contract", () => {
     // visible reading the block and produces a component whose "large" step is
     // smaller than its "medium" one.
     const sizes = ["xs", "sm", "base", "md", "lg", "xl", "2xl"].map((step) => {
-      const match = CSS.match(new RegExp(`--osn-text-${step}:\\s*([\\d.]+)px`));
-      if (!match) throw new Error(`--osn-text-${step} is not a px value`);
+      const match = CSS.match(new RegExp(`--ui-text-${step}:\\s*([\\d.]+)px`));
+      if (!match) throw new Error(`--ui-text-${step} is not a px value`);
       return Number.parseFloat(match[1]!);
     });
     expect(sizes).toEqual(sizes.toSorted((a, b) => a - b));

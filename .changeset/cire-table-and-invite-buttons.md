@@ -5,7 +5,7 @@
 
 cire adopts the new table-cell props, and 11 more invite buttons become `<Button>`
 
-21 class overrides on `Th` and `Td` in `cire/host` move to `@osn/ui`'s new
+21 class overrides on `Th` and `Td` in `cire/host` move to `@shared/ui`'s new
 `align`, `tone` and `valign` props, and three `<Table class="font-body">` drop a
 class the component now sets itself.
 

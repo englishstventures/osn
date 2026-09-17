@@ -298,7 +298,7 @@
 }
 
 /* ── The token contract ─────────────────────────────────────────────────────
- * `@osn/ui` and `@cire/ui` are written against `--osn-*`, not against the
+ * `@shared/ui` and `@cire/ui` are written against `--osn-*`, not against the
  * ramp above. This block is the whole of their integration, and it is
  * value-for-value identical to `cire/host`'s for the reason the ramp itself is
  * duplicated: the two portals are two doors into the same product, and a
@@ -314,10 +314,10 @@
  * across both portals' components, gold appears in 422 colour utilities and
  * the brand green in 8 — the green lives almost entirely in the shadcn alias
  * block above, which nothing in this package reads. So gold is what a shared
- * component means by "accent", which is also what makes an `@osn/ui` Button
+ * component means by "accent", which is also what makes an `@shared/ui` Button
  * and a `@cire/ui` Button the same button rather than two colours of one.
  *
- * `--osn-on-accent` is therefore `--on-gold`, a dark ink rather than a
+ * `--ui-on-accent` is therefore `--on-gold`, a dark ink rather than a
  * near-white: gold is a mid-lightness fill in both themes, so what sits on it
  * is dark in both.
  *
@@ -327,78 +327,78 @@
  * contrast, and a gold fill carries `on-gold`, so lightening it does.
  */
 :root {
-  --osn-ground: var(--bg);
-  --osn-ground-deep: var(--bg-deep);
-  --osn-surface: var(--surface);
-  --osn-surface-raised: var(--surface-raised);
-  --osn-surface-sunk: var(--surface-sunk);
+  --ui-ground: var(--bg);
+  --ui-ground-deep: var(--bg-deep);
+  --ui-surface: var(--surface);
+  --ui-surface-raised: var(--surface-raised);
+  --ui-surface-sunk: var(--surface-sunk);
 
-  --osn-hairline: var(--border);
-  --osn-hairline-strong: var(--border-strong);
+  --ui-hairline: var(--border);
+  --ui-hairline-strong: var(--border-strong);
 
-  --osn-ink: var(--text);
-  --osn-ink-secondary: var(--text-muted);
-  --osn-ink-tertiary: var(--text-faint);
+  --ui-ink: var(--text);
+  --ui-ink-secondary: var(--text-muted);
+  --ui-ink-tertiary: var(--text-faint);
 
-  --osn-accent: var(--gold);
-  --osn-accent-strong: var(--gold-hi);
-  --osn-accent-soft: var(--gold-dim);
-  --osn-accent-ink: var(--gold-ink);
-  --osn-on-accent: var(--on-gold);
+  --ui-accent: var(--gold);
+  --ui-accent-strong: var(--gold-hi);
+  --ui-accent-soft: var(--gold-dim);
+  --ui-accent-ink: var(--gold-ink);
+  --ui-on-accent: var(--on-gold);
 
-  --osn-success: var(--success);
-  --osn-warn: var(--warn);
-  --osn-danger: var(--error);
-  --osn-on-danger: var(--bg);
+  --ui-success: var(--success);
+  --ui-warn: var(--warn);
+  --ui-danger: var(--error);
+  --ui-on-danger: var(--bg);
 
-  --osn-focus: var(--focus);
+  --ui-focus: var(--focus);
 
   /* No `lg`. The house rule is "nothing rounder than 6px except pills", so the
    * contract's larger step resolves to the same 6px rather than importing a
    * 10px corner this product does not use. */
-  --osn-radius-hair: var(--radius-hair);
-  --osn-radius-sm: var(--radius-sm);
-  --osn-radius-md: var(--radius-md);
-  --osn-radius-lg: var(--radius-md);
-  --osn-radius-pill: var(--radius-pill);
+  --ui-radius-hair: var(--radius-hair);
+  --ui-radius-sm: var(--radius-sm);
+  --ui-radius-md: var(--radius-md);
+  --ui-radius-lg: var(--radius-md);
+  --ui-radius-pill: var(--radius-pill);
   /* Sharp, like every other control here: the house look is stationery. */
-  --osn-radius-control: var(--osn-radius-sm);
+  --ui-radius-control: var(--ui-radius-sm);
 
   /* No mono family is loaded here — `tabular-nums` on the body face is what
    * lines figures up in a column. The stack is named anyway so a shared
    * component asking for mono gets the platform's rather than the contract's
    * fallback, which is the same list by a different route. */
-  --osn-font-body: var(--font-body);
-  --osn-font-display: var(--font-display);
-  --osn-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ui-font-body: var(--font-body);
+  --ui-font-display: var(--font-display);
+  --ui-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* The type scale, in the sizes this product already uses. The steps are
    * clustered from the arbitrary values across both portals — 0.72 for the
    * uppercase meta line, 0.82 for a control, 0.9 for body — so a shared
    * component rendering here looks like cire rather than like the contract's
    * neutral defaults. */
-  --osn-text-xs: 0.72rem;
-  --osn-text-sm: 0.82rem;
-  --osn-text-base: 0.9rem;
-  --osn-text-md: 1.05rem;
-  --osn-text-lg: 1.3rem;
-  --osn-text-xl: 1.75rem;
-  --osn-text-2xl: 2.5rem;
+  --ui-text-xs: 0.72rem;
+  --ui-text-sm: 0.82rem;
+  --ui-text-base: 0.9rem;
+  --ui-text-md: 1.05rem;
+  --ui-text-lg: 1.3rem;
+  --ui-text-xl: 1.75rem;
+  --ui-text-2xl: 2.5rem;
 
   /* `wider` is the house uppercase tracking and `ultra` is the wide one the
    * section headings use; the rest keep the contract's own steps. */
-  --osn-tracking-tight: -0.02em;
-  --osn-tracking-normal: 0em;
-  --osn-tracking-wide: 0.04em;
-  --osn-tracking-wider: 0.1em;
-  --osn-tracking-widest: 0.16em;
-  --osn-tracking-ultra: 0.2em;
+  --ui-tracking-tight: -0.02em;
+  --ui-tracking-normal: 0em;
+  --ui-tracking-wide: 0.04em;
+  --ui-tracking-wider: 0.1em;
+  --ui-tracking-widest: 0.16em;
+  --ui-tracking-ultra: 0.2em;
 
-  --osn-leading-none: 1.1;
-  --osn-leading-tight: 1.2;
-  --osn-leading-snug: 1.4;
-  --osn-leading-normal: 1.6;
-  --osn-leading-relaxed: 1.75;
+  --ui-leading-none: 1.1;
+  --ui-leading-tight: 1.2;
+  --ui-leading-snug: 1.4;
+  --ui-leading-normal: 1.6;
+  --ui-leading-relaxed: 1.75;
 }
 
 @layer base {

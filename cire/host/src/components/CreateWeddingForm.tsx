@@ -1,8 +1,8 @@
 import Button from "@cire/ui/button";
-import { Field, Fieldset } from "@osn/ui/ui/field";
-import { Input } from "@osn/ui/ui/input";
-import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
+import { Field, Fieldset } from "@shared/ui/ui/field";
+import { Input } from "@shared/ui/ui/input";
+import { Notice } from "@shared/ui/ui/notice";
 import { createSignal, For, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -104,8 +104,8 @@ export default function CreateWeddingForm(props: {
       onSubmit={submit}
     >
       <div class="flex flex-col gap-1">
-        <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">New wedding</p>
-        <h2 class="font-display text-text text-osn-lg font-light">Start a new celebration</h2>
+        <p class="font-body text-gold text-ui-xs tracking-ui-widest uppercase">New wedding</p>
+        <h2 class="font-display text-text text-ui-lg font-light">Start a new celebration</h2>
       </div>
 
       <Field label="Wedding name">
@@ -143,9 +143,9 @@ export default function CreateWeddingForm(props: {
                     onChange={() => setCodeStyle(option.value)}
                     class="accent-gold"
                   />
-                  <span class="font-body text-text text-osn-base">{option.label}</span>
+                  <span class="font-body text-text text-ui-base">{option.label}</span>
                 </span>
-                <span class="font-body text-text-muted text-osn-sm pl-6 leading-snug">
+                <span class="font-body text-text-muted text-ui-sm pl-6 leading-snug">
                   {option.hint}
                 </span>
               </label>

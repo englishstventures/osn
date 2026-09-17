@@ -1,7 +1,7 @@
 import Button from "@cire/ui/button";
-import { Fieldset } from "@osn/ui/ui/field";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
+import { Fieldset } from "@shared/ui/ui/field";
 import { createSignal, For, onMount, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -136,9 +136,9 @@ export default function RemintPanel(props: RemintPanelProps) {
                     onChange={() => setTargetStyle(option.value)}
                     class="accent-gold"
                   />
-                  <span class="font-body text-text text-osn-base">{option.label}</span>
+                  <span class="font-body text-text text-ui-base">{option.label}</span>
                 </span>
-                <span class="font-body text-text-muted text-osn-sm pl-6 leading-snug">
+                <span class="font-body text-text-muted text-ui-sm pl-6 leading-snug">
                   {option.hint}
                 </span>
               </label>
@@ -161,7 +161,7 @@ export default function RemintPanel(props: RemintPanelProps) {
       <Show when={confirming()}>
         <div class="border-error/30 bg-error/5 flex flex-col gap-3 rounded-sm border p-4">
           <Show when={sharedCount() > 0}>
-            <p class="font-body text-error text-osn-base leading-relaxed">
+            <p class="font-body text-error text-ui-base leading-relaxed">
               {sharedCount() === 1
                 ? "1 family has already been sent their code."
                 : `${sharedCount()} families have already been sent their codes.`}{" "}
@@ -169,7 +169,7 @@ export default function RemintPanel(props: RemintPanelProps) {
               new one.
             </p>
           </Show>
-          <p class="font-body text-text text-osn-base">
+          <p class="font-body text-text text-ui-base">
             Re-mint all {familyCount()} family codes in the{" "}
             <span class="text-gold">{targetStyle()}</span> style? This can&apos;t be undone.
           </p>

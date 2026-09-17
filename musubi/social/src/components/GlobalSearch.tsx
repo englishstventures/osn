@@ -1,5 +1,5 @@
-import { clsx } from "@osn/ui/lib/utils";
-import { Input } from "@osn/ui/ui/input";
+import { clsx } from "@shared/ui/lib/utils";
+import { Input } from "@shared/ui/ui/input";
 import { useNavigate } from "@solidjs/router";
 import { createSignal, For, Show } from "solid-js";
 

@@ -19,7 +19,7 @@
     "@cire/ui": "workspace:*",
     "@fontsource/cormorant-garamond": "^5.3.0",
     "@fontsource/lato": "^5.3.0",
-    "@osn/ui": "workspace:*",
+    "@shared/ui": "workspace:*",
     "@shared/design-tokens": "workspace:*",
     "@shared/legal": "workspace:*",
     "@shared/rp-auth": "workspace:*",

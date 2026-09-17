@@ -22,40 +22,40 @@ const fixtures = {
   // The defect, in the shape that cost nine call sites: a `base:` utility
   // handed to a component whose own defaults are also `base:`.
   "component-class.tsx": `
-import { Modal } from "@osn/ui/ui/modal";
+import { Modal } from "@shared/ui/ui/modal";
 export const a = <Modal class="base:max-w-lg base:bg-bg">x</Modal>;
 `,
   // The same on a member-expression component.
   "member-component.tsx": `
-import { Dialog } from "@osn/ui/ui/dialog";
+import { Dialog } from "@shared/ui/ui/dialog";
 export const b = <Dialog.Panel class="base:p-0">x</Dialog.Panel>;
 `,
   // `className`, for a codebase that has both spellings.
   "class-name.tsx": `
-import { Modal } from "@osn/ui/ui/modal";
+import { Modal } from "@shared/ui/ui/modal";
 export const c = <Modal className="base:rounded-none">x</Modal>;
 `,
   // A responsive variant in front of it is still the same tie, and the message
   // has to quote what was actually written.
   "variant-prefixed.tsx": `
-import { Modal } from "@osn/ui/ui/modal";
+import { Modal } from "@shared/ui/ui/modal";
 export const d = <Modal class="md:base:max-h-none">x</Modal>;
 `,
   // Classes reached through a helper. `clsx` and a conditional are how half the
   // call sites in this repo build a class string.
   "through-clsx.tsx": `
-import { Modal } from "@osn/ui/ui/modal";
+import { Modal } from "@shared/ui/ui/modal";
 export const e = <Modal class={clsx("base:w-full", on && "base:p-6")}>x</Modal>;
 `,
   // `classList` puts the class in the object KEY, not the value.
   "class-list.tsx": `
-import { Modal } from "@osn/ui/ui/modal";
+import { Modal } from "@shared/ui/ui/modal";
 export const f = <Modal classList={{ "base:hidden": closed }}>x</Modal>;
 `,
   // A template's static chunks count; the interpolation is
   // `require-static-classes`' problem, not this rule's.
   "template-literal.tsx": `
-import { Modal } from "@osn/ui/ui/modal";
+import { Modal } from "@shared/ui/ui/modal";
 export const g = <Modal class={\`base:gap-4 \${extra}\`}>x</Modal>;
 `,
   // NOT a violation. A component styling its own markup is the entire point of
@@ -65,29 +65,29 @@ export const h = <div class="base:max-w-lg base:bg-bg">x</div>;
 `,
   // NOT a violation. The correct form at a call site.
   "plain-utility.tsx": `
-import { Modal } from "@osn/ui/ui/modal";
+import { Modal } from "@shared/ui/ui/modal";
 export const i = <Modal class="max-w-lg bg-bg">x</Modal>;
 `,
   // NOT a violation. A class that merely contains the letters `base`.
   "base-substring.tsx": `
-import { Modal } from "@osn/ui/ui/modal";
+import { Modal } from "@shared/ui/ui/modal";
 export const j = <Modal class="bg-base-ground database-row">x</Modal>;
 `,
   // NOT a violation. Some other prop carrying a string.
   "other-prop.tsx": `
-import { Modal } from "@osn/ui/ui/modal";
+import { Modal } from "@shared/ui/ui/modal";
 export const k = <Modal label="base:max-w-lg">x</Modal>;
 `,
   // NOT a violation, and the half of the rule that keeps it usable. A wrapper
   // passing `base:` down to a third-party component is not a tie: Kobalte sets
   // no `base:` defaults, so this IS the zero-specificity default its own
   // consumer will override. Without this exemption the rule reports 199 sites
-  // across `@osn/ui` and says nothing true about any of them.
+  // across the shared layers and says nothing true about any of them.
   "third-party-target.tsx": `
 import { Dialog as KobalteDialog } from "@kobalte/core/dialog";
 export const l = <KobalteDialog.Overlay class="base:fixed base:inset-0">x</KobalteDialog.Overlay>;
 `,
-  // A relative import is ours by construction — `@osn/ui`'s own \`UsernameInput\`
+  // A relative import is ours by construction — `@shared/ui`'s own \`UsernameInput\`
   // passes \`base:flex-1\` to its sibling \`Input\`, which has \`base:\` defaults.
   "relative-import.tsx": `
 import { Input } from "./input";
@@ -166,7 +166,7 @@ describe("house/no-base-variant-at-call-site", () => {
 
   it("leaves a component's own markup alone, which is what `base:` is for", () => {
     // The rule that stops this from being unusable. Every `base:` in
-    // `@osn/ui` and `@cire/ui` is on a plain element and must stay silent.
+    // `@shared/ui` and `@cire/ui` is on a plain element and must stay silent.
     expect(diagnostics.filter((d) => d.filename.endsWith("own-element.tsx"))).toHaveLength(0);
   });
 

@@ -102,7 +102,7 @@ export function ConsentPlaceholder(props: { category: ConsentCategory; vendor: s
 
   return (
     <div class="border-border/70 bg-surface-raised/60 mt-2 rounded-md border px-4 py-4 text-center">
-      <p class="font-body text-text-muted text-osn-sm leading-relaxed">
+      <p class="font-body text-text-muted text-ui-sm leading-relaxed">
         <Show when={vendor()?.purpose} fallback={<>Content from {vendorName()} is switched off.</>}>
           {(purpose) => (
             <>
@@ -111,7 +111,7 @@ export function ConsentPlaceholder(props: { category: ConsentCategory; vendor: s
           )}
         </Show>
       </p>
-      <p class="font-body text-text-muted/80 text-osn-xs mt-1.5 leading-relaxed">
+      <p class="font-body text-text-muted/80 text-ui-xs mt-1.5 leading-relaxed">
         It's switched off because you turned off {categoryTitle()}. It loads from {vendorName()}'s
         servers, which lets them see your IP address and browser.
       </p>

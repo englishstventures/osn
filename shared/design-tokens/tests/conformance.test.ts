@@ -41,26 +41,26 @@ function stylesheet(overrides: Record<string, string> = {}): string {
   };
 
   const map = `
-    --osn-ground: var(--page);
-    --osn-ground-deep: var(--panel);
-    --osn-surface: var(--panel);
-    --osn-surface-raised: var(--panel-hi);
-    --osn-surface-sunk: var(--well);
-    --osn-hairline: var(--rule);
-    --osn-hairline-strong: var(--rule-strong);
-    --osn-ink: var(--body);
-    --osn-ink-secondary: var(--body-dim);
-    --osn-ink-tertiary: var(--body-faint);
-    --osn-accent: var(--brand);
-    --osn-accent-strong: var(--brand-hi);
-    --osn-accent-soft: var(--brand-wash);
-    --osn-accent-ink: var(--brand-ink);
-    --osn-on-accent: var(--on-brand);
-    --osn-success: var(--ok);
-    --osn-warn: var(--warn);
-    --osn-danger: var(--bad);
-    --osn-on-danger: var(--on-bad);
-    --osn-focus: var(--ring);
+    --ui-ground: var(--page);
+    --ui-ground-deep: var(--panel);
+    --ui-surface: var(--panel);
+    --ui-surface-raised: var(--panel-hi);
+    --ui-surface-sunk: var(--well);
+    --ui-hairline: var(--rule);
+    --ui-hairline-strong: var(--rule-strong);
+    --ui-ink: var(--body);
+    --ui-ink-secondary: var(--body-dim);
+    --ui-ink-tertiary: var(--body-faint);
+    --ui-accent: var(--brand);
+    --ui-accent-strong: var(--brand-hi);
+    --ui-accent-soft: var(--brand-wash);
+    --ui-accent-ink: var(--brand-ink);
+    --ui-on-accent: var(--on-brand);
+    --ui-success: var(--ok);
+    --ui-warn: var(--warn);
+    --ui-danger: var(--bad);
+    --ui-on-danger: var(--on-bad);
+    --ui-focus: var(--ring);
   `;
 
   const decls = Object.entries(house)
@@ -86,7 +86,7 @@ describe("checkContractConformance", () => {
       css: stylesheet({ "--body": "oklch(85% 0 0)" }),
       scopes: ONE_SCOPE,
     });
-    expect(failures.some((f) => f.fg === "--osn-ink")).toBe(true);
+    expect(failures.some((f) => f.fg === "--ui-ink")).toBe(true);
   });
 
   it("fails body ink that is too light, naming the ratio", () => {
@@ -94,7 +94,7 @@ describe("checkContractConformance", () => {
       css: stylesheet({ "--body-dim": "oklch(75% 0 0)" }),
       scopes: ONE_SCOPE,
     });
-    const hit = failures.find((f) => f.fg === "--osn-ink-secondary");
+    const hit = failures.find((f) => f.fg === "--ui-ink-secondary");
     expect(hit).toBeDefined();
     expect(hit?.required).toBe(4.5);
     expect(hit?.ratio).toBeLessThan(4.5);
@@ -107,8 +107,8 @@ describe("checkContractConformance", () => {
       css: stylesheet({ "--well": "oklch(40% 0 0)" }),
       scopes: ONE_SCOPE,
     });
-    expect(failures.some((f) => f.fg === "--osn-ink" && f.bg === "--osn-surface-sunk")).toBe(true);
-    expect(failures.some((f) => f.fg === "--osn-ink" && f.bg === "--osn-ground")).toBe(false);
+    expect(failures.some((f) => f.fg === "--ui-ink" && f.bg === "--ui-surface-sunk")).toBe(true);
+    expect(failures.some((f) => f.fg === "--ui-ink" && f.bg === "--ui-ground")).toBe(false);
   });
 
   it("composites translucent ink over its ground before measuring", () => {
@@ -118,7 +118,7 @@ describe("checkContractConformance", () => {
       css: stylesheet({ "--body": "oklch(20% 0 0 / 0.2)" }),
       scopes: ONE_SCOPE,
     });
-    const hit = failures.find((f) => f.fg === "--osn-ink" && f.bg === "--osn-ground");
+    const hit = failures.find((f) => f.fg === "--ui-ink" && f.bg === "--ui-ground");
     expect(hit).toBeDefined();
     expect(hit?.ratio).toBeLessThan(4.5);
     expect(hit?.reason).toContain("compositing");
@@ -131,7 +131,7 @@ describe("checkContractConformance", () => {
       css: stylesheet({ "--rule": "oklch(99.5% 0 0)" }),
       scopes: ONE_SCOPE,
     });
-    expect(failures.some((f) => f.fg === "--osn-hairline")).toBe(false);
+    expect(failures.some((f) => f.fg === "--ui-hairline")).toBe(false);
   });
 
   it("holds large-text and UI tokens to 3:1, not 4.5:1", () => {
@@ -140,30 +140,30 @@ describe("checkContractConformance", () => {
       css: stylesheet({ "--body-faint": "oklch(60% 0 0)" }),
       scopes: ONE_SCOPE,
     });
-    expect(failures.some((f) => f.fg === "--osn-ink-tertiary")).toBe(false);
+    expect(failures.some((f) => f.fg === "--ui-ink-tertiary")).toBe(false);
   });
 
   it("measures on-fill ink against its fill, never against the page", () => {
-    // White on white would be a failure if `--osn-on-accent` were measured
+    // White on white would be a failure if `--ui-on-accent` were measured
     // against the ground. It is not a combination any component renders.
     const failures = checkContractConformance({ css: stylesheet(), scopes: ONE_SCOPE });
-    expect(failures.some((f) => f.fg === "--osn-on-accent" && f.bg === "--osn-ground")).toBe(false);
+    expect(failures.some((f) => f.fg === "--ui-on-accent" && f.bg === "--ui-ground")).toBe(false);
   });
 
   it("reports an unmapped token rather than skipping it", () => {
-    const css = stylesheet().replace("--osn-ink: var(--body);", "");
+    const css = stylesheet().replace("--ui-ink: var(--body);", "");
     const failures = checkContractConformance({ css, scopes: ONE_SCOPE });
     expect(failures.some((f) => f.reason.includes("not mapped"))).toBe(true);
   });
 
   it("honours an explicit waiver", () => {
-    const css = stylesheet().replace("--osn-ink: var(--body);", "");
+    const css = stylesheet().replace("--ui-ink: var(--body);", "");
     const failures = checkContractConformance({
       css,
       scopes: ONE_SCOPE,
-      waived: { "--osn-ink": "deliberately absent, for this test" },
+      waived: { "--ui-ink": "deliberately absent, for this test" },
     });
-    expect(failures.some((f) => f.fg === "--osn-ink")).toBe(false);
+    expect(failures.some((f) => f.fg === "--ui-ink")).toBe(false);
   });
 
   it("catches a cyclic var() chain instead of recursing until the stack dies", () => {
@@ -172,7 +172,7 @@ describe("checkContractConformance", () => {
       ":root {\n  --body-alias: var(--body);",
     );
     const failures = checkContractConformance({ css, scopes: ONE_SCOPE });
-    expect(failures.some((f) => f.fg === "--osn-ink" && f.reason.includes("cyclic"))).toBe(true);
+    expect(failures.some((f) => f.fg === "--ui-ink" && f.reason.includes("cyclic"))).toBe(true);
   });
 
   it("refuses a translucent ground, because what is behind it is unknowable", () => {
@@ -180,9 +180,7 @@ describe("checkContractConformance", () => {
       css: stylesheet({ "--panel": "oklch(98% 0 0 / 0.6)" }),
       scopes: ONE_SCOPE,
     });
-    expect(failures.some((f) => f.bg === "--osn-surface" && f.reason.includes("opaque"))).toBe(
-      true,
-    );
+    expect(failures.some((f) => f.bg === "--ui-surface" && f.reason.includes("opaque"))).toBe(true);
   });
 
   it("does not merge `:root[data-theme]` declarations into the bare `:root` scope", () => {
@@ -199,7 +197,7 @@ describe("checkContractConformance", () => {
       css,
       scopes: [{ name: "light", selectors: [":root", ':root[data-theme="light"]'] }],
     });
-    expect(failures.some((f) => f.fg === "--osn-ink")).toBe(true);
+    expect(failures.some((f) => f.fg === "--ui-ink")).toBe(true);
   });
 
   it("throws on a selector that matches no block, rather than asserting about nothing", () => {
@@ -227,7 +225,7 @@ describe("assertContractConformance", () => {
     } catch (error) {
       message = (error as Error).message;
     }
-    expect(message).toContain("--osn-ink-secondary");
+    expect(message).toContain("--ui-ink-secondary");
     expect(message).toContain("[test]");
     expect(message).toMatch(/\d+\.\d+:1/);
   });

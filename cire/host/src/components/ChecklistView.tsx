@@ -1,9 +1,9 @@
 import Button from "@cire/ui/button";
-import { Field } from "@osn/ui/ui/field";
-import { Input } from "@osn/ui/ui/input";
-import { Notice } from "@osn/ui/ui/notice";
-import { Select } from "@osn/ui/ui/select";
 import { useAuth } from "@shared/rp-auth/solid";
+import { Field } from "@shared/ui/ui/field";
+import { Input } from "@shared/ui/ui/input";
+import { Notice } from "@shared/ui/ui/notice";
+import { Select } from "@shared/ui/ui/select";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -252,12 +252,12 @@ export default function ChecklistView(props: ChecklistViewProps) {
         <For each={grouped()}>
           {(group) => (
             <section class="flex flex-col gap-2">
-              <h3 class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
+              <h3 class="text-gold-dim font-body text-ui-xs tracking-ui-widest uppercase">
                 {group.bucket.label}
               </h3>
               <Show
                 when={group.items.length > 0}
-                fallback={<p class="text-text-muted text-osn-sm italic">Nothing here yet.</p>}
+                fallback={<p class="text-text-muted text-ui-sm italic">Nothing here yet.</p>}
               >
                 <ul class="flex flex-col gap-1">
                   <For each={group.items}>
@@ -271,13 +271,13 @@ export default function ChecklistView(props: ChecklistViewProps) {
                           onChange={() => props.canEdit && toggleDone(task)}
                         />
                         <span
-                          class={`text-osn-base flex-1 ${
+                          class={`text-ui-base flex-1 ${
                             task.status === "done" ? "text-text-muted line-through" : "text-text"
                           }`}
                         >
                           {task.title}
                           <Show when={task.dueAt}>
-                            <span class="text-text-muted text-osn-xs ml-2">· due {task.dueAt}</span>
+                            <span class="text-text-muted text-ui-xs ml-2">· due {task.dueAt}</span>
                           </Show>
                         </span>
                         <Show when={props.canEdit}>

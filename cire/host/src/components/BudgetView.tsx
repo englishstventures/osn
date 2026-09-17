@@ -1,9 +1,9 @@
 import Button from "@cire/ui/button";
-import { Field } from "@osn/ui/ui/field";
-import { Input } from "@osn/ui/ui/input";
-import { Notice } from "@osn/ui/ui/notice";
-import { Select } from "@osn/ui/ui/select";
 import { useAuth } from "@shared/rp-auth/solid";
+import { Field } from "@shared/ui/ui/field";
+import { Input } from "@shared/ui/ui/input";
+import { Notice } from "@shared/ui/ui/notice";
+import { Select } from "@shared/ui/ui/select";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -360,13 +360,13 @@ export default function BudgetView(props: BudgetViewProps) {
       {/* Summary — spent vs cap, owner cap editor. */}
       <div class="border-border bg-surface/20 flex flex-wrap items-center justify-between gap-4 rounded-sm border p-4">
         <div class="flex flex-col gap-1">
-          <span class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
+          <span class="text-gold-dim font-body text-ui-xs tracking-ui-widest uppercase">
             Spent so far
           </span>
-          <span class="text-text text-osn-lg font-semibold">
+          <span class="text-text text-ui-lg font-semibold">
             {fmtMinor(spent(), currency())}
             <Show when={snapshot()?.budgetTotalMinor != null}>
-              <span class="text-text-muted text-osn-base font-normal">
+              <span class="text-text-muted text-ui-base font-normal">
                 {" "}
                 of {fmtMinor(snapshot()!.budgetTotalMinor!, currency())}
               </span>
@@ -377,7 +377,7 @@ export default function BudgetView(props: BudgetViewProps) {
               snapshot()?.budgetTotalMinor != null && spent() > (snapshot()?.budgetTotalMinor ?? 0)
             }
           >
-            <span class="text-error text-osn-sm">Over budget</span>
+            <span class="text-error text-ui-sm">Over budget</span>
           </Show>
         </div>
         <Show when={props.canManage}>
@@ -472,7 +472,7 @@ export default function BudgetView(props: BudgetViewProps) {
 
       <Show
         when={grouped().length > 0}
-        fallback={<p class="text-text-muted text-osn-sm italic">No budget items yet.</p>}
+        fallback={<p class="text-text-muted text-ui-sm italic">No budget items yet.</p>}
       >
         {/* Categories pair up on a wide panel. The minimum is generous (32rem)
             because a budget row carries a name plus three money cells and the
@@ -487,10 +487,10 @@ export default function BudgetView(props: BudgetViewProps) {
               return (
                 <section class="flex flex-col gap-2">
                   <div class="flex items-baseline justify-between">
-                    <h3 class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
+                    <h3 class="text-gold-dim font-body text-ui-xs tracking-ui-widest uppercase">
                       {categoryLabel(group.category.key)}
                     </h3>
-                    <span class="text-text-muted text-osn-sm">
+                    <span class="text-text-muted text-ui-sm">
                       est {fmtMinor(subtotalEst(), currency())} · spent{" "}
                       {fmtMinor(subtotalActual(), currency())}
                     </span>
@@ -500,7 +500,7 @@ export default function BudgetView(props: BudgetViewProps) {
                       {(item, i) => (
                         <li class="border-border bg-surface/10 flex flex-col gap-2 rounded-sm border px-3 py-2">
                           <div class="flex flex-wrap items-center gap-3">
-                            <span class="text-text text-osn-base min-w-[8rem] flex-1">
+                            <span class="text-text text-ui-base min-w-[8rem] flex-1">
                               {item.name}
                             </span>
                             <MoneyCell
@@ -600,13 +600,13 @@ function MoneyCell(props: {
 }) {
   return (
     <label class="flex w-24 flex-col gap-0.5">
-      <span class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
+      <span class="text-gold-dim font-body text-ui-xs tracking-ui-widest uppercase">
         {props.label}
       </span>
       <Show
         when={props.canEdit}
         fallback={
-          <span class="text-text text-osn-sm">
+          <span class="text-text text-ui-sm">
             {props.minor == null ? "—" : fmtMinor(props.minor, props.currency)}
           </span>
         }
@@ -648,7 +648,7 @@ function PaymentPanel(props: {
     <div class="border-border/60 ml-2 flex flex-col gap-2 border-l pl-3">
       <For each={props.payments}>
         {(p) => (
-          <div class="text-osn-sm flex flex-wrap items-center gap-2">
+          <div class="text-ui-sm flex flex-wrap items-center gap-2">
             <input
               type="checkbox"
               aria-label={`${p.label} paid`}

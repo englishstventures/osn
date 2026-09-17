@@ -254,7 +254,7 @@ export default function VendorApp() {
         <Dashboard />
       </RequireAuth>
       {/* `topLayer` because this app's dialogs are `showModal()` dialogs
-          (`@osn/ui`'s `Modal`), which paint in the top layer — above every
+          (`@shared/ui`'s `Modal`), which paint in the top layer — above every
           stacking context, so no `z-index` on the toast container could reach
           over one. See `ToasterProps.topLayer`. */}
       <Toaster position="bottom-right" topLayer />

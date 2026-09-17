@@ -123,7 +123,7 @@ export function rewriteScales(source: string): FileResult {
       skipped.push({ value: original, why: "unmapped" });
       return whole;
     }
-    const replacement = `${scale}-osn-${step}`;
+    const replacement = `${scale}-ui-${step}`;
     rewrites.push({ from: original, to: replacement });
     return replacement;
   });

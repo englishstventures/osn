@@ -1,6 +1,6 @@
 import Button from "@cire/ui/button";
-import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
+import { Notice } from "@shared/ui/ui/notice";
 import { createSignal, For, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -197,7 +197,7 @@ export default function ChangeHistory(props: { weddingId: string }) {
 
   return (
     <details class="border-border bg-bg/30 group/history rounded-sm border" onToggle={onToggle}>
-      <summary class="font-body text-text hover:text-gold text-osn-base flex cursor-pointer items-center gap-2 px-4 py-3 transition select-none [&::-webkit-details-marker]:hidden">
+      <summary class="font-body text-text hover:text-gold text-ui-base flex cursor-pointer items-center gap-2 px-4 py-3 transition select-none [&::-webkit-details-marker]:hidden">
         <span
           class="text-gold inline-block transition-transform group-open/history:rotate-90"
           aria-hidden
@@ -213,13 +213,13 @@ export default function ChangeHistory(props: { weddingId: string }) {
         </Show>
 
         <Show when={loading() && entries() === null}>
-          <p class="text-text-muted text-osn-sm" aria-busy="true">
+          <p class="text-text-muted text-ui-sm" aria-busy="true">
             Loading…
           </p>
         </Show>
 
         <Show when={loaded() && (entries()?.length ?? 0) === 0}>
-          <p class="text-text-muted text-osn-sm">No changes yet.</p>
+          <p class="text-text-muted text-ui-sm">No changes yet.</p>
         </Show>
 
         <Show when={(entries()?.length ?? 0) > 0}>
@@ -233,15 +233,15 @@ export default function ChangeHistory(props: { weddingId: string }) {
                 return (
                   <li class="border-border bg-surface/30 flex flex-col gap-2 rounded-sm border p-4 @lg/panel:flex-row @lg/panel:items-center @lg/panel:justify-between">
                     <div class="flex flex-col gap-1">
-                      <span class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
+                      <span class="font-body text-gold text-ui-xs tracking-ui-widest uppercase">
                         {KIND_LABEL[entry.kind] ?? "Change"}
                       </span>
-                      <span class="font-body text-text text-osn-base">
+                      <span class="font-body text-text text-ui-base">
                         {formatDate(entry.uploadedAt)}
                       </span>
-                      <span class="text-text-muted text-osn-sm">{summarise(entry.summary)}</span>
+                      <span class="text-text-muted text-ui-sm">{summarise(entry.summary)}</span>
                       <span
-                        class="font-body text-osn-xs tracking-osn-widest uppercase"
+                        class="font-body text-ui-xs tracking-ui-widest uppercase"
                         classList={{
                           "text-gold": entry.status === "applied",
                           "text-text-muted": entry.status !== "applied",
@@ -266,7 +266,7 @@ export default function ChangeHistory(props: { weddingId: string }) {
 
                     <Show when={agedOut()}>
                       <span
-                        class="font-body text-text-muted text-osn-xs shrink-0 self-start italic @lg/panel:max-w-[12rem] @lg/panel:self-auto @lg/panel:text-right"
+                        class="font-body text-text-muted text-ui-xs shrink-0 self-start italic @lg/panel:max-w-[12rem] @lg/panel:self-auto @lg/panel:text-right"
                         title="Only the ten most recent changes keep a restore point."
                       >
                         Restore point no longer available

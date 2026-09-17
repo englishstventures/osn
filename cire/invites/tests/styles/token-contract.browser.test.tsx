@@ -3,7 +3,7 @@
  *
  * Every other check stops short of this one. `design-token-contract.test.ts`
  * parses the stylesheet and does arithmetic on values it reads; the unit tier
- * asserts a component carries `base:bg-osn-accent` as a string. Neither can see
+ * asserts a component carries `base:bg-ui-accent` as a string. Neither can see
  * whether that class **generated any CSS**, whether it survived the cascade, or
  * what a browser finally painted — and a Tailwind utility the scanner cannot
  * resolve emits nothing at all. No error, no rule, and every string assertion
@@ -11,9 +11,9 @@
  *
  * That gap matters more here than anywhere else in the repo, because `@cire/ui`
  * lives in a different package from the stylesheet that themes it. The chain is
- * four links long — the component's `base:bg-osn-accent`, the contract's
- * `--color-osn-accent: var(--osn-accent, …)`, this app's
- * `--osn-accent: var(--color-gold)`, and the gold itself — and three of them
+ * four links long — the component's `base:bg-ui-accent`, the contract's
+ * `--color-ui-accent: var(--ui-accent, …)`, this app's
+ * `--ui-accent: var(--color-gold)`, and the gold itself — and three of them
  * are in files the component never mentions.
  */
 
@@ -54,7 +54,7 @@ describe("the contract reaches the pixel", () => {
 
   it("draws the call to action in the invite's own gold", () => {
     // The whole four-link chain, checked as a colour rather than as a string:
-    // `base:text-osn-accent-ink` on a component in another package resolves to
+    // `base:text-ui-accent-ink` on a component in another package resolves to
     // `--color-gold-ink` in this app's stylesheet.
     const { getByRole } = render(() => <Button variant="cta">Open invitation</Button>);
     const style = getComputedStyle(getByRole("button"));

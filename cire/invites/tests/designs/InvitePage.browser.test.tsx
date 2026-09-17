@@ -376,7 +376,7 @@ describe.each([
       return found!;
     }, SETTLED);
 
-    const toast = el.closest(".osn-toast") as HTMLElement;
+    const toast = el.closest(".ui-toast") as HTMLElement;
     expect(toast, "the message is not inside a toast element").toBeTruthy();
 
     // The message itself, on whatever the toast composites to.
@@ -387,7 +387,7 @@ describe.each([
 
     // And the tone glyph, which is the half that carries the organiser's
     // semantic colour and the half the page tokens got wrong.
-    const glyph = toast.querySelector(".osn-toast__glyph")!;
+    const glyph = toast.querySelector(".ui-toast__glyph")!;
     expect(
       contrastRatio(paintedInk(glyph), paintedBackdrop(glyph)),
       "the tone glyph is illegible on the toast surface",

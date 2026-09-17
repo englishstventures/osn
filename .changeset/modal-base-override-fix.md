@@ -10,11 +10,11 @@ Nine `Modal` call sites were being silently overruled by the component's own def
 that a caller's utility wins. That only holds when the caller's utility is
 *plain*. A `base:` one ties, and a tie is resolved by Tailwind's stylesheet
 order, which is neither the class-attribute order nor anything the call site can
-see: `.base\:max-w-osn-sm` is emitted after `.base\:max-w-lg`, so the component
+see: `.base\:max-w-ui-sm` is emitted after `.base\:max-w-lg`, so the component
 beat its own caller with every string assertion still passing.
 
 The consent preferences dialog was the worst of the nine — 480px instead of
-512px, and painted on `--osn-surface-raised` instead of the page ground, which
+512px, and painted on `--ui-surface-raised` instead of the page ground, which
 put the panel on the same colour as the category rows inside it and stopped them
 reading as rows. On the one surface whose whole job is being legible.
 

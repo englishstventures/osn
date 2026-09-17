@@ -1,10 +1,10 @@
 import Button from "@cire/ui/button";
-import { Field } from "@osn/ui/ui/field";
-import { Input } from "@osn/ui/ui/input";
-import { heldWhileClosing, Modal } from "@osn/ui/ui/modal";
-import { Notice } from "@osn/ui/ui/notice";
-import { Select } from "@osn/ui/ui/select";
 import { useAuth } from "@shared/rp-auth/solid";
+import { Field } from "@shared/ui/ui/field";
+import { Input } from "@shared/ui/ui/input";
+import { heldWhileClosing, Modal } from "@shared/ui/ui/modal";
+import { Notice } from "@shared/ui/ui/notice";
+import { Select } from "@shared/ui/ui/select";
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import { Portal } from "solid-js/web";
 
@@ -291,14 +291,14 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
 
       {/* Loading */}
       <Show when={loading() && listings().length === 0}>
-        <p role="status" class="text-text-muted text-osn-sm italic">
+        <p role="status" class="text-text-muted text-ui-sm italic">
           Loading vendors…
         </p>
       </Show>
 
       {/* Empty state */}
       <Show when={!loading() && listings().length === 0 && !error()}>
-        <p role="status" class="text-text-muted text-osn-sm italic">
+        <p role="status" class="text-text-muted text-ui-sm italic">
           No vendors match your filters.
         </p>
       </Show>
@@ -310,13 +310,13 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
             {(item) => (
               <li class="border-border bg-surface/10 flex flex-col gap-3 rounded-sm border p-4">
                 <div class="flex flex-col gap-1">
-                  <span class="text-text text-osn-base font-medium">{item.name}</span>
+                  <span class="text-text text-ui-base font-medium">{item.name}</span>
 
                   {/* Category chips */}
                   <div class="flex flex-wrap gap-1">
                     <For each={item.categories}>
                       {(cat) => (
-                        <span class="bg-surface/60 text-text-muted text-osn-xs rounded-full px-2 py-0.5">
+                        <span class="bg-surface/60 text-text-muted text-ui-xs rounded-full px-2 py-0.5">
                           {categoryLabel(cat)}
                         </span>
                       )}
@@ -324,15 +324,15 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
                   </div>
 
                   <Show when={item.locationText}>
-                    <span class="text-text-muted text-osn-sm">{item.locationText}</span>
+                    <span class="text-text-muted text-ui-sm">{item.locationText}</span>
                   </Show>
 
                   <Show when={item.priceBand}>
-                    <span class="text-text-muted text-osn-sm">{item.priceBand}</span>
+                    <span class="text-text-muted text-ui-sm">{item.priceBand}</span>
                   </Show>
 
                   <Show when={item.description}>
-                    <p class="text-text-muted text-osn-sm line-clamp-2">{item.description}</p>
+                    <p class="text-text-muted text-ui-sm line-clamp-2">{item.description}</p>
                   </Show>
                 </div>
 
@@ -389,12 +389,12 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
                       >
                         <div class="flex flex-col gap-2">
                           <fieldset class="flex flex-wrap gap-2">
-                            <legend class="text-gold-dim font-body text-osn-xs sr-only uppercase">
+                            <legend class="text-gold-dim font-body text-ui-xs sr-only uppercase">
                               Pick a category
                             </legend>
                             <For each={item.categories}>
                               {(cat) => (
-                                <label class="text-osn-sm flex items-center gap-1">
+                                <label class="text-ui-sm flex items-center gap-1">
                                   <input
                                     type="radio"
                                     name={`add-cat-${item.id}`}
@@ -475,7 +475,7 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
           {(ml) => (
             <>
               <div class="flex items-start justify-between gap-4">
-                <h2 class="text-text text-osn-md font-medium">{ml().name}</h2>
+                <h2 class="text-text text-ui-md font-medium">{ml().name}</h2>
                 <Button
                   variant="bare"
                   type="button"
@@ -491,7 +491,7 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
               <div class="flex flex-wrap gap-1">
                 <For each={ml().categories}>
                   {(cat) => (
-                    <span class="bg-surface/60 text-text-muted text-osn-xs rounded-full px-2 py-0.5">
+                    <span class="bg-surface/60 text-text-muted text-ui-xs rounded-full px-2 py-0.5">
                       {categoryLabel(cat)}
                     </span>
                   )}
@@ -499,15 +499,15 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
               </div>
 
               <Show when={ml().locationText}>
-                <p class="text-text-muted text-osn-sm">{ml().locationText}</p>
+                <p class="text-text-muted text-ui-sm">{ml().locationText}</p>
               </Show>
 
               <Show when={ml().priceBand}>
-                <p class="text-text-muted text-osn-sm">
+                <p class="text-text-muted text-ui-sm">
                   {ml().priceBand}
                   <Show when={ml().priceMinMinor != null || ml().priceMaxMinor != null}>
                     {" "}
-                    <span class="text-text-muted text-osn-sm">
+                    <span class="text-text-muted text-ui-sm">
                       {ml().priceMinMinor != null
                         ? `from $${(ml().priceMinMinor! / 100).toFixed(0)}`
                         : ""}
@@ -521,7 +521,7 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
               </Show>
 
               <Show when={ml().description}>
-                <p class="text-text text-osn-base">{ml().description}</p>
+                <p class="text-text text-ui-base">{ml().description}</p>
               </Show>
 
               {/* Contact details */}
@@ -532,7 +532,7 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
                       href={href()}
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
+                      class="text-gold-dim hover:text-gold text-ui-sm underline-offset-2 hover:underline"
                     >
                       Website
                     </a>
@@ -544,17 +544,17 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
                       href={href()}
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="text-gold-dim hover:text-gold text-osn-sm underline-offset-2 hover:underline"
+                      class="text-gold-dim hover:text-gold text-ui-sm underline-offset-2 hover:underline"
                     >
                       Instagram
                     </a>
                   )}
                 </Show>
                 <Show when={ml().email}>
-                  <span class="text-text-muted text-osn-sm">{ml().email}</span>
+                  <span class="text-text-muted text-ui-sm">{ml().email}</span>
                 </Show>
                 <Show when={ml().phone}>
-                  <span class="text-text-muted text-osn-sm">{ml().phone}</span>
+                  <span class="text-text-muted text-ui-sm">{ml().phone}</span>
                 </Show>
               </div>
 
@@ -589,12 +589,12 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
                   >
                     <div class="flex flex-col gap-2">
                       <fieldset class="flex flex-wrap gap-2">
-                        <legend class="text-gold-dim font-body text-osn-xs sr-only uppercase">
+                        <legend class="text-gold-dim font-body text-ui-xs sr-only uppercase">
                           Pick a category
                         </legend>
                         <For each={ml().categories}>
                           {(cat) => (
-                            <label class="text-osn-sm flex items-center gap-1">
+                            <label class="text-ui-sm flex items-center gap-1">
                               <input
                                 type="radio"
                                 name={`modal-add-cat-${ml().id}`}

@@ -175,7 +175,7 @@ describe("Overview", () => {
     const headline = screen
       .getByText(/days to go/i)
       .closest("div")!
-      // `[class~=]` rather than `.tabular-nums`: `Stat` is `@osn/ui`'s now, and
+      // `[class~=]` rather than `.tabular-nums`: `Stat` is `@shared/ui`'s now, and
       // every class a library component writes is `base:`-prefixed so a call
       // site can still override it. The attribute selector matches the
       // whitespace-separated token without needing the colon escaped.
