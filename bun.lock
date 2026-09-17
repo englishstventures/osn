@@ -65,6 +65,7 @@
     "cire/host": {
       "name": "@cire/host",
       "dependencies": {
+        "@cire/dietary": "workspace:*",
         "@astrojs/solid-js": "^7.0.2",
         "@cire/invite-designs": "workspace:*",
         "@cire/theme": "workspace:*",
@@ -180,6 +181,7 @@
     "cire/ui": {
       "name": "@cire/ui",
       "dependencies": {
+        "@cire/dietary": "workspace:*",
         "@shared/ui": "workspace:*",
         "@shared/design-tokens": "workspace:*",
       },

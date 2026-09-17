@@ -1,3 +1,4 @@
+import { type DietaryPreset } from "@cire/dietary";
 import Button from "@cire/ui/button";
 import { useAuth } from "@shared/rp-auth/solid";
 import { EmptyState } from "@shared/ui/ui/empty-state";
@@ -71,6 +72,7 @@ interface EditTarget {
   guestName: string;
   status: RsvpStatus;
   dietary: string;
+  dietaryPresets: readonly DietaryPreset[];
 }
 
 /**
@@ -99,6 +101,7 @@ export default function RsvpView(props: RsvpViewProps) {
   const [edit, setEdit] = createSignal<EditTarget | null>(null);
   const [formStatus, setFormStatus] = createSignal<RsvpStatus>("attending");
   const [formDietary, setFormDietary] = createSignal("");
+  const [formPresets, setFormPresets] = createSignal<readonly DietaryPreset[]>([]);
   const [formConsent, setFormConsent] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [formError, setFormError] = createSignal<string | null>(null);
@@ -150,20 +153,25 @@ export default function RsvpView(props: RsvpViewProps) {
   const openEditor = (
     eventId: string,
     guest: { guestId: string; firstName: string; lastName: string },
-    existing?: { status: RsvpStatus; dietary: string },
+    existing?: { status: RsvpStatus; dietary: string; dietaryPresets: readonly DietaryPreset[] },
   ) => {
     setFormError(null);
     setFormStatus(existing?.status ?? "attending");
     setFormDietary(existing?.dietary ?? "");
-    // Prefill consent when editing a row that already carries dietary text
-    // (prior consent assumed) — mirrors the guest form's behaviour.
-    setFormConsent((existing?.dietary.trim().length ?? 0) > 0);
+    setFormPresets(existing?.dietaryPresets ?? []);
+    // Prefill consent when editing a row that already carries dietary data —
+    // presets or free text, since both are what consent authorises. Mirrors the
+    // guest form.
+    setFormConsent(
+      (existing?.dietary.trim().length ?? 0) > 0 || (existing?.dietaryPresets.length ?? 0) > 0,
+    );
     setEdit({
       eventId,
       guestId: guest.guestId,
       guestName: `${guest.firstName} ${guest.lastName}`,
       status: existing?.status ?? "attending",
       dietary: existing?.dietary ?? "",
+      dietaryPresets: existing?.dietaryPresets ?? [],
     });
   };
 
@@ -171,7 +179,11 @@ export default function RsvpView(props: RsvpViewProps) {
    *  blank when the guest has said nothing yet. */
   const openRow = (eventId: string, row: RsvpRow) => {
     if (row.responded && row.status !== "none") {
-      openEditor(eventId, row, { status: row.status, dietary: row.dietary });
+      openEditor(eventId, row, {
+        status: row.status,
+        dietary: row.dietary,
+        dietaryPresets: row.dietaryPresets,
+      });
       return;
     }
     openEditor(eventId, row);
@@ -215,7 +227,11 @@ export default function RsvpView(props: RsvpViewProps) {
     const target = edit();
     if (!target) return;
     const dietary = formDietary().trim();
-    if (dietary.length > 0 && !formConsent()) {
+    const dietaryPresets = formPresets();
+    // Presets are special-category exactly as the free text is, so either one
+    // being present is what the attestation has to cover.
+    const hasDietaryData = dietary.length > 0 || dietaryPresets.length > 0;
+    if (hasDietaryData && !formConsent()) {
       haptic("reject");
       setFormError("Confirm the guest consented before storing dietary requirements.");
       return;
@@ -233,7 +249,8 @@ export default function RsvpView(props: RsvpViewProps) {
           body: JSON.stringify({
             status: formStatus(),
             dietary,
-            dietaryConsent: dietary.length > 0 ? formConsent() : false,
+            dietaryPresets,
+            dietaryConsent: hasDietaryData ? formConsent() : false,
           }),
         },
       );

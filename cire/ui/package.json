@@ -5,6 +5,7 @@
   "exports": {
     "./button": "./src/button.tsx",
     "./card": "./src/card.tsx",
+    "./dietary-presets": "./src/dietary-presets.tsx",
     "./loading": "./src/loading.tsx",
     "./username-input": "./src/username-input.tsx"
   },
@@ -14,8 +15,9 @@
     "test:run": "bunx --bun vitest run"
   },
   "dependencies": {
-    "@shared/ui": "workspace:*",
-    "@shared/design-tokens": "workspace:*"
+    "@cire/dietary": "workspace:*",
+    "@shared/design-tokens": "workspace:*",
+    "@shared/ui": "workspace:*"
   },
   "devDependencies": {
     "@shared/typescript-config": "workspace:*",

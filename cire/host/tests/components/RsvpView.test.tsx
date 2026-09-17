@@ -400,9 +400,17 @@ describe("RsvpView", () => {
     const body = JSON.parse(putCall[1]?.body as string) as {
       status: string;
       dietary: string;
+      dietaryPresets: readonly string[];
       dietaryConsent: boolean;
     };
-    expect(body).toEqual({ status: "attending", dietary: "Nut allergy", dietaryConsent: true });
+    // Typed into "Other" with nothing picked from the list — the server is what
+    // adds `other`, so the body carries the presets exactly as the form held them.
+    expect(body).toEqual({
+      status: "attending",
+      dietary: "Nut allergy",
+      dietaryPresets: [],
+      dietaryConsent: true,
+    });
   });
 
   it("editor edits an existing reply (prefilled, overwrites)", async () => {
