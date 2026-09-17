@@ -6,24 +6,94 @@ import { DbService, dbQuery } from "../db";
 import type { EntitlementKey } from "./entitlements";
 
 /**
- * A co-host's role. `editor` gets full module writes (guests, schedule,
- * invite, import — a partner or hired planner); `viewer` is read-only. The
- * owner is never rowed into `wedding_hosts`, so "owner" is not a stored role.
+ * Every value the `wedding_hosts.role` column may hold, read off the column
+ * itself. The app-layer vocabulary below derives from this, so the two cannot
+ * drift: widening the column widens {@link HostRole}, and every exhaustive
+ * switch over it stops compiling until the new role is handled.
  */
-export type HostRole = "editor" | "viewer";
+export type StoredHostRole = (typeof weddingHosts.$inferSelect)["role"];
 
 /**
- * Map a stored role onto the app-layer {@link HostRole}. `host` is the legacy
- * pre-roles value (and still the column's DDL DEFAULT — unchangeable without a
- * table rebuild): migration 0031 rewrote all rows to `editor`, but a stray
- * legacy value degrades to `editor` (what every pre-roles co-host effectively
- * was). Anything ELSE — an unknown or corrupted value no code path writes —
- * degrades to `viewer`, the least-privilege role, so the gate chain never
- * fails open (S-L1).
+ * A co-host's role in the app layer. `editor` gets full module writes (guests,
+ * schedule, invite, import — a partner or hired planner); `viewer` is
+ * read-only. The owner is never rowed into `wedding_hosts`, so "owner" is not
+ * a stored role.
+ *
+ * `host` is excluded: it is the legacy pre-roles value and still the column's
+ * DDL DEFAULT (unchangeable without a table rebuild), but no reader treats it
+ * as a role of its own — {@link normaliseHostRole} folds it into `editor`.
+ */
+export type HostRole = Exclude<StoredHostRole, "host">;
+
+/**
+ * The roles the organiser API may WRITE. Deliberately narrower than
+ * {@link HostRole}: `add()` and `setRole()` take this, so the compiler proves
+ * no route can assign a role outside it, independently of the runtime bar that
+ * `HostRoleSchema` puts on the request body.
+ */
+export type AssignableHostRole = "editor" | "viewer";
+
+/**
+ * Each role's privilege rank, lowest first. Exhaustive over {@link HostRole} by
+ * type — a role added to the column must be ranked here before this compiles,
+ * which is what makes {@link LEAST_PRIVILEGE_ROLE} true rather than merely
+ * intended.
+ */
+const ROLE_PRIVILEGE_RANK = {
+  viewer: 1,
+  editor: 2,
+} satisfies Record<HostRole, number>;
+
+/**
+ * What an unrecognised stored role degrades to: the narrowest role there is.
+ * Derived from {@link ROLE_PRIVILEGE_RANK} rather than written out, so adding a
+ * role below the current floor moves the floor with it instead of leaving a
+ * stale literal that grants more than the newest role gets.
+ */
+export const LEAST_PRIVILEGE_ROLE: HostRole = (
+  Object.keys(ROLE_PRIVILEGE_RANK) as HostRole[]
+).reduce((lowest, role) =>
+  ROLE_PRIVILEGE_RANK[role] < ROLE_PRIVILEGE_RANK[lowest] ? role : lowest,
+);
+
+/** Membership test for {@link StoredHostRole}, keyed rather than listed so a
+ *  value added to the column has to be answered for here too. Exported so a
+ *  test can enumerate the stored roles without restating them — a restated list
+ *  is one that stops matching the column the first time it is widened. */
+export const STORED_HOST_ROLES = {
+  host: true,
+  editor: true,
+  viewer: true,
+} satisfies Record<StoredHostRole, true>;
+
+function isStoredHostRole(role: string): role is StoredHostRole {
+  return Object.hasOwn(STORED_HOST_ROLES, role);
+}
+
+/** Fold a recognised stored value onto the app-layer role it means. */
+function mapStoredRole(role: StoredHostRole): HostRole {
+  switch (role) {
+    // Migration 0031 rewrote every legacy `host` row to `editor`; a stray one
+    // is what every pre-roles co-host effectively was.
+    case "host":
+    case "editor":
+      return "editor";
+    case "viewer":
+      return "viewer";
+  }
+  const _exhaustive: never = role;
+  return LEAST_PRIVILEGE_ROLE;
+}
+
+/**
+ * Map a stored role onto the app-layer {@link HostRole}. A value the column is
+ * not declared to hold — corrupted, or written by something that bypassed the
+ * schema — degrades to {@link LEAST_PRIVILEGE_ROLE} so the gate chain never
+ * fails open.
  */
 export function normaliseHostRole(role: string): HostRole {
-  if (role === "editor" || role === "host") return "editor";
-  return "viewer";
+  if (!isStoredHostRole(role)) return LEAST_PRIVILEGE_ROLE;
+  return mapStoredRole(role);
 }
 
 /** A co-host row surfaced to the management panel. Never echoes the account id —
@@ -266,7 +336,7 @@ export const hostsService = {
     osnProfileId: string;
     addedByOsnProfileId: string;
     ownerOsnProfileId: string;
-    role: HostRole;
+    role: AssignableHostRole;
   }): Effect.Effect<WeddingHostRow, HostConflict | HostWriteError, DbService> {
     return Effect.gen(function* () {
       const db = yield* DbService;
@@ -399,7 +469,7 @@ export const hostsService = {
   setRole(input: {
     weddingId: string;
     osnProfileId: string;
-    role: HostRole;
+    role: AssignableHostRole;
   }): Effect.Effect<WeddingHostRow, HostNotFound | HostWriteError, DbService> {
     return Effect.gen(function* () {
       const db = yield* DbService;
