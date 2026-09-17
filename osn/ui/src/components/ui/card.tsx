@@ -27,7 +27,7 @@ const Card: Component<CardProps> = (props) => {
   return (
     <div
       class={clsx(
-        "base:bg-osn-surface base:text-osn-ink base:rounded-osn-lg base:border base:border-border",
+        "base:bg-osn-surface base:text-osn-ink base:rounded-osn-lg base:border base:border-osn-hairline",
         CARD_PADDING[local.padding ?? "none"],
         local.class,
       )}

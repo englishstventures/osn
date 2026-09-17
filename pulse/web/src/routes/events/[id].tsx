@@ -127,7 +127,7 @@ export function EventDetailPage() {
                   <span
                     class={`text-xs ${
                       e().status === "ongoing"
-                        ? "font-semibold text-green-600"
+                        ? "text-success font-semibold"
                         : e().status === "cancelled"
                           ? "text-destructive"
                           : "text-muted-foreground"

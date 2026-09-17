@@ -62,7 +62,7 @@ export function EventCard(props: {
             <span
               class={`text-xs ${
                 props.event.status === "ongoing"
-                  ? "font-semibold text-green-600"
+                  ? "text-success font-semibold"
                   : props.event.status === "cancelled"
                     ? "text-destructive"
                     : "text-muted-foreground"

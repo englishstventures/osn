@@ -54,7 +54,7 @@ function summariseRRule(rrule: string): string {
 }
 
 function statusColour(status: SeriesInstance["status"]): string {
-  if (status === "ongoing") return "font-semibold text-green-600";
+  if (status === "ongoing") return "font-semibold text-success";
   if (status === "cancelled") return "text-destructive";
   return "text-muted-foreground";
 }

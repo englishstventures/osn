@@ -10,7 +10,7 @@ const badgeVariants = cva(
         default: "base:bg-osn-accent base:text-osn-on-accent",
         secondary: "base:bg-osn-surface-sunk base:text-osn-ink-secondary",
         destructive: "base:bg-osn-danger base:text-osn-on-danger",
-        outline: "base:text-osn-ink base:border base:border-border",
+        outline: "base:text-osn-ink base:border base:border-osn-hairline",
       },
     },
     defaultVariants: {

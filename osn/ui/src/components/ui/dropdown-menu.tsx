@@ -11,7 +11,7 @@ const DropdownMenuContent: ParentComponent<ComponentProps<"div">> = (props) => {
     <KobalteDropdownMenu.Portal>
       <KobalteDropdownMenu.Content
         class={clsx(
-          "base:bg-osn-surface-raised base:text-osn-ink base:border-border base:z-50 base:min-w-[8rem] base:rounded-osn-md base:border base:p-1 base:shadow-md base:outline-none",
+          "base:bg-osn-surface-raised base:text-osn-ink base:border-osn-hairline base:z-50 base:min-w-[8rem] base:rounded-osn-md base:border base:p-1 base:shadow-md base:outline-none",
           "base:data-[expanded]:animate-in base:data-[closed]:animate-out base:data-[closed]:fade-out-0 base:data-[expanded]:fade-in-0 base:data-[closed]:zoom-out-95 base:data-[expanded]:zoom-in-95",
           local.class,
         )}
@@ -53,7 +53,7 @@ const DropdownMenuSeparator: ParentComponent<ComponentProps<"hr">> = (props) => 
   const [local, others] = splitProps(props, ["class"]);
   return (
     <KobalteDropdownMenu.Separator
-      class={clsx("base:bg-border base:-mx-1 base:my-1 base:h-px", local.class)}
+      class={clsx("base:bg-osn-hairline base:-mx-1 base:my-1 base:h-px", local.class)}
       {...others}
     />
   );

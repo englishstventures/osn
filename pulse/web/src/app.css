@@ -203,6 +203,18 @@
      arbitrary value, which is how the explore nav's two accent pills were
      written — one of them with a hover state and one without, because two
      copies of a style drift. */
+  /* Success and warning, which the shadcn ramp has neither of. Both existed
+     already as `--toast-accent-*`, contrast-checked and dark-mode-aware; what
+     was missing was a utility, which is why five call sites reached for a raw
+     Tailwind palette colour instead. Those are fixed sRGB and do not move when
+     the theme flips — `text-green-600` measured 3.08:1 on this background and
+     `bg-emerald-500` 2.36:1, under the floors for text and for a non-text
+     indicator respectively. These read 5.38:1 to 10.09:1.
+
+     *Measured 2026-09-17 — `contrastRatio` from `@shared/color`, each value
+     against `--background` in both themes.* */
+  --color-success: var(--toast-accent-success);
+  --color-warn: var(--toast-accent-warn);
   --color-pulse-accent: var(--pulse-accent);
   --color-pulse-accent-strong: var(--pulse-accent-strong);
   --color-pulse-accent-soft: var(--pulse-accent-soft);

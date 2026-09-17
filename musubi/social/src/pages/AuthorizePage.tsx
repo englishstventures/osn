@@ -547,9 +547,7 @@ function ClientCard(props: { context: AuthorizeContext | undefined }) {
           </p>
         }
       >
-        <p class="text-caption mt-3 font-medium text-emerald-600 dark:text-emerald-400">
-          Verified OSN app
-        </p>
+        <p class="text-caption text-success mt-3 font-medium">Verified OSN app</p>
       </Show>
     </div>
   );
