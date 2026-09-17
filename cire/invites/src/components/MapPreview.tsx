@@ -11,7 +11,8 @@ interface MapPreviewProps {
 /**
  * Map preview for a wedding event's "Where" section.
  *
- * Two render paths share one footer (venue line + "Open in Maps" action):
+ * Two render paths share one footer, which always names the venue and carries
+ * the "Open in Maps" affordance only where its own path needs one:
  *
  *  - **Real map** — when `PUBLIC_GOOGLE_MAPS_EMBED_KEY` is configured at build
  *    time AND the event has a venue address AND the guest has allowed
@@ -38,8 +39,8 @@ interface MapPreviewProps {
  *
  * The un-consented fallback is the CSS card rather than the generic "content
  * blocked" placeholder, deliberately: the card is a genuinely useful thing to
- * put where a map goes — it names the venue and still opens the guest's own maps
- * app via the footer link, which is a plain outbound navigation the guest
+ * put where a map goes — it names the venue and the card is itself a link to the
+ * guest's own maps app, which is a plain outbound navigation the guest
  * initiates and so needs no consent. A guest who refuses loses the interactive
  * tiles and nothing else. The cost is that the card gives no hint that a richer
  * map is available; the standing "Privacy choices" control in the site footer
@@ -71,7 +72,7 @@ export function MapPreview(props: MapPreviewProps) {
               vendor="google-maps"
               fallback={<MapCard href={href()} venue={venue()} />}
             >
-              <MapEmbed href={href()} venue={venue()} src={src()} />
+              <MapEmbed venue={venue()} src={src()} />
             </ConsentGate>
           )}
         </Show>
@@ -81,11 +82,15 @@ export function MapPreview(props: MapPreviewProps) {
 }
 
 /**
- * The real Google Maps Embed iframe + the shared footer. The iframe captures
- * pointer events, so (unlike the CSS card) the actionable "open in maps" link
- * lives in the footer rather than wrapping the whole card.
+ * The real Google Maps Embed iframe + the shared footer.
+ *
+ * The iframe captures pointer events, so nothing outside it can be the map's
+ * control surface; Google's own "View larger map" inside the frame is the route
+ * to a full map. The footer here is therefore the venue line alone — a second
+ * "Open in Maps" beside it would be a duplicate of a control the guest can
+ * already see.
  */
-function MapEmbed(props: { href: string; venue: string | null; src: string }) {
+function MapEmbed(props: { venue: string | null; src: string }) {
   const title = () => `Map of ${props.venue ?? "the venue"}`;
 
   return (
@@ -110,7 +115,7 @@ function MapEmbed(props: { href: string; venue: string | null; src: string }) {
         // shifts layout as the embed loads.
         class="block h-36 w-full border-0"
       />
-      <FooterRow href={props.href} venue={props.venue} />
+      <FooterRow venue={props.venue} />
     </div>
   );
 }
@@ -166,19 +171,21 @@ function MapCard(props: { href: string; venue: string | null }) {
         </div>
       </div>
 
-      <FooterRow href={props.href} venue={props.venue} interactive={false} />
+      <FooterRow venue={props.venue} showAction />
     </a>
   );
 }
 
 /**
- * Shared footer: venue line + the "Open in Maps" affordance. In the CSS-card
- * path the enclosing `<a>` is the link, so the action is a non-interactive
- * `<span>` (`interactive={false}`); in the iframe path it is itself the link.
+ * Shared footer: the venue line, and the "Open in Maps" affordance on the path
+ * that asks for one.
+ *
+ * The affordance is never itself a link. `MapCard` wraps its whole card in an
+ * `<a>` and passes `showAction`, so the affordance is the visible signal that
+ * the card is clickable rather than a second route to the same place; `MapEmbed`
+ * leaves it out, because the map it renders carries its own control.
  */
-function FooterRow(props: { href: string; venue: string | null; interactive?: boolean }) {
-  const isLink = () => props.interactive !== false;
-
+function FooterRow(props: { venue: string | null; showAction?: boolean }) {
   return (
     <div class="border-border/70 bg-surface-raised flex items-center justify-between gap-3 border-t px-4 py-3">
       <Show
@@ -186,30 +193,24 @@ function FooterRow(props: { href: string; venue: string | null; interactive?: bo
         fallback={<span class="font-body text-text-muted text-ui-sm italic">View on map</span>}
       >
         {(line) => (
-          <span class="font-body text-text-muted text-ui-sm min-w-0 flex-1 truncate text-left">
+          // The address wraps rather than being cut off: it is the one thing
+          // this footer exists to say, and an ellipsis in place of the suburb
+          // tells a guest nothing. `wrap-anywhere` gives a single unbreakable
+          // token somewhere to break, so no address can push the row wider than
+          // the card; the four-line cap bounds one of unlimited length, since
+          // nothing between the organiser's input and here constrains it. Four
+          // is one line more than a street address needs in the narrowest
+          // column this footer renders in.
+          <span class="font-body text-text-muted text-ui-sm line-clamp-4 min-w-0 flex-1 text-left wrap-anywhere">
             {line()}
           </span>
         )}
       </Show>
-      <Show
-        when={isLink()}
-        fallback={
-          <span class="border-gold font-body text-gold-ink group-hover:bg-gold group-hover:text-bg text-ui-xs tracking-ui-wider inline-flex shrink-0 items-center gap-1.5 rounded-sm border px-3.5 py-1.5 uppercase transition-colors duration-200">
-            Open in Maps
-            <OpenIcon />
-          </span>
-        }
-      >
-        <a
-          href={props.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`Open ${props.venue ?? "the venue"} in maps`}
-          class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg focus-visible:ring-gold/60 text-ui-xs tracking-ui-wider inline-flex shrink-0 items-center gap-1.5 rounded-sm border px-3.5 py-1.5 uppercase transition-colors duration-200 focus:outline-none focus-visible:ring-2"
-        >
+      <Show when={props.showAction}>
+        <span class="border-gold font-body text-gold-ink group-hover:bg-gold group-hover:text-bg text-ui-xs tracking-ui-wider inline-flex shrink-0 items-center gap-1.5 rounded-sm border px-3.5 py-1.5 uppercase transition-colors duration-200">
           Open in Maps
           <OpenIcon />
-        </a>
+        </span>
       </Show>
     </div>
   );

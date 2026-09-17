@@ -53,6 +53,18 @@ describe("MapPreview", () => {
     expect(getByText(/open in maps/i)).toBeTruthy();
   });
 
+  it("keeps the card's affordance a decoration on one link, not a second link", () => {
+    // The whole card is the anchor, so "Open in Maps" is a `<span>` inside it:
+    // the visible signal that the card is clickable. Two anchors here would be
+    // two tab stops and two announcements for one destination.
+    const { container, getByText } = render(() => <MapPreview event={baseEvent} />);
+
+    expect(container.querySelectorAll("a")).toHaveLength(1);
+    const action = getByText(/open in maps/i);
+    expect(action.tagName).toBe("SPAN");
+    expect(action.closest("a")).toBe(container.querySelector("a"));
+  });
+
   it("renders nothing when there is no address or mapsUrl", () => {
     const { container } = render(() => (
       <MapPreview event={{ ...baseEvent, address: null, mapsUrl: null }} />
@@ -131,15 +143,17 @@ describe("MapPreview", () => {
       expect(sandbox).not.toContain("allow-top-navigation");
     });
 
-    it("keeps the 'Open in Maps' link working alongside the iframe", () => {
+    it("offers no in-page maps control beside the iframe, and still names the venue", () => {
+      // The iframe carries Google's own "View larger map", so a second control
+      // in the footer would be two routes to one map. The venue line is not a
+      // control and stays in both branches.
       vi.stubEnv("PUBLIC_GOOGLE_MAPS_EMBED_KEY", KEY);
-      const { getByRole } = render(() => <MapPreview event={baseEvent} />);
+      const { container, getByText, queryByText } = render(() => <MapPreview event={baseEvent} />);
 
-      const link = getByRole("link") as HTMLAnchorElement;
-      expect(link.href).toContain("https://www.google.com/maps/search/?api=1&query=");
-      expect(link.href).toContain(encodeURIComponent("12 Banksia Lane, Strathfield"));
-      expect(link.target).toBe("_blank");
-      expect(link.rel).toBe("noopener noreferrer");
+      expect(container.querySelector("iframe")).not.toBeNull();
+      expect(container.querySelector("a")).toBeNull();
+      expect(queryByText(/open in maps/i)).toBeNull();
+      expect(getByText("12 Banksia Lane, Strathfield")).toBeTruthy();
     });
 
     it("falls back to the CSS card (no iframe) when there is no address to query", () => {
@@ -234,6 +248,59 @@ describe("MapPreview", () => {
       saveConsent({ ...defaultGrants(), embeds: false });
 
       expect(container.querySelector("iframe")).toBeNull();
+    });
+  });
+
+  /**
+   * The mechanism half of the address's wrapping contract. The outcome half —
+   * that the address is genuinely readable and genuinely unclipped at a given
+   * width — is in `MapPreview.browser.test.tsx`, because jsdom parses no
+   * stylesheet and computes no layout, so `getByText` finds the address whether
+   * it is painted in full or cut off at the first word.
+   *
+   * What this adds that the browser tier cannot: it names the utilities, so a
+   * regression reads as "someone put `truncate` back" rather than as an
+   * arithmetic failure on a rect.
+   */
+  describe("the venue line's wrapping contract", () => {
+    const KEY = "test-embed-key";
+
+    const addressClasses = (container: HTMLElement) => {
+      const line = [...container.querySelectorAll("span")].find(
+        (el) => el.textContent === "12 Banksia Lane, Strathfield",
+      );
+      expect(line, "no element carries the venue address").toBeTruthy();
+      return line!.className;
+    };
+
+    it("lets the address wrap and bounds it, in the CSS-card branch", () => {
+      const { container } = render(() => <MapPreview event={baseEvent} />);
+      const classes = addressClasses(container);
+
+      // `truncate` is `white-space: nowrap` + `text-overflow: ellipsis`, which
+      // clips at every width rather than only at narrow ones.
+      expect(classes).not.toMatch(/(^|\s)truncate(\s|$)/);
+      expect(classes).toContain("wrap-anywhere");
+      expect(classes).toContain("line-clamp-4");
+      // The action is what the address shares its row with, so the address must
+      // still be allowed to shrink inside the flex row.
+      expect(classes).toContain("min-w-0");
+      expect(classes).toContain("flex-1");
+    });
+
+    it("lets the address wrap and bounds it, in the iframe branch", () => {
+      // The footer is shared, so both branches inherit one contract — but the
+      // iframe branch is the one production guests see, and it would be the one
+      // to silently diverge if the footer were ever forked per branch.
+      vi.stubEnv("PUBLIC_GOOGLE_MAPS_EMBED_KEY", KEY);
+      seedConsentForTest({ embeds: true });
+      const { container } = render(() => <MapPreview event={baseEvent} />);
+      expect(container.querySelector("iframe")).not.toBeNull();
+
+      const classes = addressClasses(container);
+      expect(classes).not.toMatch(/(^|\s)truncate(\s|$)/);
+      expect(classes).toContain("wrap-anywhere");
+      expect(classes).toContain("line-clamp-4");
     });
   });
 });
