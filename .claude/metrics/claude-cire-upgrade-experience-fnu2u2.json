@@ -4,8 +4,8 @@
     "number": null,
     "branch": "claude/cire-upgrade-experience-fnu2u2",
     "base_sha": "b5f9c8f4c3701ae6e3a08529c86db40f1ca563ac",
-    "head_sha": "ccff5e9049966cd1dda9b00f588c31499458c2dd",
-    "generated_at": "2026-09-17T10:57:22.220Z",
+    "head_sha": "4e542beb772f53c57c249836f4dc5d0ca476a1ff",
+    "generated_at": "2026-09-17T11:21:22.255Z",
     "merged_at": null,
     "phase": "at-open"
   },
@@ -21,33 +21,33 @@
   "window": {
     "sessions": 1,
     "first_ts": "2026-09-14T12:13:19.506Z",
-    "last_ts": "2026-09-17T10:53:07.159Z",
-    "span_seconds": 254388,
-    "active_seconds": 7916,
+    "last_ts": "2026-09-17T11:16:14.913Z",
+    "span_seconds": 255775,
+    "active_seconds": 8984,
     "compactions": 0
   },
   "spend": {
-    "usd_equivalent": 74.35721800000003,
+    "usd_equivalent": 80.85853700000003,
     "tokens": {
-      "input": 1974,
-      "output": 217150,
-      "thinking": 22532,
+      "input": 2020,
+      "output": 230746,
+      "thinking": 23969,
       "cache_write_5m": 597806,
-      "cache_write_1h": 1528366,
-      "cache_read": 85753386
+      "cache_write_1h": 1557954,
+      "cache_read": 97484004
     },
     "by_model": {
       "claude-opus-5": {
         "tokens": {
-          "input": 496,
-          "output": 215622,
-          "thinking": 22532,
+          "input": 542,
+          "output": 229218,
+          "thinking": 23969,
           "cache_write_5m": 0,
-          "cache_write_1h": 1528366,
-          "cache_read": 79273226
+          "cache_write_1h": 1557954,
+          "cache_read": 91003844
         },
-        "usd_equivalent": 60.31330299999999,
-        "messages": 248
+        "usd_equivalent": 66.814622,
+        "messages": 271
       },
       "<synthetic>": {
         "tokens": {
@@ -77,15 +77,15 @@
     "by_actor": {
       "main": {
         "tokens": {
-          "input": 496,
-          "output": 215622,
-          "thinking": 22532,
+          "input": 542,
+          "output": 229218,
+          "thinking": 23969,
           "cache_write_5m": 0,
-          "cache_write_1h": 1528366,
-          "cache_read": 79273226
+          "cache_write_1h": 1557954,
+          "cache_read": 91003844
         },
-        "usd_equivalent": 60.31330299999999,
-        "messages": 249
+        "usd_equivalent": 66.814622,
+        "messages": 272
       },
       "subagent": {
         "tokens": {
@@ -101,17 +101,17 @@
       }
     },
     "effort": {
-      "high": 297
+      "high": 320
     },
     "unpriced_models": []
   },
   "diff": {
     "files": {
       "generated": 0,
-      "test": 10,
+      "test": 13,
       "docs": 0,
       "config": 4,
-      "source": 18
+      "source": 27
     },
     "loc": {
       "generated": {
@@ -119,28 +119,29 @@
         "deleted": 0
       },
       "test": {
-        "added": 1536,
-        "deleted": 54
+        "added": 1990,
+        "deleted": 74
       },
       "docs": {
         "added": 0,
         "deleted": 0
       },
       "config": {
-        "added": 3698,
+        "added": 3710,
         "deleted": 14
       },
       "source": {
-        "added": 1681,
-        "deleted": 102
+        "added": 2233,
+        "deleted": 108
       }
     },
     "packages": [
       "cire/api",
-      "cire/db"
+      "cire/db",
+      "cire/host"
     ],
     "touches_migration": true,
-    "commits": 13
+    "commits": 15
   },
   "interaction": {
     "user_turns": 9,
@@ -148,7 +149,7 @@
     "tokens_before_first_edit": 3333164,
     "sessions_with_observed_edit": 1,
     "tool_calls": {
-      "Bash": 349,
+      "Bash": 370,
       "Read": 6,
       "Skill": 3,
       "AskUserQuestion": 3,
