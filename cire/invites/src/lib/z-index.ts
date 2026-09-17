@@ -59,17 +59,18 @@
  * reach is worse than no control at all, because the stored record would then
  * assert a freely-given choice they had no practical way to change.
  *
- * `EVERYTHING` is what this used to say, and it is no longer true. A sheet is a
- * `showModal()` dialog in the top layer, so while one is open the banner is
- * painted beneath it AND inert — not clickable, not announced — and comes back
- * when the sheet closes. The gap that leaves is named in `xchromo/osn#1061`; it
- * is not reachability (Escape closes the sheet) but the absence of a consent
- * affordance beside a third-party embed the guest is looking at right then.
+ * `every other NUMBERED layer` is the exact claim, and the qualifier is the
+ * important half. A sheet is a `showModal()` dialog in the top layer, so while
+ * one is open the banner is painted beneath it AND inert — not clickable, not
+ * announced — and comes back when the sheet closes. The gap that leaves is
+ * `xchromo/osn#1061`: not reachability (Escape closes the sheet) but the
+ * absence of a consent affordance beside a third-party embed the guest is
+ * looking at right then.
  *
- * The preferences DIALOG is unaffected, and is safer than a number made it: it
- * is an `@osn/ui` `Modal` too, so opening it from inside a sheet makes it the
- * blocking dialog and the sheet goes inert beneath it. It has no layer here
- * because it has nothing left to rank against.
+ * The preferences DIALOG is unaffected, and is in a stronger position than a
+ * number could put it: it is an `@osn/ui` `Modal` too, so opening it from
+ * inside a sheet makes it the blocking dialog and the sheet goes inert beneath
+ * it. It has no layer here because it has nothing left to rank against.
  *
  * ## Tailwind v4 note
  *

@@ -37,8 +37,11 @@ packages:
   - "@cire/theme"
   - "@cire/vendor"
   - "@cire/invites"
+  - "@cire/ui"
+  - "@shared/color"
   - "@shared/crypto"
   - "@shared/db-utils"
+  - "@shared/design-tokens"
   - "@shared/email"
   - "@shared/feature-flags"
   - "@shared/observability"
@@ -49,7 +52,7 @@ packages:
   - "@shared/toast"
   - "@shared/turnstile"
   - "@shared/typescript-config"
-last-reviewed: 2026-09-09
+last-reviewed: 2026-09-17
 ---
 
 # Monorepo Structure
@@ -93,10 +96,13 @@ cire/
   api/                 # @cire/api — Elysia on Cloudflare Workers (port 8787; prod api.cireweddings.com)
   db/                  # @cire/db — Drizzle schema + D1 migrations
   theme/               # @cire/theme — zero-dep shared theming validators (CSS-colour allow-list, IB-S-L1)
+  ui/                  # @cire/ui — cire's house component layer (Button, Card, loading, username input). Version-less like every @cire/* package
   landing/             # @cire/landing — Astro + Solid marketing site for the apex (port 4323; prod cireweddings.com)
 shared/
+  color/               # @shared/color — OKLCH parsing / conversion / contrast maths, lifted out of @cire/theme so no @shared/* depends on a @cire/* one
   crypto/              # @shared/crypto — ARC tokens (S2S), recovery codes, RFC 6238 TOTP; Signal Protocol pending
   db-utils/            # @shared/db-utils — createDrizzleClient, makeDbLive, commitBatch, rowsChanged
+  design-tokens/       # @shared/design-tokens — the osn-* contract every shared component reads, its scales, and the WCAG conformance harness
   email/               # @shared/email — EmailService Tag: Resend / Cloudflare / Log / Noop transports
   feature-flags/       # @shared/feature-flags — key-optional, fail-safe GrowthBook flag client
   observability/       # @shared/observability — OTel logger / tracer / metric helpers, Elysia plugin, instrumentedFetch

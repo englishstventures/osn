@@ -51,19 +51,17 @@ export function ConsentPreferences() {
   }
 
   return (
-    // Was a hand-rolled `fixed inset-0` overlay with its own backdrop div, its
-    // own `Tab` trap and its own Escape handler. `Modal` is the platform's
-    // `<dialog>`, so all three come from `showModal()`, and the top layer
-    // removes the z-index rank this dialog had to be given.
+    // `Modal` rather than `AnimatedModal`: that one applies the invite's
+    // per-section theme variables, and this dialog also renders on `/privacy`
+    // and `/terms`, which have no invite theme at all.
     //
-    // It still does not reuse `AnimatedModal`, for the reason that component's
-    // own comment gives: `AnimatedModal` applies the invite's per-section theme
-    // variables, and this dialog also renders on `/privacy` and `/terms`, which
-    // have no invite theme at all.
+    // A dismissal is not a decision. Escape and a backdrop click both discard
+    // the draft and leave the banner up, and `onClose` is wired to nothing but
+    // `closeConsentPreferences` so there is no path where one writes a record.
     //
-    // Dismissing without saving stays the behaviour a backdrop click has — a
-    // dismissal is not a decision, so the draft is discarded and the banner
-    // stays up — and it is `Modal`'s backdrop doing it now rather than a div.
+    // Plain utilities in `class`, never `base:` ones: `Modal`'s own defaults
+    // are `:where(…)`, so a plain utility beats them and a `base:` one ties —
+    // see `wiki/architecture/component-library.md`.
     <Modal
       open
       onClose={closeConsentPreferences}

@@ -30,7 +30,8 @@ Map of Content for the OSN monorepo knowledge graph. Open this vault in Obsidian
 - [[effect-v4-api]] — the v3 forms that no longer compile, and the v4 form to write instead
 - [[s2s-patterns]] — graphBridge, cross-package calls, ARC token flow
 - [[frontend-patterns]] — SolidJS, shared UI tokens, lazy loading
-- [[component-library]] — Zaidan/shadcn-style components, Kobalte primitives, CVA variants
+- [[design-tokens]] — the `osn-*` contract every shared component reads, the scales under it, and the conformance harness
+- [[component-library]] — Zaidan/shadcn-style components in two layers (`@osn/ui`, `@cire/ui`), Kobalte primitives, CVA variants
 - [[drag-and-drop]] — `@shared/sortable` for drag-to-reorder, multi-container lists, and the keyboard + announcement path it owns
 - [[account-recovery-factors]] — TOTP and email-verified recovery: the restricted `osn-recovery` session, the step-up allow-lists, the provenance cooldown, and the six issues they split into
 - [[cire-platform-plan]] — cire's build plan from digital invite to wedding-management platform
