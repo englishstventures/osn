@@ -20,6 +20,7 @@
       "name": "@cire/api",
       "dependencies": {
         "@cire/db": "workspace:*",
+        "@cire/dietary": "workspace:*",
         "@cire/invite-designs": "workspace:*",
         "@cire/theme": "workspace:*",
         "@elysiajs/cors": "^1.4.2",
@@ -53,6 +54,12 @@
       "devDependencies": {
         "@shared/typescript-config": "workspace:*",
         "drizzle-kit": "^0.31.10",
+      },
+    },
+    "cire/dietary": {
+      "name": "@cire/dietary",
+      "devDependencies": {
+        "@shared/typescript-config": "workspace:*",
       },
     },
     "cire/host": {
