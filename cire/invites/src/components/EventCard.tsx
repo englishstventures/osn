@@ -298,7 +298,7 @@ export function EventCard(props: EventCardProps) {
             </button>
             <Button
               variant="quiet"
-              class="min-h-11 flex-1 sm:flex-none sm:py-2.5"
+              class="min-h-11 flex-1 sm:flex-none"
               onClick={() => props.onDetails(props.event)}
             >
               Event Details
