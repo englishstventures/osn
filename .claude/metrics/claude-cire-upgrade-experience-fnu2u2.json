@@ -4,8 +4,8 @@
     "number": null,
     "branch": "claude/cire-upgrade-experience-fnu2u2",
     "base_sha": "b5f9c8f4c3701ae6e3a08529c86db40f1ca563ac",
-    "head_sha": "e0e34013739eba0ae5a25b202cd754a7b2c81ed0",
-    "generated_at": "2026-09-14T16:11:56.329Z",
+    "head_sha": "ccff5e9049966cd1dda9b00f588c31499458c2dd",
+    "generated_at": "2026-09-17T10:57:22.220Z",
     "merged_at": null,
     "phase": "at-open"
   },
@@ -21,33 +21,45 @@
   "window": {
     "sessions": 1,
     "first_ts": "2026-09-14T12:13:19.506Z",
-    "last_ts": "2026-09-14T16:07:18.455Z",
-    "span_seconds": 14039,
-    "active_seconds": 4350,
+    "last_ts": "2026-09-17T10:53:07.159Z",
+    "span_seconds": 254388,
+    "active_seconds": 7916,
     "compactions": 0
   },
   "spend": {
-    "usd_equivalent": 37.936651000000005,
+    "usd_equivalent": 74.35721800000003,
     "tokens": {
-      "input": 1726,
-      "output": 117051,
-      "thinking": 17432,
+      "input": 1974,
+      "output": 217150,
+      "thinking": 22532,
       "cache_write_5m": 597806,
-      "cache_write_1h": 671509,
-      "cache_read": 35056822
+      "cache_write_1h": 1528366,
+      "cache_read": 85753386
     },
     "by_model": {
       "claude-opus-5": {
         "tokens": {
-          "input": 248,
-          "output": 115523,
-          "thinking": 17432,
+          "input": 496,
+          "output": 215622,
+          "thinking": 22532,
           "cache_write_5m": 0,
-          "cache_write_1h": 671509,
-          "cache_read": 28576662
+          "cache_write_1h": 1528366,
+          "cache_read": 79273226
         },
-        "usd_equivalent": 23.892736000000006,
-        "messages": 124
+        "usd_equivalent": 60.31330299999999,
+        "messages": 248
+      },
+      "<synthetic>": {
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "thinking": 0,
+          "cache_write_5m": 0,
+          "cache_write_1h": 0,
+          "cache_read": 0
+        },
+        "usd_equivalent": 0,
+        "messages": 1
       },
       "claude-fable-5-1": {
         "tokens": {
@@ -65,15 +77,15 @@
     "by_actor": {
       "main": {
         "tokens": {
-          "input": 248,
-          "output": 115523,
-          "thinking": 17432,
+          "input": 496,
+          "output": 215622,
+          "thinking": 22532,
           "cache_write_5m": 0,
-          "cache_write_1h": 671509,
-          "cache_read": 28576662
+          "cache_write_1h": 1528366,
+          "cache_read": 79273226
         },
-        "usd_equivalent": 23.892736000000006,
-        "messages": 124
+        "usd_equivalent": 60.31330299999999,
+        "messages": 249
       },
       "subagent": {
         "tokens": {
@@ -89,17 +101,17 @@
       }
     },
     "effort": {
-      "high": 173
+      "high": 297
     },
     "unpriced_models": []
   },
   "diff": {
     "files": {
       "generated": 0,
-      "test": 5,
+      "test": 10,
       "docs": 0,
-      "config": 3,
-      "source": 9
+      "config": 4,
+      "source": 18
     },
     "loc": {
       "generated": {
@@ -107,20 +119,20 @@
         "deleted": 0
       },
       "test": {
-        "added": 274,
-        "deleted": 0
+        "added": 1536,
+        "deleted": 54
       },
       "docs": {
         "added": 0,
         "deleted": 0
       },
       "config": {
-        "added": 3637,
-        "deleted": 0
+        "added": 3698,
+        "deleted": 14
       },
       "source": {
-        "added": 391,
-        "deleted": 65
+        "added": 1681,
+        "deleted": 102
       }
     },
     "packages": [
@@ -128,15 +140,15 @@
       "cire/db"
     ],
     "touches_migration": true,
-    "commits": 8
+    "commits": 13
   },
   "interaction": {
-    "user_turns": 6,
-    "corrective_turns": 5,
+    "user_turns": 9,
+    "corrective_turns": 8,
     "tokens_before_first_edit": 3333164,
     "sessions_with_observed_edit": 1,
     "tool_calls": {
-      "Bash": 224,
+      "Bash": 349,
       "Read": 6,
       "Skill": 3,
       "AskUserQuestion": 3,
