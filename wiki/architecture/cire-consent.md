@@ -287,23 +287,20 @@ mounted first.
   switch to see what it covers and then closes the dialog has granted nothing.
 - **Withdrawal is permanent and findable** — `ConsentPreferencesLink` in
   `SiteFooter.astro` on every page, plus a copy on `/privacy`.
-- **The dialog reaches above the details sheet, and the banner no longer does.**
-  Both were once a `z-index` (`Z_LAYER.CONSENT` = 200, `CONSENT_DIALOG` = 210)
-  ranked over the sheet's 100. The sheet is a `showModal()` dialog now, in the
-  **top layer**, which no number reaches — see
-  [[wiki/architecture/component-library]] §What has to sit above a modal.
-  - The **dialog** is fine, and is in fact safer than it was: it is a
-    `showModal()` dialog too, so opening it from a blocked embed inside the
-    sheet makes it the blocking dialog and the sheet goes inert beneath it.
-    `CONSENT_DIALOG` is deleted because it has nothing left to rank against.
-  - The **banner** is not a dialog and still carries `Z_LAYER.CONSENT`, so while
+- **The dialog reaches above the details sheet. The banner does not.** The sheet
+  is a `showModal()` dialog, so it renders in the **top layer**, which no
+  `z-index` reaches — see [[wiki/architecture/component-library]] §What has to
+  sit above a modal.
+  - The **dialog** is a `showModal()` dialog too, so opening it from a blocked
+    embed inside the sheet makes it the blocking dialog and the sheet goes inert
+    beneath it. It carries no `z-index` because it has nothing to rank against.
+  - The **banner** is not a dialog and carries `Z_LAYER.CONSENT` (200), so while
     a sheet is open it is painted underneath and is `inert`: not clickable, not
-    announced. It comes back the moment the sheet closes. The guest is not
-    locked out — Escape or the sheet's own close reaches it — but an undecided
-    guest looking at a third-party embed *inside* the sheet has no consent
-    affordance in front of them unless the category is already off, which is
-    what puts a `<ConsentGate>` placeholder there. Tracked in
-    `xchromo/osn#1061`.
+    announced. It returns the moment the sheet closes. The guest is not locked
+    out — Escape or the sheet's own close reaches it — but an undecided guest
+    looking at a third-party embed *inside* the sheet has no consent affordance
+    in front of them unless the category is already off, which is what puts a
+    `<ConsentGate>` placeholder there. Tracked in `xchromo/osn#1061`.
 
 Only one mounted component renders the dialog at a time
 (`claimConsentDialogHost`), or a page with both a banner and a footer link would
