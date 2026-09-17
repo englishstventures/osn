@@ -183,7 +183,7 @@ see `cire/invites/src/lib/z-index.ts`.
 ### `topLayer`, for an app with `showModal()` dialogs
 
 A z-index is only half the ordering once an app has a `<dialog>` opened with
-`showModal()` — which is every app using `@osn/ui`'s `Modal`. Such a dialog
+`showModal()` — which is every app using `@shared/ui`'s `Modal`. Such a dialog
 paints in the **top layer**, above every stacking context in the document by
 definition, so no number on the container reaches over it. Cire's RSVP save
 toast fires while the sheet is still open for its dwell, and was raised behind
@@ -219,7 +219,7 @@ Current mounts:
 | App | Position | Notes |
 |---|---|---|
 | `@cire/invites` | `top-center` | Per design pack; `Z_CLASS.TOAST` + `topLayer`, 4s dwell. The RSVP sheet's sticky bar owns the bottom edge |
-| `@cire/host`, `@cire/vendor` | `bottom-right` | `topLayer` — both apps' dialogs are `@osn/ui` `Modal`s |
+| `@cire/host`, `@cire/vendor` | `bottom-right` | `topLayer` — both apps' dialogs are `@shared/ui` `Modal`s |
 | `@musubi/social` | responsive | `top-center` on mobile with a `top` offset clearing the 3rem bar + `env(safe-area-inset-top)`. No `topLayer`: its dialogs are Kobalte's, which are not top-layer |
 | `@pulse/web` | `bottom-right` | As musubi — Kobalte dialogs, no `topLayer` |
 

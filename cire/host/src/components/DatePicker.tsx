@@ -193,10 +193,10 @@ export default function DatePicker(props: {
   if (props.readOnly) {
     return (
       <div class="flex flex-col gap-1.5">
-        <span class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
+        <span class="font-body text-text-muted text-ui-xs tracking-ui-wider uppercase">
           {props.label}
         </span>
-        <p class="font-body text-text border-border bg-bg/50 text-osn-base rounded-sm border px-3 py-2 opacity-70">
+        <p class="font-body text-text border-border bg-bg/50 text-ui-base rounded-sm border px-3 py-2 opacity-70">
           <Show when={selected()} fallback={<span class="opacity-60">No date set</span>}>
             {(d) => formatLong(d())}
           </Show>
@@ -207,14 +207,14 @@ export default function DatePicker(props: {
 
   return (
     <div class="flex flex-col gap-1.5">
-      <span class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
+      <span class="font-body text-text-muted text-ui-xs tracking-ui-wider uppercase">
         {props.label}
       </span>
       <Popover open={open()} onOpenChange={setOpen} gutter={8} placement="bottom-start">
         <Popover.Trigger
           aria-label={`${props.label}${selected() ? `: ${formatLong(selected()!)}` : ", no date set"}`}
           disabled={props.disabled}
-          class="border-border bg-bg font-body text-text hover:border-gold focus-visible:border-gold focus-visible:ring-gold/40 text-osn-base flex items-center justify-between gap-2 rounded-sm border px-3 py-2 text-left transition-colors outline-none focus-visible:ring-2 disabled:opacity-40"
+          class="border-border bg-bg font-body text-text hover:border-gold focus-visible:border-gold focus-visible:ring-gold/40 text-ui-base flex items-center justify-between gap-2 rounded-sm border px-3 py-2 text-left transition-colors outline-none focus-visible:ring-2 disabled:opacity-40"
         >
           <Show
             when={selected()}
@@ -256,7 +256,7 @@ export default function DatePicker(props: {
                   <path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
               </Button>
-              <span class="font-body text-text text-osn-sm tracking-osn-wide">{monthLabel()}</span>
+              <span class="font-body text-text text-ui-sm tracking-ui-wide">{monthLabel()}</span>
               <Button
                 variant="quiet"
                 type="button"
@@ -291,7 +291,7 @@ export default function DatePicker(props: {
                   {(wd) => (
                     <span
                       role="columnheader"
-                      class="font-body text-text-muted text-osn-xs tracking-osn-wider flex h-6 items-center justify-center uppercase"
+                      class="font-body text-text-muted text-ui-xs tracking-ui-wider flex h-6 items-center justify-center uppercase"
                     >
                       {wd}
                     </span>
@@ -324,7 +324,7 @@ export default function DatePicker(props: {
                             tabindex={isFocused() ? 0 : -1}
                             onClick={() => commit(day)}
                             classList={{
-                              "flex h-8 w-8 items-center justify-center rounded-sm text-osn-sm tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold/50": true,
+                              "flex h-8 w-8 items-center justify-center rounded-sm text-ui-sm tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold/50": true,
                               "bg-gold text-bg font-medium": isSelected(),
                               "text-text hover:bg-gold/15": !isSelected() && inMonth(),
                               "text-text-muted opacity-40 hover:opacity-70":

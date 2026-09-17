@@ -1,4 +1,4 @@
-import { clsx } from "@osn/ui/lib/utils";
+import { clsx } from "@shared/ui/lib/utils";
 import { For, type JSX } from "solid-js";
 
 /**
@@ -9,7 +9,7 @@ import { For, type JSX } from "solid-js";
  * not a stylistic preference. A change to the selected-state colour had to be
  * made in two files, and nothing said so.
  *
- * ## Why not `@osn/ui`'s `Tabs`
+ * ## Why not `@shared/ui`'s `Tabs`
  *
  * That one is Kobalte's, and it is a *pill* tab: a filled accent chip, with its
  * own `Tabs.Content` structure and roving arrow-key focus. This is a different
@@ -25,7 +25,7 @@ import { For, type JSX } from "solid-js";
  * moving selection, one tab stop for the set — and a bar that claims the roles
  * without keeping the contract is worse for a screen-reader user than plain
  * buttons, because it promises navigation that is not there. Reach for
- * `@osn/ui`'s `Tabs` when the page can own real panels.
+ * `@shared/ui`'s `Tabs` when the page can own real panels.
  */
 export interface SectionTab<T extends string> {
   value: T;

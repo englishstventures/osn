@@ -1,9 +1,9 @@
-import { Button } from "@osn/ui/ui/button";
-import { Card } from "@osn/ui/ui/card";
-import { Label } from "@osn/ui/ui/label";
-import { RadioGroup, RadioGroupItem } from "@osn/ui/ui/radio-group";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
+import { Button } from "@shared/ui/ui/button";
+import { Card } from "@shared/ui/ui/card";
+import { Label } from "@shared/ui/ui/label";
+import { RadioGroup, RadioGroupItem } from "@shared/ui/ui/radio-group";
 import { createSignal, Show } from "solid-js";
 
 import { updateMySettings } from "../lib/rsvps";

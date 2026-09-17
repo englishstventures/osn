@@ -1,5 +1,5 @@
 ---
-"@osn/ui": patch
+"@shared/ui": patch
 ---
 
 `Modal` degrades instead of throwing where `<dialog>` is unimplemented

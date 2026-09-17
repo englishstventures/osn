@@ -200,7 +200,7 @@ Four environments, two drivers, one Drizzle type:
 - **Standalone apps first**, working toward a hybrid super-app
 - **iOS first**, then web, then Android (Android deferred)
 - **SolidJS** everywhere; **Astro + Solid** for the web surfaces and marketing sites
-- Shared components in `@osn/ui`, built on Kobalte in the Zaidan (shadcn-for-Solid) style
+- Shared components in `@shared/ui`, built on Kobalte in the Zaidan (shadcn-for-Solid) style
 
 ### Messaging architecture
 

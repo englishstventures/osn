@@ -1,11 +1,4 @@
 import Button from "@cire/ui/button";
-import { EmptyState } from "@osn/ui/ui/empty-state";
-import { Field, Fieldset } from "@osn/ui/ui/field";
-import { Input } from "@osn/ui/ui/input";
-import { heldWhileClosing, Modal } from "@osn/ui/ui/modal";
-import { Notice } from "@osn/ui/ui/notice";
-import { Select } from "@osn/ui/ui/select";
-import { Textarea } from "@osn/ui/ui/textarea";
 import { useAuth } from "@shared/rp-auth/solid";
 import {
   closestCenter,
@@ -20,6 +13,13 @@ import {
   useDragDropContext,
 } from "@shared/sortable";
 import { toast } from "@shared/toast";
+import { EmptyState } from "@shared/ui/ui/empty-state";
+import { Field, Fieldset } from "@shared/ui/ui/field";
+import { Input } from "@shared/ui/ui/input";
+import { heldWhileClosing, Modal } from "@shared/ui/ui/modal";
+import { Notice } from "@shared/ui/ui/notice";
+import { Select } from "@shared/ui/ui/select";
+import { Textarea } from "@shared/ui/ui/textarea";
 import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import { Portal } from "solid-js/web";
 
@@ -412,7 +412,7 @@ export default function EventsEditor(props: { weddingId: string }) {
         <Portal>
           <div class="border-border bg-surface/95 fixed inset-x-0 bottom-0 z-40 border-t backdrop-blur">
             <div class="page-frame flex flex-wrap items-center justify-between gap-3 py-3">
-              <span class="font-body text-text-muted text-osn-sm">
+              <span class="font-body text-text-muted text-ui-sm">
                 <Show when={hasErrors()} fallback="You have unsaved changes.">
                   <span class="text-error">
                     Fix {store.errors().length} {store.errors().length === 1 ? "error" : "errors"}{" "}
@@ -455,12 +455,12 @@ export default function EventsEditor(props: { weddingId: string }) {
               </div>
             </div>
             <Show when={store.warnings().length > 0 && !hasErrors()}>
-              <p class="border-gold/20 bg-gold/5 text-gold-dim page-frame text-osn-sm border-t py-2">
+              <p class="border-gold/20 bg-gold/5 text-gold-dim page-frame text-ui-sm border-t py-2">
                 {store.warnings().join(" ")}
               </p>
             </Show>
             <Show when={saveError()}>
-              <p class="border-error/20 bg-error/5 text-error page-frame text-osn-sm border-t py-2">
+              <p class="border-error/20 bg-error/5 text-error page-frame text-ui-sm border-t py-2">
                 {saveError()}
               </p>
             </Show>
@@ -561,23 +561,23 @@ function EventRowCard(props: {
       </div>
 
       <div class="min-w-0 flex-1">
-        <p class="font-display text-text text-osn-md truncate">
+        <p class="font-display text-text text-ui-md truncate">
           {props.event.name || <span class="text-text-muted not-italic">{UNNAMED_EVENT}</span>}
         </p>
         {/* The stored value is never printed raw: it carries a derived UTC
             offset, and showing that next to the zone named right after it says
             the same fact twice — once in a form the organiser can't edit. */}
-        <p class="font-body text-text-muted text-osn-sm truncate">
+        <p class="font-body text-text-muted text-ui-sm truncate">
           <Show when={props.event.startAt} fallback="No start time set">
             {formatEventWhen(props.event.startAt, props.event.endAt, props.event.timezone)}
           </Show>
           {props.event.timezone ? ` · ${props.event.timezone}` : ""}
         </p>
         <Show when={props.hasError}>
-          <p class="text-error text-osn-sm">This event has errors — open it to fix them.</p>
+          <p class="text-error text-ui-sm">This event has errors — open it to fix them.</p>
         </Show>
         <Show when={props.event.id === null}>
-          <span class="font-body text-gold/70 border-gold/30 text-osn-xs tracking-osn-widest mt-1 inline-block rounded-sm border px-1.5 py-0.5 uppercase">
+          <span class="font-body text-gold/70 border-gold/30 text-ui-xs tracking-ui-widest mt-1 inline-block rounded-sm border px-1.5 py-0.5 uppercase">
             New — saved on apply
           </span>
         </Show>
@@ -598,7 +598,7 @@ function EventRowCard(props: {
 /** The palette group's heading. Not a `Field` label: the group holds a list of
  *  swatch rows rather than one control, so there is nothing for a `for` to point
  *  at. Kept in step with `Field`'s own label by hand. */
-const fieldLabel = "font-body text-text-muted text-osn-xs tracking-osn-wider uppercase";
+const fieldLabel = "font-body text-text-muted text-ui-xs tracking-ui-wider uppercase";
 
 /** The add/edit drawer — a right-hand panel with the full event form. Every
  *  field writes straight through to the draft (no local staging), so undo/
@@ -705,13 +705,13 @@ function EventDrawer(props: {
       class="border-border my-0 mr-0 ml-auto h-full max-h-none w-full max-w-md overflow-y-auto rounded-none border-l p-6"
     >
       <div class="mb-6 flex items-center justify-between">
-        <h2 class="font-display text-gold-dim text-osn-lg">Event details</h2>
+        <h2 class="font-display text-gold-dim text-ui-lg">Event details</h2>
         <Button
           variant="bare"
           type="button"
           onClick={props.onClose}
           aria-label="Close"
-          class="text-osn-lg"
+          class="text-ui-lg"
         >
           ✕
         </Button>

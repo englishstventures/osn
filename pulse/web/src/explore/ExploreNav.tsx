@@ -1,4 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@osn/ui/ui/avatar";
+import { useAuth } from "@shared/rp-auth/solid";
+import { Avatar, AvatarFallback, AvatarImage } from "@shared/ui/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,8 +8,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@osn/ui/ui/dropdown-menu";
-import { useAuth } from "@shared/rp-auth/solid";
+} from "@shared/ui/ui/dropdown-menu";
 import { useLocation, useNavigate } from "@solidjs/router";
 import { createMemo, For, Show } from "solid-js";
 
@@ -74,7 +74,7 @@ export function ExploreNav(props: {
           >
             <span class="brand-pulse h-2 w-2 rounded-full" style={{ background: "var(--card)" }} />
           </span>
-          <span class="text-osn-xl pb-0.5 tracking-tight">Pulse</span>
+          <span class="text-ui-xl pb-0.5 tracking-tight">Pulse</span>
         </div>
 
         <nav class="flex gap-0.5">
@@ -83,7 +83,7 @@ export function ExploreNav(props: {
               <Show when={tab.id === "home" || session()}>
                 <button
                   type="button"
-                  class={`text-osn-sm relative rounded-lg px-3.5 py-2 font-medium transition-colors ${
+                  class={`text-ui-sm relative rounded-lg px-3.5 py-2 font-medium transition-colors ${
                     tab.disabled
                       ? "text-muted-foreground/40 cursor-default"
                       : isActiveTab(tab.path)
@@ -113,10 +113,10 @@ export function ExploreNav(props: {
               value={props.query}
               onInput={(e) => props.onQueryChange(e.currentTarget.value)}
               placeholder="Search events, people, venues…"
-              class="text-foreground placeholder:text-muted-foreground text-osn-sm flex-1 border-0 bg-transparent outline-none"
+              class="text-foreground placeholder:text-muted-foreground text-ui-sm flex-1 border-0 bg-transparent outline-none"
             />
             <kbd
-              class="border-border bg-card text-muted-foreground text-osn-xs rounded-[5px] border px-1.5 py-0.5"
+              class="border-border bg-card text-muted-foreground text-ui-xs rounded-[5px] border px-1.5 py-0.5"
               style={{ "font-family": "var(--font-mono)" }}
             >
               ⌘K
@@ -219,13 +219,13 @@ export function ExploreNav(props: {
           <Show when={typeof props.eventCount === "number"}>
             <div class="text-left">
               <div
-                class="text-osn-2xl leading-none"
+                class="text-ui-2xl leading-none"
                 style={{ "font-family": "var(--font-serif)", "letter-spacing": "-0.02em" }}
               >
                 {props.eventCount}
               </div>
               <div
-                class="text-muted-foreground text-osn-xs mt-1 tracking-wider uppercase"
+                class="text-muted-foreground text-ui-xs mt-1 tracking-wider uppercase"
                 style={{ "font-family": "var(--font-mono)" }}
               >
                 events nearby
@@ -235,13 +235,13 @@ export function ExploreNav(props: {
           <Show when={typeof props.liveCount === "number" && props.liveCount! > 0}>
             <div class="text-left">
               <div
-                class="text-osn-2xl leading-none"
+                class="text-ui-2xl leading-none"
                 style={{ "font-family": "var(--font-serif)", "letter-spacing": "-0.02em" }}
               >
                 {props.liveCount}
               </div>
               <div
-                class="text-muted-foreground text-osn-xs mt-1 tracking-wider uppercase"
+                class="text-muted-foreground text-ui-xs mt-1 tracking-wider uppercase"
                 style={{ "font-family": "var(--font-mono)" }}
               >
                 happening now

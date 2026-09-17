@@ -81,14 +81,14 @@ describe("PreviewModal", () => {
    * They clicked `dialog.parentElement` — the `fixed inset-0` scrim this
    * component used to render. There is no scrim now: the backdrop is
    * `::backdrop`, a pseudo-element that cannot be an event target, and
-   * `@osn/ui`'s `Modal` decides inside-or-outside by hit-testing the click
+   * `@shared/ui`'s `Modal` decides inside-or-outside by hit-testing the click
    * against the dialog's own box.
    *
    * That is not a claim this tier can make. `getBoundingClientRect` is all
    * zeroes in happy-dom, so every click lands "inside" a zero-sized box and the
    * assertion would pass whatever the component did — which is how the second
    * of the two was already passing. It is tested where it can be, in
-   * `osn/ui/tests/components/modal.browser.test.tsx`, against a real box: one
+   * `shared/ui/tests/modal.browser.test.tsx`, against a real box: one
    * case for the backdrop and one for a click on the dialog's own padding,
    * which a naive `target === currentTarget` check closes on and which loses a
    * guest's work every time they miss a control by a few pixels.

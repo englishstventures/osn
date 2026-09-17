@@ -117,14 +117,12 @@ export default function DesignPicker(props: {
                   class="flex min-w-[8rem] flex-col items-start gap-1 text-left aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
                 >
                   <DesignThumbnail id={design.id} />
-                  <span class="font-body text-osn-sm">{design.name}</span>
+                  <span class="font-body text-ui-sm">{design.name}</span>
                   <Show when={isLocked()}>
-                    <span class="text-gold-dim text-osn-xs tracking-osn-wider uppercase">
-                      Locked
-                    </span>
+                    <span class="text-gold-dim text-ui-xs tracking-ui-wider uppercase">Locked</span>
                   </Show>
                   <Show when={checked()}>
-                    <span class="text-gold text-osn-xs tracking-osn-wider uppercase">Current</span>
+                    <span class="text-gold text-ui-xs tracking-ui-wider uppercase">Current</span>
                   </Show>
                 </button>
                 <Show when={!isLocked()}>
@@ -132,7 +130,7 @@ export default function DesignPicker(props: {
                     href={props.previewHref(design.id)}
                     target="_blank"
                     rel="noopener"
-                    class="font-body text-gold-dim text-osn-xs tracking-osn-wider uppercase underline-offset-4 hover:underline"
+                    class="font-body text-gold-dim text-ui-xs tracking-ui-wider uppercase underline-offset-4 hover:underline"
                   >
                     Preview live
                   </a>
@@ -142,7 +140,7 @@ export default function DesignPicker(props: {
           }}
         </For>
       </div>
-      <p class="text-gold-dim text-osn-sm">
+      <p class="text-gold-dim text-ui-sm">
         Saved instantly — open your invite link to preview it live.
       </p>
     </>

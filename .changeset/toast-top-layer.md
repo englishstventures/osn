@@ -5,7 +5,7 @@
 `Toaster` can raise itself into the top layer
 
 A `showModal()` dialog paints above every stacking context in the document, so
-once an app has one — and `@osn/ui`'s `Modal` is one — no `z-index` on the toast
+once an app has one — and `@shared/ui`'s `Modal` is one — no `z-index` on the toast
 container can put a toast over it. cire's RSVP save toast fires while the sheet
 is still open for its dwell, which is exactly that case: it was raised behind
 the reply it confirms.

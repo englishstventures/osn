@@ -1,4 +1,4 @@
-import type { SafeProps } from "@osn/ui/ui/props";
+import type { SafeProps } from "@shared/ui/ui/props";
 import { splitProps } from "solid-js";
 
 /**
@@ -10,10 +10,10 @@ import { splitProps } from "solid-js";
  * is why three had drifted to a different padding and two to a different
  * tracking. This is those four, named.
  *
- * ## Why this is not `@osn/ui`'s Button
+ * ## Why this is not `@shared/ui`'s Button
  *
  * The shapes are the house style, not a general one: uppercase, tracked, a
- * sharp 4px corner, and a *gold* primary rather than a neutral one. `@osn/ui`'s
+ * sharp 4px corner, and a *gold* primary rather than a neutral one. `@shared/ui`'s
  * Button is the shadcn set — six variants, sentence case, rounded — and an app
  * that wanted cire's would be overriding almost every class. Two components is
  * the honest answer; one component with ten variants is not.
@@ -49,15 +49,15 @@ export type ButtonVariant =
 export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 const BASE =
-  "base:font-osn-body base:inline-flex base:items-center base:justify-center base:gap-2 " +
-  "base:rounded-osn-sm base:border base:whitespace-nowrap " +
+  "base:font-ui-body base:inline-flex base:items-center base:justify-center base:gap-2 " +
+  "base:rounded-ui-sm base:border base:whitespace-nowrap " +
   "base:transition-colors base:duration-100 base:ease-out " +
   // Its own focus ring, from the contract's own token. A library component
   // cannot assume its host declares a blanket `:focus-visible` rule: the two
   // portals and `@cire/invites` do, `@cire/landing` does not, and the nine
   // guest-site call sites this replaces each wrote one out by hand. The values
   // match what the portals' global rule already draws, so nothing moves there.
-  "base:focus-visible:outline-2 base:focus-visible:outline-offset-2 base:focus-visible:outline-osn-focus " +
+  "base:focus-visible:outline-2 base:focus-visible:outline-offset-2 base:focus-visible:outline-ui-focus " +
   "base:disabled:pointer-events-none base:disabled:opacity-40 " +
   // `aria-disabled` is the other way to say it: the control stays in the tab
   // order and keeps its description reachable, and the click is swallowed below
@@ -69,7 +69,7 @@ const BASE =
 
 const VARIANT = {
   primary:
-    "base:border-osn-accent base:bg-osn-accent base:text-osn-on-accent base:hover:bg-osn-accent-strong",
+    "base:border-ui-accent base:bg-ui-accent base:text-ui-on-accent base:hover:bg-ui-accent-strong",
   /**
    * Outline at rest, primary on hover — the guest site's call to action, at
    * nine call sites across `@cire/invites` and `@cire/landing`: the claim-code
@@ -83,13 +83,13 @@ const VARIANT = {
    * needs its commit to be findable — so there `primary` is filled from the
    * start and `outline` stays a wash. Both products need both.
    */
-  cta: "base:border-osn-accent base:text-osn-accent-ink base:bg-transparent base:hover:bg-osn-accent base:hover:text-osn-on-accent base:disabled:hover:bg-transparent base:disabled:hover:text-osn-accent-ink",
+  cta: "base:border-ui-accent base:text-ui-accent-ink base:bg-transparent base:hover:bg-ui-accent base:hover:text-ui-on-accent base:disabled:hover:bg-transparent base:disabled:hover:text-ui-accent-ink",
   outline:
-    "base:border-osn-accent/40 base:text-osn-accent-ink base:hover:border-osn-accent base:hover:bg-osn-accent-soft",
+    "base:border-ui-accent/40 base:text-ui-accent-ink base:hover:border-ui-accent base:hover:bg-ui-accent-soft",
   quiet:
-    "base:border-osn-hairline base:text-osn-ink-secondary base:hover:border-osn-accent base:hover:text-osn-accent-ink",
+    "base:border-ui-hairline base:text-ui-ink-secondary base:hover:border-ui-accent base:hover:text-ui-accent-ink",
   danger:
-    "base:border-osn-danger/40 base:text-osn-danger base:hover:border-osn-danger base:hover:bg-osn-danger/10",
+    "base:border-ui-danger/40 base:text-ui-danger base:hover:border-ui-danger base:hover:bg-ui-danger/10",
 
   /*
    * The three borderless ones.
@@ -110,10 +110,10 @@ const VARIANT = {
    * `bare` is a glyph — a move-up arrow, a close cross, a disclosure caret. No
    * underline, because there is no word to underline.
    */
-  link: "base:border-transparent base:bg-transparent base:text-osn-accent-ink base:underline-offset-4 base:hover:underline",
+  link: "base:border-transparent base:bg-transparent base:text-ui-accent-ink base:underline-offset-4 base:hover:underline",
   subtle:
-    "base:border-transparent base:bg-transparent base:text-osn-ink-secondary base:underline-offset-4 base:hover:text-osn-ink base:hover:underline",
-  bare: "base:border-transparent base:bg-transparent base:text-osn-ink-secondary base:hover:text-osn-ink",
+    "base:border-transparent base:bg-transparent base:text-ui-ink-secondary base:underline-offset-4 base:hover:text-ui-ink base:hover:underline",
+  bare: "base:border-transparent base:bg-transparent base:text-ui-ink-secondary base:hover:text-ui-ink",
   /**
    * A glyph that destroys something — the bin beside a budget line, a
    * checklist task, a colour swatch. Muted at rest like `bare`, because a row
@@ -126,7 +126,7 @@ const VARIANT = {
    * delete action that no longer signals anything.
    */
   bareDanger:
-    "base:border-transparent base:bg-transparent base:text-osn-ink-secondary base:hover:text-osn-danger",
+    "base:border-transparent base:bg-transparent base:text-ui-ink-secondary base:hover:text-ui-danger",
 } satisfies Readonly<Record<ButtonVariant, string>>;
 
 /**
@@ -141,22 +141,22 @@ const VARIANT = {
 const BORDERLESS = new Set<ButtonVariant>(["link", "subtle", "bare", "bareDanger"]);
 
 const SIZE = {
-  sm: "base:px-3 base:py-1.5 base:text-osn-xs base:tracking-osn-wider base:uppercase",
-  md: "base:px-4 base:py-2 base:text-osn-sm base:tracking-osn-wider base:uppercase",
+  sm: "base:px-3 base:py-1.5 base:text-ui-xs base:tracking-ui-wider base:uppercase",
+  md: "base:px-4 base:py-2 base:text-ui-sm base:tracking-ui-wider base:uppercase",
   // For a control that is the only thing to do on the screen it is on — a
   // claim-code submit, an RSVP commit. Also the minimum comfortable touch
   // target on a phone, which is where most invites are opened.
-  lg: "base:px-6 base:py-3.5 base:text-osn-base base:tracking-osn-wider base:uppercase",
+  lg: "base:px-6 base:py-3.5 base:text-ui-base base:tracking-ui-wider base:uppercase",
   // Square, for a single glyph. No tracking — there is nothing to track.
-  icon: "base:h-8 base:w-8 base:shrink-0 base:p-0 base:text-osn-base base:uppercase",
+  icon: "base:h-8 base:w-8 base:shrink-0 base:p-0 base:text-ui-base base:uppercase",
 } satisfies Readonly<Record<ButtonSize, string>>;
 
 /** {@link SIZE} for the borderless variants: type only, plus what a glyph needs to stay hittable. */
 const BORDERLESS_SIZE = {
-  sm: "base:text-osn-xs",
-  md: "base:text-osn-sm",
-  lg: "base:text-osn-base",
-  icon: "base:px-1 base:text-osn-md base:leading-none",
+  sm: "base:text-ui-xs",
+  md: "base:text-ui-sm",
+  lg: "base:text-ui-base",
+  icon: "base:px-1 base:text-ui-md base:leading-none",
 } satisfies Readonly<Record<ButtonSize, string>>;
 
 /**

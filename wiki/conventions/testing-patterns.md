@@ -48,7 +48,7 @@ scripts/
   tests/
     check-astro-fonts.test.ts      # scripts/ is not a workspace; `bun test ./scripts/`
     changeset-required.test.sh     # shell tests too
-osn/ui/
+shared/ui/
   tests/
     auth/Register.test.tsx          # Shared Register component (Solid + happy-dom)
     auth/SignIn.test.tsx            # Shared SignIn component (passkey-only)
@@ -377,7 +377,7 @@ bun run test
 bun run --cwd pulse/api test:run
 bun run --cwd osn/api test:run
 bun run --cwd osn/client test:run
-bun run --cwd osn/ui test:run
+bun run --cwd shared/ui test:run
 bun run --cwd pulse/db test:run
 bun run --cwd zap/api test:run
 bun run --cwd zap/db test:run

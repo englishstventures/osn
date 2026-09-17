@@ -23,23 +23,23 @@
  */
 export const CONTRACT_COLOR_TOKENS = {
   /** Backgrounds a reader's eye rests on. Nothing is asserted *about* them; they are what other tokens are asserted *against*. */
-  grounds: ["--osn-ground", "--osn-ground-deep"],
+  grounds: ["--ui-ground", "--ui-ground-deep"],
   /** Raised planes. Also grounds for contrast purposes. */
-  surfaces: ["--osn-surface", "--osn-surface-raised", "--osn-surface-sunk"],
+  surfaces: ["--ui-surface", "--ui-surface-raised", "--ui-surface-sunk"],
   /** Body-copy ink. Must clear {@link WCAG_TEXT} against every ground and surface. */
-  ink: ["--osn-ink", "--osn-ink-secondary"],
+  ink: ["--ui-ink", "--ui-ink-secondary"],
   /** Large-text, ornament and disabled ink. Clears {@link WCAG_UI} only — never body copy. */
-  inkLarge: ["--osn-ink-tertiary"],
+  inkLarge: ["--ui-ink-tertiary"],
   /** Non-text UI that must be perceivable: control boundaries, the focus ring. Clears {@link WCAG_UI}. */
-  ui: ["--osn-hairline-strong", "--osn-focus"],
+  ui: ["--ui-hairline-strong", "--ui-focus"],
   /** Decoration with no contrast floor. A card is told apart by its surface, not its edge. */
-  decorative: ["--osn-hairline", "--osn-accent-soft"],
+  decorative: ["--ui-hairline", "--ui-accent-soft"],
   /** Fills. What sits *on* them is asserted, not they themselves. */
-  fills: ["--osn-accent", "--osn-accent-strong", "--osn-danger"],
+  fills: ["--ui-accent", "--ui-accent-strong", "--ui-danger"],
   /** Ink that sits on a fill. Asserted against the fill it names, not against the page. */
-  onFill: ["--osn-on-accent", "--osn-on-danger"],
+  onFill: ["--ui-on-accent", "--ui-on-danger"],
   /** Accent and status colours used as ink on a ground. Clears {@link WCAG_TEXT}. */
-  chromaticInk: ["--osn-accent-ink", "--osn-success", "--osn-warn"],
+  chromaticInk: ["--ui-accent-ink", "--ui-success", "--ui-warn"],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 
 /** Every colour token in the contract, flattened. */
@@ -48,28 +48,22 @@ export const ALL_COLOR_TOKENS: readonly string[] = Object.values(CONTRACT_COLOR_
 /** Radius, type-family and motion tokens. No contrast obligation, so they are listed separately. */
 export const CONTRACT_SCALAR_TOKENS = {
   radius: [
-    "--osn-radius-hair",
-    "--osn-radius-sm",
-    "--osn-radius-md",
-    "--osn-radius-lg",
-    "--osn-radius-pill",
-    // A role rather than a size, like `--osn-focus`. How round a control is
+    "--ui-radius-hair",
+    "--ui-radius-sm",
+    "--ui-radius-md",
+    "--ui-radius-lg",
+    "--ui-radius-pill",
+    // A role rather than a size, like `--ui-focus`. How round a control is
     // turns out to be an app-level decision independent of how round a card
     // is — musubi's house style is pill CTAs, cire's is a sharp 4px — and a
     // shared control that picked a sized step instead gets overridden at every
     // call site in at least one app.
-    "--osn-radius-control",
+    "--ui-radius-control",
   ],
-  fontFamily: ["--osn-font-body", "--osn-font-display", "--osn-font-mono"],
-  focus: ["--osn-focus-width", "--osn-focus-offset"],
-  motion: [
-    "--osn-dur-fast",
-    "--osn-dur-base",
-    "--osn-dur-slow",
-    "--osn-ease-out",
-    "--osn-ease-in-out",
-  ],
-  elevation: ["--osn-elev-1", "--osn-elev-2"],
+  fontFamily: ["--ui-font-body", "--ui-font-display", "--ui-font-mono"],
+  focus: ["--ui-focus-width", "--ui-focus-offset"],
+  motion: ["--ui-dur-fast", "--ui-dur-base", "--ui-dur-slow", "--ui-ease-out", "--ui-ease-in-out"],
+  elevation: ["--ui-elev-1", "--ui-elev-2"],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 
 /**
@@ -263,7 +257,7 @@ export const WCAG_UI = 3;
  *
  * Every ink is measured against every ground and surface, because a token that
  * clears 4.5:1 on the page and fails it on a raised menu is a real defect and
- * the naive version of this check — ink against `--osn-ground` alone — does not
+ * the naive version of this check — ink against `--ui-ground` alone — does not
  * see it. That is nine assertions per ink token, which is why this is generated.
  */
 export function contrastPairs(): readonly { fg: string; bg: string; min: number }[] {
@@ -281,11 +275,11 @@ export function contrastPairs(): readonly { fg: string; bg: string; min: number 
   }
 
   // On-fill ink is asserted against the fill it names, never against the page:
-  // `--osn-on-accent` sitting on `--osn-ground` is a combination no component
+  // `--ui-on-accent` sitting on `--ui-ground` is a combination no component
   // produces, and asserting it would fail honest palettes for no reason.
-  pairs.push({ fg: "--osn-on-accent", bg: "--osn-accent", min: WCAG_TEXT });
-  pairs.push({ fg: "--osn-on-accent", bg: "--osn-accent-strong", min: WCAG_TEXT });
-  pairs.push({ fg: "--osn-on-danger", bg: "--osn-danger", min: WCAG_TEXT });
+  pairs.push({ fg: "--ui-on-accent", bg: "--ui-accent", min: WCAG_TEXT });
+  pairs.push({ fg: "--ui-on-accent", bg: "--ui-accent-strong", min: WCAG_TEXT });
+  pairs.push({ fg: "--ui-on-danger", bg: "--ui-danger", min: WCAG_TEXT });
 
   return pairs;
 }

@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     // happy-dom, not jsdom, and it is not a preference: jsdom implements no
     // part of `<dialog>` — `showModal` is `undefined` there — so the demo
-    // sheet, which is `@osn/ui`'s `Modal`, cannot open at all. happy-dom has
+    // sheet, which is `@shared/ui`'s `Modal`, cannot open at all. happy-dom has
     // it, and it is what every other component-testing package here uses.
     environment: "happy-dom",
     transformMode: { web: [/\.[jt]sx?$/] },

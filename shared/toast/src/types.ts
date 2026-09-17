@@ -72,7 +72,7 @@ export interface ToasterProps {
    * Raise the container into the **top layer** while it has something to show.
    *
    * Turn this on in any app that opens a `<dialog>` with `showModal()` — which
-   * is every app using `@osn/ui`'s `Modal`. A modal dialog renders in the top
+   * is every app using `@shared/ui`'s `Modal`. A modal dialog renders in the top
    * layer, which paints above every stacking context in the document *by
    * definition*, so no `z-index` on this container can put a toast over it. The
    * RSVP save toast fires while the sheet is still open, which is precisely the

@@ -19,16 +19,16 @@ import type { JSX } from "solid-js";
 
 export type CardTone = "default" | "accent";
 
-const CARD_BASE = "base:flex base:flex-col base:gap-3 base:rounded-osn-sm base:border base:p-5";
+const CARD_BASE = "base:flex base:flex-col base:gap-3 base:rounded-ui-sm base:border base:p-5";
 
 const TONE = {
-  default: "base:border-osn-hairline base:bg-osn-surface/30",
-  accent: "base:border-osn-accent/30 base:bg-osn-surface/30",
+  default: "base:border-ui-hairline base:bg-ui-surface/30",
+  accent: "base:border-ui-accent/30 base:bg-ui-surface/30",
 } satisfies Readonly<Record<CardTone, string>>;
 
 /** Added when the whole card is the control. */
 const INTERACTIVE =
-  "base:hover:border-osn-accent-soft base:hover:bg-osn-surface/50 base:text-left " +
+  "base:hover:border-ui-accent-soft base:hover:bg-ui-surface/50 base:text-left " +
   "base:transition-colors base:duration-200 base:ease-out";
 
 export function cardClass(options: { tone?: CardTone; interactive?: boolean } = {}): string {
@@ -48,7 +48,7 @@ export default function Card(props: { tone?: CardTone; class?: string; children:
 /** The gold label a card leads with. One weight, one tracking, everywhere. */
 export function CardEyebrow(props: { children: JSX.Element }) {
   return (
-    <p class="base:font-osn-body base:text-osn-accent base:text-osn-xs base:tracking-osn-ultra base:uppercase">
+    <p class="base:font-ui-body base:text-ui-accent base:text-ui-xs base:tracking-ui-ultra base:uppercase">
       {props.children}
     </p>
   );
@@ -63,7 +63,7 @@ export function CardEyebrow(props: { children: JSX.Element }) {
  */
 export function CardCta(props: { children: JSX.Element }) {
   return (
-    <span class="base:font-osn-body base:text-osn-accent-ink base:hover:text-osn-accent group/cta base:flex base:items-center base:gap-1.5 base:self-start base:text-osn-sm base:transition-colors base:duration-100">
+    <span class="base:font-ui-body base:text-ui-accent-ink base:hover:text-ui-accent group/cta base:flex base:items-center base:gap-1.5 base:self-start base:text-ui-sm base:transition-colors base:duration-100">
       {props.children}
       <span
         aria-hidden="true"

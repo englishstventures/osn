@@ -1,8 +1,8 @@
-import { Avatar, AvatarFallback } from "@osn/ui/ui/avatar";
-import { Button } from "@osn/ui/ui/button";
-import { Card } from "@osn/ui/ui/card";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
+import { Avatar, AvatarFallback } from "@shared/ui/ui/avatar";
+import { Button } from "@shared/ui/ui/button";
+import { Card } from "@shared/ui/ui/card";
 import { createResource, createSignal, For, Show } from "solid-js";
 
 import {

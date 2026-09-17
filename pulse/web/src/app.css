@@ -338,7 +338,7 @@ body {
  * says which of pulse's colours plays each one. App code is untouched — every
  * `bg-card`, `bg-pulse-accent` and `shadow-md` stays exactly as written.
  *
- * ## `--osn-accent` is `--primary`, not `--pulse-accent`
+ * ## `--ui-accent` is `--primary`, not `--pulse-accent`
  *
  * Pulse carries two accents: shadcn's `--primary`, a near-black used as the
  * filled-CTA ground, and `--pulse-accent`, the coral that is the product's
@@ -347,53 +347,53 @@ body {
  * shared `<Button>` in the app: a redesign wearing the costume of a refactor.
  *
  * The coral keeps its own names and stays app-level, which is where it is used
- * from today. Nothing in `@osn/ui` has ever asked for it.
+ * from today. Nothing in `@shared/ui` has ever asked for it.
  *
- * ## `--osn-accent-soft` is `--muted`
+ * ## `--ui-accent-soft` is `--muted`
  *
- * The contract's `accent-soft` is a tint of whatever `--osn-accent` is. That is
+ * The contract's `accent-soft` is a tint of whatever `--ui-accent` is. That is
  * the near-black `--primary`, so its tint is the neutral `--muted`.
  * `--pulse-accent-soft` is a tint of the CORAL — the right answer to a
  * different mapping, and wrong here by exactly the amount coral differs from
  * ink.
  */
 :root {
-  --osn-ground: var(--background);
-  --osn-ground-deep: var(--secondary);
-  --osn-surface: var(--card);
-  --osn-surface-raised: var(--popover);
-  --osn-surface-sunk: var(--muted);
+  --ui-ground: var(--background);
+  --ui-ground-deep: var(--secondary);
+  --ui-surface: var(--card);
+  --ui-surface-raised: var(--popover);
+  --ui-surface-sunk: var(--muted);
 
-  --osn-hairline: var(--border);
-  --osn-hairline-strong: var(--input);
+  --ui-hairline: var(--border);
+  --ui-hairline-strong: var(--input);
 
-  --osn-ink: var(--foreground);
-  --osn-ink-secondary: var(--muted-foreground);
-  --osn-ink-tertiary: var(--subtle);
+  --ui-ink: var(--foreground);
+  --ui-ink-secondary: var(--muted-foreground);
+  --ui-ink-tertiary: var(--subtle);
 
-  --osn-accent: var(--primary);
-  --osn-accent-strong: var(--primary-hover);
-  --osn-accent-soft: var(--muted);
-  --osn-accent-ink: var(--primary);
-  --osn-on-accent: var(--primary-foreground);
+  --ui-accent: var(--primary);
+  --ui-accent-strong: var(--primary-hover);
+  --ui-accent-soft: var(--muted);
+  --ui-accent-ink: var(--primary);
+  --ui-on-accent: var(--primary-foreground);
 
-  --osn-success: var(--toast-accent-success);
-  --osn-warn: var(--toast-accent-warn);
-  --osn-danger: var(--destructive);
-  --osn-on-danger: var(--destructive-foreground);
+  --ui-success: var(--toast-accent-success);
+  --ui-warn: var(--toast-accent-warn);
+  --ui-danger: var(--destructive);
+  --ui-on-danger: var(--destructive-foreground);
 
-  --osn-focus: var(--ring);
+  --ui-focus: var(--ring);
 
-  --osn-radius-hair: 2px;
-  --osn-radius-sm: calc(var(--radius) - 4px);
-  --osn-radius-md: var(--radius);
-  --osn-radius-lg: calc(var(--radius) + 4px);
-  --osn-radius-pill: 9999px;
-  --osn-radius-control: var(--radius);
+  --ui-radius-hair: 2px;
+  --ui-radius-sm: calc(var(--radius) - 4px);
+  --ui-radius-md: var(--radius);
+  --ui-radius-lg: calc(var(--radius) + 4px);
+  --ui-radius-pill: 9999px;
+  --ui-radius-control: var(--radius);
 
-  --osn-font-body: var(--font-sans);
-  --osn-font-display: var(--font-serif);
-  --osn-font-mono: var(--font-mono);
+  --ui-font-body: var(--font-sans);
+  --ui-font-display: var(--font-serif);
+  --ui-font-mono: var(--font-mono);
 
   /* The type scale.
    *
@@ -419,13 +419,13 @@ body {
    *   xl   28px
    *   2xl  40px    below the hero, which stays a `clamp()` and is not a step
    */
-  --osn-text-xs: 11px;
-  --osn-text-sm: 12px;
-  --osn-text-base: 14px;
-  --osn-text-md: 16.5px;
-  --osn-text-lg: 22px;
-  --osn-text-xl: 28px;
-  --osn-text-2xl: 40px;
+  --ui-text-xs: 11px;
+  --ui-text-sm: 12px;
+  --ui-text-base: 14px;
+  --ui-text-md: 16.5px;
+  --ui-text-lg: 22px;
+  --ui-text-xl: 28px;
+  --ui-text-2xl: 40px;
 
   /* Tracking and leading keep the contract's steps: pulse states neither as a
    * scale, and the one pattern DESIGN.md does name — "uppercase, wide

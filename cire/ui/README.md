@@ -1,11 +1,11 @@
 # @cire/ui
 
-cire's own component layer: the chrome `@osn/ui` should not carry, because it is
+cire's own component layer: the chrome `@shared/ui` should not carry, because it is
 this product's house style rather than anything a second product would want.
 
 Three components today — `Button`, `Card`, `Loading`. Everything else the two
 portals used to duplicate (`Field`, `Notice`, `EmptyState`, `Chip`, `Stat`,
-`Meter`, `Table`, `SafeProps`) is in `@osn/ui`, because none of it was
+`Meter`, `Table`, `SafeProps`) is in `@shared/ui`, because none of it was
 cire-specific; it was only cire-_located_.
 
 ## It is written against the token contract

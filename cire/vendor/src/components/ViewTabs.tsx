@@ -66,7 +66,7 @@ export default function ViewTabs(props: {
             type="button"
             aria-current={props.value === tab.value ? "page" : undefined}
             onClick={() => props.onChange(tab.value)}
-            class={`font-body rounded-pill text-osn-xs tracking-osn-wider relative px-3 py-1.5 uppercase transition-colors duration-(--dur-fast) ease-(--ease-out) @2xl/frame:px-4 ${
+            class={`font-body rounded-pill text-ui-xs tracking-ui-wider relative px-3 py-1.5 uppercase transition-colors duration-(--dur-fast) ease-(--ease-out) @2xl/frame:px-4 ${
               props.value === tab.value ? "text-on-brand" : "text-text-muted hover:text-text"
             }`}
           >

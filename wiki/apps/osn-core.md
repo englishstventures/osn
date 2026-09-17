@@ -7,7 +7,7 @@ packages:
   - "@osn/api"
   - "@osn/client"
   - "@osn/db"
-  - "@osn/ui"
+  - "@osn/auth-ui"
   - "@shared/crypto"
 related:
   - "[[identity-model]]"
@@ -31,7 +31,7 @@ OSN Core is the identity stack every other OSN app builds on. It owns auth (pass
 | `@osn/api` | Binary server (port 4000). Hosts auth, graph, organisations, recommendations, S2S routes, and JWKS. |
 | `@osn/client` | Browser/SDK: `OsnAuthService`, `useAuth`, plus typed graph / organisation / recommendation clients. |
 | `@osn/db` | Drizzle + SQLite schema (accounts, profiles, passkeys, sessions, social graph, organisations, service accounts). |
-| `@osn/ui` | Shared SolidJS components for auth flows: `<SignIn>`, `<Register>`, `<RecoveryCodesView>`, `<RecoveryLoginForm>`, `<SessionsView>`, `<SecurityEventsBanner>`, `<StepUpDialog>`, `<ChangeEmailForm>`. |
+| `@osn/auth-ui` | Shared SolidJS components for auth flows: `<SignIn>`, `<Register>`, `<RecoveryCodesView>`, `<RecoveryLoginForm>`, `<SessionsView>`, `<SecurityEventsBanner>`, `<StepUpDialog>`, `<ChangeEmailForm>`. |
 | `@shared/crypto` | ARC token primitives + recovery-code helpers. |
 
 ## Authentication model
@@ -90,7 +90,7 @@ Handles live in a single namespace shared with organisations. A handle is immuta
 ```bash
 bun run --cwd osn/api test:run     # auth + graph + organisation routes and services
 bun run --cwd osn/client test:run  # client SDK
-bun run --cwd osn/ui test:run      # shared auth components
+bun run --cwd osn/auth-ui test:run  # shared auth components
 ```
 
 Auth routes use `createAuthRoutes(authConfig, dbLayer?)` — `authConfig` is required, `dbLayer` defaults to `DbLive`.

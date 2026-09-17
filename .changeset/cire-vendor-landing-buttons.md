@@ -18,6 +18,6 @@ travelling highlight, where button chrome would say "press me" on a control
 whose job is to say "you are here".
 
 The overlays in both apps are unchanged and stay hand-rolled, because
-`@osn/ui`'s `Modal` has no animation story and every overlay it is meant to
+`@shared/ui`'s `Modal` has no animation story and every overlay it is meant to
 replace animates. Tracked as xchromo/osn#1056, which needs a decision before
 those conversions can be right rather than merely done.

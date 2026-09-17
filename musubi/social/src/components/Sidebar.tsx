@@ -1,7 +1,7 @@
 import { useAuth } from "@osn/client/solid";
-import { clsx } from "@osn/ui/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@osn/ui/ui/avatar";
-import { Button } from "@osn/ui/ui/button";
+import { clsx } from "@shared/ui/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@shared/ui/ui/avatar";
+import { Button } from "@shared/ui/ui/button";
 import { A, useLocation } from "@solidjs/router";
 import { createMemo, createSignal, For, Show } from "solid-js";
 
@@ -40,7 +40,7 @@ export function Sidebar() {
         <div class="flex items-center justify-between px-4 pt-6 pb-1">
           <div class="flex items-baseline gap-1.5">
             <span class="text-foreground text-title font-medium">OSN</span>
-            <span class="text-subtle text-meta tracking-osn-wide uppercase">Social</span>
+            <span class="text-subtle text-meta tracking-ui-wide uppercase">Social</span>
           </div>
           <ThemeToggle />
         </div>

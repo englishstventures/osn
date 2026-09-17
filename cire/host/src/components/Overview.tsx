@@ -1,7 +1,7 @@
 import Card, { CardCtaButton, CardEyebrow, cardClass } from "@cire/ui/card";
-import { Meter } from "@osn/ui/ui/meter";
-import { Stat } from "@osn/ui/ui/stat";
 import { useAuth } from "@shared/rp-auth/solid";
+import { Meter } from "@shared/ui/ui/meter";
+import { Stat } from "@shared/ui/ui/stat";
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -360,7 +360,7 @@ export default function Overview(props: {
       <Show
         when={agenda().length > 0}
         fallback={
-          <p class="font-body text-text-muted text-osn-sm leading-relaxed">
+          <p class="font-body text-text-muted text-ui-sm leading-relaxed">
             Nothing scheduled yet — add events, payment due dates, or task deadlines.
           </p>
         }
@@ -387,20 +387,20 @@ export default function Overview(props: {
                   }
                   class="hover:bg-surface/40 flex w-full items-center gap-3 py-2 text-left transition-colors"
                 >
-                  <span class="text-text-muted text-osn-sm w-14 shrink-0 font-mono tabular-nums">
+                  <span class="text-text-muted text-ui-sm w-14 shrink-0 font-mono tabular-nums">
                     {fmtAgendaDate(item.date)}
                   </span>
-                  <span aria-hidden="true" class="text-osn-sm w-4 shrink-0 text-center">
+                  <span aria-hidden="true" class="text-ui-sm w-4 shrink-0 text-center">
                     {AGENDA_ICON[item.kind]}
                   </span>
-                  <span class="text-text text-osn-base grow truncate">{item.label}</span>
+                  <span class="text-text text-ui-base grow truncate">{item.label}</span>
                   <Show when={item.overdue}>
-                    <span class="font-body text-error text-osn-xs shrink-0 tracking-wide uppercase">
+                    <span class="font-body text-error text-ui-xs shrink-0 tracking-wide uppercase">
                       overdue
                     </span>
                   </Show>
                   <Show when={item.detail}>
-                    <span class="text-text-muted text-osn-sm shrink-0 font-mono tabular-nums">
+                    <span class="text-text-muted text-ui-sm shrink-0 font-mono tabular-nums">
                       {item.detail}
                     </span>
                   </Show>
@@ -470,7 +470,7 @@ export default function Overview(props: {
                   when={weddingDate()}
                   fallback={
                     <>
-                      <p class="font-display text-text text-osn-lg leading-tight font-light">
+                      <p class="font-display text-text text-ui-lg leading-tight font-light">
                         No date yet
                       </p>
                       <CardCtaButton onClick={() => props.onNavigate("settings", "wedding")}>
@@ -484,7 +484,7 @@ export default function Overview(props: {
                       <Show
                         when={countdown() !== null}
                         fallback={
-                          <p class="font-display text-text text-osn-lg leading-tight font-light">
+                          <p class="font-display text-text text-ui-lg leading-tight font-light">
                             {formatWeddingDate(iso())}
                           </p>
                         }
@@ -497,14 +497,14 @@ export default function Overview(props: {
                           // dates read as words with no redundant numeral above them.
                           if (days === 0) {
                             return (
-                              <p class="font-display text-gold text-osn-xl leading-none font-light">
+                              <p class="font-display text-gold text-ui-xl leading-none font-light">
                                 Today!
                               </p>
                             );
                           }
                           if (days === 1) {
                             return (
-                              <p class="font-display text-gold text-osn-xl leading-none font-light">
+                              <p class="font-display text-gold text-ui-xl leading-none font-light">
                                 Tomorrow!
                               </p>
                             );
@@ -516,9 +516,7 @@ export default function Overview(props: {
                           );
                         })()}
                       </Show>
-                      <p class="font-body text-text-muted text-osn-sm">
-                        {formatWeddingDate(iso())}
-                      </p>
+                      <p class="font-body text-text-muted text-ui-sm">{formatWeddingDate(iso())}</p>
                     </>
                   )}
                 </Show>
@@ -530,7 +528,7 @@ export default function Overview(props: {
                 <Show
                   when={data()?.rsvps && data()!.rsvps!.eventCount > 0}
                   fallback={
-                    <p class="font-body text-text-muted text-osn-sm leading-relaxed">
+                    <p class="font-body text-text-muted text-ui-sm leading-relaxed">
                       Replies will roll up here once you have events and guests.
                     </p>
                   }
@@ -540,16 +538,16 @@ export default function Overview(props: {
                     return (
                       <>
                         <div class="flex items-baseline gap-2">
-                          <span class="font-display text-gold text-osn-xl leading-none tabular-nums">
+                          <span class="font-display text-gold text-ui-xl leading-none tabular-nums">
                             {r.attending}
                           </span>
-                          <span class="font-body text-text-muted text-osn-sm">
+                          <span class="font-body text-text-muted text-ui-sm">
                             attending across {r.eventCount}{" "}
                             {r.eventCount === 1 ? "event" : "events"}
                           </span>
                         </div>
                         <Meter value={r.responded} max={r.invited} label="RSVP responses" />
-                        <dl class="font-body text-text-muted text-osn-sm grid grid-cols-2 gap-x-4 gap-y-1">
+                        <dl class="font-body text-text-muted text-ui-sm grid grid-cols-2 gap-x-4 gap-y-1">
                           <div class="flex justify-between gap-2">
                             <dt>Declined</dt>
                             <dd class="text-text font-mono">{r.declined}</dd>
@@ -568,7 +566,7 @@ export default function Overview(props: {
                           </div>
                         </dl>
                         <Show when={data()!.rsvpEvents.length > 0}>
-                          <ul class="font-body text-text-muted text-osn-sm flex flex-col gap-0.5">
+                          <ul class="font-body text-text-muted text-ui-sm flex flex-col gap-0.5">
                             <For each={data()!.rsvpEvents.slice(0, 5)}>
                               {(e) => (
                                 <li class="flex justify-between gap-2">
@@ -598,7 +596,7 @@ export default function Overview(props: {
               {/* ── Guests + events snapshot ─────────────────────────────── */}
               <Card>
                 <CardEyebrow>Guests &amp; events</CardEyebrow>
-                <dl class="font-body text-text-muted text-osn-sm flex flex-col gap-1.5">
+                <dl class="font-body text-text-muted text-ui-sm flex flex-col gap-1.5">
                   <div class="flex justify-between gap-2">
                     <dt>Households</dt>
                     <dd class="text-text font-mono">{householdCount()}</dd>
@@ -628,20 +626,20 @@ export default function Overview(props: {
                 <CardEyebrow>Checklist</CardEyebrow>
                 <Show
                   when={taskCounts(props.weddingId)}
-                  fallback={<p class="text-text-muted text-osn-sm">Loading your tasks…</p>}
+                  fallback={<p class="text-text-muted text-ui-sm">Loading your tasks…</p>}
                 >
                   {(tc) => (
                     <Show
                       when={tc().open > 0}
                       fallback={
-                        <p class="text-text-muted text-osn-sm">No tasks yet — add your first.</p>
+                        <p class="text-text-muted text-ui-sm">No tasks yet — add your first.</p>
                       }
                     >
-                      <p class="text-text text-osn-base">
-                        <span class="text-gold text-osn-lg font-semibold">{tc().open}</span> open{" "}
+                      <p class="text-text text-ui-base">
+                        <span class="text-gold text-ui-lg font-semibold">{tc().open}</span> open{" "}
                         {tc().open === 1 ? "task" : "tasks"}
                       </p>
-                      <p class="text-text-muted text-osn-sm">
+                      <p class="text-text-muted text-ui-sm">
                         {tc().done} of {tc().total} done
                       </p>
                       <Meter value={tc().done} max={tc().total} label="Checklist completion" />
@@ -664,18 +662,16 @@ export default function Overview(props: {
                   <CardEyebrow>Vendors</CardEyebrow>
                   <Show
                     when={vendorCountValue() !== null}
-                    fallback={<p class="text-text-muted text-osn-sm">Loading your vendors…</p>}
+                    fallback={<p class="text-text-muted text-ui-sm">Loading your vendors…</p>}
                   >
                     <Show
                       when={(vendorCountValue() ?? 0) > 0}
                       fallback={
-                        <p class="text-text-muted text-osn-sm">No vendors yet — add your first.</p>
+                        <p class="text-text-muted text-ui-sm">No vendors yet — add your first.</p>
                       }
                     >
-                      <p class="text-text text-osn-base">
-                        <span class="text-gold text-osn-lg font-semibold">
-                          {vendorCountValue()}
-                        </span>{" "}
+                      <p class="text-text text-ui-base">
+                        <span class="text-gold text-ui-lg font-semibold">{vendorCountValue()}</span>{" "}
                         {vendorCountValue() === 1 ? "vendor" : "vendors"} tracked
                       </p>
                     </Show>
@@ -692,7 +688,7 @@ export default function Overview(props: {
                 <CardEyebrow>Budget</CardEyebrow>
                 <Show
                   when={spentSoFarMemo() !== null}
-                  fallback={<p class="text-text-muted text-osn-sm">Loading your budget…</p>}
+                  fallback={<p class="text-text-muted text-ui-sm">Loading your budget…</p>}
                 >
                   <Show
                     when={
@@ -700,15 +696,15 @@ export default function Overview(props: {
                         data()?.profile?.budgetTotalMinor) != null
                     }
                     fallback={
-                      <p class="text-text-muted text-osn-sm">
+                      <p class="text-text-muted text-ui-sm">
                         {(spentSoFarMemo() ?? 0) > 0
                           ? `${fmtBudget(spentSoFarMemo()!, budgetCurrency())} tracked — set a total →`
                           : "No budget yet — add your first item."}
                       </p>
                     }
                   >
-                    <p class="text-text text-osn-base">
-                      <span class="text-gold text-osn-lg font-semibold">
+                    <p class="text-text text-ui-base">
+                      <span class="text-gold text-ui-lg font-semibold">
                         {fmtBudget(spentSoFarMemo() ?? 0, budgetCurrency())}
                       </span>{" "}
                       <span class="text-text-muted">
@@ -734,14 +730,14 @@ export default function Overview(props: {
                             label="Budget spend"
                           />
                           <Show when={spent > cap!}>
-                            <p class="text-error text-osn-xs">Over budget</p>
+                            <p class="text-error text-ui-xs">Over budget</p>
                           </Show>
                         </Show>
                       );
                     })()}
                   </Show>
                   <Show when={upcomingPaymentsMemo().length > 0}>
-                    <p class="text-text-muted text-osn-sm">
+                    <p class="text-text-muted text-ui-sm">
                       Next: {upcomingPaymentsMemo()[0]!.label}
                       <Show when={upcomingPaymentsMemo()[0]!.dueAt}>
                         {" "}

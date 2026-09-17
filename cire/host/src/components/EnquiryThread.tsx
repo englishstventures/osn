@@ -1,8 +1,8 @@
 import Button from "@cire/ui/button";
-import { Field } from "@osn/ui/ui/field";
-import { Notice } from "@osn/ui/ui/notice";
-import { Textarea } from "@osn/ui/ui/textarea";
 import { toast } from "@shared/toast";
+import { Field } from "@shared/ui/ui/field";
+import { Notice } from "@shared/ui/ui/notice";
+import { Textarea } from "@shared/ui/ui/textarea";
 import { createSignal, For, Show } from "solid-js";
 
 import type { EnquiryListItem, EnquiryMessage } from "../lib/enquiries-store";
@@ -64,8 +64,8 @@ export default function EnquiryThread(props: EnquiryThreadProps) {
           ← Back
         </Button>
         <div class="flex flex-1 flex-wrap items-center gap-2">
-          <span class="text-text text-osn-base font-medium">{props.enquiry.vendorName}</span>
-          <span class="bg-surface/60 text-text-muted text-osn-xs rounded-full px-2 py-0.5">
+          <span class="text-text text-ui-base font-medium">{props.enquiry.vendorName}</span>
+          <span class="bg-surface/60 text-text-muted text-ui-xs rounded-full px-2 py-0.5">
             {categoryLabel(props.enquiry.category)}
           </span>
         </div>
@@ -81,10 +81,8 @@ export default function EnquiryThread(props: EnquiryThreadProps) {
       {/* Quote card */}
       <Show when={props.enquiry.quotedMinor != null}>
         <div class="border-border bg-surface/10 flex flex-wrap items-center gap-3 rounded-sm border px-3 py-2">
-          <span class="text-gold-dim font-body text-osn-xs tracking-osn-widest uppercase">
-            Quote
-          </span>
-          <span class="text-text text-osn-base flex-1 font-medium">
+          <span class="text-gold-dim font-body text-ui-xs tracking-ui-widest uppercase">Quote</span>
+          <span class="text-text text-ui-base flex-1 font-medium">
             {fmtMinor(props.enquiry.quotedMinor!, props.currency)}
           </span>
           <Show when={props.canEdit}>
@@ -107,7 +105,7 @@ export default function EnquiryThread(props: EnquiryThreadProps) {
       {/* Message list */}
       <div class="flex flex-col gap-2">
         <Show when={props.loading}>
-          <p class="text-text-muted text-osn-sm italic">Loading messages…</p>
+          <p class="text-text-muted text-ui-sm italic">Loading messages…</p>
         </Show>
         <Show when={props.error}>
           <Notice tone="danger" alert>
@@ -120,7 +118,7 @@ export default function EnquiryThread(props: EnquiryThreadProps) {
             return (
               <div
                 data-mine={String(isMine)}
-                class={`text-osn-base max-w-[75%] rounded-sm px-3 py-2 ${
+                class={`text-ui-base max-w-[75%] rounded-sm px-3 py-2 ${
                   isMine ? "bg-gold/20 text-text self-end" : "bg-surface/30 text-text self-start"
                 }`}
               >

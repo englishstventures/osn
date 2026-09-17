@@ -22,18 +22,18 @@ const CSS = readFileSync(
 
 /** A Tailwind v4 theme namespace, and the `CONTRACT_SCALES` key it mirrors. */
 const NAMESPACES = [
-  ["--text-osn-", "text"],
-  ["--tracking-osn-", "tracking"],
-  ["--leading-osn-", "leading"],
-  ["--container-osn-", "measure"],
+  ["--text-ui-", "text"],
+  ["--tracking-ui-", "tracking"],
+  ["--leading-ui-", "leading"],
+  ["--container-ui-", "measure"],
 ] as const;
 
 describe("tokens.css declares exactly the scales the module exports", () => {
   for (const [prefix, key] of NAMESPACES) {
     it(`${key}: every step is aliased, with its value as the fallback`, () => {
       for (const [step, value] of Object.entries(CONTRACT_SCALES[key])) {
-        // `--text-osn-sm: var(--osn-text-sm, 0.8rem);`
-        const token = key === "measure" ? `--osn-measure-${step}` : `--osn-${key}-${step}`;
+        // `--text-ui-sm: var(--ui-text-sm, 0.8rem);`
+        const token = key === "measure" ? `--ui-measure-${step}` : `--ui-${key}-${step}`;
         const declaration = new RegExp(
           `${prefix}${step.replace(/[^\w-]/g, "\\$&")}:\\s*var\\(\\s*${token}\\s*,\\s*${value.replace(
             /[.\\+*?[^\]$(){}=!<>|:#-]/g,

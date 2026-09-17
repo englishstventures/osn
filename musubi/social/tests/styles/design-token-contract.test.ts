@@ -6,7 +6,7 @@
  * roles are and what each one owes; this asserts that the colours musubi sends
  * to those roles pay it. A shared component rendered here reads the contract,
  * so a mapping that quietly puts secondary ink under 4.5:1 makes every
- * `@osn/ui` primitive illegible in this app and in no other.
+ * `@shared/ui` primitive illegible in this app and in no other.
  *
  * It parses the stylesheet rather than a duplicated table of colours, because a
  * duplicated table is the thing that drifts.
@@ -41,13 +41,13 @@ const SCOPES = [
  * filed defect blocking unrelated work, not to hide it.
  */
 const WAIVED = {
-  "--osn-hairline-strong": [
+  "--ui-hairline-strong": [
     "`--input` is #e2e2e2 (1.30:1 on --background, 1.18:1 on --muted) and",
     "#3a3a3a in dark (1.50:1 / 1.24:1), against a 3:1 floor. The fix is a",
     "design decision — darken the border and lose the hairline look, or give",
     "controls a perceivable fill and keep it. Tracked as osn-tracker#653.",
   ].join(" "),
-  "--osn-ink-tertiary": [
+  "--ui-ink-tertiary": [
     "`--subtle` is #9e9e9e, 2.68:1 on --background and 2.44:1 on --muted in",
     "light, against a 3:1 floor. Dark passes at 3.97 / 3.30. Tracked as",
     "osn-tracker#653; the proposed fix is #8d8d8d.",
@@ -71,20 +71,20 @@ describe("design-token contract", () => {
     expect(CSS).toMatch(/@import\s+["']@shared\/design-tokens\/tokens\.css["']/);
   });
 
-  it("sends shadcn's neutral `--accent` to a surface, never to `--osn-accent-soft`", () => {
+  it("sends shadcn's neutral `--accent` to a surface, never to `--ui-accent-soft`", () => {
     // The trap the contract's own docs call out: shadcn's `--accent` is a
-    // neutral grey here, and `--osn-accent-soft` means a tint of the ACCENT.
+    // neutral grey here, and `--ui-accent-soft` means a tint of the ACCENT.
     // Getting this wrong gives components a grey wash where they asked for a
     // brand one — subtle enough to survive review, obvious in a design.
-    expect(CSS).toMatch(/--osn-accent-soft:\s*var\(--muted\)/);
-    expect(CSS).not.toMatch(/--osn-accent-soft:\s*var\(--accent\)/);
+    expect(CSS).toMatch(/--ui-accent-soft:\s*var\(--muted\)/);
+    expect(CSS).not.toMatch(/--ui-accent-soft:\s*var\(--accent\)/);
   });
 
   it("maps the contract through aliases, so `.dark` carries it automatically", () => {
     // A literal here would pin the light value into both themes, and the
     // failure would look like "dark mode ignores the theme" three steps later.
-    const mapping = CSS.slice(CSS.indexOf("--osn-ground:"), CSS.indexOf("--osn-radius-hair:"));
-    const literals = [...mapping.matchAll(/(--osn-[\w-]+):\s*(#[0-9a-f]{3,8})/gi)];
+    const mapping = CSS.slice(CSS.indexOf("--ui-ground:"), CSS.indexOf("--ui-radius-hair:"));
+    const literals = [...mapping.matchAll(/(--ui-[\w-]+):\s*(#[0-9a-f]{3,8})/gi)];
     expect(literals.map((m) => m[1])).toEqual([]);
   });
 
@@ -93,7 +93,7 @@ describe("design-token contract", () => {
     // has not mapped renders the package's neutral default, which is a
     // different type system showing through in the middle of this one.
     for (const step of ["xs", "sm", "base", "md", "lg", "xl", "2xl"]) {
-      expect(CSS).toMatch(new RegExp(`--osn-text-${step}:`));
+      expect(CSS).toMatch(new RegExp(`--ui-text-${step}:`));
     }
   });
 });

@@ -15,13 +15,13 @@ import { rewriteScales } from "../codemod-scale";
 describe("rewriteScales", () => {
   test("maps a bracketed size onto its contract step", () => {
     const { source, rewrites } = rewriteScales('<p class="text-[0.72rem] font-body">x</p>');
-    expect(source).toBe('<p class="text-osn-xs font-body">x</p>');
-    expect(rewrites).toEqual([{ from: "text-[0.72rem]", to: "text-osn-xs" }]);
+    expect(source).toBe('<p class="text-ui-xs font-body">x</p>');
+    expect(rewrites).toEqual([{ from: "text-[0.72rem]", to: "text-ui-xs" }]);
   });
 
   test("maps all three scales the contract publishes", () => {
     const { source } = rewriteScales('class="text-[0.9rem] tracking-[0.1em] leading-[1.4]"');
-    expect(source).toBe('class="text-osn-base tracking-osn-wider leading-osn-snug"');
+    expect(source).toBe('class="text-ui-base tracking-ui-wider leading-ui-snug"');
   });
 
   test("leaves a computed value alone, and says so", () => {
@@ -53,13 +53,13 @@ describe("rewriteScales", () => {
   test("rewrites the value a variant is applied to, leaving the variant intact", () => {
     // Both brackets on one class, and only one of them is a size.
     const { source } = rewriteScales('class="data-[state=open]:text-[0.9rem]"');
-    expect(source).toBe('class="data-[state=open]:text-osn-base"');
+    expect(source).toBe('class="data-[state=open]:text-ui-base"');
   });
 
   test("still rewrites a value that a variant is applied to", () => {
     // The variant is the prefix; the VALUE after the colon is fair game.
     const { source } = rewriteScales('class="md:text-[0.9rem] hover:tracking-[0.1em]"');
-    expect(source).toBe('class="md:text-osn-base hover:tracking-osn-wider"');
+    expect(source).toBe('class="md:text-ui-base hover:tracking-ui-wider"');
   });
 
   test("leaves a value the table has no entry for, and counts it", () => {
@@ -100,7 +100,7 @@ describe("rewriteScales", () => {
     for (const [scale, table] of Object.entries(SCALE_MIGRATION)) {
       for (const [from, to] of Object.entries(table)) {
         const { source } = rewriteScales(`class="${scale}-[${from}]"`);
-        if (source !== `class="${scale}-osn-${to}"`) unreachable.push(`${scale}-[${from}]`);
+        if (source !== `class="${scale}-ui-${to}"`) unreachable.push(`${scale}-[${from}]`);
       }
     }
     expect(unreachable).toEqual([]);

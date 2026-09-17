@@ -1,5 +1,5 @@
 import Button from "@cire/ui/button";
-import { Table, Td, Th } from "@osn/ui/ui/table";
+import { Table, Td, Th } from "@shared/ui/ui/table";
 import { For, Show } from "solid-js";
 // The SHARED change-preview renderer (guest+event editor §8): "extract
 // ImportPanel's plan-rendering into a shared component so both ImportPanel and
@@ -120,15 +120,15 @@ export function PlanCounts(props: { plan: ChangePlan }) {
 export default function ChangePreview(props: ChangePreviewProps) {
   return (
     <div class="border-border bg-bg/40 flex flex-col gap-4 rounded-sm border p-4">
-      <h3 class="font-display text-gold-dim text-osn-md">Diff preview</h3>
+      <h3 class="font-display text-gold-dim text-ui-md">Diff preview</h3>
       <PlanCounts plan={props.plan} />
 
       <Show when={props.warnings.length > 0}>
         <div class="border-gold/30 bg-gold/[0.06] flex flex-col gap-1.5 rounded-sm border p-3">
-          <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
+          <p class="font-body text-gold text-ui-xs tracking-ui-widest uppercase">
             Before you apply
           </p>
-          <ul class="text-text-muted text-osn-sm flex flex-col gap-1">
+          <ul class="text-text-muted text-ui-sm flex flex-col gap-1">
             <For each={props.warnings}>
               {(w) => <li class="before:mr-2 before:content-['•']">{w}</li>}
             </For>

@@ -1,8 +1,8 @@
 import Button from "@cire/ui/button";
-import { EmptyState } from "@osn/ui/ui/empty-state";
-import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
+import { EmptyState } from "@shared/ui/ui/empty-state";
+import { Notice } from "@shared/ui/ui/notice";
 import { createSignal, lazy, onMount, Show, For, Suspense } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -207,7 +207,7 @@ export default function EventTable(props: EventTableProps) {
       </Show>
 
       <Show when={!loading() && !error() && hasEvents()}>
-        <p class="font-body text-text-muted text-osn-sm">
+        <p class="font-body text-text-muted text-ui-sm">
           {events().length} {events().length === 1 ? "event" : "events"} · uploading a photo
           replaces the current one
         </p>
@@ -225,16 +225,16 @@ export default function EventTable(props: EventTableProps) {
               // details into a half-width card.
               <li class="border-border bg-surface/30 @container/card flex flex-col gap-3 rounded-sm border p-5">
                 <header class="flex flex-col gap-1">
-                  <span class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
+                  <span class="font-body text-gold text-ui-xs tracking-ui-widest uppercase">
                     {event.slug}
                   </span>
-                  <h3 class="font-display text-text text-osn-lg font-light">{event.name}</h3>
-                  <p class="font-body text-text-muted text-osn-sm">
+                  <h3 class="font-display text-text text-ui-lg font-light">{event.name}</h3>
+                  <p class="font-body text-text-muted text-ui-sm">
                     {formatEventWhen(event.startAt, event.endAt, event.timezone)} · {event.timezone}
                   </p>
                 </header>
 
-                <dl class="font-body text-osn-base grid grid-cols-1 gap-x-6 gap-y-2 @md/card:grid-cols-2">
+                <dl class="font-body text-ui-base grid grid-cols-1 gap-x-6 gap-y-2 @md/card:grid-cols-2">
                   <Show when={event.address}>
                     <Detail label="Address" value={event.address!} />
                   </Show>
@@ -251,7 +251,7 @@ export default function EventTable(props: EventTableProps) {
                     <For each={event.dressCodePalette!}>
                       {(swatch) => (
                         <span
-                          class="border-border bg-bg font-body text-text-muted text-osn-xs tracking-osn-wide inline-flex items-center gap-2 rounded-sm border px-2 py-1 uppercase"
+                          class="border-border bg-bg font-body text-text-muted text-ui-xs tracking-ui-wide inline-flex items-center gap-2 rounded-sm border px-2 py-1 uppercase"
                           title={swatch.color}
                         >
                           <span
@@ -266,7 +266,7 @@ export default function EventTable(props: EventTableProps) {
                 </Show>
 
                 <Show when={event.pinterestUrl || event.mapsUrl}>
-                  <div class="font-body text-osn-sm flex flex-wrap gap-4 pt-1">
+                  <div class="font-body text-ui-sm flex flex-wrap gap-4 pt-1">
                     <Show when={event.mapsUrl}>
                       <a
                         href={event.mapsUrl!}
@@ -330,7 +330,7 @@ function EventImageField(props: {
 
   return (
     <div class="border-border/60 mt-1 flex flex-col gap-2 rounded-sm border border-dashed p-3">
-      <span class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
+      <span class="font-body text-text-muted text-ui-xs tracking-ui-wider uppercase">
         Event image
       </span>
       <Show when={absoluteUrl()}>
@@ -370,7 +370,7 @@ function EventImageField(props: {
             if (file) props.onSelect(file);
             e.currentTarget.value = "";
           }}
-          class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-osn-sm file:text-osn-sm file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5"
+          class="font-body text-text file:border-border file:bg-bg file:font-body file:text-text hover:file:border-gold text-ui-sm file:text-ui-sm file:mr-3 file:rounded-sm file:border file:px-3 file:py-1.5"
         />
         <Show when={props.url}>
           <Button variant="link" type="button" onClick={() => setCropping(true)}>
@@ -402,7 +402,7 @@ function EventImageField(props: {
 function Detail(props: { label: string; value: string; span?: boolean }) {
   return (
     <div class={props.span ? "@md/card:col-span-2" : ""}>
-      <dt class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
+      <dt class="font-body text-text-muted text-ui-xs tracking-ui-wider uppercase">
         {props.label}
       </dt>
       <dd class="text-text">{props.value}</dd>

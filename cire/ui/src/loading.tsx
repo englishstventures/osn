@@ -24,7 +24,7 @@ export default function Loading(props: { label: string }) {
   return (
     <p
       role="status"
-      class="base:font-osn-body base:text-osn-ink-secondary base:animate-pulse base:text-osn-base base:tracking-osn-wider base:uppercase"
+      class="base:font-ui-body base:text-ui-ink-secondary base:animate-pulse base:text-ui-base base:tracking-ui-wider base:uppercase"
     >
       {props.label}
     </p>

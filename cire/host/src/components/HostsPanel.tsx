@@ -1,10 +1,10 @@
 import Button from "@cire/ui/button";
 import { UsernameInput } from "@cire/ui/username-input";
-import { EmptyState } from "@osn/ui/ui/empty-state";
-import { Field, Fieldset } from "@osn/ui/ui/field";
-import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
+import { EmptyState } from "@shared/ui/ui/empty-state";
+import { Field, Fieldset } from "@shared/ui/ui/field";
+import { Notice } from "@shared/ui/ui/notice";
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
@@ -487,7 +487,7 @@ export default function HostsPanel(props: HostsPanelProps) {
                           list IS the organiser's connections, and saying so is what
                           makes an unprompted dropdown legible rather than startling. */}
                       <Show when={browsingConnections()}>
-                        <p class="border-border text-text-muted font-body text-osn-xs tracking-osn-wider border-b px-3 py-2 uppercase">
+                        <p class="border-border text-text-muted font-body text-ui-xs tracking-ui-wider border-b px-3 py-2 uppercase">
                           From your OSN connections
                         </p>
                       </Show>
@@ -518,20 +518,20 @@ export default function HostsPanel(props: HostsPanelProps) {
                               }}
                             >
                               <span class="flex flex-wrap items-center gap-2">
-                                <span class="font-body text-gold-dim text-osn-base">
+                                <span class="font-body text-gold-dim text-ui-base">
                                   @{s.handle}
                                 </span>
                                 {/* Only on the mixed list — when every row is a
                                     connection the caption already said so, and a
                                     badge on every row is noise. */}
                                 <Show when={s.connected && !browsingConnections()}>
-                                  <span class="border-gold/40 text-gold font-body text-osn-xs tracking-osn-widest rounded-sm border px-1.5 py-0.5 uppercase">
+                                  <span class="border-gold/40 text-gold font-body text-ui-xs tracking-ui-widest rounded-sm border px-1.5 py-0.5 uppercase">
                                     Connected
                                   </span>
                                 </Show>
                               </span>
                               <Show when={s.displayName}>
-                                <span class="font-body text-text-muted text-osn-sm">
+                                <span class="font-body text-text-muted text-ui-sm">
                                   {s.displayName}
                                 </span>
                               </Show>
@@ -570,9 +570,9 @@ export default function HostsPanel(props: HostsPanelProps) {
                         onChange={() => setRole(option.value)}
                         class="accent-gold"
                       />
-                      <span class="font-body text-text text-osn-base">{option.label}</span>
+                      <span class="font-body text-text text-ui-base">{option.label}</span>
                     </span>
-                    <span class="font-body text-text-muted text-osn-sm pl-6 leading-snug">
+                    <span class="font-body text-text-muted text-ui-sm pl-6 leading-snug">
                       {option.hint}
                     </span>
                   </label>
@@ -607,19 +607,19 @@ export default function HostsPanel(props: HostsPanelProps) {
           {(o) => (
             <ul class="flex flex-col gap-2">
               <li class="border-gold/40 bg-gold/5 flex items-center justify-between gap-4 rounded-sm border px-4 py-3">
-                <span class="font-body text-text text-osn-base flex flex-wrap items-center gap-3">
+                <span class="font-body text-text text-ui-base flex flex-wrap items-center gap-3">
                   {o().handle ? (
                     <span class="text-gold-dim">@{o().handle}</span>
                   ) : (
                     <span
-                      class="text-text-muted text-osn-sm tracking-osn-wide font-mono"
+                      class="text-text-muted text-ui-sm tracking-ui-wide font-mono"
                       title="OSN profile id"
                     >
                       {o().osnProfileId}
                     </span>
                   )}
                   <span
-                    class="border-gold text-gold font-body text-osn-xs tracking-osn-widest rounded-sm border px-2 py-0.5 uppercase"
+                    class="border-gold text-gold font-body text-ui-xs tracking-ui-widest rounded-sm border px-2 py-0.5 uppercase"
                     title="Owns this wedding — can't be removed or demoted"
                   >
                     Owner
@@ -656,19 +656,19 @@ export default function HostsPanel(props: HostsPanelProps) {
             <For each={hosts()}>
               {(host) => (
                 <li class="border-border bg-surface/30 flex items-center justify-between gap-4 rounded-sm border px-4 py-3">
-                  <span class="font-body text-text text-osn-base flex flex-wrap items-center gap-3">
+                  <span class="font-body text-text text-ui-base flex flex-wrap items-center gap-3">
                     {host.handle ? (
                       <span class="text-gold-dim">@{host.handle}</span>
                     ) : (
                       <span
-                        class="text-text-muted text-osn-sm tracking-osn-wide font-mono"
+                        class="text-text-muted text-ui-sm tracking-ui-wide font-mono"
                         title="OSN profile id"
                       >
                         {host.osnProfileId}
                       </span>
                     )}
                     <span
-                      class="border-gold/40 text-gold font-body text-osn-xs tracking-osn-widest rounded-sm border px-2 py-0.5 uppercase"
+                      class="border-gold/40 text-gold font-body text-ui-xs tracking-ui-widest rounded-sm border px-2 py-0.5 uppercase"
                       title={
                         host.role === "viewer"
                           ? "Can see everything but change nothing"
@@ -690,7 +690,7 @@ export default function HostsPanel(props: HostsPanelProps) {
                       }
                     >
                       {(addedBy) => (
-                        <span class="font-body text-text-muted text-osn-xs tracking-osn-wide">
+                        <span class="font-body text-text-muted text-ui-xs tracking-ui-wide">
                           added by {host.addedByHandle ? `@${host.addedByHandle}` : addedBy()}
                         </span>
                       )}

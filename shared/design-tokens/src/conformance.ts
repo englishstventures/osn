@@ -7,7 +7,7 @@
  * `cire/host/tests/styles/tokens.test.ts` — the thing this generalises — finds
  * tokens with a regex over **literal** `--name: oklch(…)` declarations inside a
  * block located by exact string match. That works there because cire's ramps
- * *are* literals. A contract mapping never is: it is `--osn-ink: var(--text)`,
+ * *are* literals. A contract mapping never is: it is `--ui-ink: var(--text)`,
  * pointing at a token declared somewhere else in the file, possibly itself
  * pointing at a third. There is no literal to match, so the regex approach
  * finds nothing and silently asserts about an empty set — a test that cannot
@@ -74,7 +74,7 @@ export interface ConformanceOptions {
    * excuses rather than living in a comment someone deletes.
    *
    * What a waiver does NOT do is change what components render. A waived
-   * `--osn-hairline-strong` still needs mapping, or every shared component
+   * `--ui-hairline-strong` still needs mapping, or every shared component
    * that draws a control boundary falls back to this package's neutral grey.
    */
   waived?: Readonly<Record<string, string>>;
@@ -160,7 +160,7 @@ const VAR = /^var\(\s*(--[\w-]+)\s*(?:,\s*([\s\S]+))?\)$/;
  * Follow a value through however many `var()` hops it takes to reach something
  * a colour parser recognises.
  *
- * A contract mapping is at least two hops (`--osn-ink` → `--text` → a literal)
+ * A contract mapping is at least two hops (`--ui-ink` → `--text` → a literal)
  * and cire's ramps make it three. `seen` is not paranoia: `--a: var(--b)` with
  * `--b: var(--a)` is a stylesheet someone will eventually write, and without it
  * this recurses until the stack gives out and reports as a crash rather than as

@@ -37,13 +37,13 @@ that none of the three is ever the answer.
 ```
   app vocabulary          contract              component
   ──────────────          ────────              ─────────
-  --card         ──map──▶ --osn-surface  ──────▶ bg-osn-surface
-  --gold         ──map──▶ --osn-accent   ──────▶ bg-osn-accent
+  --card         ──map──▶ --ui-surface  ──────▶ bg-ui-surface
+  --gold         ──map──▶ --ui-accent   ──────▶ bg-ui-accent
 ```
 
 Three rules, and they are the whole design:
 
-1. **The contract is library-facing.** `@osn/ui`, `@cire/ui`, `@shared/toast`
+1. **The contract is library-facing.** `@shared/ui`, `@cire/ui`, `@shared/toast`
    and `@shared/sortable` write `osn-*` utilities. Application code never does —
    every `bg-card` in pulse and `text-gold` in cire stays exactly as written.
 2. **An app maps once.** A `:root` block naming each `--osn-*` in the app's own
@@ -60,9 +60,9 @@ Adopting it is two lines:
 @import "@shared/design-tokens/tokens.css";
 
 :root {
-  --osn-surface: var(--card);
-  --osn-ink: var(--foreground);
-  --osn-accent: var(--primary);
+  --ui-surface: var(--card);
+  --ui-ink: var(--foreground);
+  --ui-accent: var(--primary);
   /* … */
 }
 ```
@@ -79,9 +79,9 @@ Adopting it is two lines:
 | Status   | `success`, `warn`, `danger`, `on-danger`                            |
 | Focus    | `focus`                                                             |
 
-Scales: `text-osn-xs` … `2xl`, `tracking-osn-tight` … `ultra`,
-`leading-osn-none` … `relaxed`, `radius-osn-hair` … `pill` plus
-`radius-osn-control`.
+Scales: `text-ui-xs` … `2xl`, `tracking-ui-tight` … `ultra`,
+`leading-ui-none` … `relaxed`, `radius-ui-hair` … `pill` plus
+`radius-ui-control`.
 
 Two names are worth reading twice. **`ground-deep` is not "darker"** — it is
 what the page recedes _to_, behind a sticky bar or under a scrim, and on a dark
@@ -93,7 +93,7 @@ two have opposite contrast requirements.
 
 ### `@theme inline`, not plain `@theme`
 
-`inline` makes `bg-osn-surface` compile to `var(--osn-surface, …)` resolved **at
+`inline` makes `bg-ui-surface` compile to `var(--ui-surface, …)` resolved **at
 the element**, not at `:root`. A subtree that redefines a token is then followed
 correctly — a theme story showing light and dark side by side, a themed section
 on a landing page, cire's invite preview rendering a wedding's palette inside
@@ -106,7 +106,7 @@ not transfer: there the JS-read name is `--color-gold`. Here nothing reads
 
 ### Fallbacks inline, and no `:root` in the package
 
-Every read is `var(--osn-x, <fallback>)` written at the use site. There is
+Every read is `var(--ui-x, <fallback>)` written at the use site. There is
 deliberately **no `:root` block in `tokens.css`**: a package-level `:root` is
 unlayered and lands at the import site, so it would beat an app mapping written
 inside `@layer base` or a later `@theme` — the app would set a token and
@@ -150,7 +150,7 @@ see removes the feature outright for a keyboard user.
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@shared/design-tokens` | `tokens.css` (the contract), the conformance harness, and `CONTRACT_SCALES` / `SCALE_MIGRATION` which the scale codemod reads                       |
 | `@shared/color`         | The OKLCH maths — parsing, conversion, contrast, `ensureContrast`. Lifted out of `@cire/theme` so no `@shared/*` package depends on a `@cire/*` one |
-| `@osn/ui`               | The shadcn-vocabulary primitives, re-keyed onto the contract                                                                                        |
+| `@shared/ui`               | The shadcn-vocabulary primitives, re-keyed onto the contract                                                                                        |
 | `@cire/ui`              | cire's house components — see [[wiki/architecture/component-library]] for why two layers rather than one                                            |
 
 `scripts/codemod-scale.ts` is the migration tool: it rewrites static arbitrary

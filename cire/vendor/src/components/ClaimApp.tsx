@@ -1,8 +1,8 @@
 import Button from "@cire/ui/button";
 import Card, { CardEyebrow } from "@cire/ui/card";
 import Loading from "@cire/ui/loading";
-import { Notice } from "@osn/ui/ui/notice";
 import { AuthProvider, useAuth } from "@shared/rp-auth/solid";
+import { Notice } from "@shared/ui/ui/notice";
 import { createResource, createSignal, onCleanup, onMount, Show } from "solid-js";
 
 import { haptic } from "../lib/haptics";
@@ -85,7 +85,7 @@ function ClaimContent() {
       <Show when={preview.state === "ready" && preview() !== null && !invalidLink()}>
         <Card tone="accent">
           <CardEyebrow>You've been invited to claim</CardEyebrow>
-          <p class="font-display text-text text-osn-xl leading-tight font-light">
+          <p class="font-display text-text text-ui-xl leading-tight font-light">
             {preview()?.name}
           </p>
         </Card>
@@ -95,7 +95,7 @@ function ClaimContent() {
           when={session() !== null && session() !== undefined}
           fallback={
             <div class="flex flex-col gap-4">
-              <p class="font-body text-text-muted text-osn-base leading-relaxed">
+              <p class="font-body text-text-muted text-ui-base leading-relaxed">
                 Sign in with your musubi account to continue. We'll bring you straight back here.
               </p>
               <Button
@@ -109,7 +109,7 @@ function ClaimContent() {
           }
         >
           <div class="flex flex-col gap-4">
-            <h2 class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">
+            <h2 class="font-body text-gold text-ui-xs tracking-ui-widest uppercase">
               Choose the organisation that owns this listing
             </h2>
             <OrgPicker onPick={(org) => void handleClaim(org)} />

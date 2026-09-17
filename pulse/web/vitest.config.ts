@@ -3,11 +3,11 @@
  * `@musubi/social` run, and for the same reason.
  *
  * The `unit` project parses no stylesheet and computes no layout. It can assert
- * that an element carries `base:bg-osn-accent` as a string, but never that the
+ * that an element carries `base:bg-ui-accent` as a string, but never that the
  * class emitted any CSS, that it won the cascade, or what colour reached the
  * pixel. Since the design-token contract landed, that is the whole question: a
- * contract utility is three hops from a value (`bg-osn-accent` →
- * `--color-osn-accent` → `--osn-accent` → `--primary`), and a Tailwind utility
+ * contract utility is three hops from a value (`bg-ui-accent` →
+ * `--color-ui-accent` → `--ui-accent` → `--primary`), and a Tailwind utility
  * the scanner cannot resolve emits nothing at all, silently.
  *
  * Browser tests are named `*.browser.test.ts(x)` and excluded from `unit` by

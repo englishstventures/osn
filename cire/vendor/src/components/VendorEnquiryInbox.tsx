@@ -1,9 +1,9 @@
 import { cardClass } from "@cire/ui/card";
 import Loading from "@cire/ui/loading";
-import { Chip, type ChipTone } from "@osn/ui/ui/chip";
-import { EmptyState } from "@osn/ui/ui/empty-state";
-import { Notice } from "@osn/ui/ui/notice";
 import { useAuth } from "@shared/rp-auth/solid";
+import { Chip, type ChipTone } from "@shared/ui/ui/chip";
+import { EmptyState } from "@shared/ui/ui/empty-state";
+import { Notice } from "@shared/ui/ui/notice";
 import { createResource, For, Show } from "solid-js";
 
 import { listEnquiries, type VendorEnquiryListItem } from "../lib/enquiries-store";
@@ -57,8 +57,8 @@ export default function VendorEnquiryInbox(props: VendorEnquiryInboxProps) {
   return (
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-0.5">
-        <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">Enquiries</p>
-        <h2 class="font-display text-text text-osn-lg leading-tight font-light">Your inbox</h2>
+        <p class="font-body text-gold text-ui-xs tracking-ui-widest uppercase">Enquiries</p>
+        <h2 class="font-display text-text text-ui-lg leading-tight font-light">Your inbox</h2>
       </div>
 
       <Show when={rows.loading}>
@@ -100,11 +100,11 @@ export default function VendorEnquiryInbox(props: VendorEnquiryInboxProps) {
                   </div>
 
                   <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
+                    <span class="font-body text-text-muted text-ui-xs tracking-ui-wider uppercase">
                       {categoryLabel(item.category)}
                     </span>
                     <Show when={item.quotedMinor != null}>
-                      <span class="font-body text-gold-ink text-osn-sm tabular-nums">
+                      <span class="font-body text-gold-ink text-ui-sm tabular-nums">
                         {aud.format(item.quotedMinor! / 100)}
                       </span>
                     </Show>
@@ -113,7 +113,7 @@ export default function VendorEnquiryInbox(props: VendorEnquiryInboxProps) {
                         gives the exact moment to anything that wants it. */}
                     <time
                       datetime={new Date(item.lastMessageAt).toISOString()}
-                      class="font-body text-text-muted text-osn-xs ml-auto"
+                      class="font-body text-text-muted text-ui-xs ml-auto"
                     >
                       {shortDate(item.lastMessageAt)}
                     </time>

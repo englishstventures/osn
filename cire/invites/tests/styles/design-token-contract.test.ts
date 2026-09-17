@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
  * roles are and what each one owes; this asserts that the colours the invite
  * sends to those roles pay it. A shared component rendered here reads the
  * contract, so a mapping that puts secondary ink under 4.5:1 makes every
- * `@osn/ui` primitive illegible on the guest site and nowhere else.
+ * `@shared/ui` primitive illegible on the guest site and nowhere else.
  *
  * ## What it can and cannot see
  *
@@ -54,10 +54,10 @@ describe("design-token contract", () => {
     // would pin the evergreen fallback into every wedding's invite, and the
     // failure would look like "the theme picker stopped working" with nothing
     // pointing back at this file.
-    const mapping = CSS.slice(CSS.indexOf("--osn-ground:"), CSS.indexOf("--osn-radius-hair:"));
-    const literals = [...mapping.matchAll(/(--osn-[\w-]+):\s*(oklch|#)/gi)].map((m) => m[1]);
+    const mapping = CSS.slice(CSS.indexOf("--ui-ground:"), CSS.indexOf("--ui-radius-hair:"));
+    const literals = [...mapping.matchAll(/(--ui-[\w-]+):\s*(oklch|#)/gi)].map((m) => m[1]);
     expect(literals).toEqual([]);
-    expect(mapping).toMatch(/--osn-ground:\s*var\(--color-bg\)/);
+    expect(mapping).toMatch(/--ui-ground:\s*var\(--color-bg\)/);
   });
 
   it("names the control boundary rather than leaving it written out", () => {
@@ -65,12 +65,12 @@ describe("design-token contract", () => {
     // claim-code box, the three gift-registry fields. That is a token by any
     // other measure, and the contract needs it by name to hold it to 3:1.
     expect(CSS).toMatch(/--color-border-strong:/);
-    expect(CSS).toMatch(/--osn-hairline-strong:\s*var\(--color-border-strong\)/);
+    expect(CSS).toMatch(/--ui-hairline-strong:\s*var\(--color-border-strong\)/);
   });
 
   it("maps all seven type steps rather than leaving gaps for the fallback", () => {
     for (const step of ["xs", "sm", "base", "md", "lg", "xl", "2xl"]) {
-      expect(CSS).toMatch(new RegExp(`--osn-text-${step}:`));
+      expect(CSS).toMatch(new RegExp(`--ui-text-${step}:`));
     }
   });
 });

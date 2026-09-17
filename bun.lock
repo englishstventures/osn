@@ -63,7 +63,7 @@
         "@cire/theme": "workspace:*",
         "@cire/ui": "workspace:*",
         "@kobalte/core": "^0.13.14",
-        "@osn/ui": "workspace:*",
+        "@shared/ui": "workspace:*",
         "@shared/db-utils": "workspace:*",
         "@shared/design-tokens": "workspace:*",
         "@shared/rp-auth": "workspace:*",
@@ -109,7 +109,7 @@
         "@fontsource/cormorant-garamond": "^5.3.0",
         "@fontsource/lato": "^5.3.0",
         "@cire/ui": "workspace:*",
-        "@osn/ui": "workspace:*",
+        "@shared/ui": "workspace:*",
         "@shared/design-tokens": "workspace:*",
         "@shared/legal": "workspace:*",
         "@shared/rp-auth": "workspace:*",
@@ -140,7 +140,7 @@
       "dependencies": {
         "@astrojs/solid-js": "^7.0.2",
         "@cire/ui": "workspace:*",
-        "@osn/ui": "workspace:*",
+        "@shared/ui": "workspace:*",
         "@shared/design-tokens": "workspace:*",
         "@shared/legal": "workspace:*",
         "@tailwindcss/vite": "^4.3.3",
@@ -173,7 +173,7 @@
     "cire/ui": {
       "name": "@cire/ui",
       "dependencies": {
-        "@osn/ui": "workspace:*",
+        "@shared/ui": "workspace:*",
         "@shared/design-tokens": "workspace:*",
       },
       "devDependencies": {
@@ -198,7 +198,7 @@
         "@cire/theme": "workspace:*",
         "@cire/ui": "workspace:*",
         "@kobalte/core": "^0.13.14",
-        "@osn/ui": "workspace:*",
+        "@shared/ui": "workspace:*",
         "@shared/design-tokens": "workspace:*",
         "@shared/rp-auth": "workspace:*",
         "@shared/toast": "workspace:*",
@@ -249,7 +249,8 @@
       "version": "0.14.1",
       "dependencies": {
         "@osn/client": "workspace:*",
-        "@osn/ui": "workspace:*",
+        "@osn/auth-ui": "workspace:*",
+        "@shared/ui": "workspace:*",
         "@shared/design-tokens": "workspace:*",
         "@shared/legal": "workspace:*",
         "@shared/toast": "workspace:*",
@@ -306,6 +307,29 @@
         "wrangler": "^4.127.1",
       },
     },
+    "osn/auth-ui": {
+      "name": "@osn/auth-ui",
+      "version": "1.13.0",
+      "dependencies": {
+        "@osn/client": "workspace:*",
+        "@shared/toast": "workspace:*",
+        "@shared/ui": "workspace:*",
+        "@simplewebauthn/browser": "^13.3.0",
+      },
+      "devDependencies": {
+        "@shared/design-tokens": "workspace:*",
+        "@shared/typescript-config": "workspace:*",
+        "@solidjs/testing-library": "^0.8.10",
+        "happy-dom": "^20.12.2",
+        "solid-js": "^1.9.15",
+        "vite": "^8.2.2",
+        "vite-plugin-solid": "^2.11.14",
+        "vitest": "^4.1.11",
+      },
+      "peerDependencies": {
+        "solid-js": ">=1.9",
+      },
+    },
     "osn/client": {
       "name": "@osn/client",
       "version": "2.17.0",
@@ -342,38 +366,7 @@
         "wrangler": "^4.127.1",
       },
     },
-    "osn/ui": {
-      "name": "@osn/ui",
-      "version": "1.11.1",
-      "dependencies": {
-        "@kobalte/core": "^0.13.14",
-        "@osn/client": "workspace:*",
-        "@shared/toast": "workspace:*",
-        "@simplewebauthn/browser": "^13.3.0",
-        "class-variance-authority": "^0.7.1",
-        "clsx": "^2.1.1",
-        "tailwind-merge": "^3.6.0",
-      },
-      "devDependencies": {
-        "@shared/design-tokens": "workspace:*",
-        "@shared/typescript-config": "workspace:*",
-        "@solidjs/testing-library": "^0.8.10",
-        "@testing-library/jest-dom": "^7.0.1",
-        "@tailwindcss/vite": "^4.3.3",
-        "@vitest/browser": "4.1.11",
-        "@vitest/browser-playwright": "4.1.11",
-        "happy-dom": "^20.12.2",
-        "playwright": "^1.62.1",
-        "solid-js": "^1.9.15",
-        "tailwindcss": "^4.3.3",
-        "vite": "^8.2.2",
-        "vite-plugin-solid": "^2.11.14",
-        "vitest": "^4.1.11",
-      },
-      "peerDependencies": {
-        "solid-js": ">=1.9",
-      },
-    },
+
     "pulse/api": {
       "name": "@pulse/api",
       "version": "0.27.9",
@@ -454,7 +447,7 @@
         "@fontsource/geist-mono": "^5.3.0",
         "@fontsource/geist-sans": "^5.3.0",
         "@fontsource/instrument-serif": "^5.3.0",
-        "@osn/ui": "workspace:*",
+        "@shared/ui": "workspace:*",
         "@pulse/api": "workspace:*",
         "@shared/design-tokens": "workspace:*",
         "@shared/legal": "workspace:*",
@@ -714,11 +707,40 @@
       "name": "@shared/typescript-config",
       "version": "0.0.2",
     },
+    "shared/ui": {
+      "name": "@shared/ui",
+      "version": "0.0.0",
+      "dependencies": {
+        "@kobalte/core": "^0.13.14",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "tailwind-merge": "^3.6.0",
+      },
+      "devDependencies": {
+        "@shared/design-tokens": "workspace:*",
+        "@shared/typescript-config": "workspace:*",
+        "@solidjs/testing-library": "^0.8.10",
+        "@tailwindcss/vite": "^4.3.3",
+        "@testing-library/jest-dom": "^7.0.1",
+        "@vitest/browser": "4.1.11",
+        "@vitest/browser-playwright": "4.1.11",
+        "happy-dom": "^20.12.2",
+        "playwright": "^1.62.1",
+        "solid-js": "^1.9.15",
+        "tailwindcss": "^4.3.3",
+        "vite": "^8.2.2",
+        "vite-plugin-solid": "^2.11.14",
+        "vitest": "^4.1.11",
+      },
+      "peerDependencies": {
+        "solid-js": ">=1.9",
+      },
+    },
     "tools/lab": {
       "name": "@tools/lab",
       "version": "0.1.18",
       "dependencies": {
-        "@osn/ui": "workspace:*",
+        "@shared/ui": "workspace:*",
         "@tailwindcss/vite": "^4.3.3",
         "solid-js": "^1.9.15",
         "tailwindcss": "^4.3.3",
@@ -740,7 +762,7 @@
       "version": "0.2.6",
       "dependencies": {
         "@observablehq/plot": "^0.6.17",
-        "@osn/ui": "workspace:*",
+        "@shared/ui": "workspace:*",
         "@tailwindcss/vite": "^4.3.3",
         "solid-js": "^1.9.15",
         "tailwindcss": "^4.3.3",
@@ -1322,7 +1344,7 @@
 
     "@osn/db": ["@osn/db@workspace:osn/db"],
 
-    "@osn/ui": ["@osn/ui@workspace:osn/ui"],
+    "@osn/auth-ui": ["@osn/auth-ui@workspace:osn/auth-ui"],
 
     "@oxc-parser/binding-android-arm-eabi": ["@oxc-parser/binding-android-arm-eabi@0.141.0", "", { "os": "android", "cpu": "arm" }, "sha512-jk7086MFvR/T4DG9IY7MKBVt1PMxvSZoz/TvnifodvS0pjghVwJHRttnAExhlwdMOgHv1TmLdENnbNpYk2zjvA=="],
 
@@ -1549,6 +1571,8 @@
     "@shared/sortable": ["@shared/sortable@workspace:shared/sortable"],
 
     "@shared/toast": ["@shared/toast@workspace:shared/toast"],
+
+    "@shared/ui": ["@shared/ui@workspace:shared/ui"],
 
     "@shared/turnstile": ["@shared/turnstile@workspace:shared/turnstile"],
 

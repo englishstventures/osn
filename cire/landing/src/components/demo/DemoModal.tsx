@@ -4,7 +4,7 @@
  * It used to be a 130-line port of `cire/invites`' `AnimatedModal`: a
  * `fixed inset-0` scrim, a 40-line `Tab` focus trap, Escape handling, a body
  * scroll lock, focus restore, and an enter/exit animation lazily imported from
- * `Modal.motion`. `@osn/ui`'s `Modal` supplies all of it — the trap, Escape and
+ * `Modal.motion`. `@shared/ui`'s `Modal` supplies all of it — the trap, Escape and
  * inertness from `showModal()`, the top layer instead of a `z-index`, and the
  * motion from its own stylesheet.
  *
@@ -19,7 +19,7 @@
  */
 
 import Button from "@cire/ui/button";
-import { Modal } from "@osn/ui/ui/modal";
+import { Modal } from "@shared/ui/ui/modal";
 import type { JSX } from "solid-js";
 
 interface DemoModalProps {

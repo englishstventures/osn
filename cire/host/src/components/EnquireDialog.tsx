@@ -1,9 +1,9 @@
 import Button from "@cire/ui/button";
-import { Field } from "@osn/ui/ui/field";
-import { Modal } from "@osn/ui/ui/modal";
-import { Textarea } from "@osn/ui/ui/textarea";
 import { useAuth } from "@shared/rp-auth/solid";
 import { toast } from "@shared/toast";
+import { Field } from "@shared/ui/ui/field";
+import { Modal } from "@shared/ui/ui/modal";
+import { Textarea } from "@shared/ui/ui/textarea";
 import { createSignal, createUniqueId } from "solid-js";
 
 import { redirectToLogin } from "../lib/api";
@@ -83,8 +83,8 @@ export default function EnquireDialog(props: EnquireDialogProps) {
       class="flex w-full max-w-lg flex-col gap-4"
     >
       <header class="flex flex-col gap-1">
-        <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">Enquiry</p>
-        <h3 id={titleId} class="font-display text-text text-osn-lg font-light">
+        <p class="font-body text-gold text-ui-xs tracking-ui-widest uppercase">Enquiry</p>
+        <h3 id={titleId} class="font-display text-text text-ui-lg font-light">
           Enquire with {props.vendorName}
         </h3>
       </header>

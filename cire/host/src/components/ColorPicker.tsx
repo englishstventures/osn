@@ -5,7 +5,7 @@ import { ColorSlider } from "@kobalte/core/color-slider";
 import { ColorSwatch } from "@kobalte/core/color-swatch";
 import { type Color, parseColor } from "@kobalte/core/colors";
 import { Popover } from "@kobalte/core/popover";
-import { Input } from "@osn/ui/ui/input";
+import { Input } from "@shared/ui/ui/input";
 import { createEffect, createSignal, createUniqueId, Show } from "solid-js";
 /**
  * The colour a picker shows when nothing is set and the caller names no
@@ -204,11 +204,11 @@ export default function ColorPicker(props: {
 
   return (
     <div class="flex flex-col items-start gap-1.5">
-      <span class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase">
+      <span class="font-body text-text-muted text-ui-xs tracking-ui-wider uppercase">
         {props.label}
       </span>
       <Show when={props.hint}>
-        <span class="font-body text-text-muted text-osn-xs -mt-1 italic">{props.hint}</span>
+        <span class="font-body text-text-muted text-ui-xs -mt-1 italic">{props.hint}</span>
       </Show>
       <div class="flex items-center gap-2">
         <Popover gutter={8} placement="bottom-start">
@@ -222,9 +222,9 @@ export default function ColorPicker(props: {
             />
             <Show
               when={props.value}
-              fallback={<span class="font-body text-text-muted text-osn-sm italic">Default</span>}
+              fallback={<span class="font-body text-text-muted text-ui-sm italic">Default</span>}
             >
-              <span class="font-body text-text text-osn-sm tracking-osn-wide uppercase tabular-nums">
+              <span class="font-body text-text text-ui-sm tracking-ui-wide uppercase tabular-nums">
                 {toHex(display())}
               </span>
             </Show>
@@ -264,7 +264,7 @@ export default function ColorPicker(props: {
               <div class="flex flex-col gap-1">
                 <label
                   for={hexId}
-                  class="font-body text-text-muted text-osn-xs tracking-osn-wider uppercase"
+                  class="font-body text-text-muted text-ui-xs tracking-ui-wider uppercase"
                 >
                   Hex
                 </label>
@@ -288,11 +288,7 @@ export default function ColorPicker(props: {
                 />
                 <Show when={discarded()}>
                   {(kept) => (
-                    <span
-                      id={hexNoteId}
-                      role="status"
-                      class="font-body text-text-muted text-osn-xs"
-                    >
+                    <span id={hexNoteId} role="status" class="font-body text-text-muted text-ui-xs">
                       Needs 6 digits — kept {kept()}
                     </span>
                   )}

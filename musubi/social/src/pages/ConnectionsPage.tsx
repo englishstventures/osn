@@ -5,16 +5,16 @@ import type {
   SentRequestEntry,
 } from "@osn/client";
 import { useAuth } from "@osn/client/solid";
-import { Avatar, AvatarFallback } from "@osn/ui/ui/avatar";
-import { Button } from "@osn/ui/ui/button";
+import { toast } from "@shared/toast";
+import { Avatar, AvatarFallback } from "@shared/ui/ui/avatar";
+import { Button } from "@shared/ui/ui/button";
 import {
   Dialog,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@osn/ui/ui/dialog";
-import { toast } from "@shared/toast";
+} from "@shared/ui/ui/dialog";
 import { createResource, createSignal, For, Show } from "solid-js";
 
 import { ResponsiveDialogContent } from "../components/ResponsiveDialogContent";

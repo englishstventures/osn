@@ -14,7 +14,7 @@
   "dependencies": {
     "@astrojs/solid-js": "^7.0.2",
     "@cire/ui": "workspace:*",
-    "@osn/ui": "workspace:*",
+    "@shared/ui": "workspace:*",
     "@shared/design-tokens": "workspace:*",
     "@shared/legal": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",

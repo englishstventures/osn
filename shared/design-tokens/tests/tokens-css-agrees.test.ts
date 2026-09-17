@@ -28,13 +28,13 @@ const RAW = readFileSync(fileURLToPath(new URL("../src/tokens.css", import.meta.
  *
  * Every assertion below is about what the file *declares*, and this file's
  * docblocks quote the very things they warn against — an example `@import
- * "tailwindcss"` showing a consumer's setup, a `var(--osn-focus-width)` showing
+ * "tailwindcss"` showing a consumer's setup, a `var(--ui-focus-width)` showing
  * how a scalar token is read. Two of these tests failed on that prose before
  * the strip existed, which is a fair warning about matching CSS with a regex.
  */
 const CSS = RAW.replace(/\/\*[\s\S]*?\*\//g, "");
 
-/** `--color-osn-x: var(--osn-x, …)` → `--osn-x`, taken only from inside `@theme`. */
+/** `--color-ui-x: var(--ui-x, …)` → `--ui-x`, taken only from inside `@theme`. */
 function aliasedTokens(): Set<string> {
   const open = CSS.indexOf("@theme");
   expect(open).toBeGreaterThan(-1);
@@ -49,7 +49,7 @@ function aliasedTokens(): Set<string> {
     }
   }
   const body = CSS.slice(brace + 1, end);
-  return new Set([...body.matchAll(/var\(\s*(--osn-[\w-]+)\s*,/g)].map((m) => m[1]));
+  return new Set([...body.matchAll(/var\(\s*(--ui-[\w-]+)\s*,/g)].map((m) => m[1]));
 }
 
 describe("tokens.css agrees with the exported token list", () => {
@@ -64,24 +64,24 @@ describe("tokens.css agrees with the exported token list", () => {
       ...ALL_COLOR_TOKENS,
       ...CONTRACT_SCALAR_TOKENS.radius,
       ...CONTRACT_SCALAR_TOKENS.fontFamily,
-      // The scale namespaces. `measure` breaks the `--osn-<key>-<step>` pattern
+      // The scale namespaces. `measure` breaks the `--ui-<key>-<step>` pattern
       // because Tailwind's namespace is `--container-*` while the role is a
       // measure; the contract is named for the role, the alias for Tailwind.
-      ...Object.keys(CONTRACT_SCALES.text).map((s) => `--osn-text-${s}`),
-      ...Object.keys(CONTRACT_SCALES.tracking).map((s) => `--osn-tracking-${s}`),
-      ...Object.keys(CONTRACT_SCALES.leading).map((s) => `--osn-leading-${s}`),
-      ...Object.keys(CONTRACT_SCALES.measure).map((s) => `--osn-measure-${s}`),
+      ...Object.keys(CONTRACT_SCALES.text).map((s) => `--ui-text-${s}`),
+      ...Object.keys(CONTRACT_SCALES.tracking).map((s) => `--ui-tracking-${s}`),
+      ...Object.keys(CONTRACT_SCALES.leading).map((s) => `--ui-leading-${s}`),
+      ...Object.keys(CONTRACT_SCALES.measure).map((s) => `--ui-measure-${s}`),
     ]);
     const extra = [...aliasedTokens()].filter((t) => !known.has(t));
     expect(extra).toEqual([]);
   });
 
   it("gives every alias a fallback, so an unmapped app still renders", () => {
-    // `var(--osn-x)` with no fallback resolves to nothing and the declaration
+    // `var(--ui-x)` with no fallback resolves to nothing and the declaration
     // is dropped — an unmapped app would render transparent text rather than
     // legible-but-neutral text.
     const open = CSS.indexOf("@theme");
-    const bare = [...CSS.slice(open).matchAll(/var\(\s*(--osn-[\w-]+)\s*\)/g)].map((m) => m[1]);
+    const bare = [...CSS.slice(open).matchAll(/var\(\s*(--ui-[\w-]+)\s*\)/g)].map((m) => m[1]);
     expect(bare).toEqual([]);
   });
 
@@ -98,7 +98,8 @@ describe("tokens.css agrees with the exported token list", () => {
   it("ships the two directives consumers would otherwise each declare", () => {
     // Proven to propagate through a bare package specifier in xchromo/osn#1041.
     expect(CSS).toMatch(/@custom-variant base \(:where\(&\)\);/);
-    expect(CSS).toMatch(/@source "\.\.\/\.\.\/\.\.\/osn\/ui\/src";/);
+    expect(CSS).toMatch(/@source "\.\.\/\.\.\/ui\/src";/);
+    expect(CSS).toMatch(/@source "\.\.\/\.\.\/\.\.\/osn\/auth-ui\/src";/);
   });
 
   it("never imports tailwindcss itself", () => {
@@ -119,21 +120,21 @@ describe("tokens.css agrees with the exported token list", () => {
 
 describe("contrastPairs", () => {
   it("measures each body ink against all five grounds and surfaces", () => {
-    const pairs = contrastPairs().filter((p) => p.fg === "--osn-ink");
+    const pairs = contrastPairs().filter((p) => p.fg === "--ui-ink");
     expect(pairs).toHaveLength(5);
     expect(pairs.every((p) => p.min === 4.5)).toBe(true);
   });
 
   it("never measures on-fill ink against a page ground", () => {
     const wrong = contrastPairs().filter(
-      (p) => p.fg === "--osn-on-accent" && p.bg.startsWith("--osn-ground"),
+      (p) => p.fg === "--ui-on-accent" && p.bg.startsWith("--ui-ground"),
     );
     expect(wrong).toEqual([]);
   });
 
   it("asserts nothing about decorative tokens", () => {
     const decorative = contrastPairs().filter(
-      (p) => p.fg === "--osn-hairline" || p.fg === "--osn-accent-soft",
+      (p) => p.fg === "--ui-hairline" || p.fg === "--ui-accent-soft",
     );
     expect(decorative).toEqual([]);
   });

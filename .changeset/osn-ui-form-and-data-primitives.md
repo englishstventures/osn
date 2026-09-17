@@ -1,8 +1,8 @@
 ---
-"@osn/ui": minor
+"@shared/ui": minor
 ---
 
-Lift cire's `Field`, `Select`, `Meter` and `Table` into `@osn/ui`, on the token contract
+Lift cire's `Field`, `Select`, `Meter` and `Table` into `@shared/ui`, on the token contract
 
 The last of the primitives that existed twice in cire's two portals and nowhere
 shared. `Field` is the label-hint-error scaffolding — it hands the caller `id`,

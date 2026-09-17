@@ -1,5 +1,5 @@
 ---
-"@osn/ui": minor
+"@shared/ui": minor
 ---
 
 `Modal` animates, and its exit works in every engine rather than only in Chrome
@@ -24,7 +24,7 @@ waited out the same way — the hook is animation-library-agnostic without namin
 a library. A reopen mid-exit is tracked by a token, so a stale close cannot land
 on a dialog somebody has just reopened.
 
-Timing is `--osn-modal-enter` and `--osn-modal-exit`, so an app retimes rather
+Timing is `--ui-modal-enter` and `--ui-modal-exit`, so an app retimes rather
 than restyles. `prefers-reduced-motion` drops both to 1ms rather than `none`:
 the exit is awaited, and a transition that never started is one there is nothing
 to wait for.

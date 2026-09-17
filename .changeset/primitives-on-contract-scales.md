@@ -1,5 +1,5 @@
 ---
-"@osn/ui": minor
+"@shared/ui": minor
 "@shared/design-tokens": minor
 "@musubi/social": patch
 "@pulse/web": patch
@@ -15,8 +15,8 @@ overriding: 82 component-override sites between `@musubi/social` and
 size". 36 utilities are now contract steps, mapped by value through
 `SCALE_MIGRATION` rather than by name.
 
-**`--osn-radius-control` is new**, and it is a role rather than a size — the
-same way `--osn-focus` is its own colour rather than an alias of the accent.
+**`--ui-radius-control` is new**, and it is a role rather than a size — the
+same way `--ui-focus` is its own colour rather than an alias of the accent.
 How round a *control* is turns out to be an app-level decision independent of
 how round a card is: musubi's house style is pill CTAs, cire's is a sharp 4px,
 pulse sits between. A shared control picking one of the sized steps gets

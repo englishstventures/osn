@@ -1,14 +1,14 @@
-import { Input, type InputProps } from "@osn/ui/ui/input";
+import { Input, type InputProps } from "@shared/ui/ui/input";
 import { splitProps } from "solid-js";
 
 /**
  * A text input for an OSN handle, with a fixed "@" shown ahead of the box —
- * the same affordance `@osn/ui`'s own `UsernameInput` gives the identity app,
+ * the same affordance `@shared/ui`'s own `UsernameInput` gives the identity app,
  * so a handle looks the same wherever someone types one across the platform.
  *
  * ## Why this is not that component
  *
- * Not the token vocabulary — both read the contract. The API. `@osn/ui`'s is
+ * Not the token vocabulary — both read the contract. The API. `@shared/ui`'s is
  * controlled — `value: string` plus `onInput: (value: string) => void`, with a
  * debounced availability `status` it renders itself. This one takes raw input
  * props, because its one call site is a combobox: it spreads `role`,
@@ -29,7 +29,7 @@ export function UsernameInput(props: UsernameInputProps) {
   return (
     <div class={`base:flex base:items-center base:gap-2${own.class ? ` ${own.class}` : ""}`}>
       <span
-        class="base:font-osn-body base:text-osn-ink-secondary base:text-osn-base"
+        class="base:font-ui-body base:text-ui-ink-secondary base:text-ui-base"
         aria-hidden="true"
       >
         @

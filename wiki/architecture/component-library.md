@@ -18,7 +18,7 @@ related:
   - "[[testing-patterns]]"
   - "[[pulse]]"
 packages:
-  - "@osn/ui"
+  - "@shared/ui"
   - "@pulse/web"
 last-reviewed: 2026-09-16
 ---
@@ -36,10 +36,10 @@ OSN uses **Zaidan**-style components — the SolidJS equivalent of shadcn/ui. Co
 
 ## Where Components Live
 
-All shared UI primitives live in `@osn/ui`:
+All shared UI primitives live in `@shared/ui`:
 
 ```
-osn/ui/src/
+shared/ui/src/
 ├── lib/
 │   └── utils.ts              ← clsx re-export, cn() (fallback)
 ├── components/
@@ -74,7 +74,7 @@ Kobalte's default `"bottom"` opens the panel over whatever sits below the trigge
 which for a field label is the input itself, so a form field usually wants `"top"`.
 
 The trigger is a native `<button type="button">`: Kobalte's `ButtonRoot` supplies
-that default, so it never submits the form it sits inside. `osn/ui`'s own tests
+that default, so it never submits the form it sits inside. `shared/ui`'s own tests
 hold that guarantee rather than trusting it.
 
 > [!important] Why `PopoverContent` carries `data-kb-top-layer`
@@ -91,18 +91,18 @@ hold that guarantee rather than trusting it.
 >
 > A test covering this **must flush macrotasks first**: the hide defers through
 > `setTimeout` then `requestAnimationFrame`, so a check made immediately passes
-> while the panel is in fact hidden. `osn/ui/tests/components/ui/info-popover.test.tsx`
+> while the panel is in fact hidden. `shared/ui/tests/ui/info-popover.test.tsx`
 > holds the guarantee, rendering the popover inside a real `Dialog`.
 
-`CreateProfileForm.tsx` also uses `UsernameInput` for its handle field. `cire/host` doesn't depend on `@osn/ui` (its own component kit, different design system) — it has a local port at `cire/host/src/components/ui/UsernameInput.tsx` wrapping that kit's own `Input`, same "@"-prefix idea, used in `HostsPanel`'s add-host combobox.
+`CreateProfileForm.tsx` also uses `UsernameInput` for its handle field. `cire/host` doesn't depend on `@shared/ui` (its own component kit, different design system) — it has a local port at `cire/host/src/components/ui/UsernameInput.tsx` wrapping that kit's own `Input`, same "@"-prefix idea, used in `HostsPanel`'s add-host combobox.
 
 Consuming apps import via subpath exports:
 
 ```typescript
-import { Button } from "@osn/ui/ui/button";
-import { Card } from "@osn/ui/ui/card";
-import { clsx } from "@osn/ui/lib/utils";  // for conditional class joining
-import { cn } from "@osn/ui/lib/utils";     // only if you need Tailwind conflict resolution
+import { Button } from "@shared/ui/ui/button";
+import { Card } from "@shared/ui/ui/card";
+import { clsx } from "@shared/ui/lib/utils";  // for conditional class joining
+import { cn } from "@shared/ui/lib/utils";     // only if you need Tailwind conflict resolution
 ```
 
 ## Dependency Stack
@@ -114,7 +114,7 @@ import { cn } from "@osn/ui/lib/utils";     // only if you need Tailwind conflic
 | `clsx` | Conditional class string joining |
 | `tailwind-merge` | Tailwind class conflict resolution (used only via `cn()` fallback) |
 
-These are dependencies of `@osn/ui`. Consuming apps get them transitively — no extra installs needed.
+These are dependencies of `@shared/ui`. Consuming apps get them transitively — no extra installs needed.
 
 ## Class Composition: the `base:` prefix, `clsx()`, and `cn()`
 
@@ -141,7 +141,7 @@ import { clsx } from "clsx";
 Use for composing non-conflicting class sets, conditional classes, and signal-driven toggles:
 
 ```typescript
-import { clsx } from "@osn/ui/lib/utils";
+import { clsx } from "@shared/ui/lib/utils";
 
 clsx("px-4 py-2", isActive && "font-bold", props.class)
 ```
@@ -151,7 +151,7 @@ clsx("px-4 py-2", isActive && "font-bold", props.class)
 Reserved for rare cases where two arbitrary class sets may contain conflicting Tailwind utilities and neither is a component default. `cn()` wraps `clsx` + `tailwind-merge` (~14 KB) for runtime conflict resolution:
 
 ```typescript
-import { cn } from "@osn/ui/lib/utils";
+import { cn } from "@shared/ui/lib/utils";
 
 // Only use when you genuinely have unpredictable conflicts:
 cn(dynamicClassesFromSignalA(), dynamicClassesFromSignalB())
@@ -202,15 +202,15 @@ If `tailwind-merge` is tree-shaken (i.e. no consumer imports `cn()`), the bundle
 
 > **Important:** `base:` prefixes must be written directly in source strings, not generated at runtime via a function. Tailwind v4's JIT scanner does static analysis of source files — it cannot see classes produced by a runtime transform.
 
-**Any new app** that uses `@osn/ui` components must include two things in its CSS:
+**Any new app** that uses `@shared/ui` components must include two things in its CSS:
 
-1. `@source` pointing to `osn/ui/src/` (relative to the CSS file) so Tailwind scans the library's source for `base:*` class names. Without this, Tailwind v4's auto-detection ignores workspace packages in `node_modules`.
+1. `@source` pointing to `shared/ui/src/` (relative to the CSS file) so Tailwind scans the library's source for `base:*` class names. Without this, Tailwind v4's auto-detection ignores workspace packages in `node_modules`.
 2. `@custom-variant base (:where(&));` to define the zero-specificity variant.
 
 Example `App.css`:
 ```css
 @import "tailwindcss";
-@source "../../../osn/ui/src";
+@source "../../../shared/ui/src";
 @custom-variant base (:where(&));
 ```
 
@@ -221,7 +221,7 @@ Example `App.css`:
 Use CVA for components with discrete visual variants:
 
 ```tsx
-import { Button } from "@osn/ui/ui/button";
+import { Button } from "@shared/ui/ui/button";
 
 <Button variant="default">Primary action</Button>
 <Button variant="secondary" size="sm">Secondary</Button>
@@ -232,7 +232,7 @@ import { Button } from "@osn/ui/ui/button";
 For links that need button styling, use the exported `buttonVariants` function:
 
 ```tsx
-import { buttonVariants } from "@osn/ui/ui/button";
+import { buttonVariants } from "@shared/ui/ui/button";
 
 <A href="/settings" class={buttonVariants({ variant: "secondary", size: "sm" })}>
   Settings
@@ -244,7 +244,7 @@ import { buttonVariants } from "@osn/ui/ui/button";
 These wrap Kobalte primitives with styling. They provide proper accessibility by default:
 
 ```tsx
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@osn/ui/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@shared/ui/ui/dialog";
 
 <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
   <DialogContent>
@@ -268,9 +268,9 @@ Key behaviours you get by default:
 Thin wrappers that apply consistent base styling and accept a `class` prop for overrides:
 
 ```tsx
-import { Input } from "@osn/ui/ui/input";
-import { Label } from "@osn/ui/ui/label";
-import { Card } from "@osn/ui/ui/card";
+import { Input } from "@shared/ui/ui/input";
+import { Label } from "@shared/ui/ui/label";
+import { Card } from "@shared/ui/ui/card";
 
 <Card class="p-4">
   <Label for="email">Email</Label>
@@ -280,7 +280,7 @@ import { Card } from "@osn/ui/ui/card";
 
 ### Overlays: `Modal`, and why its exit is deferred
 
-`@osn/ui`'s `Modal` is the platform's `<dialog>` with `showModal()`. The focus
+`@shared/ui`'s `Modal` is the platform's `<dialog>` with `showModal()`. The focus
 trap, Escape-to-close, background inertness and `::backdrop` all come from the
 browser, and the element renders in the **top layer** — above every stacking
 context in the document by definition, which is what makes it immune to the
@@ -312,8 +312,8 @@ Timing is two custom properties, so an app retimes rather than restyles:
 
 ```css
 :root {
-  --osn-modal-enter: 350ms;
-  --osn-modal-exit: 200ms;
+  --ui-modal-enter: 350ms;
+  --ui-modal-exit: 200ms;
 }
 ```
 
@@ -338,7 +338,7 @@ wins. That only holds when the caller's utility is *plain*.
 A `base:` one on the same property ties, and a tie is resolved by **Tailwind's
 stylesheet order**, which is neither the order of the `class` attribute nor
 anything the call site can see. Measured in `cire/invites`' built CSS,
-`.base\:max-w-osn-sm` is emitted after `.base\:max-w-lg`, so the component beat
+`.base\:max-w-ui-sm` is emitted after `.base\:max-w-lg`, so the component beat
 its own caller — silently, with every string assertion still passing.
 
 ```tsx
@@ -430,11 +430,11 @@ component bug:
   `await Promise.allSettled(panel.getAnimations({ subtree: true }).map((a) => a.finished))`
   — after one frame, so the transition has actually started.
 
-The motion itself is benched in `@tools/lab` under **osn/ui/overlays →
+The motion itself is benched in `@tools/lab` under **shared/ui/overlays →
 ModalMotion**, with the two durations on sliders. Whether a curve looks right is
 not a question a test can answer; whether the exit *runs*, and whether the
 dialog stays in the top layer until it finishes, are — and
-`osn/ui/tests/components/modal.browser.test.tsx` asserts both.
+`shared/ui/tests/modal.browser.test.tsx` asserts both.
 
 ## CSS Theme Variables
 
@@ -464,16 +464,16 @@ Components reference CSS variables defined in each app's root CSS (e.g. `pulse/w
 
 Tailwind maps these via `@theme inline` to utility classes (`bg-primary`, `text-muted-foreground`, etc.). Dark mode overrides go in `.dark {}`.
 
-**Any new app** that uses `@osn/ui` components must define these CSS variables in its root stylesheet. Copy from `pulse/web/src/app.css` as the starting point.
+**Any new app** that uses `@shared/ui` components must define these CSS variables in its root stylesheet. Copy from `pulse/web/src/app.css` as the starting point.
 
 ## Adding a New Component
 
-1. Create the file in `osn/ui/src/components/ui/<name>.tsx`
+1. Create the file in `shared/ui/src/ui/<name>.tsx`
 2. Follow the existing pattern: `splitProps` for `class`, write `base:` prefixed defaults literally in the class string, use `clsx()` to compose them with `local.class`, spread `...others`
 3. For interactive components, use Kobalte primitives from `@kobalte/core/<name>`
 4. For variant components, use CVA with a literal `base:` prefixed string for each variant, and export both the component and the `variants` function
 5. For internal child elements that don't accept consumer `class` overrides, write the `base:` prefixed string directly (no `clsx` needed)
-6. Add a subpath export in `osn/ui/package.json`:
+6. Add a subpath export in `shared/ui/package.json`:
    ```json
    "./ui/<name>": "./src/components/ui/<name>.tsx"
    ```
@@ -489,7 +489,7 @@ Tailwind maps these via `@theme inline` to utility classes (`bg-primary`, `text-
 
 ## Source Files
 
-- [osn/ui/src/components/ui/](../../osn/ui/src/components/ui/) — all component source
-- [osn/ui/src/lib/utils.ts](../../osn/ui/src/lib/utils.ts) — `clsx`, `cn()`
-- [osn/ui/package.json](../../osn/ui/package.json) — subpath exports
+- [shared/ui/src/ui/](../../shared/ui/src/ui/) — all component source
+- [shared/ui/src/lib/utils.ts](../../shared/ui/src/lib/utils.ts) — `clsx`, `cn()`
+- [shared/ui/package.json](../../shared/ui/package.json) — subpath exports
 - [pulse/web/src/app.css](../../pulse/web/src/app.css) — CSS variable theme + `@custom-variant base`

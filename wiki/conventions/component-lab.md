@@ -30,9 +30,9 @@ the decisions behind it.
 
 ## The catalogue
 
-`osn/ui` → **Everything** is every component `@osn/ui` exports on one page, each
+`shared/ui` → **Everything** is every component `@shared/ui` exports on one page, each
 with its import path — the "what do we already have" view. Per-component groups
-(`osn/ui/Button`, `osn/ui/display`, `osn/ui/forms`, `osn/ui/overlays`) carry the
+(`shared/ui/Button`, `shared/ui/display`, `shared/ui/forms`, `shared/ui/overlays`) carry the
 variants and states.
 
 `shared/toast` and `shared/sortable` are benches rather than catalogues: they
@@ -96,7 +96,7 @@ component under any workspace's `src/` (permanent bench). Both are found.
 
 **The lab imports `musubi/social/src/App.css` rather than copying tokens.** That
 file is the source of truth for `--background`, the `.dark` block and the `base:`
-variant every `@osn/ui` class is written against. A second copy drifts. The cost
+variant every `@shared/ui` class is written against. A second copy drifts. The cost
 is that the OSN look is the lab's default; a story with its own design language
 imports its own CSS.
 

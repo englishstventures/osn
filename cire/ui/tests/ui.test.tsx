@@ -1,4 +1,4 @@
-import { Field } from "@osn/ui/ui/field";
+import { Field } from "@shared/ui/ui/field";
 import "@testing-library/jest-dom/vitest";
 // @vitest-environment happy-dom
 import { cleanup, render, screen } from "@solidjs/testing-library";
@@ -18,7 +18,7 @@ import { UsernameInput } from "../src/username-input";
  *
  * They came from `cire/host` and `cire/vendor`, which each had a copy. The
  * components they cover are the ones that stayed cire's — everything else the
- * two portals duplicated is in `@osn/ui` now, and so are its tests.
+ * two portals duplicated is in `@shared/ui` now, and so are its tests.
  */
 
 afterEach(cleanup);
@@ -109,7 +109,7 @@ describe("Button — the borderless variants", () => {
     // on a text link is a word floating in a gap.
     const { getByRole } = render(() => <Button variant="link">Go</Button>);
     const cls = getByRole("button").className;
-    expect(cls).toContain("text-osn-sm");
+    expect(cls).toContain("text-ui-sm");
     expect(cls).not.toMatch(/base:px-4|base:py-2/);
   });
 
@@ -130,9 +130,9 @@ describe("Button — the borderless variants", () => {
     // on hover, where it arrives exactly when it is useful.
     const { getByRole } = render(() => <Button variant="bareDanger">{"\u00D7"}</Button>);
     const cls = getByRole("button").className;
-    expect(cls).toContain("text-osn-ink-secondary");
-    expect(cls).toContain("hover:text-osn-danger");
-    expect(cls).not.toMatch(/base:text-osn-danger\b/);
+    expect(cls).toContain("text-ui-ink-secondary");
+    expect(cls).toContain("hover:text-ui-danger");
+    expect(cls).not.toMatch(/base:text-ui-danger\b/);
   });
 });
 

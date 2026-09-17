@@ -18,19 +18,19 @@ Nothing here ships. It is a dev tool.
 
 ## The catalogue
 
-Open **`osn/ui` → Everything** for every component `@osn/ui` exports on one
+Open **`shared/ui` → Everything** for every component `@shared/ui` exports on one
 page, each with the import path to copy. That is the "what do we already have"
 view. For a component's full range of variants and states, open its own group:
 
 | Group             | Covers                                                                          |
 | ----------------- | ------------------------------------------------------------------------------- |
-| `osn/ui`          | Everything, one state each                                                      |
-| `osn/ui/Button`   | All variants, all sizes, live playground                                        |
-| `osn/ui/display`  | Badge, Avatar, Card                                                             |
-| `osn/ui/forms`    | Input, Label, Textarea, Select, Field, Fieldset, Checkbox, RadioGroup, UsernameInput, OtpInput |
-| `osn/ui/feedback` | Notice, Chip, EmptyState, Stat                                                  |
-| `osn/ui/data`     | Table, Meter                                                                    |
-| `osn/ui/overlays` | Dialog, Modal, DropdownMenu, Popover, Tabs                                      |
+| `shared/ui`          | Everything, one state each                                                      |
+| `shared/ui/Button`   | All variants, all sizes, live playground                                        |
+| `shared/ui/display`  | Badge, Avatar, Card                                                             |
+| `shared/ui/forms`    | Input, Label, Textarea, Select, Field, Fieldset, Checkbox, RadioGroup, UsernameInput, OtpInput |
+| `shared/ui/feedback` | Notice, Chip, EmptyState, Stat                                                  |
+| `shared/ui/data`     | Table, Meter                                                                    |
+| `shared/ui/overlays` | Dialog, Modal, DropdownMenu, Popover, Tabs                                      |
 | `pulse/Icon`      | The Pulse glyph set, every icon at every size                                   |
 | `shared/toast`    | Tones, positions, stacking, actions/promises, overflow                          |
 | `shared/sortable` | Drag feel, the shift/settle animation, grip hover/focus, multi-container        |
@@ -94,7 +94,7 @@ Anything richer (a callback, a fixture) belongs in the story's own closure.
 Optional per-file defaults:
 
 ```tsx
-export const meta = { title: "osn/ui/Button", layout: "centered" as const };
+export const meta = { title: "shared/ui/Button", layout: "centered" as const };
 ```
 
 `layout` is `centered` (default), `padded` (top-left, for layout work) or
@@ -207,7 +207,7 @@ not copy the pattern into app code.
 
 `src/lab.css` imports `musubi/social/src/App.css` wholesale rather than keeping its
 own copy of the design tokens. That file defines `--background`, the `.dark`
-block and the `base:` variant that every `@osn/ui` class is written against, so
+block and the `base:` variant that every `@shared/ui` class is written against, so
 importing it is what makes those components render here exactly as they render
 in the app. A second copy would drift within a week.
 

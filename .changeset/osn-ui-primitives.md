@@ -1,5 +1,5 @@
 ---
-"@osn/ui": minor
+"@shared/ui": minor
 ---
 
 Lift `EmptyState`, `Notice`, `Stat`, `Chip` and `SafeProps` out of the two cire
@@ -27,7 +27,7 @@ a dark ground is a bright smear on a light one.
 type-checks `<Notice innerHTML={vendorName} />`, which reads like ordinary prop
 passing and is a script tag.
 
-Adds a Tailwind build and a token mapping to `@osn/ui`'s browser project. The
+Adds a Tailwind build and a token mapping to `@shared/ui`'s browser project. The
 package ships no CSS, which is right for the package and useless for a test: an
 unresolvable contract utility emits nothing at all, so without a real build
 every colour assertion compares two empty strings and the suite goes green

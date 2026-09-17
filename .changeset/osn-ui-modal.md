@@ -1,5 +1,5 @@
 ---
-"@osn/ui": minor
+"@shared/ui": minor
 ---
 
 New `Modal`, built on the platform's `<dialog>` + `showModal()` rather than on
@@ -32,7 +32,7 @@ convention.
 `@musubi/social` and `@pulse/web` keep the existing Kobalte-backed `Dialog`;
 nothing about it changes.
 
-Also adds a browser test project to `@osn/ui`. Almost everything worth having
+Also adds a browser test project to `@shared/ui`. Almost everything worth having
 about `<dialog>` is unobservable in a DOM shim — the top layer, the focus trap,
 inertness, `::backdrop` — so a shim assertion that the element exists would pass
 just as happily against a `<div>` wearing the same classes.

@@ -112,7 +112,7 @@ export default function PreviewInviteButton(props: { weddingId: string }) {
       aria-busy={loading()}
       class="h-9 px-2.5 disabled:cursor-default @2xl/frame:px-3.5"
     >
-      <span aria-hidden="true" class="text-osn-sm leading-none @2xl/frame:hidden">
+      <span aria-hidden="true" class="text-ui-sm leading-none @2xl/frame:hidden">
         ◎
       </span>
       <span class="sr-only @2xl/frame:not-sr-only">

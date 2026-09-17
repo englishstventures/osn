@@ -29,7 +29,7 @@ export function FilterRail(props: {
       <For each={CATEGORIES}>
         {(cat) => (
           <FilterChip pressed={props.active === cat.id} onPress={() => props.onSelect(cat.id)}>
-            <span class="text-osn-sm">{cat.ico}</span>
+            <span class="text-ui-sm">{cat.ico}</span>
             {cat.label}
           </FilterChip>
         )}

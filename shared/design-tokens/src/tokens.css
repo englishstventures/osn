@@ -3,10 +3,10 @@
  *
  * ## What this file is
  *
- * A **library-facing** API. `@osn/ui`, `@cire/ui` and every other shared
- * package writes `bg-osn-surface` / `text-osn-ink`; an application keeps its
+ * A **library-facing** API. `@shared/ui`, `@cire/ui` and every other shared
+ * package writes `bg-ui-surface` / `text-ui-ink`; an application keeps its
  * own vocabulary untouched (`bg-card` in pulse, `text-gold` in cire). The
- * `osn-` namespace is what makes that separation real rather than a
+ * `ui-` namespace is what makes that separation real rather than a
  * convention — nothing an app writes can collide with a contract utility, and
  * nothing a contract utility reads depends on an app's naming.
  *
@@ -17,9 +17,9 @@
  *   @import "@shared/design-tokens/tokens.css";
  *
  *   :root {
- *     --osn-surface: var(--surface);
- *     --osn-ink: var(--text);
- *     --osn-accent: var(--brand);
+ *     --ui-surface: var(--surface);
+ *     --ui-ink: var(--text);
+ *     --ui-accent: var(--brand);
  *   }
  *
  * That is the whole integration. This file carries the `@source` and
@@ -30,7 +30,7 @@
  *
  * ## Why the values are fallbacks, not defaults
  *
- * Every read is `var(--osn-x, <fallback>)` written inline at the use site, and
+ * Every read is `var(--ui-x, <fallback>)` written inline at the use site, and
  * there is deliberately **no `:root` block here**. A package-level `:root` is
  * unlayered and lands at the import site, so it would beat any app mapping
  * written inside `@layer base` or a later `@theme` — the app would set a token
@@ -43,9 +43,9 @@
  *
  * ## Why `inline`
  *
- * `@theme inline` makes `bg-osn-surface` compile to
- * `background-color: var(--osn-surface, …)` — the variable is resolved **at the
- * element**, not at `:root`. So a subtree that redefines `--osn-surface` is
+ * `@theme inline` makes `bg-ui-surface` compile to
+ * `background-color: var(--ui-surface, …)` — the variable is resolved **at the
+ * element**, not at `:root`. So a subtree that redefines `--ui-surface` is
  * followed correctly: a theme story showing light and dark side by side, a
  * themed section on a landing page, cire's invite preview rendering a wedding's
  * palette inside the organiser's own chrome. Without `inline` the alias
@@ -58,7 +58,8 @@
  * non-inline does not apply here.
  */
 
-@source "../../../osn/ui/src";
+@source "../../ui/src";
+@source "../../../osn/auth-ui/src";
 @source "../../toast/src";
 @source "../../sortable/src";
 
@@ -69,8 +70,8 @@
    * `ground` is the page. `ground-deep` is what the page recedes to behind a
    * sticky bar or under a scrim — it is not "darker", it is *further away*,
    * which in a light theme means darker and in a dark theme can mean either. */
-  --color-osn-ground: var(--osn-ground, #ffffff);
-  --color-osn-ground-deep: var(--osn-ground-deep, #f4f4f5);
+  --color-ui-ground: var(--ui-ground, #ffffff);
+  --color-ui-ground-deep: var(--ui-ground-deep, #f4f4f5);
 
   /* ── Surfaces ─────────────────────────────────────────────────────────────
    * Three, and three is the minimum: `musubi/social` and `pulse/web` both
@@ -79,27 +80,27 @@
    * cannot express either app without losing a distinction it relies on.
    * `surface` is a card, `surface-raised` a menu or popover above it,
    * `surface-sunk` a well — an input, a code block, a progress track. */
-  --color-osn-surface: var(--osn-surface, #fafafa);
-  --color-osn-surface-raised: var(--osn-surface-raised, #ffffff);
-  --color-osn-surface-sunk: var(--osn-surface-sunk, #f4f4f5);
+  --color-ui-surface: var(--ui-surface, #fafafa);
+  --color-ui-surface-raised: var(--ui-surface-raised, #ffffff);
+  --color-ui-surface-sunk: var(--ui-surface-sunk, #f4f4f5);
 
   /* ── Edges ────────────────────────────────────────────────────────────────
    * `hairline` is decoration and carries NO contrast floor — a card is told
    * apart by its surface, not its edge. `hairline-strong` is the visible
    * boundary of a control that has no fill (an outline button, an input) and
    * must clear 3:1 against both grounds. The conformance test knows the
-   * difference; a single `--osn-border` could not express it. */
-  --color-osn-hairline: var(--osn-hairline, #e4e4e7);
-  --color-osn-hairline-strong: var(--osn-hairline-strong, #a1a1aa);
+   * difference; a single `--ui-border` could not express it. */
+  --color-ui-hairline: var(--ui-hairline, #e4e4e7);
+  --color-ui-hairline-strong: var(--ui-hairline-strong, #a1a1aa);
 
   /* ── Ink ──────────────────────────────────────────────────────────────────
    * `ink` and `ink-secondary` clear 4.5:1. `ink-tertiary` clears only 3:1 and
    * is therefore for large text, ornament and disabled states — never body
    * copy. Naming it `tertiary` rather than `faint` keeps the ladder readable;
    * naming the floor in the comment is what the test asserts. */
-  --color-osn-ink: var(--osn-ink, #18181b);
-  --color-osn-ink-secondary: var(--osn-ink-secondary, #52525b);
-  --color-osn-ink-tertiary: var(--osn-ink-tertiary, #71717a);
+  --color-ui-ink: var(--ui-ink, #18181b);
+  --color-ui-ink-secondary: var(--ui-ink-secondary, #52525b);
+  --color-ui-ink-tertiary: var(--ui-ink-tertiary, #71717a);
 
   /* ── Accent ───────────────────────────────────────────────────────────────
    * `accent` is a FILL: the ground of a primary button, the wash behind an
@@ -109,35 +110,35 @@
    * accent — never a neutral surface, however tempting: an app that maps
    * shadcn's neutral `accent` here instead of onto a surface gets a coloured
    * hover state where it wanted a grey one. */
-  --color-osn-accent: var(--osn-accent, #18181b);
-  --color-osn-accent-strong: var(--osn-accent-strong, #000000);
-  --color-osn-accent-soft: var(--osn-accent-soft, #e4e4e7);
-  --color-osn-accent-ink: var(--osn-accent-ink, #18181b);
-  --color-osn-on-accent: var(--osn-on-accent, #ffffff);
+  --color-ui-accent: var(--ui-accent, #18181b);
+  --color-ui-accent-strong: var(--ui-accent-strong, #000000);
+  --color-ui-accent-soft: var(--ui-accent-soft, #e4e4e7);
+  --color-ui-accent-ink: var(--ui-accent-ink, #18181b);
+  --color-ui-on-accent: var(--ui-on-accent, #ffffff);
 
   /* ── Status ───────────────────────────────────────────────────────────────
    * Separate from the accent, as status colour always should be: an app whose
    * brand is green still needs a green that means "succeeded" and does not
    * mean "primary action". */
-  --color-osn-success: var(--osn-success, #15803d);
-  --color-osn-warn: var(--osn-warn, #a16207);
-  --color-osn-danger: var(--osn-danger, #b91c1c);
-  --color-osn-on-danger: var(--osn-on-danger, #ffffff);
+  --color-ui-success: var(--ui-success, #15803d);
+  --color-ui-warn: var(--ui-warn, #a16207);
+  --color-ui-danger: var(--ui-danger, #b91c1c);
+  --color-ui-on-danger: var(--ui-on-danger, #ffffff);
 
   /* ── Focus ────────────────────────────────────────────────────────────────
    * Its own token rather than an alias of the accent, because a focus
    * indicator has a 3:1 floor and plenty of brand colours do not clear it.
    * cire learned this with gold, which is unreadable on its light ground. */
-  --color-osn-focus: var(--osn-focus, #2563eb);
+  --color-ui-focus: var(--ui-focus, #2563eb);
 
   /* ── Radius ───────────────────────────────────────────────────────────────
    * `hair` is a 2px softening that reads as "not a raw rectangle"; `pill` is
    * fully round. Everything between is the app's house style. */
-  --radius-osn-hair: var(--osn-radius-hair, 2px);
-  --radius-osn-sm: var(--osn-radius-sm, 4px);
-  --radius-osn-md: var(--osn-radius-md, 6px);
-  --radius-osn-lg: var(--osn-radius-lg, 10px);
-  --radius-osn-pill: var(--osn-radius-pill, 999px);
+  --radius-ui-hair: var(--ui-radius-hair, 2px);
+  --radius-ui-sm: var(--ui-radius-sm, 4px);
+  --radius-ui-md: var(--ui-radius-md, 6px);
+  --radius-ui-lg: var(--ui-radius-lg, 10px);
+  --radius-ui-pill: var(--ui-radius-pill, 999px);
 
   /* `control` is a role, not a size — the same way `focus` is its own colour
    * rather than an alias of the accent. How round a BUTTON is turns out to be
@@ -149,13 +150,13 @@
    *
    * It defaults to `md` rather than to a literal, so an app that has no opinion
    * gets its own mid radius and not this package's. */
-  --radius-osn-control: var(--osn-radius-control, var(--osn-radius-md, 6px));
+  --radius-ui-control: var(--ui-radius-control, var(--ui-radius-md, 6px));
 
   /* ── Type families ────────────────────────────────────────────────────────
    * Families only — the sizes are the scale below. */
-  --font-osn-body: var(--osn-font-body, ui-sans-serif, system-ui, sans-serif);
-  --font-osn-display: var(--osn-font-display, ui-serif, Georgia, serif);
-  --font-osn-mono: var(--osn-font-mono, ui-monospace, SFMono-Regular, monospace);
+  --font-ui-body: var(--ui-font-body, ui-sans-serif, system-ui, sans-serif);
+  --font-ui-display: var(--ui-font-display, ui-serif, Georgia, serif);
+  --font-ui-mono: var(--ui-font-mono, ui-monospace, SFMono-Regular, monospace);
 
   /* ── Type scale ───────────────────────────────────────────────────────────
    * Seven steps, clustered from what the monorepo actually used: 956 sites
@@ -173,15 +174,15 @@
    * whole system. `em` is deliberately absent: two `em` sizes nested compound,
    * which is how a scale stops being one.
    *
-   * Named for role, not value. Changing `--osn-text-sm` is one line; changing
+   * Named for role, not value. Changing `--ui-text-sm` is one line; changing
    * `text-[0.82rem]` was 108 sites. */
-  --text-osn-xs: var(--osn-text-xs, 0.7rem);
-  --text-osn-sm: var(--osn-text-sm, 0.8rem);
-  --text-osn-base: var(--osn-text-base, 0.9rem);
-  --text-osn-md: var(--osn-text-md, 1.05rem);
-  --text-osn-lg: var(--osn-text-lg, 1.3rem);
-  --text-osn-xl: var(--osn-text-xl, 1.75rem);
-  --text-osn-2xl: var(--osn-text-2xl, 2.5rem);
+  --text-ui-xs: var(--ui-text-xs, 0.7rem);
+  --text-ui-sm: var(--ui-text-sm, 0.8rem);
+  --text-ui-base: var(--ui-text-base, 0.9rem);
+  --text-ui-md: var(--ui-text-md, 1.05rem);
+  --text-ui-lg: var(--ui-text-lg, 1.3rem);
+  --text-ui-xl: var(--ui-text-xl, 1.75rem);
+  --text-ui-2xl: var(--ui-text-2xl, 2.5rem);
 
   /* ── Tracking ─────────────────────────────────────────────────────────────
    * Six steps from 18 observed values, chosen so nothing moves more than
@@ -190,12 +191,12 @@
    * The wide end is not decoration: `wider` and `ultra` are what the uppercase
    * eyebrow labels across cire and pulse are built on, and letter-spacing is
    * the whole difference between an eyebrow and shouting. */
-  --tracking-osn-tight: var(--osn-tracking-tight, -0.02em);
-  --tracking-osn-normal: var(--osn-tracking-normal, 0em);
-  --tracking-osn-wide: var(--osn-tracking-wide, 0.04em);
-  --tracking-osn-wider: var(--osn-tracking-wider, 0.1em);
-  --tracking-osn-widest: var(--osn-tracking-widest, 0.16em);
-  --tracking-osn-ultra: var(--osn-tracking-ultra, 0.24em);
+  --tracking-ui-tight: var(--ui-tracking-tight, -0.02em);
+  --tracking-ui-normal: var(--ui-tracking-normal, 0em);
+  --tracking-ui-wide: var(--ui-tracking-wide, 0.04em);
+  --tracking-ui-wider: var(--ui-tracking-wider, 0.1em);
+  --tracking-ui-widest: var(--ui-tracking-widest, 0.16em);
+  --tracking-ui-ultra: var(--ui-tracking-ultra, 0.24em);
 
   /* ── Leading ──────────────────────────────────────────────────────────────
    * Five steps from 12 observed values; nothing moves more than 0.05.
@@ -204,11 +205,11 @@
      wants `line-height: 1` on a single-line label (a badge, a checkbox's word)
      reaches for Tailwind's own `leading-none`, which is a structural choice
      rather than a step on a type scale. */
-  --leading-osn-none: var(--osn-leading-none, 1.1);
-  --leading-osn-tight: var(--osn-leading-tight, 1.2);
-  --leading-osn-snug: var(--osn-leading-snug, 1.4);
-  --leading-osn-normal: var(--osn-leading-normal, 1.6);
-  --leading-osn-relaxed: var(--osn-leading-relaxed, 1.75);
+  --leading-ui-none: var(--ui-leading-none, 1.1);
+  --leading-ui-tight: var(--ui-leading-tight, 1.2);
+  --leading-ui-snug: var(--ui-leading-snug, 1.4);
+  --leading-ui-normal: var(--ui-leading-normal, 1.6);
+  --leading-ui-relaxed: var(--ui-leading-relaxed, 1.75);
 
   /* ── Measure ──────────────────────────────────────────────────────────────
    * Content widths only — the caps that decide how long a line of prose gets,
@@ -222,19 +223,19 @@
    * exemption documented in the README, because forcing a sidebar width into
    * a typographic scale makes the scale meaningless rather than making the
    * sidebar consistent. */
-  --container-osn-xs: var(--osn-measure-xs, 20rem);
-  --container-osn-sm: var(--osn-measure-sm, 30rem);
-  --container-osn-md: var(--osn-measure-md, 34rem);
-  --container-osn-lg: var(--osn-measure-lg, 40rem);
-  --container-osn-xl: var(--osn-measure-xl, 46rem);
-  --container-osn-2xl: var(--osn-measure-2xl, 64rem);
-  --container-osn-3xl: var(--osn-measure-3xl, 75rem);
+  --container-ui-xs: var(--ui-measure-xs, 20rem);
+  --container-ui-sm: var(--ui-measure-sm, 30rem);
+  --container-ui-md: var(--ui-measure-md, 34rem);
+  --container-ui-lg: var(--ui-measure-lg, 40rem);
+  --container-ui-xl: var(--ui-measure-xl, 46rem);
+  --container-ui-2xl: var(--ui-measure-2xl, 64rem);
+  --container-ui-3xl: var(--ui-measure-3xl, 75rem);
 }
 
 /*
  * Focus ring width and offset, and the motion tokens, are plain custom
  * properties rather than `@theme` entries: they are consumed as
- * `outline-width: var(--osn-focus-width)` inside a component's own rule, not
+ * `outline-width: var(--ui-focus-width)` inside a component's own rule, not
  * as a Tailwind utility, so aliasing them would generate utilities nobody
  * spells. They still need fallbacks, which is what this block is for — and
  * unlike a `:root` colour block, a value an app has already set wins here,
@@ -242,14 +243,14 @@
  */
 @layer base {
   :where(:root) {
-    --osn-focus-width: 2px;
-    --osn-focus-offset: 2px;
-    --osn-dur-fast: 120ms;
-    --osn-dur-base: 200ms;
-    --osn-dur-slow: 320ms;
-    --osn-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-    --osn-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-    --osn-elev-1: 0 1px 2px rgb(0 0 0 / 0.06);
-    --osn-elev-2: 0 8px 24px rgb(0 0 0 / 0.12);
+    --ui-focus-width: 2px;
+    --ui-focus-offset: 2px;
+    --ui-dur-fast: 120ms;
+    --ui-dur-base: 200ms;
+    --ui-dur-slow: 320ms;
+    --ui-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ui-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --ui-elev-1: 0 1px 2px rgb(0 0 0 / 0.06);
+    --ui-elev-2: 0 8px 24px rgb(0 0 0 / 0.12);
   }
 }

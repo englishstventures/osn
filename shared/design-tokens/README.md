@@ -20,10 +20,10 @@ same arrangement `@shared/toast` already uses with `--toast-*`, generalised.
 @import "@shared/design-tokens/tokens.css";
 
 :root {
-  --osn-ground: var(--bg);
-  --osn-surface: var(--surface);
-  --osn-ink: var(--text);
-  --osn-accent: var(--brand);
+  --ui-ground: var(--bg);
+  --ui-surface: var(--surface);
+  --ui-ink: var(--text);
+  --ui-accent: var(--brand);
   /* … the rest of the contract */
 }
 ```
@@ -53,9 +53,9 @@ it("maps the contract without breaking contrast", () => {
 
 ## Who writes `osn-*`
 
-**Shared packages only.** `@osn/ui`, `@cire/ui`, `@shared/toast` and anything
-else that has to render inside more than one app write `bg-osn-surface`,
-`text-osn-ink`, `text-osn-sm`. **Application code keeps its own vocabulary** —
+**Shared packages only.** `@shared/ui`, `@cire/ui`, `@shared/toast` and anything
+else that has to render inside more than one app write `bg-ui-surface`,
+`text-ui-ink`, `text-ui-sm`. **Application code keeps its own vocabulary** —
 cire keeps `bg-surface` and `text-gold`, pulse keeps `bg-card`. The namespace
 exists precisely so adopting the contract does not mean rewriting the 3,120
 class attributes in the tree.
@@ -64,30 +64,30 @@ class attributes in the tree.
 
 | Group     | Tokens                                                        | Obligation                                      |
 | --------- | ------------------------------------------------------------- | ----------------------------------------------- |
-| Grounds   | `--osn-ground`, `--osn-ground-deep`                           | what other tokens are measured _against_        |
-| Surfaces  | `--osn-surface`, `--osn-surface-raised`, `--osn-surface-sunk` | also grounds, for contrast                      |
-| Edges     | `--osn-hairline`                                              | decoration, **no floor**                        |
-|           | `--osn-hairline-strong`                                       | 3:1                                             |
-| Ink       | `--osn-ink`, `--osn-ink-secondary`                            | 4.5:1 against every ground and surface          |
-|           | `--osn-ink-tertiary`                                          | 3:1 — large text, ornament, disabled only       |
-| Accent    | `--osn-accent`, `--osn-accent-strong`                         | fills; what sits on them is what is measured    |
-|           | `--osn-accent-soft`                                           | a tint of the accent, **not** a neutral surface |
-|           | `--osn-accent-ink`                                            | 4.5:1 — the readable-on-a-ground variant        |
-|           | `--osn-on-accent`                                             | 4.5:1 against the accent it sits on             |
-| Status    | `--osn-success`, `--osn-warn`                                 | 4.5:1                                           |
-|           | `--osn-danger`, `--osn-on-danger`                             | fill and its ink                                |
-| Focus     | `--osn-focus`                                                 | 3:1                                             |
-| Radius    | `--osn-radius-hair\|sm\|md\|lg\|pill`                         | —                                               |
-| Type      | `--osn-font-body\|display\|mono`                              | —                                               |
-| Motion    | `--osn-dur-fast\|base\|slow`, `--osn-ease-out\|in-out`        | —                                               |
-| Elevation | `--osn-elev-1\|2`                                             | —                                               |
+| Grounds   | `--ui-ground`, `--ui-ground-deep`                           | what other tokens are measured _against_        |
+| Surfaces  | `--ui-surface`, `--ui-surface-raised`, `--ui-surface-sunk` | also grounds, for contrast                      |
+| Edges     | `--ui-hairline`                                              | decoration, **no floor**                        |
+|           | `--ui-hairline-strong`                                       | 3:1                                             |
+| Ink       | `--ui-ink`, `--ui-ink-secondary`                            | 4.5:1 against every ground and surface          |
+|           | `--ui-ink-tertiary`                                          | 3:1 — large text, ornament, disabled only       |
+| Accent    | `--ui-accent`, `--ui-accent-strong`                         | fills; what sits on them is what is measured    |
+|           | `--ui-accent-soft`                                           | a tint of the accent, **not** a neutral surface |
+|           | `--ui-accent-ink`                                            | 4.5:1 — the readable-on-a-ground variant        |
+|           | `--ui-on-accent`                                             | 4.5:1 against the accent it sits on             |
+| Status    | `--ui-success`, `--ui-warn`                                 | 4.5:1                                           |
+|           | `--ui-danger`, `--ui-on-danger`                             | fill and its ink                                |
+| Focus     | `--ui-focus`                                                 | 3:1                                             |
+| Radius    | `--ui-radius-hair\|sm\|md\|lg\|pill`                         | —                                               |
+| Type      | `--ui-font-body\|display\|mono`                              | —                                               |
+| Motion    | `--ui-dur-fast\|base\|slow`, `--ui-ease-out\|in-out`        | —                                               |
+| Elevation | `--ui-elev-1\|2`                                             | —                                               |
 
 Three surfaces is the minimum, not a preference: `musubi/social` and `pulse/web`
 both collapse shadcn's `secondary`/`muted`/`accent` onto one value and
 `card`/`popover`/`background` onto another, so a two-surface contract cannot
 express either without losing a distinction the app relies on. For the same
 reason, an app mapping shadcn's _neutral_ `accent` must send it to a **surface**,
-never to `--osn-accent-soft`, or it gets a coloured hover state where it wanted
+never to `--ui-accent-soft`, or it gets a coloured hover state where it wanted
 a grey one.
 
 ## Scales
@@ -139,7 +139,7 @@ contract defines, in every scope you name.
 It is a **rewrite** of `cire/host/tests/styles/tokens.test.ts`, not a move.
 That harness finds tokens by regex over literal `--name: oklch(…)`
 declarations, which works there because cire's ramps _are_ literals. A contract
-mapping never is — it is `--osn-ink: var(--text)`, two or three hops from a
+mapping never is — it is `--ui-ink: var(--text)`, two or three hops from a
 value — so against a mapping the regex matches nothing and asserts about an
 empty set. A test that cannot fail. Hence the `var()` resolver, with cycle
 detection.
@@ -168,8 +168,8 @@ exactly that in CI.
 
 ## Why `@theme inline`
 
-`inline` compiles `bg-osn-surface` to `background-color: var(--osn-surface, …)`,
-resolved **at the element**. A subtree that redefines `--osn-surface` is
+`inline` compiles `bg-ui-surface` to `background-color: var(--ui-surface, …)`,
+resolved **at the element**. A subtree that redefines `--ui-surface` is
 therefore followed correctly: a lab story showing both themes at once, a themed
 section on a landing page, cire's invite preview rendering a wedding's palette
 inside the organiser's chrome. Without `inline` the alias resolves once at
@@ -181,7 +181,7 @@ non-inline does not apply here.
 
 ## Why there is no `:root` block
 
-Every fallback is written inline as `var(--osn-x, <value>)`. A package-level
+Every fallback is written inline as `var(--ui-x, <value>)`. A package-level
 `:root` is unlayered and lands at the import site, so it would beat an app
 mapping written inside `@layer base` or a later `@theme` — the app would set a
 token and silently get the package's value. `@shared/toast` avoids it the same

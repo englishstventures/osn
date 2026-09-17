@@ -1,5 +1,5 @@
 ---
-"@osn/ui": minor
+"@shared/ui": minor
 ---
 
 `Modal` mounts its children only while it is open, and exports `heldWhileClosing`

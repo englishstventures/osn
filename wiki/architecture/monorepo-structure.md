@@ -21,7 +21,7 @@ packages:
   - "@osn/api"
   - "@osn/client"
   - "@osn/db"
-  - "@osn/ui"
+  - "@shared/ui"
   - "@musubi/landing"
   - "@musubi/social"
   - "@pulse/web"
@@ -76,7 +76,7 @@ osn/
   api/                 # @osn/api — Bun/Elysia identity server (port 4000): auth, graph, organisations, recommendations
   client/              # @osn/client — SDK: OsnAuthService, useAuth, graph/org/recommendation clients
   db/                  # @osn/db — Drizzle + SQLite (accounts, profiles, passkeys, sessions, graph, orgs, service accounts)
-  ui/                  # @osn/ui — shared SolidJS auth components (<SignIn>, <Register>, <RecoveryCodesView>, etc.)
+  ui/                  # @shared/ui — shared SolidJS auth components (<SignIn>, <Register>, <RecoveryCodesView>, etc.)
   social/              # @musubi/social — SolidJS web app for identity + graph management (port 1422)
   landing/             # @musubi/landing — Astro + Solid marketing site (port 4324)
 pulse/
@@ -122,7 +122,7 @@ shared/
 | Where does the OSN binary live? | `osn/api` — `@osn/api` is the only OSN runtime. There is no separate `@osn/core` library. |
 | Where do auth route factories live? | `osn/api/src/routes/auth/` — `createAuthRoutes(config, dbLayer?)` composes per-domain route groups from `index.ts`. |
 | Where do ARC token primitives live? | `@shared/crypto` (`shared/crypto/src/arc.ts`). |
-| Where do shared auth UI components live? | `@osn/ui/auth/*` — consumed by `@musubi/social`, Pulse app, future Zap app. |
+| Where do shared auth UI components live? | `@osn/auth-ui/*` — consumed by `@musubi/social`, Pulse app, future Zap app. |
 | Where do Pulse → OSN calls go? | Through `pulse/api/src/services/graphBridge.ts` — see [[s2s-patterns]]. |
 
 ## Cross-package Dependencies

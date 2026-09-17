@@ -6,11 +6,11 @@
  * a caller's utility wins. That only works when the caller's utility is
  * **plain**. A `base:` one ties on specificity, and a tie is resolved by
  * Tailwind's stylesheet order, which is neither the class-attribute order nor
- * anything the call site can see: `.base\:max-w-osn-sm` is emitted after
+ * anything the call site can see: `.base\:max-w-ui-sm` is emitted after
  * `.base\:max-w-lg`, so the component silently beat its own caller.
  *
  * Measured before the fix, on this dialog: 480px wide instead of 512px, and
- * painted on `--osn-surface-raised` instead of `--color-bg`, which put the
+ * painted on `--ui-surface-raised` instead of `--color-bg`, which put the
  * panel on the same colour as the `bg-surface-raised/40` category rows inside
  * it — the rows stopped reading as rows.
  *
@@ -51,11 +51,11 @@ describe("the consent dialog, as painted", () => {
     const style = getComputedStyle(panel());
 
     expect(style.backgroundColor).toBe(paint("var(--color-bg)"));
-    expect(style.backgroundColor).not.toBe(paint("var(--osn-surface-raised)"));
+    expect(style.backgroundColor).not.toBe(paint("var(--ui-surface-raised)"));
   });
 
   it("is as wide as it asks to be", () => {
-    // `max-w-lg` is 32rem. `Modal`'s own default is `max-w-osn-sm`, 30rem.
+    // `max-w-lg` is 32rem. `Modal`'s own default is `max-w-ui-sm`, 30rem.
     expect(getComputedStyle(panel()).maxWidth).toBe("512px");
   });
 
