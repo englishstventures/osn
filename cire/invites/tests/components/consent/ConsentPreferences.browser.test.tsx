@@ -1,6 +1,6 @@
 import { cleanup, render } from "@solidjs/testing-library";
-import { userEvent } from "@vitest/browser/context";
 import { afterEach, describe, expect, it } from "vitest";
+import { userEvent } from "vitest/browser";
 
 import "../../../src/styles/global.css";
 import { ConsentPreferences } from "../../../src/components/consent/ConsentPreferences";

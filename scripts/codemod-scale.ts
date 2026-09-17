@@ -57,7 +57,7 @@ import { join } from "node:path";
 // workspace, so the root has no `node_modules` entry to resolve the bare
 // specifier through. The table still lives in the package — this file reaches
 // into it rather than keeping a copy, which is the whole point.
-import { SCALE_MIGRATION } from "../shared/design-tokens/src/index.ts";
+import { SCALE_MIGRATION } from "../shared/design-tokens/src/index";
 
 /**
  * The three utilities the contract publishes a scale for.
