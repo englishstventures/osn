@@ -2,6 +2,10 @@
 "@cire/db": patch
 "@cire/api": patch
 "@cire/dietary": patch
+"@cire/ui": patch
+"@cire/invites": patch
+"@cire/host": patch
+"@cire/landing": patch
 ---
 
 Store dietary requirements as structured presets alongside the free text.

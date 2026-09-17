@@ -381,7 +381,8 @@ export function RsvpModal(props: RsvpModalProps) {
     // Art. 9(2)(a) gate: dietary data is special-category — presets as much as
     // free text, since `halal` and `nuts` name a belief and a health condition
     // outright — and may only be sent with explicit consent. (The server also
-    // enforces this with a 422 — see cire-guest-data DPIA → C-H2.)
+    // enforces this with a 422 — see
+    // `wiki/compliance/dpia/cire-guest-data.md`.)
     if (membersWithDietaryData().length > 0 && !consented()) {
       setError("Please tick the box to let us store your dietary requirements.");
       return;
@@ -641,7 +642,7 @@ export function RsvpModal(props: RsvpModalProps) {
             names exactly who it covers and refuses to open ticked unless every
             one of those people already has a stored consent record — see
             `consentAlreadyCovers`. Unticked by default, and the submit gate
-            blocks on it. See cire-guest-data DPIA → C-H2. */}
+            blocks on it. See `wiki/compliance/dpia/cire-guest-data.md`. */}
         <Show when={membersWithDietaryData().length > 0}>
           <label class="font-body text-text-muted text-ui-sm flex items-start gap-2.5 leading-relaxed normal-case">
             <input
