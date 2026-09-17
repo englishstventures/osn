@@ -9,8 +9,6 @@ import {
   fetchGiftRegistryHousehold,
   formatGiftPrice,
   giftPageTitle,
-  giftRegistryAvailability,
-  giftRegistryAvailabilityCopy,
   giftRegistryBody,
   giftRegistryClaimedCopy,
   giftRegistryExternalHref,
@@ -18,8 +16,9 @@ import {
   giftRegistryHeading,
   giftRegistryImageBase,
   giftRegistryPath,
+  giftRegistryQuantityHint,
   giftRegistryRemaining,
-  giftRegistryRemainingCopy,
+  GIFT_REGISTRY_MAX_QUANTITY,
   groupGiftRegistryItems,
   hasGiftRegistryCategories,
   releaseGiftRegistryItem,
@@ -305,17 +304,25 @@ describe("counts", () => {
   it("never goes negative, whatever the row says", () => {
     expect(giftRegistryRemaining(item({ quantityWanted: 1, quantityClaimed: 4 }))).toBe(0);
   });
+});
 
-  it("says counts and only counts", () => {
-    expect(giftRegistryRemainingCopy(item({ quantityWanted: 2, quantityClaimed: 1 }))).toBe(
-      "1 of 2 left",
-    );
-    expect(giftRegistryRemainingCopy(item({ quantityWanted: 1, quantityClaimed: 0 }))).toBe(
-      "Available",
-    );
-    expect(giftRegistryRemainingCopy(item({ quantityWanted: 2, quantityClaimed: 2 }))).toBe(
-      "All reserved",
-    );
+describe("the reserve-ceiling hint", () => {
+  it("names the ceiling the quantity box enforces", () => {
+    expect(giftRegistryQuantityHint(2)).toBe("You can reserve up to 2.");
+    expect(giftRegistryQuantityHint(1)).toBe("You can reserve 1.");
+  });
+
+  it("says nothing where the ceiling is the wedding-wide one", () => {
+    // Nothing about THIS gift is bounding them there, so there is nothing to
+    // explain — and a hint on every form is a hint nobody reads.
+    expect(giftRegistryQuantityHint(GIFT_REGISTRY_MAX_QUANTITY)).toBeNull();
+    expect(giftRegistryQuantityHint(GIFT_REGISTRY_MAX_QUANTITY + 1)).toBeNull();
+  });
+
+  it("says nothing below 1, where there is no form to be in", () => {
+    expect(giftRegistryQuantityHint(0)).toBeNull();
+    expect(giftRegistryQuantityHint(-2)).toBeNull();
+    expect(giftRegistryQuantityHint(Number.NaN)).toBeNull();
   });
 });
 
@@ -425,38 +432,6 @@ describe("giftPageTitle", () => {
 });
 
 describe("the ledger line", () => {
-  it("counts quantities, not rows", () => {
-    // One row for six glasses is six gifts to a guest, and five of them are
-    // still something they can act on.
-    const items = [
-      item({ id: "a", quantityWanted: 6, quantityClaimed: 1 }),
-      item({ id: "b", quantityWanted: 1, quantityClaimed: 0 }),
-    ];
-    expect(giftRegistryAvailability(items)).toEqual({ available: 6, total: 7 });
-    expect(giftRegistryAvailabilityCopy(items)).toBe("6 of 7 still available");
-  });
-
-  it("says nothing at all about an empty list", () => {
-    // An empty published list has its own copy; "0 of 0" is not a summary.
-    expect(giftRegistryAvailabilityCopy([])).toBeNull();
-  });
-
-  it("has its own words for a list with nothing left", () => {
-    expect(giftRegistryAvailabilityCopy([item({ quantityWanted: 2, quantityClaimed: 2 })])).toBe(
-      "Every gift has been reserved",
-    );
-  });
-
-  it("survives a row that says something impossible", () => {
-    // Over-claimed and negative rows exist (a restored backup, a migration).
-    // The one line that summarises the page must not print a negative number.
-    const items = [
-      item({ id: "a", quantityWanted: 1, quantityClaimed: 4 }),
-      item({ id: "b", quantityWanted: -3, quantityClaimed: 0 }),
-    ];
-    expect(giftRegistryAvailability(items)).toEqual({ available: 0, total: 1 });
-  });
-
   it("counts this household's own reservations, and names no one", () => {
     const claim = (quantity: number): GiftRegistryHouseholdClaim => ({
       itemId: "gi-1",
