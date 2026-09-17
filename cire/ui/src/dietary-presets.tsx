@@ -78,28 +78,12 @@ export interface DietaryPresetsProps {
   disabled?: boolean;
   /** Names whose requirements these are, for the group's accessible name. */
   label?: string;
-  /**
-   * Stacking class for the popover panel.
-   *
-   * `@shared/ui`'s popover defaults to `z-50`, which is correct on an ordinary
-   * page and wrong inside a modal: cire's guest sheet paints at `z-100`, so a
-   * panel opened from within it renders BEHIND the backdrop — visible nowhere,
-   * clickable nowhere. An app that opens this from inside a modal passes its own
-   * above-the-modal layer, since a shared component cannot know another
-   * package's stacking contract.
-   */
+  /** Extra classes for the popover panel, for a caller with its own layering. */
   panelClass?: string;
   /**
-   * Which shell to use.
-   *
-   * `"auto"` (default) picks by viewport: the scrolling track on a phone, the
-   * popover above it. `"inline"` pins the fields inline at every width.
-   *
-   * Inline exists because a popover cannot be opened from inside a
-   * `showModal()` dialog by z-index alone — a modal dialog paints above every
-   * stacking context in the document, so the panel lands behind it, visible and
-   * clickable nowhere. A caller rendering this inside such a dialog passes
-   * `"inline"` rather than shipping a control that silently does nothing.
+   * Pin the fields inline at every width instead of collapsing them into a
+   * popover above the breakpoint. For a caller whose surface has no room for a
+   * panel, or which wants every option visible at once.
    */
   shell?: "auto" | "inline";
 }

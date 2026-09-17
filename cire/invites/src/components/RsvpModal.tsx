@@ -592,13 +592,10 @@ export function RsvpModal(props: RsvpModalProps) {
                       onChange={(next) => setDietaryPresets(guestId, next)}
                       disabled={locked()}
                       label={`Dietary requirements for ${member.firstName}`}
-                      // This sheet is a `showModal()` dialog, which paints in
-                      // the top layer above every stacking context — so a
-                      // portalled popover opened from inside it lands behind
-                      // the sheet at any z-index. `AddToCalendar` escapes that
-                      // by promoting its own menu into the top layer with the
-                      // native `popover` attribute; the shared Kobalte popover
-                      // does not, so the picker stays inline here.
+                      // This sheet is a `frame` Modal, whose dialog is
+                      // `overflow-hidden` — and the popover panel mounts inside
+                      // that dialog to clear the top layer, so it lands inside
+                      // the clip. Inline until xchromo/osn#1089 lands.
                       shell="inline"
                     />
                   </div>

@@ -9,8 +9,6 @@ import type { EventSummary, FamilyMember } from "../../src/components/types";
 /*
  * The dietary picker inside the sheet it actually ships in, measured.
  *
- * Three claims live here because nothing below the browser tier can check them.
- *
  * Two claims live here because nothing below the browser tier can check them.
  *
  * **The track overflows inside the sheet, not the other way round.** A
@@ -20,11 +18,13 @@ import type { EventSummary, FamilyMember } from "../../src/components/types";
  * computes no layout and cannot tell the two apart — the classes are identical
  * either way.
  *
- * **The picker stays inline at every width here.** The sheet is a `showModal()`
- * dialog, which paints in the top layer above every stacking context, so a
- * portalled popover opened from inside it would land behind the sheet at any
- * z-index. `RsvpModal` therefore pins `shell="inline"`, and this is where that
- * is checked against a real viewport rather than a stubbed `matchMedia`.
+ * **The picker stays inline at every width here.** The sheet is a `frame`
+ * Modal, whose dialog is `overflow-hidden`. `@shared/ui`'s popover mounts its
+ * panel into the open dialog — which is what clears the top layer a
+ * `showModal()` dialog occupies — and inside a `frame` dialog that puts it in
+ * the clip instead. `RsvpModal` therefore pins `shell="inline"` until
+ * xchromo/osn#1089 lands, and this is where that is checked against a real
+ * viewport rather than a stubbed `matchMedia`.
  */
 
 /** Wide enough to clear the picker's 48rem query with room to spare. */
@@ -97,11 +97,10 @@ describe("dietary picker, in the sheet", () => {
     expect(group.clientWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 
-  it("stays inline on a desktop viewport, because the sheet is a modal dialog", async () => {
-    // Not the popover shell the picker uses elsewhere: a `showModal()` dialog
-    // paints above every stacking context, so a portalled panel opened from
-    // inside it is invisible and unclickable at any z-index. Shipping the
-    // trigger here would ship a control that silently does nothing.
+  it("stays inline on a desktop viewport, because the sheet is a `frame` modal", async () => {
+    // Not the shell the picker uses elsewhere. Shipping the trigger here would
+    // ship a control whose panel opens inside the dialog's `overflow-hidden`
+    // and cannot be clicked — see xchromo/osn#1089.
     await page.viewport(...WIDE);
     const { fieldset } = openAttending();
     expect(within(fieldset).getAllByRole("checkbox").length).toBeGreaterThan(0);
