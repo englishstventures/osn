@@ -10,7 +10,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { rewriteScales } from "../codemod-scale.ts";
+import { rewriteScales } from "../codemod-scale";
 
 describe("rewriteScales", () => {
   test("maps a bracketed size onto its contract step", () => {
@@ -95,7 +95,7 @@ describe("rewriteScales", () => {
     // The table is the decision and this file only carries it out, so the one
     // thing worth asserting across all of it is that nothing in it is
     // unreachable — a typo'd key would otherwise sit there looking applied.
-    const { SCALE_MIGRATION } = await import("../../shared/design-tokens/src/index.ts");
+    const { SCALE_MIGRATION } = await import("../../shared/design-tokens/src/index");
     const unreachable: string[] = [];
     for (const [scale, table] of Object.entries(SCALE_MIGRATION)) {
       for (const [from, to] of Object.entries(table)) {
