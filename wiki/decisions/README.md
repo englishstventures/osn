@@ -55,6 +55,9 @@ Obsidian and nowhere else, and an editor cannot follow one.
 | [[post-rank-connection-recheck-over-d1-batch]] | A bounded re-check after ranking fixes the step-1/step-2 race, rather than a `db.batch()` that would depend on undocumented D1 isolation |
 | [[d1-migration-cost-budget-calibration]] | `scripts/guard-d1-migration-cost.ts` prices a chain offline at 27 D1 rows per schema write — the top of a measured 22-27 band |
 | [[rsvp-dwell-as-budget-with-announcement-floor]] | The cire RSVP confirmed-state dwell is a budget spent from the click, with a 500ms floor sized by the spoken announcement rather than the visible label swap |
+| [[top-layer-over-z-index-stack]] | The cire guest site's stacking scale has no modal layer — what must clear a sheet enters the top layer after it, rather than carrying a bigger number |
+| [[closing-band-width-bound-over-height-clip]] | The closing band's height follows the organiser's crop, and the height bound is enforced by constraining the box's width — never by a `max-height` clip |
+| [[d1-session-first-primary]] | One D1 session per request, opened `first-primary` for the whole Worker, so read-your-writes never depends on which route was reached |
 
 ## Writing one
 

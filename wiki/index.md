@@ -125,6 +125,9 @@ decided it — see [[decisions/README]] for what belongs here and what does not.
 - [[post-rank-connection-recheck-over-d1-batch]] — a bounded re-check after ranking, over a `db.batch()` that would rest on undocumented D1 isolation
 - [[d1-migration-cost-budget-calibration]] — why the migration-cost guard prices a chain offline at 27 D1 rows per schema write
 - [[rsvp-dwell-as-budget-with-announcement-floor]] — the cire RSVP dwell is a budget spent from the click, floored by what VoiceOver needs to speak
+- [[top-layer-over-z-index-stack]] — nothing in cire's stacking scale ranks against a sheet: the top layer, entered later, over a bigger number
+- [[closing-band-width-bound-over-height-clip]] — the closing band takes the crop's aspect, and its height bound is applied to the width so nothing is clipped
+- [[d1-session-first-primary]] — one D1 session per request, `first-primary` Worker-wide, over a per-route constraint
 
 ## Compliance
 

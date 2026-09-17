@@ -290,7 +290,8 @@ mounted first.
 - **The dialog reaches above the details sheet. The banner does not.** The sheet
   is a `showModal()` dialog, so it renders in the **top layer**, which no
   `z-index` reaches — see [[wiki/architecture/component-library]] §What has to
-  sit above a modal.
+  sit above a modal, and [[top-layer-over-z-index-stack]] for why the guest
+  site's scale ranks nothing against a sheet.
   - The **dialog** is a `showModal()` dialog too, so opening it from a blocked
     embed inside the sheet makes it the blocking dialog and the sheet goes inert
     beneath it. It carries no `z-index` because it has nothing to rank against.
