@@ -18,7 +18,7 @@ A Stripe endpoint is scoped either to the platform or to connected accounts and
 each carries a different secret, so an upgrade branch inside the Connect route
 would have been a branch no event could reach.
 
-New tables (migration 0059): `wedding_upgrade_purchases`, because
+New tables (migration 0060): `wedding_upgrade_purchases`, because
 `wedding_entitlements` is keyed (wedding, entitlement) with
 `onConflictDoNothing` and a second purchase of a held key would vanish with no
 record that money moved; and `platform_sales`, deliberately outside the wedding

@@ -17,11 +17,11 @@
  * The orderings here are load-bearing. See the comments at each one.
  */
 
-import { platformSales, weddingUpgradePurchases } from "@cire/db";
-import { and, eq, isNull } from "drizzle-orm";
+import { weddingEntitlements, weddingUpgradePurchases, weddings, platformSales } from "@cire/db";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { Data, Effect } from "effect";
 
-import { type Db, DbService, dbQuery } from "../db";
+import { commitGroupedBatchesReturning, type Db, DbService, dbQuery } from "../db";
 import { metricUpgradeCheckoutStarted, metricUpgradePurchaseSettled } from "../metrics";
 import { entitlementService } from "./entitlements";
 import type { StripeClient } from "./stripe";
@@ -61,12 +61,22 @@ export class UpgradeProviderError extends Data.TaggedError("UpgradeProviderError
  * `checkout_session_id` is a different situation from one on the partial
  * one-pending index, and anything that is not a conflict at all must surface as
  * a write error rather than a cheerful 409.
+ *
+ * MATCHED ON COLUMNS, NOT THE INDEX NAME. SQLite names the columns a conflict
+ * was on and never the index that enforced it — a violation of the partial
+ * one-pending index reports `UNIQUE constraint failed:
+ * wedding_upgrade_purchases.wedding_id, wedding_upgrade_purchases.entitlement`.
+ * Matching on the index name instead looks right, is what the index is called
+ * in every other file, and can never fire: the caller then gets a 500 where the
+ * contract says 409, and the organiser is told to try again on the one path
+ * whose whole purpose is telling them to wait.
  */
 export function upgradeConflictReason(message: string): "processing" | "session_taken" | null {
   if (!message.includes("UNIQUE constraint failed")) return null;
-  if (message.includes("one_pending")) return "processing";
+  // Checked first: a session conflict names that column alone, and the
+  // one-pending pair must not swallow it.
   if (message.includes("checkout_session_id")) return "session_taken";
-  return null;
+  return message.includes("wedding_id") && message.includes("entitlement") ? "processing" : null;
 }
 
 /**
@@ -131,25 +141,55 @@ export function createUpgradeService(deps: UpgradeServiceDeps) {
   const now = deps.now ?? (() => Date.now());
   const newId = deps.newId ?? ((prefix: string) => `${prefix}_${crypto.randomUUID()}`);
 
-  /** The wedding's live attempt at this key, if it has one. */
-  const pendingFor = (db: Db, weddingId: string, entitlement: PurchasableEntitlement) =>
+  /**
+   * Both questions `startPurchase` opens with, in one statement.
+   *
+   * "Does the wedding already hold this?" and "is there a live attempt at it?"
+   * are keyed on the same two arguments and neither produces the other's key,
+   * so running them in sequence was an artefact of the `yield*` order rather
+   * than a data dependency — two D1 round trips on every press where one does.
+   * The `EXISTS` column is the `directory.ts` `inWedding` idiom.
+   *
+   * Anchored on `weddings` because the role gate has already proved that row
+   * exists, and the LEFT JOIN can fan out to at most one row:
+   * `wedding_upgrade_purchases_one_pending_uniq` makes a second pending row for
+   * the same (wedding, entitlement) impossible.
+   */
+  const openingRead = (db: Db, weddingId: string, entitlement: PurchasableEntitlement) =>
     dbQuery(() =>
       db
         .select({
+          held: sql<number>`EXISTS (SELECT 1 FROM ${weddingEntitlements} e WHERE e.wedding_id = ${weddingId} AND e.entitlement = ${entitlement})`,
           id: weddingUpgradePurchases.id,
           sessionId: weddingUpgradePurchases.checkoutSessionId,
           createdAt: weddingUpgradePurchases.createdAt,
         })
-        .from(weddingUpgradePurchases)
-        .where(
+        .from(weddings)
+        .leftJoin(
+          weddingUpgradePurchases,
           and(
-            eq(weddingUpgradePurchases.weddingId, weddingId),
+            eq(weddingUpgradePurchases.weddingId, weddings.id),
             eq(weddingUpgradePurchases.entitlement, entitlement),
             eq(weddingUpgradePurchases.status, "pending"),
           ),
         )
+        .where(eq(weddings.id, weddingId))
         .all(),
-    ).pipe(Effect.map((rows) => rows[0] ?? null));
+    ).pipe(
+      Effect.map((rows) => {
+        const row = rows[0];
+        return {
+          held: Boolean(row?.held),
+          // A LEFT JOIN with no match leaves the purchase columns null, which
+          // is "no live attempt" — distinct from "no wedding", which the gate
+          // already ruled out.
+          pending:
+            row && row.id !== null && row.createdAt !== null
+              ? { id: row.id, sessionId: row.sessionId, createdAt: row.createdAt }
+              : null,
+        };
+      }),
+    );
 
   /**
    * Close a pending row, guarded on the exact state it was observed in.
@@ -192,8 +232,11 @@ export function createUpgradeService(deps: UpgradeServiceDeps) {
       return Effect.gen(function* () {
         const db = yield* DbService;
 
-        // 1. Nothing to sell if the wedding already has it.
-        if (yield* entitlementService.has(input.weddingId, input.entitlement)) {
+        // 1. One statement answers both opening questions — see `openingRead`.
+        const opening = yield* openingRead(db, input.weddingId, input.entitlement);
+
+        // Nothing to sell if the wedding already has it.
+        if (opening.held) {
           metricUpgradeCheckoutStarted(input.entitlement, "already_held");
           return yield* Effect.fail(new UpgradeConflict({ reason: "already_held" }));
         }
@@ -206,7 +249,7 @@ export function createUpgradeService(deps: UpgradeServiceDeps) {
 
         // 2. Resolve any live attempt BEFORE inserting. The partial unique
         //    index is the backstop behind this, not the control flow.
-        const existing = yield* pendingFor(db, input.weddingId, input.entitlement);
+        const existing = opening.pending;
         if (existing !== null) {
           if (existing.sessionId !== null) {
             const probe = yield* deps.stripe
@@ -312,9 +355,10 @@ export function createUpgradeService(deps: UpgradeServiceDeps) {
                 isNull(weddingUpgradePurchases.checkoutSessionId),
               ),
             )
-            .run(),
+            .returning({ id: weddingUpgradePurchases.id })
+            .all(),
         );
-        if (rowsChanged(attached) === 0) {
+        if (changedNone(attached)) {
           metricUpgradeCheckoutStarted(input.entitlement, "processing");
           return yield* Effect.fail(new UpgradeConflict({ reason: "processing" }));
         }
@@ -390,54 +434,64 @@ export function createUpgradeService(deps: UpgradeServiceDeps) {
           return "unpaid";
         }
 
-        // GRANT FIRST. Idempotent on its own primary key.
-        yield* entitlementService.grant(row.weddingId, entitlement, {
-          source: "purchase",
-          // A webhook has no actor of its own; the buyer is the honest answer
-          // and is what the audit column is for.
-          grantedBy: row.buyer,
-          providerRef: input.checkoutSessionId,
-        });
-
-        // SALES SECOND, keyed on the purchase so a redelivery writes one row.
-        yield* dbQuery(() =>
-          db
-            .insert(platformSales)
-            .values({
-              id: newId("sal"),
-              purchaseId: row.id,
-              entitlement,
-              amountMinor: input.paidAmountMinor ?? 0,
-              currency: input.paidCurrency?.toUpperCase() ?? "",
-              settledAt: new Date(now()),
-            })
-            .onConflictDoNothing()
-            .run(),
-        );
-
-        // FLIP LAST, conditionally. Zero rows means a previous delivery already
-        // did all of the above.
+        // ONE ROUND TRIP for all three writes. D1 runs a batch atomically and
+        // in statement order, so "grant, then sales, then flip" survives as
+        // ordering INSIDE the batch — and a crash can no longer land between
+        // the grant and the flip at all, which strengthens the invariant above
+        // rather than weakening it. bun:sqlite has no `.batch()`, so the helper
+        // chains them in the same order and the tests see no difference.
         const flipped = yield* dbQuery(() =>
-          db
-            .update(weddingUpgradePurchases)
-            .set({
-              status: "succeeded",
-              checkoutSessionId: input.checkoutSessionId,
-              paymentIntentId: input.paymentIntentId,
-              amountMinor: input.paidAmountMinor,
-              currency: input.paidCurrency?.toUpperCase() ?? null,
-              updatedAt: new Date(now()),
-            })
-            .where(
-              and(
-                eq(weddingUpgradePurchases.id, row.id),
-                eq(weddingUpgradePurchases.status, "pending"),
-              ),
-            )
-            .run(),
+          commitGroupedBatchesReturning(
+            db,
+            [
+              // Idempotent on its own primary key.
+              [
+                entitlementService.grantStatement(db, row.weddingId, entitlement, {
+                  source: "purchase",
+                  // A webhook has no actor of its own; the buyer is the honest
+                  // answer and is what the audit column is for.
+                  grantedBy: row.buyer,
+                  providerRef: input.checkoutSessionId,
+                }),
+              ],
+              // Keyed on the purchase, so a redelivery writes one row.
+              [
+                db
+                  .insert(platformSales)
+                  .values({
+                    id: newId("sal"),
+                    purchaseId: row.id,
+                    entitlement,
+                    amountMinor: input.paidAmountMinor ?? 0,
+                    currency: input.paidCurrency?.toUpperCase() ?? "",
+                    settledAt: new Date(now()),
+                  })
+                  .onConflictDoNothing(),
+              ],
+            ],
+            // The tail. Zero rows back means a previous delivery already did
+            // all of the above.
+            db
+              .update(weddingUpgradePurchases)
+              .set({
+                status: "succeeded",
+                checkoutSessionId: input.checkoutSessionId,
+                paymentIntentId: input.paymentIntentId,
+                amountMinor: input.paidAmountMinor,
+                currency: input.paidCurrency?.toUpperCase() ?? null,
+                updatedAt: new Date(now()),
+              })
+              .where(
+                and(
+                  eq(weddingUpgradePurchases.id, row.id),
+                  eq(weddingUpgradePurchases.status, "pending"),
+                ),
+              )
+              .returning({ id: weddingUpgradePurchases.id }),
+          ),
         );
 
-        const outcome: SettleOutcome = rowsChanged(flipped) === 0 ? "replayed" : "granted";
+        const outcome: SettleOutcome = changedNone(flipped) ? "replayed" : "granted";
         metricUpgradePurchaseSettled(entitlement, outcome === "granted" ? "granted" : "replayed");
         return outcome;
       }).pipe(Effect.withSpan("cire.upgrade.settlePurchase"));
@@ -462,17 +516,16 @@ export function createUpgradeService(deps: UpgradeServiceDeps) {
                 eq(weddingUpgradePurchases.checkoutSessionId, input.checkoutSessionId),
               ),
             )
-            .run(),
-        );
-        if (rowsChanged(changed) === 0) return "ignored";
-        const rows = yield* dbQuery(() =>
-          db
-            .select({ entitlement: weddingUpgradePurchases.entitlement })
-            .from(weddingUpgradePurchases)
-            .where(eq(weddingUpgradePurchases.id, input.purchaseId))
+            // The metric's label comes back with the write. An expiry is the
+            // ordinary end of an abandoned checkout, so re-reading the row we
+            // just wrote would spend a round trip on every one of them.
+            .returning({ entitlement: weddingUpgradePurchases.entitlement })
             .all(),
         );
-        const entitlement = rows[0]?.entitlement as PurchasableEntitlement | undefined;
+        if (changedNone(changed)) return "ignored";
+        const entitlement = (changed as { entitlement: string }[])[0]?.entitlement as
+          | PurchasableEntitlement
+          | undefined;
         if (entitlement) {
           metricUpgradePurchaseSettled(
             entitlement,
@@ -515,18 +568,19 @@ export function createUpgradeService(deps: UpgradeServiceDeps) {
 }
 
 /**
- * Rows a write touched, across both drivers.
+ * Did a guarded write match nothing?
  *
- * bun:sqlite returns `{ changes }`; D1 reports it under `meta.changes`. The
- * conditional writes above are guards, and a guard whose row count cannot be
- * read is not a guard — so an unreadable shape counts as zero, which fails
- * closed (the caller treats it as "somebody else got there first").
+ * Reads the ROWS BACK (`.returning(...).all()`) rather than a driver's row
+ * count. The count is spelled differently by each driver — bun:sqlite puts it
+ * on `.changes`, D1 under `meta.changes` — and the whole test suite runs on
+ * bun:sqlite, so a wrong reading of D1's shape would pass every test here and
+ * fail closed in production: every settle reporting `replayed` instead of
+ * `granted`, every session attach 409ing. Returned rows are the same array on
+ * both, which removes the divergence rather than testing for it. Same idiom as
+ * `settleContribution`'s adoption guard in `registry.ts`.
  */
-function rowsChanged(result: unknown): number {
-  const direct = (result as { changes?: unknown })?.changes;
-  if (typeof direct === "number") return direct;
-  const meta = (result as { meta?: { changes?: unknown } })?.meta?.changes;
-  return typeof meta === "number" ? meta : 0;
+function changedNone(result: unknown): boolean {
+  return !Array.isArray(result) || result.length === 0;
 }
 
 export type UpgradeService = ReturnType<typeof createUpgradeService>;

@@ -93,10 +93,14 @@ export const createUpgradeRoutes = (db: Db, osnAuthOptions: OsnAuthOptions, deps
           }
           return runCire(
             Effect.gen(function* () {
-              const [entries, held] = yield* Effect.all([
-                deps.catalogue.list(),
-                entitlementService.setsForWeddings([weddingId]),
-              ]);
+              // Concurrent on purpose: one half is a third-party HTTP API and
+              // the other a D1 table, so neither can answer the other and
+              // nothing here binds a key the other produced. `Effect.all`
+              // without this option runs them in sequence.
+              const [entries, held] = yield* Effect.all(
+                [deps.catalogue.list(), entitlementService.setsForWeddings([weddingId])],
+                { concurrency: "unbounded" },
+              );
               const owned = new Set(held.get(weddingId) ?? []);
               return {
                 // `held` is what makes the dialog honest about a module the

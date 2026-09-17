@@ -73,6 +73,8 @@ interface StripeStub {
   /** What the next probe answers. */
   probe: PlatformSessionState | "error";
   failCreate: boolean;
+  /** Runs while Stripe is "thinking", to drive a concurrent-write race. */
+  onCreate?: () => void;
 }
 
 function stubStripe(): StripeStub {
@@ -88,6 +90,7 @@ function stubStripe(): StripeStub {
     retrievePrice: () => Effect.succeed({ unitAmountMinor: 4900, currency: "AUD" }),
     createPlatformCheckoutSession(input: { clientReferenceId: string; successUrl: string }) {
       if (stub.failCreate) return Effect.fail(new StripeError({ reason: "unreachable" }));
+      stub.onCreate?.();
       minted += 1;
       stub.created.push(input.clientReferenceId);
       stub.successUrls.push(input.successUrl);
@@ -122,15 +125,56 @@ const START = {
 };
 
 describe("upgradeConflictReason", () => {
-  it("names the partial-index conflict and the session conflict apart", () => {
-    expect(
-      upgradeConflictReason("UNIQUE constraint failed: wedding_upgrade_purchases_one_pending_uniq"),
-    ).toBe("processing");
-    expect(
-      upgradeConflictReason(
-        "UNIQUE constraint failed: wedding_upgrade_purchases.checkout_session_id",
-      ),
-    ).toBe("session_taken");
+  /**
+   * DRIVEN THROUGH THE REAL INDEX, not a hand-written string.
+   *
+   * SQLite names the COLUMNS a conflict was on and never the index that
+   * enforced it, so a classifier matching on the index name reads correctly and
+   * can never fire. A literal-string test passes either way — which is how that
+   * mismatch survives review. This one asks the driver.
+   */
+  it("classifies what the driver actually says on the one-pending index", () => {
+    const db = createDb();
+    seedWedding(db);
+    const insert = (id: string) =>
+      db.$client.exec(
+        `INSERT INTO wedding_upgrade_purchases
+           (id, wedding_id, entitlement, status, created_by_osn_profile_id, created_at, updated_at)
+         VALUES ('${id}', 'wed_test', 'vendors', 'pending', 'usr_owner', 1, 1);`,
+      );
+    insert("upg_a");
+    let message = "";
+    try {
+      insert("upg_b");
+    } catch (e) {
+      message = String(e);
+    }
+
+    expect(message).toContain("UNIQUE constraint failed");
+    // The assertion that would have caught the original bug.
+    expect(message).not.toContain("one_pending");
+    expect(upgradeConflictReason(message)).toBe("processing");
+  });
+
+  it("classifies a session-id conflict the driver reports", () => {
+    const db = createDb();
+    seedWedding(db);
+    db.$client.exec(
+      `INSERT INTO wedding_upgrade_purchases
+         (id, wedding_id, entitlement, status, checkout_session_id, created_by_osn_profile_id, created_at, updated_at)
+       VALUES ('upg_a', 'wed_test', 'vendors', 'succeeded', 'cs_1', 'usr_owner', 1, 1);`,
+    );
+    let message = "";
+    try {
+      db.$client.exec(
+        `INSERT INTO wedding_upgrade_purchases
+           (id, wedding_id, entitlement, status, checkout_session_id, created_by_osn_profile_id, created_at, updated_at)
+         VALUES ('upg_b', 'wed_test', 'registry', 'succeeded', 'cs_1', 'usr_owner', 1, 1);`,
+      );
+    } catch (e) {
+      message = String(e);
+    }
+    expect(upgradeConflictReason(message)).toBe("session_taken");
   });
 
   it("returns null for anything that is not a unique violation", () => {
@@ -140,6 +184,10 @@ describe("upgradeConflictReason", () => {
     expect(upgradeConflictReason("SQLITE_BUSY: database is locked")).toBeNull();
     expect(upgradeConflictReason("NOT NULL constraint failed: x.y")).toBeNull();
     expect(upgradeConflictReason("")).toBeNull();
+  });
+
+  it("returns null for a unique violation on some other table's columns", () => {
+    expect(upgradeConflictReason("UNIQUE constraint failed: guests.email")).toBeNull();
   });
 });
 
@@ -320,6 +368,36 @@ describe("startPurchase", () => {
     expect(res.reused).toBe(false);
     const rows = purchases(db);
     expect(rows.find((r) => r.id === "upg_dead")?.status).toBe("failed");
+  });
+
+  /**
+   * T-E1. The attach is conditional on the row still being `pending` with no
+   * session, and its result is checked. If it matched nothing — because another
+   * request closed or claimed the row while Stripe was thinking — handing out
+   * the URL anyway takes a payment into a row that can never settle.
+   *
+   * Driven by closing the row mid-flight, which is what a concurrent press past
+   * the staleness window actually does.
+   */
+  it("refuses to hand out a URL when the attach matched nothing", async () => {
+    const db = createDb();
+    seedWedding(db);
+    const stripe = stubStripe();
+    const svc = makeService(stripe.client, { t: BASE_MS });
+
+    // Close the pending row at the moment Stripe is being asked, so the
+    // conditional attach that follows finds nothing to update.
+    stripe.onCreate = () => {
+      db.$client.exec(
+        "UPDATE wedding_upgrade_purchases SET status = 'failed' WHERE status = 'pending';",
+      );
+    };
+
+    const exit = await runExit(db, svc.startPurchase(START));
+    expect(Exit.isFailure(exit)).toBe(true);
+    // The session was minted, so Stripe has one — but no URL reached the caller.
+    expect(stripe.created).toHaveLength(1);
+    expect(purchases(db)[0]?.status).toBe("failed");
   });
 
   it("closes its own row when Stripe refuses, so the next press need not wait", async () => {

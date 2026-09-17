@@ -127,23 +127,38 @@ export function createUpgradeCatalogue(deps: {
      * offer down with it. The refusal is the caller's to log.
      */
     list(): Effect.Effect<CatalogueEntry[], never, never> {
-      return Effect.gen(function* () {
-        const entries: CatalogueEntry[] = [];
-        for (const entitlement of sellable()) {
+      // Concurrent across keys: each is a separate Stripe resource, so the
+      // reads never had to chain. On a cold isolate a sequential loop makes the
+      // dialog's "Checking the price…" state as long as the sum of them, and a
+      // Worker gets new isolates continuously — the cache spares the second
+      // request, never the first.
+      //
+      // `sellable()` yields distinct keys, so two fibres cannot race the same
+      // `priceId` into the cache.
+      const entryFor = (
+        entitlement: PurchasableEntitlement,
+      ): Effect.Effect<CatalogueEntry | null, never, never> =>
+        Effect.gen(function* () {
           const priceId = priceIdFor(entitlement);
-          if (priceId === null) continue;
+          if (priceId === null) return null;
           const price = yield* Effect.result(priceFor(priceId));
-          if (price._tag === "Failure") continue;
-          entries.push({
+          // A Price Stripe refuses drops its OWN entry and no other: one
+          // misconfigured key is an operator mistake, the whole upgrade surface
+          // vanishing because of it is an outage.
+          if (price._tag === "Failure") return null;
+          return {
             entitlement,
             ...COPY[entitlement],
             priceId,
             amountMinor: price.success.unitAmountMinor,
             currency: price.success.currency,
-          });
-        }
-        return entries;
-      }).pipe(Effect.withSpan("cire.upgrade.catalogue"));
+          };
+        });
+
+      return Effect.all(sellable().map(entryFor), { concurrency: "unbounded" }).pipe(
+        Effect.map((entries) => entries.filter((e): e is CatalogueEntry => e !== null)),
+        Effect.withSpan("cire.upgrade.catalogue"),
+      );
     },
   };
 }

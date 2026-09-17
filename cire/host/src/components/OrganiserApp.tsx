@@ -347,8 +347,13 @@ function Dashboard() {
     history.replaceState(null, "", clearUpgradeParams(new URL(window.location.href)));
 
     let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
     onCleanup(() => {
       cancelled = true;
+      // Clearing it, not just flagging it: the flag is only read after the
+      // await, so an uncleared timer holds the dashboard's last sleep open for
+      // up to its full backoff after teardown.
+      if (pollTimer !== undefined) clearTimeout(pollTimer);
     });
 
     void (async () => {
@@ -383,7 +388,13 @@ function Dashboard() {
           if (!cancelled) toast.error("That payment did not go through. Nothing was charged.");
           return;
         }
-        await new Promise((resolve) => setTimeout(resolve, pollDelayMs(attempt)));
+        // No sleep after the final attempt — there is nothing left to wait
+        // for, and sleeping there adds a full backoff to the one path where
+        // the webhook is genuinely slow.
+        if (attempt === POLL_ATTEMPTS - 1) break;
+        await new Promise((resolve) => {
+          pollTimer = setTimeout(resolve, pollDelayMs(attempt));
+        });
       }
       // Still pending after the last attempt. Not an error — Stripe is slow
       // sometimes — so the honest message says where it got to.

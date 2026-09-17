@@ -1234,7 +1234,7 @@ export const imports = sqliteTable(
   ],
 );
 
-// ── Upgrade purchases (migration 0059) ───────────────────────────────────────
+// ── Upgrade purchases (migration 0060) ───────────────────────────────────────
 // Self-serve purchase of a `wedding_entitlements` capability — `vendors` and
 // `registry` today. The money side of the entitlement table, which cannot hold
 // it: that table's primary key is (wedding_id, entitlement) and grants are
