@@ -1,53 +1,56 @@
 {
   "schema_version": 1,
   "pr": {
-    "number": null,
+    "number": 1100,
     "branch": "claude/cire-upgrade-experience-fnu2u2",
-    "base_sha": "b5f9c8f4c3701ae6e3a08529c86db40f1ca563ac",
-    "head_sha": "4e542beb772f53c57c249836f4dc5d0ca476a1ff",
-    "generated_at": "2026-09-17T11:21:22.255Z",
+    "base_sha": "e48feae103cab5e2b76cc67c68bf6c7bcdd00378",
+    "head_sha": "91a95d713d1982bd80f1c4710372e821ccf0d2f0",
+    "generated_at": "2026-09-17T21:18:59.095Z",
     "merged_at": null,
     "phase": "at-open"
   },
   "issue": {
-    "number": null,
+    "number": 1039,
     "type": null,
-    "labels": []
+    "labels": [
+      "product:cire",
+      "complexity:5"
+    ]
   },
   "complexity": {
-    "declared": null,
-    "method": "none"
+    "declared": 5,
+    "method": "confirmed"
   },
   "window": {
     "sessions": 1,
     "first_ts": "2026-09-14T12:13:19.506Z",
-    "last_ts": "2026-09-17T11:16:14.913Z",
-    "span_seconds": 255775,
-    "active_seconds": 8984,
+    "last_ts": "2026-09-17T21:18:56.559Z",
+    "span_seconds": 291937,
+    "active_seconds": 12717,
     "compactions": 0
   },
   "spend": {
-    "usd_equivalent": 80.85853700000003,
+    "usd_equivalent": 166.25286425000024,
     "tokens": {
-      "input": 2020,
-      "output": 230746,
-      "thinking": 23969,
-      "cache_write_5m": 597806,
-      "cache_write_1h": 1557954,
-      "cache_read": 97484004
+      "input": 2708,
+      "output": 335106,
+      "thinking": 36466,
+      "cache_write_5m": 1189829,
+      "cache_write_1h": 2404765,
+      "cache_read": 238711271
     },
     "by_model": {
       "claude-opus-5": {
         "tokens": {
-          "input": 542,
-          "output": 229218,
-          "thinking": 23969,
-          "cache_write_5m": 0,
-          "cache_write_1h": 1557954,
-          "cache_read": 91003844
+          "input": 1230,
+          "output": 333578,
+          "thinking": 36466,
+          "cache_write_5m": 592023,
+          "cache_write_1h": 2404765,
+          "cache_read": 232231111
         },
-        "usd_equivalent": 66.814622,
-        "messages": 271
+        "usd_equivalent": 152.20894925000022,
+        "messages": 615
       },
       "<synthetic>": {
         "tokens": {
@@ -59,7 +62,7 @@
           "cache_read": 0
         },
         "usd_equivalent": 0,
-        "messages": 1
+        "messages": 3
       },
       "claude-fable-5-1": {
         "tokens": {
@@ -77,62 +80,62 @@
     "by_actor": {
       "main": {
         "tokens": {
-          "input": 542,
-          "output": 229218,
-          "thinking": 23969,
+          "input": 910,
+          "output": 331983,
+          "thinking": 36466,
           "cache_write_5m": 0,
-          "cache_write_1h": 1557954,
-          "cache_read": 91003844
+          "cache_write_1h": 2404765,
+          "cache_read": 208242362
         },
-        "usd_equivalent": 66.814622,
-        "messages": 272
+        "usd_equivalent": 136.4729560000001,
+        "messages": 457
       },
       "subagent": {
         "tokens": {
-          "input": 1478,
-          "output": 1528,
+          "input": 1798,
+          "output": 3123,
           "thinking": 0,
-          "cache_write_5m": 597806,
+          "cache_write_5m": 1189829,
           "cache_write_1h": 0,
-          "cache_read": 6480160
+          "cache_read": 30468909
         },
-        "usd_equivalent": 14.043915,
-        "messages": 49
+        "usd_equivalent": 29.77990824999998,
+        "messages": 210
       }
     },
     "effort": {
-      "high": 320
+      "high": 664
     },
     "unpriced_models": []
   },
   "diff": {
     "files": {
-      "generated": 0,
-      "test": 13,
-      "docs": 0,
+      "generated": 1,
+      "test": 16,
+      "docs": 10,
       "config": 4,
-      "source": 27
+      "source": 28
     },
     "loc": {
       "generated": {
-        "added": 0,
+        "added": 40,
         "deleted": 0
       },
       "test": {
-        "added": 1990,
+        "added": 2399,
         "deleted": 74
       },
       "docs": {
-        "added": 0,
-        "deleted": 0
+        "added": 270,
+        "deleted": 10
       },
       "config": {
-        "added": 3710,
-        "deleted": 14
+        "added": 3720,
+        "deleted": 15
       },
       "source": {
-        "added": 2233,
-        "deleted": 108
+        "added": 2383,
+        "deleted": 121
       }
     },
     "packages": [
@@ -141,26 +144,34 @@
       "cire/host"
     ],
     "touches_migration": true,
-    "commits": 15
+    "commits": 20
   },
   "interaction": {
-    "user_turns": 9,
-    "corrective_turns": 8,
+    "user_turns": 17,
+    "corrective_turns": 16,
     "tokens_before_first_edit": 3333164,
     "sessions_with_observed_edit": 1,
     "tool_calls": {
-      "Bash": 370,
-      "Read": 6,
-      "Skill": 3,
+      "Bash": 686,
+      "Read": 9,
+      "mcp__github__pull_request_read": 7,
+      "Agent": 6,
+      "Skill": 5,
+      "ToolSearch": 5,
+      "mcp__github__issue_write": 5,
       "AskUserQuestion": 3,
-      "mcp__github__issue_write": 3,
-      "Agent": 3,
       "Write": 3,
-      "ToolSearch": 2,
+      "SubagentHandback": 2,
+      "mcp__github__get_job_logs": 2,
       "mcp__github__list_issue_types": 1,
       "mcp__github__search_issues": 1,
       "mcp__github__issue_read": 1,
-      "WebFetch": 1
+      "WebFetch": 1,
+      "mcp__github__create_pull_request": 1,
+      "mcp__Claude_Code_Remote__subscribe_pr_activity": 1,
+      "ReadNotifications": 1,
+      "mcp__github__get_check_run": 1,
+      "mcp__Claude_Code_Remote__add_repo": 1
     },
     "edit_churn": {
       "files_edited_3plus": 0,
@@ -169,10 +180,13 @@
     "skills": {
       "new-feat": 1,
       "rate-complexity": 1,
-      "stress-plan": 1
+      "stress-plan": 1,
+      "prep-pr": 1,
+      "retro": 1
     },
     "subagents": {
-      "attacker": 3
+      "attacker": 3,
+      "general-purpose": 3
     }
   }
 }
