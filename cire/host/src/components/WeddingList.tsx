@@ -52,7 +52,7 @@ export default function WeddingList(props: {
                       for". Scale, so it costs no layout. */}
                   <span
                     aria-hidden="true"
-                    class="bg-gold absolute inset-y-0 left-0 w-[2px] origin-top scale-y-0 transition-transform duration-(--dur-base) ease-(--ease-out) group-hover:scale-y-100"
+                    class="bg-gold absolute inset-y-0 left-0 w-0.5 origin-top scale-y-0 transition-transform duration-(--dur-base) ease-(--ease-out) group-hover:scale-y-100"
                   />
                   <span class="font-body text-gold text-ui-xs tracking-ui-ultra uppercase">
                     {wedding.slug}

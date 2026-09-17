@@ -144,7 +144,7 @@ export function ProfileSwitcher(props: ProfileSwitcherProps) {
             <Button
               variant="ghost"
               size="sm"
-              class="w-full text-xs"
+              class="w-full"
               onClick={() => {
                 setOpen(false);
                 setShowCreate(true);

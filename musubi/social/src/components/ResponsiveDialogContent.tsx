@@ -15,7 +15,7 @@ export const ResponsiveDialogContent: ParentComponent<ComponentProps<"div">> = (
   return (
     <DialogContent
       class={clsx(
-        "rounded-card max-md:top-auto max-md:bottom-0 max-md:left-0 max-md:max-h-[85dvh] max-md:w-full max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:overflow-y-auto max-md:rounded-b-none max-md:border-x-0 max-md:border-b-0 max-md:pb-safe",
+        "max-md:top-auto max-md:bottom-0 max-md:left-0 max-md:max-h-[85dvh] max-md:w-full max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:overflow-y-auto max-md:rounded-b-none max-md:border-x-0 max-md:border-b-0 max-md:pb-safe",
         local.class,
       )}
       {...others}

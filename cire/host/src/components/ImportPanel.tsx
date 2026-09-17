@@ -516,7 +516,7 @@ export default function ImportPanel(props: { weddingId: string; kind: ImportKind
 function Col(props: { children: string; required?: boolean }) {
   return (
     <code
-      class="text-ui-xs rounded-[2px] border px-1.5 py-0.5 font-mono"
+      class="text-ui-xs rounded-hair border px-1.5 py-0.5 font-mono"
       classList={{
         "text-gold-ink bg-gold/12 border-gold/45": props.required === true,
         "text-text-muted bg-bg/60 border-border": props.required !== true,
@@ -590,7 +590,7 @@ function StepBadge(props: { n: number }) {
  */
 function MiniMatrix() {
   return (
-    <div class="border-border/70 overflow-hidden rounded-[3px] border">
+    <div class="border-border/70 rounded-hair overflow-hidden border">
       <table class="text-ui-xs w-full border-collapse font-mono">
         <thead>
           <tr class="bg-bg/50 text-gold-ink">

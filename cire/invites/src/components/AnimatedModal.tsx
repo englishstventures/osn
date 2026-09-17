@@ -114,7 +114,7 @@ export function AnimatedModal(props: AnimatedModalProps) {
       // zero specificity by design — so a `base:` class here would tie with the
       // component's own and be resolved by Tailwind's stylesheet order rather
       // than by this file. A plain utility simply wins.
-      class="border-border bg-surface mt-auto mb-0 max-h-[85dvh] max-w-[480px] rounded-t-[1.75rem] rounded-b-none md:m-auto md:mb-8 md:max-h-[85vh] md:rounded-lg"
+      class="bg-surface mt-auto mb-0 max-h-[85dvh] max-w-120 rounded-t-[1.75rem] rounded-b-none md:m-auto md:mb-8 md:max-h-[85vh] md:rounded-lg"
     >
       {/* No z-index: a positioned box already paints over its non-positioned
           in-flow siblings, so this stays above the scroller without adding a

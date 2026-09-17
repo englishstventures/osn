@@ -416,7 +416,7 @@ export default function RegistryImageField(props: {
               id={`${props.idPrefix}-shop-link`}
               size="sm"
               type="url"
-              class="min-w-[16rem] flex-1"
+              class="min-w-64 flex-1"
               placeholder="https://…"
               value={url()}
               disabled={props.disabled || busy() !== null}

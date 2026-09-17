@@ -456,7 +456,7 @@ export default function HostsPanel(props: HostsPanelProps) {
                 {/* Combobox: a text input that suggests matching OSN profiles as
                     the organiser types. The manual type-and-submit path is
                     preserved — the dropdown is additive and never required. */}
-                <div class="relative min-w-[12rem] flex-1">
+                <div class="relative min-w-48 flex-1">
                   <UsernameInput
                     {...field}
                     name="osnHandle"
@@ -585,9 +585,7 @@ export default function HostsPanel(props: HostsPanelProps) {
 
       <Show when={loading()}>
         <div class="flex flex-col gap-3">
-          <For each={[1, 2]}>
-            {() => <div class="bg-surface h-[52px] animate-pulse rounded-sm" />}
-          </For>
+          <For each={[1, 2]}>{() => <div class="bg-surface h-13 animate-pulse rounded-sm" />}</For>
         </div>
       </Show>
 

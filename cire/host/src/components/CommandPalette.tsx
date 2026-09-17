@@ -292,7 +292,7 @@ export default function CommandPalette(props: {
                       <span class="text-ui-sm min-w-0 flex-1 truncate">{command.label}</span>
                       <Show when={command.hint}>
                         {(hint) => (
-                          <span class="text-text-faint text-ui-xs hidden max-w-[45%] shrink-0 truncate sm:block">
+                          <span class="text-text-faint text-ui-xs hidden max-w-9/20 shrink-0 truncate sm:block">
                             {hint()}
                           </span>
                         )}

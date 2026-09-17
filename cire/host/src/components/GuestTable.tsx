@@ -387,7 +387,7 @@ export default function GuestTable(props: GuestTableProps) {
       <Show when={loading()}>
         <div class="flex flex-col gap-3">
           <For each={[1, 2, 3, 4, 5]}>
-            {() => <div class="bg-surface h-[52px] animate-pulse rounded-sm" />}
+            {() => <div class="bg-surface h-13 animate-pulse rounded-sm" />}
           </For>
         </div>
       </Show>
@@ -409,7 +409,7 @@ export default function GuestTable(props: GuestTableProps) {
             {guests().length} {guests().length === 1 ? "guest" : "guests"} across{" "}
             {families().length} {families().length === 1 ? "household" : "households"}
           </p>
-          <Field label="Search guests" labelHidden class="w-full max-w-[16rem]">
+          <Field label="Search guests" labelHidden class="w-full max-w-64">
             {(field) => (
               <Input
                 {...field}

@@ -217,7 +217,7 @@ export default function ModuleSidebar(props: {
           class="bg-gold/10 pointer-events-none absolute top-0 left-0 rounded-sm"
           style={pill.style()}
         >
-          <span class="bg-gold absolute inset-y-1 left-0 w-[2px] rounded-full" />
+          <span class="bg-gold absolute inset-y-1 left-0 w-0.5 rounded-full" />
         </span>
         <For each={MODULE_NAV}>
           {(mod) => {

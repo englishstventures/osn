@@ -139,12 +139,7 @@ export function OrgDetailPage() {
                 </div>
               </div>
               <div class="flex gap-1.5">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  class="text-body max-md:h-10"
-                  onClick={openEdit}
-                >
+                <Button variant="secondary" size="sm" class="max-md:h-10" onClick={openEdit}>
                   Edit
                 </Button>
                 <Button
@@ -188,7 +183,7 @@ export function OrgDetailPage() {
                               />
                             )}
                           </Show>
-                          <AvatarFallback class="text-meta">
+                          <AvatarFallback>
                             {member.profile.handle.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -207,7 +202,7 @@ export function OrgDetailPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            class="text-muted-foreground text-body h-7 max-md:h-10"
+                            class="text-muted-foreground h-7 max-md:h-10"
                             onClick={() => removeMember(member.profile.id, member.profile.handle)}
                           >
                             Remove
@@ -253,12 +248,12 @@ export function OrgDetailPage() {
                 type="button"
                 variant="secondary"
                 size="sm"
-                class="text-body max-md:h-10"
+                class="max-md:h-10"
                 onClick={() => setShowEdit(false)}
               >
                 Cancel
               </Button>
-              <Button type="submit" size="sm" class="text-body max-md:h-10" disabled={saving()}>
+              <Button type="submit" size="sm" class="max-md:h-10" disabled={saving()}>
                 {saving() ? "Saving..." : "Save"}
               </Button>
             </div>

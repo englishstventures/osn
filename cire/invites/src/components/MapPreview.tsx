@@ -129,7 +129,7 @@ function MapCard(props: { href: string; venue: string | null }) {
           drawn entirely in CSS so it ships no image and needs no key. */}
       <div
         aria-hidden="true"
-        class="relative h-36 w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[1.03]"
+        class="relative h-36 w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-103"
         style={{
           "background-color": "var(--color-surface)",
           "background-image": [
@@ -145,7 +145,7 @@ function MapCard(props: { href: string; venue: string | null }) {
         }}
       >
         {/* Marker pin, centred over the contour glow. */}
-        <div class="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-[60%] flex-col items-center">
+        <div class="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-3/5 flex-col items-center">
           <svg
             width="26"
             height="26"

@@ -254,7 +254,7 @@ export default function GuestsEditor(props: { weddingId: string }) {
       <Show when={!store.loaded() && !loadError()}>
         <div class="flex flex-col gap-3">
           <For each={[1, 2, 3]}>
-            {() => <div class="bg-surface h-[80px] animate-pulse rounded-sm" />}
+            {() => <div class="bg-surface h-20 animate-pulse rounded-sm" />}
           </For>
         </div>
       </Show>

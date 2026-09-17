@@ -242,7 +242,7 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
           )}
         </Field>
 
-        <Field label="Keyword" class="min-w-[10rem] flex-1">
+        <Field label="Keyword" class="min-w-40 flex-1">
           {(field) => (
             <Input
               {...field}

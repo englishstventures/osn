@@ -134,7 +134,7 @@ export default function PaletteField(props: {
                     <For each={[preset.ground, preset.card, preset.ink, preset.gilt, preset.bloom]}>
                       {(colour) => (
                         <span
-                          class="border-border h-5 w-3 border-y first:rounded-l-[3px] first:border-l last:rounded-r-[3px] last:border-r"
+                          class="border-border first:rounded-l-hair last:rounded-r-hair h-5 w-3 border-y first:border-l last:border-r"
                           style={{ "background-color": colour }}
                         />
                       )}

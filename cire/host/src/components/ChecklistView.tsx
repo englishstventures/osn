@@ -203,7 +203,7 @@ export default function ChecklistView(props: ChecklistViewProps) {
           onSubmit={addTask}
           class="border-border bg-surface/20 flex flex-wrap items-end gap-3 rounded-sm border p-4"
         >
-          <Field label="Task" class="min-w-[12rem] flex-1">
+          <Field label="Task" class="min-w-48 flex-1">
             {(field) => (
               <Input
                 {...field}

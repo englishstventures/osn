@@ -11,7 +11,7 @@ const DropdownMenuContent: ParentComponent<ComponentProps<"div">> = (props) => {
     <KobalteDropdownMenu.Portal>
       <KobalteDropdownMenu.Content
         class={clsx(
-          "base:bg-ui-surface-raised base:text-ui-ink base:border-ui-hairline base:z-50 base:min-w-[8rem] base:rounded-ui-md base:border base:p-1 base:shadow-md base:outline-none",
+          "base:bg-ui-surface-raised base:text-ui-ink base:border-ui-hairline base:z-50 base:min-w-32 base:rounded-ui-md base:border base:p-1 base:shadow-md base:outline-none",
           "base:data-[expanded]:animate-in base:data-[closed]:animate-out base:data-[closed]:fade-out-0 base:data-[expanded]:fade-in-0 base:data-[closed]:zoom-out-95 base:data-[expanded]:zoom-in-95",
           local.class,
         )}
