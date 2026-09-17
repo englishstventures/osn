@@ -12,7 +12,7 @@
  *
  * 1. The contract declares **no `:root` block** — the fallbacks live inside
  *    each `var()` at its use site, deliberately, so a package-level `:root`
- *    cannot beat an app's mapping. A consequence is that `--osn-*` is not
+ *    cannot beat an app's mapping. A consequence is that `--ui-*` is not
  *    readable from `getComputedStyle` until something declares it, so a test
  *    that wants to compare a painted colour against the token it came from
  *    needs the token to exist.

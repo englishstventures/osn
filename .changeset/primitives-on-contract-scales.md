@@ -24,7 +24,7 @@ overridden at every call site in at least one app, which is exactly what
 `<Button class="rounded-pill">` ×18 in musubi was. Those 18 are deleted.
 
 **`@pulse/web` had no type scale mapped at all.** It maps colours and radii, so
-every `text-osn-*` in a shared component was resolving to the contract package's
+every `text-ui-*` in a shared component was resolving to the contract package's
 neutral fallback — a different type system showing through in the middle of that
 one, and invisible, because a fallback renders legibly. Its seven steps are now
 written down, taken from `pulse/DESIGN.md` and from what the tree actually uses,

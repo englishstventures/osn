@@ -308,7 +308,7 @@
 }
 
 /* ── The token contract ─────────────────────────────────────────────────────
- * `@shared/ui` and `@cire/ui` are written against `--osn-*`, not against the theme
+ * `@shared/ui` and `@cire/ui` are written against `--ui-*`, not against the theme
  * block above. This says which of the marketing site's colours plays each role,
  * and it is the same mapping `cire/invites` declares — the point of the brand
  * block above is that the site and the invites it advertises read as one brand,

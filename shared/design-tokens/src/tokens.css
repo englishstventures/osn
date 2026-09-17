@@ -10,7 +10,7 @@
  * convention — nothing an app writes can collide with a contract utility, and
  * nothing a contract utility reads depends on an app's naming.
  *
- * An app opts in by mapping its own colours onto the `--osn-*` names once,
+ * An app opts in by mapping its own colours onto the `--ui-*` names once,
  * anywhere in the cascade above the components:
  *
  *   @import "tailwindcss";
@@ -52,8 +52,8 @@
  * resolves once at `:root` and every one of those silently shows the page
  * theme instead.
  *
- * Nothing reads `--color-osn-*` from JavaScript; an app that wants a value in
- * JS reads its own `--osn-*` (or its own token) with `getComputedStyle`. That
+ * Nothing reads `--color-ui-*` from JavaScript; an app that wants a value in
+ * JS reads its own `--ui-*` (or its own token) with `getComputedStyle`. That
  * is why the reason `cire/host` gives for keeping its OWN theme block
  * non-inline does not apply here.
  */

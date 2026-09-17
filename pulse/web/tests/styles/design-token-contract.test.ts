@@ -61,7 +61,7 @@ describe("design-token contract", () => {
 
   it("maps all seven type steps rather than leaving gaps for the fallback", () => {
     // Pulse had none of these until the scale was written down, so every
-    // `text-osn-*` in a shared component resolved to the contract package's
+    // `text-ui-*` in a shared component resolved to the contract package's
     // neutral default — a different type system showing through in the middle
     // of this one, and invisible, because a fallback renders legibly.
     for (const step of ["xs", "sm", "base", "md", "lg", "xl", "2xl"]) {

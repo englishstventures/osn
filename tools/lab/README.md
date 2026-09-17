@@ -34,6 +34,23 @@ view. For a component's full range of variants and states, open its own group:
 | `pulse/Icon`      | The Pulse glyph set, every icon at every size                                   |
 | `shared/toast`    | Tones, positions, stacking, actions/promises, overflow                          |
 | `shared/sortable` | Drag feel, the shift/settle animation, grip hover/focus, multi-container        |
+| `design-system/colour` | Every colour role of the token contract in use, swatches captioned with what the browser painted; the contract's obligation groups |
+| `design-system/contrast` | Every pair the conformance harness checks, measured live from the pixels in the current theme |
+| `design-system/type` | The type, tracking, leading and measure scales stacked and compared, contract value beside painted value |
+| `design-system/shape-motion` | Radius (and why `control` is a role), elevation, the focus ring, and durations × easings that move |
+| `design-system/theming` | The same `@shared/ui` components under musubi's mapping, cire's ramp, and no mapping at all — what `@theme inline` buys |
+
+The `design-system/*` group is the token contract (`@shared/design-tokens`,
+[design tokens](../../wiki/architecture/design-tokens.md)) as something to look
+at rather than read. Every list in it is iterated from the contract's own exports
+(`CONTRACT_COLOR_TOKENS`, `CONTRACT_SCALES`, `contrastPairs()`), and the literal
+utility for each token lives in a table that is `satisfies`-checked against the
+same export — Tailwind only emits a class it can see spelled out, so a runtime
+`` `bg-ui-${name}` `` would render nothing. Every caption is read back from the
+painted element with `getComputedStyle`, which is why the numbers change when the
+theme does and why they say `unmeasured` under a headless DOM. The **light · dark**
+toggle is the thing to play with here: the contrast matrix re-measures, and the
+theming story's page column follows it while its cire column does not.
 
 `shared/toast` and `shared/sortable` are benches for behaviour no test tier can see. `@shared/toast`'s
 suite asserts the queue and the DOM contract; `@shared/sortable`'s asserts drop

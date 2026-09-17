@@ -414,7 +414,7 @@ body {
    * sites) and `text-sm` (49). So these are not aliases onto a scale that
    * exists; they ARE pulse's scale, written down for the first time.
    *
-   * Leaving them unmapped was not neutral. Every `text-osn-*` in a shared
+   * Leaving them unmapped was not neutral. Every `text-ui-*` in a shared
    * component was resolving to the contract package's neutral fallback, which
    * is a different type system showing through in the middle of this one — and
    * invisible, because a fallback renders legibly.

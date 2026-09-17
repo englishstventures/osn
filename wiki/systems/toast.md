@@ -188,7 +188,8 @@ The portal makes it robust by construction.
 The package sets **no `z-index`**. Pass the layer as a class —
 `class={Z_CLASS.TOAST}` — so it participates in the consumer's own stacking
 order. For cire that order is `STICKY_RAIL (20) < TOAST (150) < CONSENT (200)`;
-see `cire/invites/src/lib/z-index.ts`.
+see `cire/invites/src/lib/z-index.ts`, and
+[[top-layer-over-z-index-stack]] for why that scale has no modal layer at all.
 
 ### `topLayer`, for an app with `showModal()` dialogs
 

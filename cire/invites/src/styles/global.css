@@ -669,7 +669,7 @@
 }
 
 /* ── The token contract ─────────────────────────────────────────────────────
- * `@shared/ui` and `@cire/ui` are written against `--osn-*`, not against the theme
+ * `@shared/ui` and `@cire/ui` are written against `--ui-*`, not against the theme
  * block above. This says which of the invite's colours plays each role.
  *
  * Aliases onto `--color-*`, never onto the literals behind them — and that is

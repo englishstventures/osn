@@ -5,7 +5,7 @@
 
 `cire/invites` and `cire/landing` join the token contract
 
-Both map their brand tokens onto the `--osn-*` roles and assert conformance from
+Both map their brand tokens onto the `--ui-*` roles and assert conformance from
 their own suite, so all four cire apps now read the same contract.
 
 **The invite's mapping aliases `--color-*`, never the literals behind them**,
