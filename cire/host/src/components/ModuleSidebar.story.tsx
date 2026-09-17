@@ -113,6 +113,7 @@ export const Rail = {
         </Guidance>
         <Shell width="60rem" wide>
           <ModuleSidebar
+            weddingId="wed_test"
             active={active()}
             entitlements={entitlementsFrom(args)}
             onSelect={setActive}
@@ -149,6 +150,7 @@ export const Sheet = {
         </Guidance>
         <Shell width="22rem">
           <ModuleSidebar
+            weddingId="wed_test"
             active={active()}
             entitlements={entitlementsFrom(args)}
             onSelect={setActive}

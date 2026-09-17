@@ -1,5 +1,5 @@
 import { AuthProvider, useAuth } from "@shared/rp-auth/solid";
-import { Toaster } from "@shared/toast";
+import { toast, Toaster } from "@shared/toast";
 import {
   createEffect,
   createResource,
@@ -26,6 +26,14 @@ import {
 import { CIRE_API_URL } from "../lib/osn";
 import { initTheme } from "../lib/theme";
 import { confirmNavigation } from "../lib/unsaved-guard";
+import { fetchPurchase } from "../lib/upgrade-api";
+import {
+  clearUpgradeParams,
+  POLL_ATTEMPTS,
+  pollDelayMs,
+  readUpgradeReturn,
+} from "../lib/upgrade-return";
+import { invalidateCatalogue } from "../lib/upgrade-store";
 import type { WeddingSummary } from "./CreateWeddingForm";
 import ModuleShell from "./ModuleShell";
 import SecurityPanel from "./SecurityPanel";
@@ -321,6 +329,69 @@ function Dashboard() {
   function handleWeddingUpdated(weddingId: string, patch: { displayName: string; slug: string }) {
     setWeddings((prev) => (prev ?? []).map((w) => (w.id === weddingId ? { ...w, ...patch } : w)));
   }
+
+  /**
+   * Back from Stripe.
+   *
+   * The entitlement is granted by the webhook, not by this page, so all this
+   * does is ask what happened and refresh the list once it has. The params are
+   * stripped the moment they are read: `setRoute` rebuilds the URL as
+   * `pathname + search + hash` on every hash write and the login bounce carries
+   * `search` through, so leaving them would re-run this on every later
+   * navigation, refresh and bookmark.
+   */
+  onMount(() => {
+    if (typeof window === "undefined") return;
+    const receipt = readUpgradeReturn(window.location.search);
+    if (!receipt) return;
+    history.replaceState(null, "", clearUpgradeParams(new URL(window.location.href)));
+
+    let cancelled = false;
+    onCleanup(() => {
+      cancelled = true;
+    });
+
+    void (async () => {
+      for (let attempt = 0; attempt < POLL_ATTEMPTS && !cancelled; attempt += 1) {
+        let state: Awaited<ReturnType<typeof fetchPurchase>> = null;
+        try {
+          state = await fetchPurchase(authFetch, receipt.weddingId, receipt.purchaseId);
+        } catch {
+          // A failed poll is not a failed purchase. Keep asking; the loop is
+          // bounded, so this cannot become a spin.
+        }
+        if (cancelled) return;
+
+        if (state?.status === "succeeded") {
+          // The entitlement now exists server-side; the list is what the nav
+          // reads, so refetching it is what unlocks the module.
+          invalidateCatalogue(receipt.weddingId);
+          try {
+            const res = await authFetch(apiUrl("/api/organiser/weddings"));
+            if (res.ok) {
+              const body = (await res.json()) as { weddings: WeddingSummary[] };
+              if (!cancelled) setWeddings(body.weddings);
+            }
+          } catch {
+            // The purchase landed even if this refresh did not; a reload shows
+            // it. Saying so beats a scary error about a payment that worked.
+          }
+          if (!cancelled) toast.success("Upgrade complete — the module is unlocked.");
+          return;
+        }
+        if (state?.status === "failed" || state?.status === "expired") {
+          if (!cancelled) toast.error("That payment did not go through. Nothing was charged.");
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, pollDelayMs(attempt)));
+      }
+      // Still pending after the last attempt. Not an error — Stripe is slow
+      // sometimes — so the honest message says where it got to.
+      if (!cancelled) {
+        toast.info("Your payment is still being confirmed. This page will show it once it is.");
+      }
+    })();
+  });
 
   function handleCreated(wedding: WeddingSummary) {
     setWeddings((prev) => [...(prev ?? []), wedding]);

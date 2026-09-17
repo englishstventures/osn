@@ -53,6 +53,19 @@ export function redirectToLogin(): void {
 }
 
 /**
+ * Leave the app for an external URL.
+ *
+ * A one-line wrapper, and it earns its place for the same reason
+ * `redirectToLogin` lives here: navigation is this module's job, so a component
+ * that hands off to a payment provider has one seam to name rather than
+ * reaching for `window.location` itself. It is also the only form a test can
+ * observe — overriding `window.location` wholesale is what hangs happy-dom.
+ */
+export function navigateTo(url: string): void {
+  window.location.href = url;
+}
+
+/**
  * `Promise.all` for calls whose rejections are not equally important.
  *
  * `Promise.all` adopts whichever rejection settles FIRST, and that is decided
