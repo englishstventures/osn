@@ -345,7 +345,7 @@ export default function ImageCropModal(props: ImageCropModalProps) {
       onClose={props.onClose}
       dismissable={!busy()}
       label="Crop image"
-      class="base:flex base:max-h-[90vh] base:w-full base:max-w-2xl base:flex-col base:gap-4 base:overflow-auto"
+      class="flex max-h-[90vh] w-full max-w-2xl flex-col gap-4 overflow-auto"
     >
       <header class="flex flex-col gap-1">
         <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">Crop</p>

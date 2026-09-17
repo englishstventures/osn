@@ -8,8 +8,7 @@ import { splitProps } from "solid-js";
  *
  * ## Why this is not that component
  *
- * It used to be "because the portal has its own token classes", and that reason
- * is gone: both read the contract now. What remains is the API. `@osn/ui`'s is
+ * Not the token vocabulary — both read the contract. The API. `@osn/ui`'s is
  * controlled — `value: string` plus `onInput: (value: string) => void`, with a
  * debounced availability `status` it renders itself. This one takes raw input
  * props, because its one call site is a combobox: it spreads `role`,

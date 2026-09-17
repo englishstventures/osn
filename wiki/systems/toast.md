@@ -207,6 +207,12 @@ both.
 > So a toast raised over a modal has to be a confirmation the dialog **itself**
 > also states, never the only place something is said. Cire's RSVP sheet flips
 > its own button to "Saved" for exactly this reason.
+>
+> It also suspends the `TOAST < CONSENT` bound below, which is a statement about
+> `z-index` and stops applying in the top layer. The two do not overlap in these
+> apps — cire's toaster is `top-center` and its banner is fixed to the bottom —
+> but the guard asserts numbers, so read it as "below consent whenever both are
+> in the document's stacking order", not as an invariant of the pixels.
 
 Current mounts:
 

@@ -1,4 +1,5 @@
 import { cleanup, render } from "@solidjs/testing-library";
+import { userEvent } from "@vitest/browser/context";
 import { afterEach, describe, expect, it } from "vitest";
 
 import "../../../src/styles/global.css";
@@ -47,11 +48,12 @@ describe("the consent dialog's dismissal gestures", () => {
   it("closes on Escape, and saves nothing", async () => {
     const dialog = open();
 
-    // `requestClose()` rather than a synthetic keydown: the Escape behaviour of
-    // a modal dialog is the user agent's, so no dispatched key event triggers
-    // it. This is the platform entry point for the same cancel-then-close
-    // sequence Escape runs.
-    dialog.requestClose();
+    // A real Escape, driven through the browser. Not a dispatched
+    // `KeyboardEvent`, which a modal dialog ignores because the behaviour is
+    // the user agent's; and not `requestClose()`, which goes through the
+    // close-watcher budget and quietly stops closing anything once a suite has
+    // opened a few dialogs without user activation.
+    await userEvent.keyboard("{Escape}");
     await afterTheCloseEvent();
 
     expect(dialog.open).toBe(false);

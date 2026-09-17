@@ -53,18 +53,24 @@
  * mounted at the page root rather than inside the events section, whose Motion
  * One transform makes it a stacking context that no `z-index` can escape.
  *
- * The consent banner sits above EVERYTHING, deliberately and with a wide gap.
- * It is the guest's only route to granting — or later withdrawing — permission
- * for third-party content, and the gated embeds themselves live inside the
- * details modal. A consent control the guest cannot reach is worse than no
- * control at all, because the stored record would then assert a freely-given
- * choice they had no practical way to change.
+ * The consent banner sits above every OTHER numbered layer, deliberately and
+ * with a wide gap. It is the guest's route to granting — or later withdrawing —
+ * permission for third-party content, and a consent control the guest cannot
+ * reach is worse than no control at all, because the stored record would then
+ * assert a freely-given choice they had no practical way to change.
  *
- * The preferences dialog the banner opens has no layer here at all, and that is
- * the stronger version of the same guarantee rather than a gap in it: it is an
- * `@osn/ui` `Modal`, so it renders in the TOP LAYER, which paints above every
- * stacking context in the document by definition. There is no number to get
- * wrong and nothing for a future overlay to outbid.
+ * `every other NUMBERED layer` is the exact claim, and the qualifier is the
+ * important half. A sheet is a `showModal()` dialog in the top layer, so while
+ * one is open the banner is painted beneath it AND inert — not clickable, not
+ * announced — and comes back when the sheet closes. The gap that leaves is
+ * `xchromo/osn#1061`: not reachability (Escape closes the sheet) but the
+ * absence of a consent affordance beside a third-party embed the guest is
+ * looking at right then.
+ *
+ * The preferences DIALOG is unaffected, and is in a stronger position than a
+ * number could put it: it is an `@osn/ui` `Modal` too, so opening it from
+ * inside a sheet makes it the blocking dialog and the sheet goes inert beneath
+ * it. It has no layer here because it has nothing left to rank against.
  *
  * ## Tailwind v4 note
  *

@@ -305,7 +305,7 @@ export default function GuestsEditor(props: { weddingId: string }) {
         open={preview() !== null}
         onClose={() => setPreview(null)}
         label="Review changes before applying"
-        class="base:max-h-[85vh] base:w-full base:max-w-lg base:overflow-y-auto"
+        class="max-h-[85vh] w-full max-w-lg overflow-y-auto"
       >
         <Show when={shownPreview()}>
           {(p) => (

@@ -25,12 +25,14 @@ describe("z-index layer scale", () => {
     expect(Z_LAYER.CONSENT).toBeGreaterThan(Z_LAYER.TOAST);
   });
 
-  it("keeps consent above every page overlay", () => {
-    // A blocked embed lives INSIDE the details sheet, and its "manage privacy
-    // choices" link is how the guest reaches the preferences dialog. Both
-    // dialogs are top-layer now, so neither has a number to lose — but the
-    // banner still has to outrank the page furniture, or the route to it is
-    // buried.
+  it("keeps the consent banner above every numbered layer", () => {
+    // Every numbered one, which is no longer every layer: a sheet is a
+    // `showModal()` dialog in the top layer, and while one is open the banner
+    // is beneath it and inert whatever this says (`xchromo/osn#1061`). What
+    // this still decides is the banner against the page — the toaster, the
+    // Add-to-Calendar menu, the sticky rail — and if that inverts the banner is
+    // buried with nothing to close.
+    expect(Z_LAYER.CONSENT).toBeGreaterThan(Z_LAYER.TOAST);
     expect(Z_LAYER.CONSENT).toBeGreaterThan(Z_LAYER.MODAL_POPOVER);
     expect(Z_LAYER.CONSENT).toBeGreaterThan(Z_LAYER.STICKY_RAIL);
   });

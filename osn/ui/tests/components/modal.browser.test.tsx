@@ -11,7 +11,8 @@
 
 import { render } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { commands } from "vitest/browser";
 
 import { Modal } from "../../src/components/ui/modal";
 
@@ -325,5 +326,46 @@ describe("Modal — the exit", () => {
     unmount();
 
     expect(el.open).toBe(false);
+  });
+});
+
+describe("Modal under prefers-reduced-motion", () => {
+  /** Typed accessor for the command registered in `vitest.config.ts`. */
+  const emulate = (options: { reducedMotion?: "reduce" | "no-preference" }) =>
+    (commands as unknown as { emulateMedia: (o: typeof options) => Promise<void> }).emulateMedia(
+      options,
+    );
+
+  afterEach(async () => {
+    // The browser context is shared across tests in this file, so a leaked
+    // preference would rewrite every later assertion about motion.
+    await emulate({ reducedMotion: "no-preference" });
+  });
+
+  it("collapses the choreography to 1ms rather than removing it", async () => {
+    // Near-zero and not `none`, and the distinction is load-bearing rather than
+    // stylistic: the exit is AWAITED — `closeWhenAnimationsFinish` waits on
+    // `getAnimations({ subtree: true })` — and a transition that was never
+    // started is one there is nothing to wait for. `transition: none` would
+    // leave `getAnimations()` empty, which happens to work, but it takes the
+    // close down a different code path from the one every other engine uses.
+    await emulate({ reducedMotion: "reduce" });
+    const { dialog } = mount();
+
+    expect(getComputedStyle(dialog()).transitionDuration).toBe("0.001s");
+  });
+
+  it("still closes, and still tells the caller", async () => {
+    // The assertion that matters more than the duration: whatever the motion
+    // preference, the awaited exit has to resolve. A modal that never finished
+    // closing under reduced motion would be a dialog nobody could dismiss.
+    await emulate({ reducedMotion: "reduce" });
+    const { dialog, open, setOpen } = mount();
+
+    setOpen(false);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(dialog().open).toBe(false);
+    expect(open()).toBe(false);
   });
 });

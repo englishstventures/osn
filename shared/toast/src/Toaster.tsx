@@ -36,7 +36,14 @@ const DEFAULT_LIMIT = 4;
  * with `class` (e.g. `Z_CLASS.TOAST`). The library this replaced hardcoded
  * `z-index: 9999` into the container's inline style, which silently beat every
  * class a caller passed and parked toasts above the consent banner — the one
- * layer they must never cover.
+ * layer a consumer most needs them under.
+ *
+ * `topLayer` is the exception to be aware of rather than a hole in that: while
+ * it is on and a toast is showing, the container is in the top layer, and the
+ * `z-index` decides nothing against anything else that is. Nothing in these
+ * apps but a modal dialog is, and a toast and a consent banner do not overlap
+ * in practice — but "below consent" is a claim about numbers, and numbers stop
+ * applying up there.
  */
 export function Toaster(props: ToasterProps) {
   const position = () => props.position ?? "bottom-right";

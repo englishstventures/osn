@@ -22,6 +22,8 @@ import { playwright } from "@vitest/browser-playwright";
 import solid from "vite-plugin-solid";
 import { defineConfig } from "vitest/config";
 
+import { emulateMedia } from "./tests/test-support/browser-commands.ts";
+
 /**
  * Escape hatch for environments that ship a prebuilt Chromium whose build number
  * doesn't match the pinned Playwright — dev containers and this repo's cloud
@@ -62,6 +64,9 @@ export default defineConfig({
             // does not take effect (vitest-dev/vitest#7661).
             headless: true,
             instances: [{ browser: "chromium" }],
+            // Lets a test flip `prefers-reduced-motion` for itself instead of
+            // running the whole suite twice under a second browser instance.
+            commands: { emulateMedia },
           },
         },
       },

@@ -80,7 +80,7 @@ export default function EnquireDialog(props: EnquireDialogProps) {
       open={props.open}
       onClose={dismiss}
       labelledBy={titleId}
-      class="base:flex base:w-full base:max-w-lg base:flex-col base:gap-4"
+      class="flex w-full max-w-lg flex-col gap-4"
     >
       <header class="flex flex-col gap-1">
         <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">Enquiry</p>
