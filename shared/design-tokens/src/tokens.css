@@ -152,6 +152,17 @@
    * gets its own mid radius and not this package's. */
   --radius-ui-control: var(--ui-radius-control, var(--ui-radius-md, 6px));
 
+  /* `sheet` is the other role radius: how round the TOP corners of a bottom
+   * sheet are, once it is anchored to the bottom edge and its own bottom
+   * corners are square. It is independent of `lg` because a sheet's grip
+   * scales with the edge it is pulled from rather than with a card's corner —
+   * cire's guest site wants a pronounced 28px there while its cards stay at
+   * 10px, and reading `lg` would have forced one of the two to be wrong.
+   *
+   * It defaults to `lg`, so an app with no opinion gets its own large radius
+   * rather than a number from this package. */
+  --radius-ui-sheet: var(--ui-radius-sheet, var(--ui-radius-lg, 10px));
+
   /* ── Type families ────────────────────────────────────────────────────────
    * Families only — the sizes are the scale below. */
   --font-ui-body: var(--ui-font-body, ui-sans-serif, system-ui, sans-serif);
