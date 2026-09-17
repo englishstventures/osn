@@ -160,6 +160,16 @@
     // unscoped over the whole tree, so "error" today would fail every PR.
     "house/no-tracker-ref-in-comment": "warn",
 
+    // Tailwind's `base:` is `:where(&)` — zero specificity — so a component's
+    // defaults lose to a caller's PLAIN utility by design. A caller who writes
+    // `base:` too TIES with them, and a tie is resolved by the order Tailwind
+    // emitted the rules in, which is neither the class-attribute order nor
+    // anything visible at the call site. Nine `Modal` call sites across three
+    // cire apps were being silently overruled that way; every one of them
+    // passed every string assertion in its suite. Cleared before this went to
+    // "error", so the count is zero, not tolerated.
+    "house/no-base-variant-at-call-site": "error",
+
     // Only the last doc block in front of a declaration is attached to it, so
     // a stack means an editor shows the reader the wrong text and whatever the
     // earlier block described has quietly lost its comment. Raised to "error"
