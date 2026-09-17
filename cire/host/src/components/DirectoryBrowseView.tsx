@@ -357,7 +357,6 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
                           type="button"
                           disabled
                           aria-label="Already added to this wedding"
-                          class="opacity-60"
                         >
                           Added ✓
                         </Button>
@@ -568,7 +567,6 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
                       type="button"
                       disabled
                       aria-label="Already added to this wedding"
-                      class="opacity-60"
                     >
                       Added ✓
                     </Button>

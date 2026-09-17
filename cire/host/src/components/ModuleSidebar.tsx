@@ -280,7 +280,7 @@ export default function ModuleSidebar(props: {
             class={`${rowBase} border-border bg-surface/40 text-text hover:border-gold-dim text-ui-sm justify-between border px-4 py-3`}
           >
             <span class="flex min-w-0 items-center gap-3">
-              <span aria-hidden="true" class="text-gold w-4 shrink-0 text-center text-[1em]">
+              <span aria-hidden="true" class="text-gold w-4 shrink-0 text-center">
                 {current().glyph}
               </span>
               <span class="min-w-0 truncate">{current().label}</span>
@@ -323,7 +323,7 @@ export default function ModuleSidebar(props: {
                       <>
                         <span
                           aria-hidden="true"
-                          class={`w-4 shrink-0 pt-0.5 text-center text-[1em] ${
+                          class={`w-4 shrink-0 pt-0.5 text-center ${
                             isActive() ? "text-gold" : "text-gold-dim"
                           }`}
                         >

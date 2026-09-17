@@ -444,7 +444,6 @@ export default function RsvpView(props: RsvpViewProps) {
                                       variant="quiet"
                                       size="sm"
                                       type="button"
-                                      class="hover:border-gold/40"
                                       aria-label={`${row.responded ? "Edit" : "Record"} reply for ${row.firstName} ${row.lastName}`}
                                       onClick={() => openRow(section.event.id, row)}
                                     >

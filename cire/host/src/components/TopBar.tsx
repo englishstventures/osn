@@ -132,7 +132,7 @@ export default function TopBar(props: {
             aria-label="Search and jump to"
             aria-keyshortcuts="Meta+K Control+K"
             onClick={() => props.onOpenPalette()}
-            class="bg-surface/40 flex h-9 items-center gap-2"
+            class="bg-surface/40 flex h-9 items-center"
           >
             <span aria-hidden="true" class="text-ui-sm leading-none">
               ⌕

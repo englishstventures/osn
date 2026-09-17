@@ -44,7 +44,7 @@ export default function WeddingList(props: {
                   variant="quiet"
                   type="button"
                   onClick={() => props.onSelect(wedding)}
-                  class="bg-surface/30 hover:bg-surface/60 group relative flex w-full flex-col gap-2 overflow-hidden p-6 text-left"
+                  class="bg-surface/30 hover:bg-surface/60 group relative flex w-full flex-col overflow-hidden p-6 text-left"
                 >
                   {/* A gold rule that draws down the left edge on hover — the
                       same marker vocabulary the module rail uses for "you are

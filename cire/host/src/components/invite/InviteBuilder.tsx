@@ -1513,7 +1513,7 @@ function ToneField(props: {
               type="button"
               aria-pressed={current() === tone}
               onClick={() => props.onChange(tone === "ground" ? null : tone)}
-              class="focus-visible:border-gold focus-visible:ring-gold/40 aria-pressed:border-gold aria-pressed:ring-gold/60 transition outline-none focus-visible:ring-2 aria-pressed:ring-1"
+              class="focus-visible:border-gold focus-visible:ring-gold/40 aria-pressed:border-gold aria-pressed:ring-gold/60 outline-none focus-visible:ring-2 aria-pressed:ring-1"
               style={{ "background-color": surfaceFor[tone], color: "var(--color-text)" }}
             >
               {TONE_LABELS[tone]}

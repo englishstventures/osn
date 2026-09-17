@@ -672,7 +672,6 @@ export default function RegistryView(props: RegistryViewProps) {
                           aria-label={`Move ${item.title} up`}
                           disabled={i() === 0}
                           onClick={() => move(i(), -1)}
-                          class="disabled:opacity-30"
                         >
                           ↑
                         </Button>
@@ -682,7 +681,6 @@ export default function RegistryView(props: RegistryViewProps) {
                           aria-label={`Move ${item.title} down`}
                           disabled={i() === items().length - 1}
                           onClick={() => move(i(), 1)}
-                          class="disabled:opacity-30"
                         >
                           ↓
                         </Button>

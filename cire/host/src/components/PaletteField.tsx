@@ -126,7 +126,7 @@ export default function PaletteField(props: {
                   type="button"
                   aria-pressed={selected()}
                   onClick={() => choosePreset(key)}
-                  class="focus-visible:border-gold focus-visible:ring-gold/40 aria-pressed:border-gold flex items-center gap-2 transition outline-none focus-visible:ring-2"
+                  class="focus-visible:border-gold focus-visible:ring-gold/40 aria-pressed:border-gold flex items-center outline-none focus-visible:ring-2"
                 >
                   {/* The five colours themselves are the label — a scheme is
                       easier to recognise than to read. */}

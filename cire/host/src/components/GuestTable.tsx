@@ -366,7 +366,6 @@ export default function GuestTable(props: GuestTableProps) {
               type="button"
               onClick={() => void exportCsv("guests")}
               disabled={exporting() !== null}
-              class="transition"
             >
               {exporting() === "guests" ? "Exporting…" : "Download guests (CSV)"}
             </Button>
@@ -376,7 +375,6 @@ export default function GuestTable(props: GuestTableProps) {
               type="button"
               onClick={() => void exportCsv("rsvps")}
               disabled={exporting() !== null}
-              class="transition"
             >
               {exporting() === "rsvps" ? "Exporting…" : "Download RSVPs (CSV)"}
             </Button>
@@ -584,7 +582,7 @@ export default function GuestTable(props: GuestTableProps) {
                       <For each={visibleMembers()}>
                         {(member, index) => (
                           <tr class="hover:[&>td]:bg-surface">
-                            <Td valign="middle" class="pl-8 font-normal">
+                            <Td valign="middle" class="pl-8">
                               {member.firstName} {member.lastName}
                             </Td>
                             <Td valign="middle">

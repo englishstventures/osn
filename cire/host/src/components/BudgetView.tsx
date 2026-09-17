@@ -537,7 +537,6 @@ export default function BudgetView(props: BudgetViewProps) {
                                   aria-label="Move up"
                                   disabled={i() === 0}
                                   onClick={() => move(group.category.key, i(), -1)}
-                                  class="disabled:opacity-30"
                                 >
                                   ↑
                                 </Button>
@@ -547,7 +546,6 @@ export default function BudgetView(props: BudgetViewProps) {
                                   aria-label="Move down"
                                   disabled={i() === group.items.length - 1}
                                   onClick={() => move(group.category.key, i(), 1)}
-                                  class="disabled:opacity-30"
                                 >
                                   ↓
                                 </Button>

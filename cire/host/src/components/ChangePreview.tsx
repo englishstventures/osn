@@ -142,7 +142,6 @@ export default function ChangePreview(props: ChangePreviewProps) {
           type="button"
           onClick={() => props.onConfirm()}
           disabled={props.busy}
-          class="hover:bg-gold-dim transition"
         >
           {props.busy ? "Applying…" : (props.confirmLabel ?? "Apply changes")}
         </Button>

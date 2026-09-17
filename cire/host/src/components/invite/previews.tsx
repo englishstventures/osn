@@ -65,7 +65,7 @@ export function DeviceToggle(props: {
       type="button"
       aria-pressed={props.value === device}
       onClick={() => props.onChange(device)}
-      class="aria-pressed:border-gold aria-pressed:text-gold transition"
+      class="aria-pressed:border-gold aria-pressed:text-gold"
     >
       {label}
     </Button>

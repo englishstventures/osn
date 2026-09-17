@@ -286,7 +286,7 @@ export default function CommandPalette(props: {
                         active() === index() ? "bg-gold/10 text-gold" : "text-text-muted"
                       }`}
                     >
-                      <span aria-hidden="true" class="w-4 shrink-0 text-center text-[0.9em]">
+                      <span aria-hidden="true" class="text-ui-base w-4 shrink-0 text-center">
                         {command.glyph}
                       </span>
                       <span class="text-ui-sm min-w-0 flex-1 truncate">{command.label}</span>

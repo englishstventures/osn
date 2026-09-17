@@ -179,7 +179,6 @@ export default function EventTable(props: EventTableProps) {
               type="button"
               onClick={() => void exportEvents()}
               disabled={exporting()}
-              class="transition"
             >
               {exporting() ? "Exporting…" : "Download events (CSV)"}
             </Button>

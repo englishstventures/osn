@@ -288,7 +288,6 @@ export default function ChecklistView(props: ChecklistViewProps) {
                               aria-label="Move up"
                               disabled={i() === 0}
                               onClick={() => move(group.bucket.key, i(), -1)}
-                              class="disabled:opacity-30"
                             >
                               ↑
                             </Button>
@@ -298,7 +297,6 @@ export default function ChecklistView(props: ChecklistViewProps) {
                               aria-label="Move down"
                               disabled={i() === group.items.length - 1}
                               onClick={() => move(group.bucket.key, i(), 1)}
-                              class="disabled:opacity-30"
                             >
                               ↓
                             </Button>

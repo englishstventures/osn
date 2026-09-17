@@ -201,7 +201,7 @@ export default function GettingStarted(props: {
           organiser can use to bring the checklist back. */}
       <Show when={dismissed()}>
         <div class="flex justify-end">
-          <Button variant="subtle" size="sm" type="button" onClick={restore} class="transition">
+          <Button variant="subtle" size="sm" type="button" onClick={restore}>
             Show getting started
           </Button>
         </div>
@@ -221,7 +221,7 @@ export default function GettingStarted(props: {
             onClick={dismiss}
             aria-label="Dismiss getting started"
             title="Dismiss getting started"
-            class="hover:border-gold/50 absolute top-3 right-3 flex h-7 w-7 items-center justify-center border-transparent leading-none"
+            class="absolute top-3 right-3 flex h-7 w-7 items-center justify-center border-transparent leading-none"
           >
             <span aria-hidden>✕</span>
           </Button>
@@ -255,7 +255,7 @@ export default function GettingStarted(props: {
             same and animate on a transform rather than a width. */}
           <Meter value={completed()} max={total()} label="Setup progress" />
 
-          <ol class="auto-grid [--auto-grid-gap:0.625rem] [--auto-grid-min:18rem]">
+          <ol class="auto-grid [--auto-grid-gap:0.625rem]">
             <For each={steps()}>
               {(step, i) => (
                 <li>
@@ -264,7 +264,7 @@ export default function GettingStarted(props: {
                     type="button"
                     onClick={() => props.onJump(step.tab)}
                     data-complete={step.complete ? "true" : "false"}
-                    class="group bg-bg/30 hover:border-gold/60 flex w-full items-start gap-3 p-3 text-left"
+                    class="group bg-bg/30 flex w-full items-start gap-3 p-3 text-left"
                   >
                     <StepMarker n={i() + 1} complete={step.complete} />
                     <span class="flex flex-col gap-0.5">

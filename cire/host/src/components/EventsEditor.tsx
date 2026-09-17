@@ -388,7 +388,7 @@ export default function EventsEditor(props: { weddingId: string }) {
         open={preview() !== null}
         onClose={() => setPreview(null)}
         label="Review changes before applying"
-        class="max-h-[85vh] w-full max-w-lg overflow-y-auto"
+        class="w-full max-w-lg overflow-y-auto"
       >
         <Show when={shownPreview()}>
           {(p) => (
@@ -539,7 +539,7 @@ function EventRowCard(props: {
           {...props.sortableItem.gripProps()}
           // `py-2` is not decoration: it brings the handle to the WCAG 2.5.8
           // 24px minimum target, on the row's only re-order affordance.
-          class="focus-visible:text-gold cursor-grab touch-none leading-none active:cursor-grabbing"
+          class="focus-visible:text-gold cursor-grab touch-none active:cursor-grabbing"
         >
           ⠿
         </Button>
@@ -702,7 +702,7 @@ function EventDrawer(props: {
       open
       onClose={props.onClose}
       label="Edit event"
-      class="border-border my-0 mr-0 ml-auto h-full max-h-none w-full max-w-md overflow-y-auto rounded-none border-l p-6"
+      class="my-0 mr-0 ml-auto h-full max-h-none w-full max-w-md overflow-y-auto rounded-none border-l"
     >
       <div class="mb-6 flex items-center justify-between">
         <h2 class="font-display text-gold-dim text-ui-lg">Event details</h2>

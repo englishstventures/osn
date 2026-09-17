@@ -704,7 +704,6 @@ export default function HostsPanel(props: HostsPanelProps) {
                           void changeRole(host, host.role === "viewer" ? "editor" : "viewer")
                         }
                         disabled={roleBusyId() === host.osnProfileId}
-                        class="transition"
                         aria-label={`Make ${host.handle ? `@${host.handle}` : "host"} ${
                           host.role === "viewer" ? "an editor" : "a viewer"
                         }`}
@@ -720,7 +719,6 @@ export default function HostsPanel(props: HostsPanelProps) {
                         size="sm"
                         type="button"
                         onClick={() => void remove(host)}
-                        class="transition"
                         aria-label={`Remove ${host.handle ? `@${host.handle}` : "host"}`}
                       >
                         Remove
