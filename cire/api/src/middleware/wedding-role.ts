@@ -1,4 +1,4 @@
-import type { HostRole } from "../services/hosts";
+import type { HostRole, RunSheetScope } from "../services/hosts";
 
 /** The caller's effective role on a wedding: its owner, or the app-layer role
  *  of their `wedding_hosts` seat. */
@@ -47,9 +47,62 @@ export function policyFor(role: WeddingRole): RolePolicy {
       return { capabilities: ["member", "editor", "runSheet"], refusal: "forbidden" };
     case "viewer":
       return { capabilities: ["member", "runSheet"], refusal: "read_only_role" };
+    case "helper":
+      // The run sheet and nothing else. A helper is someone handed a job on the
+      // day, not a co-organiser: the member capability would carry the guest
+      // list, the budget, the registry, the vendors and the RSVPs with it.
+      // Their refusal is the same `forbidden` a stranger gets, so a probe
+      // cannot tell a helper's seat from no seat at all.
+      return { capabilities: ["runSheet"], refusal: "forbidden" };
   }
   const _exhaustive: never = role;
   return DENY_ALL;
+}
+
+/**
+ * The scope a caller actually gets, which is not always the one stored on their
+ * seat. The column is a helper's setting and no other role's: an owner, an
+ * editor and a viewer already read the whole dashboard, so narrowing their run
+ * sheet would hide something they can reach by another route — a filter that
+ * protects nothing but loses information.
+ *
+ * Exhaustive over {@link WeddingRole} for the same reason {@link policyFor} is:
+ * a role added to the column must be given an answer here before this compiles,
+ * and the tail returns the narrow one so a corrupted value cannot widen.
+ */
+export function runSheetScopeFor(role: WeddingRole, stored: RunSheetScope): RunSheetScope {
+  switch (role) {
+    case "owner":
+    case "editor":
+    case "viewer":
+      return "full";
+    case "helper":
+      return stored;
+  }
+  const _exhaustive: never = role;
+  return "own";
+}
+
+/** The least a run-sheet row must carry for {@link runSheetVisibleTo} to judge
+ *  it: which seat it is assigned to, or `null` for an unassigned one. */
+export type RunSheetAssignable = { assignedHostId: string | null };
+
+/**
+ * Narrow a run sheet to what `scope` entitles this caller to see.
+ *
+ * This is the enforcement, and it belongs on the server: a helper scoped `own`
+ * who receives the whole run sheet and is shown a filtered view of it has been
+ * given the whole run sheet. An unassigned row is nobody's, so `own` does not
+ * include it.
+ */
+export function runSheetVisibleTo<T extends RunSheetAssignable>(
+  scope: RunSheetScope,
+  callerHostId: string | undefined,
+  items: readonly T[],
+): T[] {
+  if (scope === "full") return [...items];
+  if (!callerHostId) return [];
+  return items.filter((item) => item.assignedHostId === callerHostId);
 }
 
 export type CapabilityDecision =

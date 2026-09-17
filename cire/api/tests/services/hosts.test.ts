@@ -441,6 +441,8 @@ describe("hostsService.authorize", () => {
       isOwner: true,
       isHost: false,
       role: "owner",
+      hostId: null,
+      runSheetScope: "own",
     });
   });
 
@@ -462,6 +464,8 @@ describe("hostsService.authorize", () => {
       isOwner: false,
       isHost: true,
       role: "editor",
+      hostId: expect.stringMatching(/^whost_/),
+      runSheetScope: "own",
     });
   });
 
@@ -505,6 +509,8 @@ describe("hostsService.authorize", () => {
       isOwner: false,
       isHost: false,
       role: null,
+      hostId: null,
+      runSheetScope: "own",
     });
   });
 
@@ -549,6 +555,8 @@ describe("hostsService.authorize — entitlement fold (P-W1)", () => {
       isOwner: true,
       isHost: false,
       role: "owner",
+      hostId: null,
+      runSheetScope: "own",
       entitled: true,
     });
   });
@@ -603,6 +611,8 @@ describe("hostsService.authorize — entitlement fold (P-W1)", () => {
       isOwner: false,
       isHost: true,
       role: "editor",
+      hostId: expect.stringMatching(/^whost_/),
+      runSheetScope: "own",
       entitled: true,
     });
   });
@@ -641,6 +651,8 @@ describe("hostsService.authorize — entitlement fold (P-W1)", () => {
       isOwner: false,
       isHost: false,
       role: null,
+      hostId: null,
+      runSheetScope: "own",
       entitled: false,
     });
   });

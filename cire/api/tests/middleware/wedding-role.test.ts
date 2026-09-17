@@ -8,7 +8,7 @@ import type { WeddingCapability, WeddingRole } from "../../src/middleware/weddin
 // behaves; this proves the policy every gate reads, so a role added without a
 // deliberate decision shows up here as a failure rather than as silence.
 
-const ROLES: readonly WeddingRole[] = ["owner", "editor", "viewer"];
+const ROLES: readonly WeddingRole[] = ["owner", "editor", "viewer", "helper"];
 const CAPABILITIES: readonly WeddingCapability[] = ["member", "editor", "runSheet"];
 
 /** Every (role, capability) pair, as `allowed` booleans. Written out in full on
@@ -18,6 +18,10 @@ const EXPECTED: Record<WeddingRole, Record<WeddingCapability, boolean>> = {
   owner: { member: true, editor: true, runSheet: true },
   editor: { member: true, editor: true, runSheet: true },
   viewer: { member: true, editor: false, runSheet: true },
+  // The whole point of the role: the run sheet, and nothing else. `member`
+  // being false here is what keeps a helper out of the guest list, the budget,
+  // the registry, the vendors and the RSVPs.
+  helper: { member: false, editor: false, runSheet: true },
 };
 
 describe("policyFor", () => {
