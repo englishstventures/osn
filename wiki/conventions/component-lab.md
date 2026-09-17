@@ -7,7 +7,7 @@ related:
   - "[[frontend-patterns]]"
   - "[[commands]]"
   - "[[devloop-urls]]"
-last-reviewed: 2026-09-14
+last-reviewed: 2026-09-17
 ---
 
 # Component Lab
@@ -31,9 +31,25 @@ the decisions behind it.
 ## The catalogue
 
 `shared/ui` → **Everything** is every component `@shared/ui` exports on one page, each
-with its import path — the "what do we already have" view. Per-component groups
-(`shared/ui/Button`, `shared/ui/display`, `shared/ui/forms`, `shared/ui/overlays`) carry the
-variants and states.
+with its import path — the "what do we already have" view. Six sibling groups
+carry the variants and states, and all seven stories live together in
+`tools/lab/src/stories/shared-ui/`:
+
+| Sidebar title | File | Covers |
+| --- | --- | --- |
+| `shared/ui` | `overview.story.tsx` | Everything, one state each |
+| `shared/ui/Button` | `button.story.tsx` | All variants, all sizes, live playground |
+| `shared/ui/display` | `display.story.tsx` | Badge, Avatar, Card |
+| `shared/ui/forms` | `forms.story.tsx` | Input, Label, Textarea, Select, Field, Fieldset, Checkbox, RadioGroup, UsernameInput, OtpInput |
+| `shared/ui/feedback` | `feedback.story.tsx` | Notice, Chip, EmptyState, Stat |
+| `shared/ui/data` | `data.story.tsx` | Table, Meter |
+| `shared/ui/overlays` | `overlays.story.tsx` | Dialog, Modal, DropdownMenu, Popover, Tabs |
+
+The sidebar title comes from each file's `meta.title`, not from its path, so
+moving a story does not move its row. The other two component layers —
+`@osn/auth-ui` and `@cire/ui`, see [[component-library]] — have no catalogue
+story: every auth view takes an `@osn/client` and a live session, which is the
+fixture problem below.
 
 `shared/toast` and `shared/sortable` are benches rather than catalogues: they
 exist for the behaviour no test tier can reach. Their unit suites assert the
@@ -60,7 +76,9 @@ and an auth session; standing those up in a story means fixtures the repo
 deliberately keeps out of app source — see [[component-library]]. The path is
 open where a component needs no such context: `pulse/Icon` is catalogued from
 a story sitting in `pulse/web/src/components/Icon.story.tsx`, which imports
-nothing from the lab and so stays an ordinary file in its own package. The two
+nothing from the lab and so stays an ordinary file in its own package, and
+`cire/host/src/components/ModuleSidebar.story.tsx` does the same for a component
+that supplies its own fixtures and imports its own `global.css`. The two
 `shared/*` benches are the same shape — bare component exports, no lab imports,
 typechecked and linted in their own package like any other file.
 
@@ -89,15 +107,17 @@ addons, or if the design system needs published docs for people outside the repo
 | three / canvas | `src/lab/three.tsx` | `ThreeCanvas`, `Canvas2D`, `htmlToCanvas`, `htmlToTexture`, CSS3D layer. |
 | Shell | `src/Lab.tsx` | Sidebar, backdrops, viewports, theme, remount, `?bare`. |
 
-Stories live either in `tools/lab/src/stories/` (spikes) or next to a real
-component under any workspace's `src/` (permanent bench). Both are found.
+Stories live either under `tools/lab/src/stories/` — the `shared/ui` catalogue
+in `stories/shared-ui/`, spikes at the top level; the glob is recursive — or
+next to a real component under any workspace's `src/` (permanent bench). Both
+are found.
 
 ## Decisions worth keeping
 
 **The lab imports `musubi/social/src/App.css` rather than copying tokens.** That
 file is the source of truth for `--background`, the `.dark` block and the `base:`
 variant every `@shared/ui` class is written against. A second copy drifts. The cost
-is that the OSN look is the lab's default; a story with its own design language
+is that Musubi's look is the lab's default; a story with its own design language
 imports its own CSS.
 
 **No iframe.** Stories render in the same document as the chrome. Hot reload

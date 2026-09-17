@@ -1,44 +1,11 @@
 /**
  * A modal dialog, built on the platform's own `<dialog>` element.
  *
- * ## Why not Kobalte
- *
- * `@shared/ui` already ships a Kobalte-backed `Dialog`, and `@musubi/social` and
- * `@pulse/web` use it. This exists because `@cire/invites` and `@cire/landing`
- * carry no Kobalte at all, and **it does not fit**: measured 2026-09-16,
- * importing `@kobalte/core/dialog` costs 15.3 KB gzip on top of a bare Solid
- * bundle (2,270 → 17,564 bytes), against ~11.7 KB of headroom in each of those
- * two apps. Adopting it there would mean re-baselining the guest site's budget
- * by roughly 9% — on the surface people load on mobile data at a wedding.
- *
- * *Measured — `bun build <entry> --minify --target=browser` from `shared/ui`, with
- * and without the import, then `gzip -9`. Budgets in
- * `scripts/bundle-size-budgets.txt`.*
- *
- * Most of what that 15 KB buys is behaviour the browser now does natively.
- * `showModal()` gives a focus trap, Escape-to-close, background inertness and a
- * `::backdrop` pseudo-element, all from the platform. What is left is the part
- * below: reactive open/close, a close-on-backdrop-click that does not misfire,
- * and the accessible name.
- *
- * ## The top layer is the point, not a detail
- *
- * A `showModal()` dialog renders in the **top layer** — outside the normal flow
- * entirely. That makes it immune to the trap that has already cost this
- * repository a bug: a `transform` on any ancestor turns that ancestor into the
- * containing block for `position: fixed` descendants *and* into a stacking
- * context no `z-index` escapes. Motion One leaves its final inline `transform`
- * on everything it animates, which is what left cire's RSVP toast mispositioned
- * and painted underneath the sheet it fired beneath
- * (`wiki/architecture/frontend-patterns.md`). Nine hand-rolled overlays in this
- * repository are `position: fixed` inside a portal, each of them one animated
- * ancestor away from that. The top layer cannot be captured that way, so the
- * whole class of bug stops being possible rather than being avoided by
- * convention.
- *
- * It also means **no `z-index` and no portal**: the top layer paints above every
- * stacking context in the document by definition, and the element may live
- * wherever it is written.
+ * `showModal()` supplies the focus trap, Escape, background inertness and the
+ * `::backdrop`; because the element renders in the top layer it needs no
+ * `z-index`, no `position` and no portal, and no ancestor `transform` can
+ * capture it. `@shared/ui` also ships a Kobalte-backed `Dialog` — the decision
+ * record below says which to reach for.
  *
  * ## Keep it mounted across the close
  *
@@ -66,6 +33,8 @@
  * dialog, competing for the same accessible name. The children mount when
  * `open` goes true and unmount once the exit has finished, so an expensive body
  * costs nothing until it is asked for and is still there to be animated away.
+ *
+ * @see wiki/decisions/native-dialog-over-kobalte.md
  */
 
 import { clsx } from "clsx";

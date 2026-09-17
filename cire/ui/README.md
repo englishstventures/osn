@@ -3,25 +3,35 @@
 cire's own component layer: the chrome `@shared/ui` should not carry, because it is
 this product's house style rather than anything a second product would want.
 
-Three components today — `Button`, `Card`, `Loading`. Everything else the two
-portals used to duplicate (`Field`, `Notice`, `EmptyState`, `Chip`, `Stat`,
-`Meter`, `Table`, `SafeProps`) is in `@shared/ui`, because none of it was
-cire-specific; it was only cire-_located_.
+Four components: `Button`, `Card`, `Loading`, and a combobox-shaped
+`UsernameInput`. Everything a cire surface needs that is not house style —
+`Field`, `Notice`, `EmptyState`, `Chip`, `Stat`, `Meter`, `Table`, `Modal`,
+`SafeProps` — is in `@shared/ui`, because none of it is cire-specific; it was
+only cire-_located_.
+
+`UsernameInput` is the one apparent duplicate, and the reason is the API rather
+than the styling: `@shared/ui`'s is controlled and renders its own debounced
+availability status, this one spreads raw input props because its single call
+site (`cire/host`'s add-host combobox) drives `aria-expanded`,
+`aria-activedescendant` and a suggestion list onto the box. The full argument is
+in `src/username-input.tsx`.
 
 ## It is written against the token contract
 
-Every class here is an `osn-*` utility, `base:`-prefixed. **"House-specific"
+Every class here is a `ui-*` utility, `base:`-prefixed. **"House-specific"
 describes which components live here, not a separate vocabulary** — a library
 that wrote `bg-gold` would be a library that only renders in the two apps that
 happen to declare `--gold`, which is exactly the bug this package exists to fix.
-`cire/host`'s Button used `duration-(--dur-fast)` and `ease-(--ease-out)`, and
-`--dur-fast` is declared in neither `cire/invites` nor `cire/landing`.
+The same trap catches motion: `--dur-fast` is declared in `cire/host` and
+`cire/vendor` and in neither `cire/invites` nor `cire/landing`, so a component
+here that spelled `duration-(--dur-fast)` would animate on two surfaces and sit
+untimed on the other two.
 
 The visible cost is that transitions here are plain Tailwind durations rather
 than cire's `--dur-*` scale, so they do not follow `--motion-scale`. Nothing in
 any app writes that property — it exists so a fixtures page can slow the whole
 portal to 0.1× and judge a reference behaviour frame by frame — so what is lost
-is a development affordance for these three components, not a user-facing one.
+is a development affordance for these components, not a user-facing one.
 The reduced-motion kill switch is a global rule in each app's `global.css` and
 is unaffected.
 
@@ -35,7 +45,7 @@ An app needs two things, both of which it almost certainly already has:
 @source "../../../ui/src"; /* relative to the app's global.css */
 ```
 
-and the `--osn-*` mapping block. The `@source` line goes in the **app's own**
+and the `--ui-*` mapping block. The `@source` line goes in the **app's own**
 stylesheet, never in `@shared/design-tokens`: a shared file pointing at a
 product package inverts the layering and would scan cire's classes into every
 musubi, pulse, lab and metrics build.

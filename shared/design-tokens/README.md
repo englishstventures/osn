@@ -51,14 +51,20 @@ it("maps the contract without breaking contrast", () => {
 });
 ```
 
-## Who writes `osn-*`
+## Who writes `ui-*`
 
-**Shared packages only.** `@shared/ui`, `@cire/ui`, `@shared/toast` and anything
-else that has to render inside more than one app write `bg-ui-surface`,
-`text-ui-ink`, `text-ui-sm`. **Application code keeps its own vocabulary** —
-cire keeps `bg-surface` and `text-gold`, pulse keeps `bg-card`. The namespace
-exists precisely so adopting the contract does not mean rewriting the 3,120
-class attributes in the tree.
+**Shared component packages only.** `@shared/ui`, `@cire/ui` and `@osn/auth-ui`
+— anything that renders inside an app it does not own — write
+`bg-ui-surface`, `text-ui-ink`, `text-ui-sm`. **Application code keeps its own
+vocabulary**: cire keeps `bg-surface` and `text-gold`, pulse keeps `bg-card`.
+The namespace exists precisely so adopting the contract does not mean rewriting
+the 3,120 class attributes in the tree.
+
+The prefix is `ui-` because that is what these names are *for*, and because a
+prefix is read as a claim about ownership: nothing here belongs to the identity
+system, and most of the surfaces painting with it never touch an OSN ceremony.
+`wiki/architecture/osn-and-musubi.md` is what decides which name a new package,
+token or identifier takes.
 
 ## The contract
 
@@ -77,7 +83,9 @@ class attributes in the tree.
 | Status    | `--ui-success`, `--ui-warn`                                 | 4.5:1                                           |
 |           | `--ui-danger`, `--ui-on-danger`                             | fill and its ink                                |
 | Focus     | `--ui-focus`                                                 | 3:1                                             |
+|           | `--ui-focus-width`, `--ui-focus-offset`                      | —                                               |
 | Radius    | `--ui-radius-hair\|sm\|md\|lg\|pill`                         | —                                               |
+|           | `--ui-radius-control`                                        | a role, not a size — defaults to `md`           |
 | Type      | `--ui-font-body\|display\|mono`                              | —                                               |
 | Motion    | `--ui-dur-fast\|base\|slow`, `--ui-ease-out\|in-out`        | —                                               |
 | Elevation | `--ui-elev-1\|2`                                             | —                                               |
@@ -175,8 +183,8 @@ section on a landing page, cire's invite preview rendering a wedding's palette
 inside the organiser's chrome. Without `inline` the alias resolves once at
 `:root` and every one of those silently shows the page theme.
 
-Nothing reads `--color-osn-*` from JavaScript — an app reads its own `--osn-*`
-or its own token — so the reason `cire/host` gives for keeping _its_ theme block
+Nothing reads `--color-ui-*` from JavaScript — an app reads its own `--ui-*` or
+its own token — so the reason `cire/host` gives for keeping _its_ theme block
 non-inline does not apply here.
 
 ## Why there is no `:root` block
@@ -197,7 +205,7 @@ be a library owning a brand.
 bun run --cwd shared/design-tokens test:run
 ```
 
-50 tests. A large minority assert that the harness produces a **failure** —
-a contrast guard that only ever goes green is indistinguishable from one that
+A large minority of them assert that the harness produces a **failure** — a
+contrast guard that only ever goes green is indistinguishable from one that
 measures nothing, which is exactly what the harness this replaces would have
 done against a `var()`-based mapping.
