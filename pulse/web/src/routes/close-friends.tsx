@@ -117,7 +117,7 @@ export function CloseFriendsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      class="text-muted-foreground h-7 text-xs"
+                      class="text-muted-foreground h-7"
                       disabled={busy() === entry.profileId}
                       onClick={() => {
                         void remove(entry);
@@ -169,7 +169,7 @@ export function CloseFriendsPage() {
                       </div>
                       <Button
                         size="sm"
-                        class="h-7 text-xs"
+                        class="h-7"
                         disabled={busy() === candidate.profileId}
                         onClick={() => {
                           void add(candidate);

@@ -184,10 +184,7 @@ export function ShareEventButton(props: ShareEventButtonProps) {
         when={isMobile()}
         fallback={
           <Popover open={open()} onOpenChange={setOpen}>
-            <PopoverTrigger
-              aria-label="Share event"
-              class="bg-secondary text-secondary-foreground hover:bg-secondary/80 inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-3 text-xs font-medium"
-            >
+            <PopoverTrigger as={Button} variant="secondary" size="sm" aria-label="Share event">
               Share
             </PopoverTrigger>
             <PopoverContent class="w-72 p-0">{grid}</PopoverContent>

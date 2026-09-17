@@ -66,7 +66,7 @@ export function SettingsPage() {
             setting. Choose your event visibility carefully when RSVPing.
           </p>
           <RadioGroup
-            class="mt-2 flex flex-col gap-2"
+            class="mt-2 flex flex-col"
             value={selected()}
             onChange={(v) => setSelected(v as Visibility)}
             name="attendanceVisibility"
