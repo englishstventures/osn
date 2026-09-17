@@ -69,7 +69,7 @@ export function ConsentPreferences() {
       onClose={closeConsentPreferences}
       labelledBy={titleId}
       aria-describedby={descriptionId}
-      class="base:border-border base:bg-bg base:mt-auto base:mb-0 base:max-h-[85vh] base:w-full base:max-w-lg base:overflow-y-auto base:rounded-t-lg base:rounded-b-none sm:base:m-auto sm:base:rounded-lg"
+      class="border-border bg-bg mt-auto mb-0 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-lg rounded-b-none sm:m-auto sm:rounded-lg"
     >
       <h2 id={titleId} class="font-display text-text text-osn-lg leading-tight font-light">
         Your privacy choices

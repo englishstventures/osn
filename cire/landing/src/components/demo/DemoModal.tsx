@@ -39,7 +39,7 @@ export function DemoModal(props: DemoModalProps) {
       open={props.open}
       onClose={props.onClose}
       labelledBy={props.labelledBy}
-      class="base:border-border base:bg-surface base:relative base:mt-auto base:mb-0 base:max-h-[85dvh] base:w-full base:max-w-[480px] base:overflow-y-auto base:overscroll-contain base:rounded-t-[1.75rem] base:rounded-b-none base:px-6 base:pt-8 base:pb-[max(2.5rem,env(safe-area-inset-bottom))] md:base:m-auto md:base:max-h-[85vh] md:base:rounded-lg md:base:pb-10"
+      class="border-border bg-surface relative mt-auto mb-0 max-h-[85dvh] w-full max-w-[480px] overflow-y-auto overscroll-contain rounded-t-[1.75rem] rounded-b-none px-6 pt-8 pb-[max(2.5rem,env(safe-area-inset-bottom))] md:m-auto md:max-h-[85vh] md:rounded-lg md:pb-10"
     >
       <Button
         variant="bare"

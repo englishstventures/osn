@@ -4,7 +4,7 @@ tags: [architecture, privacy, compliance, web, cire]
 related:
   - "[[index]]"
   - "[[cire-invite-builder]]"
-last-reviewed: 2026-08-31
+last-reviewed: 2026-09-17
 ---
 # Site-wide consent framework
 
@@ -287,9 +287,23 @@ mounted first.
   switch to see what it covers and then closes the dialog has granted nothing.
 - **Withdrawal is permanent and findable** — `ConsentPreferencesLink` in
   `SiteFooter.astro` on every page, plus a copy on `/privacy`.
-- **Consent layers sit above everything** (`Z_LAYER.CONSENT` = 200,
-  `CONSENT_DIALOG` = 210). Blocked embeds live inside the details modal, so the
-  dialog opened from one must not be buried behind it.
+- **The dialog reaches above the details sheet, and the banner no longer does.**
+  Both were once a `z-index` (`Z_LAYER.CONSENT` = 200, `CONSENT_DIALOG` = 210)
+  ranked over the sheet's 100. The sheet is a `showModal()` dialog now, in the
+  **top layer**, which no number reaches — see
+  [[wiki/architecture/component-library]] §What has to sit above a modal.
+  - The **dialog** is fine, and is in fact safer than it was: it is a
+    `showModal()` dialog too, so opening it from a blocked embed inside the
+    sheet makes it the blocking dialog and the sheet goes inert beneath it.
+    `CONSENT_DIALOG` is deleted because it has nothing left to rank against.
+  - The **banner** is not a dialog and still carries `Z_LAYER.CONSENT`, so while
+    a sheet is open it is painted underneath and is `inert`: not clickable, not
+    announced. It comes back the moment the sheet closes. The guest is not
+    locked out — Escape or the sheet's own close reaches it — but an undecided
+    guest looking at a third-party embed *inside* the sheet has no consent
+    affordance in front of them unless the category is already off, which is
+    what puts a `<ConsentGate>` placeholder there. Tracked in
+    `xchromo/osn#1061`.
 
 Only one mounted component renders the dialog at a time
 (`claimConsentDialogHost`), or a page with both a banner and a footer link would

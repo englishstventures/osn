@@ -388,7 +388,7 @@ export default function EventsEditor(props: { weddingId: string }) {
         open={preview() !== null}
         onClose={() => setPreview(null)}
         label="Review changes before applying"
-        class="base:max-h-[85vh] base:w-full base:max-w-lg base:overflow-y-auto"
+        class="max-h-[85vh] w-full max-w-lg overflow-y-auto"
       >
         <Show when={shownPreview()}>
           {(p) => (
@@ -702,7 +702,7 @@ function EventDrawer(props: {
       open
       onClose={props.onClose}
       label="Edit event"
-      class="base:border-border base:my-0 base:ml-auto base:mr-0 base:h-full base:max-h-none base:w-full base:max-w-md base:overflow-y-auto base:rounded-none base:border-l base:p-6"
+      class="border-border my-0 mr-0 ml-auto h-full max-h-none w-full max-w-md overflow-y-auto rounded-none border-l p-6"
     >
       <div class="mb-6 flex items-center justify-between">
         <h2 class="font-display text-gold-dim text-osn-lg">Event details</h2>

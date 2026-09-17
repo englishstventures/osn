@@ -1,4 +1,5 @@
 import { cleanup, render } from "@solidjs/testing-library";
+import { userEvent } from "@vitest/browser/context";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import "../../src/styles/global.css";
@@ -66,12 +67,13 @@ describe("the guest sheet, in a real engine", () => {
       </AnimatedModal>
     ));
 
-    // `requestClose()` rather than a synthetic keydown: Escape on a modal
-    // dialog is the user agent's own behaviour, so no dispatched key event
-    // triggers it. This is the platform entry point for the same sequence.
-    // Queried as `dialog` rather than by role, because that is the element type
-    // the method is on.
-    document.querySelector("dialog")!.requestClose();
+    // A real Escape, driven through the browser, rather than a dispatched
+    // `KeyboardEvent` (which a modal dialog ignores — the behaviour is the user
+    // agent's) or `requestClose()` (which goes through the close-watcher
+    // budget: without user activation a page gets one free watcher, so the
+    // method quietly stops closing anything once a suite has opened a few
+    // dialogs, and the failure lands on whichever test happens to run later).
+    await userEvent.keyboard("{Escape}");
     await afterTheCloseEvent();
 
     expect(onClose).toHaveBeenCalledTimes(1);

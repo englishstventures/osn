@@ -37,7 +37,7 @@ export default function PreviewModal(
       open={props.open}
       onClose={props.onClose}
       label="Invite preview modal"
-      class="base:flex base:max-w-sm base:flex-col base:gap-4"
+      class="flex max-w-sm flex-col gap-4"
     >
       <div class="flex items-center justify-between gap-2">
         <p class="font-body text-gold text-osn-xs tracking-osn-widest uppercase">Live preview</p>

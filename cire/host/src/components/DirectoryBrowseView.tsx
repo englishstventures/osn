@@ -469,7 +469,7 @@ export default function DirectoryBrowseView(props: DirectoryBrowseViewProps) {
         open={modalListing() !== null}
         onClose={closeModal}
         label={shownListing()?.name ?? "Vendor"}
-        class="base:flex base:max-h-[90vh] base:w-full base:max-w-lg base:flex-col base:gap-4 base:overflow-y-auto"
+        class="flex max-h-[90vh] w-full max-w-lg flex-col gap-4 overflow-y-auto"
       >
         <Show when={shownListing()}>
           {(ml) => (
