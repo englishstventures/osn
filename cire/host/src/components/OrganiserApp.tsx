@@ -357,6 +357,12 @@ function Dashboard() {
     });
 
     void (async () => {
+      /* Sequential by design, and every `await` below is inside this loop on
+         purpose: it is a poll with backoff, so running the attempts together
+         would defeat both the backoff and the early exit the moment the
+         purchase settles. `cancelled` is assigned in the `onCleanup` closure
+         above, which the unmodified-loop-condition rule cannot follow. */
+      // oxlint-disable no-await-in-loop, no-unmodified-loop-condition
       for (let attempt = 0; attempt < POLL_ATTEMPTS && !cancelled; attempt += 1) {
         let state: Awaited<ReturnType<typeof fetchPurchase>> = null;
         try {
@@ -396,6 +402,7 @@ function Dashboard() {
           pollTimer = setTimeout(resolve, pollDelayMs(attempt));
         });
       }
+      // oxlint-enable no-await-in-loop, no-unmodified-loop-condition
       // Still pending after the last attempt. Not an error — Stripe is slow
       // sometimes — so the honest message says where it got to.
       if (!cancelled) {

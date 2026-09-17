@@ -106,7 +106,14 @@ export const createUpgradeRoutes = (db: Db, osnAuthOptions: OsnAuthOptions, deps
                 // `held` is what makes the dialog honest about a module the
                 // wedding already has — the nav row unfades on the same data,
                 // so the two cannot disagree.
-                upgrades: entries.map((e) => ({ ...e, held: owned.has(e.entitlement) })),
+                upgrades: entries.map((e) => ({
+                  entitlement: e.entitlement,
+                  title: e.title,
+                  blurb: e.blurb,
+                  amountMinor: e.amountMinor,
+                  currency: e.currency,
+                  held: owned.has(e.entitlement),
+                })),
               };
             }).pipe(
               Effect.provideService(DbService, db),

@@ -126,6 +126,11 @@ export default function UpgradeDialog(props: UpgradeDialogProps) {
           }}
         >
           <div
+            /* A portalled div rather than `<dialog>`: this app's modals are
+               portalled to `document.body` because the dashboard shell sets
+               `container-type`, and they are opened declaratively by Solid
+               rather than through `showModal()`. Same shape as EnquireDialog. */
+            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
             role="dialog"
             aria-modal="true"
             aria-label={`Upgrade: ${entry()?.title ?? props.title}`}

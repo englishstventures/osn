@@ -371,7 +371,7 @@ describe("startPurchase", () => {
   });
 
   /**
-   * T-E1. The attach is conditional on the row still being `pending` with no
+   * The attach is conditional on the row still being `pending` with no
    * session, and its result is checked. If it matched nothing — because another
    * request closed or claimed the row while Stripe was thinking — handing out
    * the URL anyway takes a payment into a row that can never settle.

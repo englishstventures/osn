@@ -17,8 +17,8 @@ const cache = new Map<string, CacheEntry>();
 function entryFor(weddingId: string): CacheEntry {
   let entry = cache.get(weddingId);
   if (!entry) {
-    const [catalogue, setCatalogue] = createSignal<CatalogueEntry[] | null>(null);
-    entry = { catalogue, setCatalogue };
+    const [catalogue, setEntries] = createSignal<CatalogueEntry[] | null>(null);
+    entry = { catalogue, setCatalogue: setEntries };
     cache.set(weddingId, entry);
   }
   return entry;
