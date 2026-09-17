@@ -7,6 +7,7 @@ import {
   weddingInviteCustomisations,
   weddings,
 } from "@cire/db";
+import { parsePresets } from "@cire/dietary";
 import { eq, and, asc, count, inArray, ne, isNull } from "drizzle-orm";
 import { Effect, Data } from "effect";
 
@@ -202,6 +203,8 @@ function buildClaimResponse(family: FamilyRow): Effect.Effect<ClaimResponse, nev
               eventId: rsvps.eventId,
               status: rsvps.status,
               dietary: rsvps.dietary,
+              dietaryPresets: rsvps.dietaryPresets,
+              dietaryConsentAt: rsvps.dietaryConsentAt,
             })
             .from(rsvps)
             .innerJoin(guests, eq(rsvps.guestId, guests.id))
@@ -292,7 +295,14 @@ function buildClaimResponse(family: FamilyRow): Effect.Effect<ClaimResponse, nev
       preview: family.kind === "host",
       members: Array.from(memberMap.values()),
       events: eventList,
-      rsvps: rsvpRows,
+      // The stored key list becomes an array, and the consent stamp an ISO
+      // string, at the boundary — the sheet re-lights its picker from the first
+      // and decides whether its consent box may open ticked from the second.
+      rsvps: rsvpRows.map((row) => ({
+        ...row,
+        dietaryPresets: parsePresets(row.dietaryPresets),
+        dietaryConsentAt: row.dietaryConsentAt?.toISOString() ?? null,
+      })),
       // Resolved server-side so the banner the guest reads and the 403 the
       // write path returns are computed by the same function — the client
       // never turns the date into an instant itself.

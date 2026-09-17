@@ -93,10 +93,17 @@ function buildRsvpUpsertStatements(
  * cast straight to {@link RsvpRecord} would quietly claim the parse had already
  * happened.
  */
-type RsvpRow = Omit<RsvpRecord, "dietaryPresets"> & { dietaryPresets: string };
+type RsvpRow = Omit<RsvpRecord, "dietaryPresets" | "dietaryConsentAt"> & {
+  dietaryPresets: string;
+  dietaryConsentAt: Date | null;
+};
 
 function toRsvpRecord(row: RsvpRow): RsvpRecord {
-  return { ...row, dietaryPresets: parsePresets(row.dietaryPresets) };
+  return {
+    ...row,
+    dietaryPresets: parsePresets(row.dietaryPresets),
+    dietaryConsentAt: row.dietaryConsentAt?.toISOString() ?? null,
+  };
 }
 
 /**
@@ -115,6 +122,7 @@ function buildFamilyRsvpsQuery(db: Db, familyId: string) {
       status: rsvps.status,
       dietary: rsvps.dietary,
       dietaryPresets: rsvps.dietaryPresets,
+      dietaryConsentAt: rsvps.dietaryConsentAt,
     })
     .from(rsvps)
     .innerJoin(guests, eq(rsvps.guestId, guests.id))

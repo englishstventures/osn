@@ -80,5 +80,11 @@ export const RsvpRecord = Schema.Struct({
   status: Schema.String,
   dietary: Schema.String,
   dietaryPresets: Schema.Array(Schema.Literals(DIETARY_PRESETS)),
+  // When this row's Art. 9(2)(a) consent was stamped, or null if it carries no
+  // dietary data. The sheet needs it to decide whether its single consent
+  // checkbox may open ticked: one member's prior consent can never stand in for
+  // another's, so a household containing anyone without a record renders it
+  // unticked. ISO-8601, because it crosses the wire.
+  dietaryConsentAt: Schema.NullOr(Schema.String),
 });
 export type RsvpRecord = Schema.Schema.Type<typeof RsvpRecord>;

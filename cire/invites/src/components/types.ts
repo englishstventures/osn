@@ -1,3 +1,5 @@
+import type { DietaryPreset } from "@cire/dietary";
+
 export interface DressSwatch {
   name: string;
   color: string;
@@ -61,6 +63,18 @@ export interface RsvpSummary {
   eventId: string;
   status: "attending" | "declined" | "maybe";
   dietary: string;
+  dietaryPresets: readonly DietaryPreset[];
+  /**
+   * When this row's Art. 9(2)(a) consent was stamped, or null if it carries no
+   * dietary data.
+   *
+   * The sheet asks for consent once per submission rather than once per guest,
+   * so it has to know which members already have a record: one person's prior
+   * consent can never stand in for another's, and a household where anyone is
+   * new to consent must be asked afresh. Non-empty `dietary` used to imply this,
+   * but a row can now carry presets and no text at all.
+   */
+  dietaryConsentAt: string | null;
 }
 
 /**

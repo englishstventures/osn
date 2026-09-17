@@ -110,6 +110,7 @@
     "cire/invites": {
       "name": "@cire/invites",
       "dependencies": {
+        "@cire/dietary": "workspace:*",
         "@astrojs/cloudflare": "^14.2.6",
         "@astrojs/solid-js": "^7.0.2",
         "@cire/invite-designs": "workspace:*",
@@ -146,6 +147,7 @@
     "cire/landing": {
       "name": "@cire/landing",
       "dependencies": {
+        "@cire/dietary": "workspace:*",
         "@astrojs/solid-js": "^7.0.2",
         "@cire/ui": "workspace:*",
         "@shared/ui": "workspace:*",
