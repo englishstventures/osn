@@ -1,6 +1,6 @@
 {
   "name": "@tools/metrics",
-  "version": "0.2.11",
+  "version": "0.2.13",
   "private": true,
   "type": "module",
   "description": "Session-metrics dashboard — charts over the pull-request cards in .claude/metrics, local only",
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@observablehq/plot": "^0.6.17",
-    "@osn/ui": "workspace:*",
+    "@shared/ui": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",
     "solid-js": "^1.9.15",
     "tailwindcss": "^4.3.3"

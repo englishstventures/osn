@@ -55,7 +55,7 @@ gh issue create --repo xchromo/osn --type Feature --label product:cire --title "
 
 **Subagents are dispatched by definition, not by default.** `.claude/agents/*.md` carries a `model` and an `effort` per role — `implementer`, `mechanic`, `explorer`, `shepherd`, `attacker` — and frontmatter is the only place per-task effort can be set, since a dispatch call carries `model` but has no `effort` parameter. The `pick-agent` skill maps a task and its `complexity:` label to one. Treat its effort levels as a prior rather than a measurement: of the assistant records in this repository's history that carry an `effort` field, all 64,491 read `high` — a further 9% carry no such field at all — so nothing here has yet reported running at any other level, and nothing has measured what they are worth.
 
-**Feature or fix work starts with `/new-feat`, in every environment.** It takes or opens the issue, cuts the branch, writes the plan to `NEW-FEAT.md` and runs `/stress-plan` against that plan before any code exists — the one gate with no downstream equivalent, since every later review checks the code against the plan rather than the plan against the repo. A `SessionStart` hook in `.claude/settings.json` says so at the top of each session. Skip it only for a one-line change on a branch that already exists. `/prep-pr` files findings at the end of a review. Label and type definitions, and the Project setup, are in `[[wiki/runbooks/github-issues-setup]]`; how a finding is filed is in `[[wiki/conventions/review-findings]]`.
+**Feature or fix work starts with `/new-feat`, in every environment.** It takes or opens the issue, cuts the branch, writes the plan to `NEW-FEAT.md` and runs `/stress-plan` against that plan before any code exists — the one gate with no downstream equivalent, since every later review checks the code against the plan rather than the plan against the repo. A `SessionStart` hook in `.claude/settings.json` says so at the top of each session. Skip it only for a one-line change on a branch that already exists. `/prep-pr` files findings at the end of a review, and `/retro` runs straight after it — it writes and commits the session-metrics card for the branch (nothing else writes one carrying the pull request's identity) and turns what the session cost into concrete changes to the skills, this file, the wiki, the tests or the brief. Label and type definitions, and the Project setup, are in `[[wiki/runbooks/github-issues-setup]]`; how a finding is filed is in `[[wiki/conventions/review-findings]]`.
 
 One label is orthogonal to all of that: **`needs:decision`**, on both repos. It means the next step needs a choice only the repo owner can make. An agent working the backlog writes what the issue is and what it proposes, applies the label, and moves to a different issue — one open question never parks the queue. See `[[wiki/conventions/review-findings]]` §When the fix needs a decision from the owner.
 
@@ -85,11 +85,13 @@ One label is orthogonal to all of that: **`needs:decision`**, on both repos. It 
 | Add rate limiting to endpoint | `[[wiki/systems/rate-limiting]]`, `[[wiki/systems/redis]]` |
 | Instrument logging, tracing, metrics | `[[wiki/observability/overview]]`, then specific page |
 | See what an agent session cost a PR (token/cost cards, the complexity comparison, the DuckDB queries) | `[[wiki/observability/session-metrics]]` |
+| Close out a finished branch — write the card, and turn the session into changes to the skills, docs or the brief | `.claude/skills/retro/SKILL.md` (`/retro`) |
 | Write or review tests | `[[wiki/conventions/testing-patterns]]` |
 | Write a comment (what earns one, the references that rot, TSDoc tags, when it belongs in the wiki instead) | `[[wiki/conventions/code-comments]]` |
 | Run the devloop (named HTTPS hosts per app, a stack per worktree, adding an app to it) | `[[wiki/conventions/devloop-urls]]` |
 | Split one goal across several PRs (stacked PRs — setting the base with the gh CLI, merge order, rebasing a stack) | `[[wiki/conventions/stacked-prs]]` |
 | Write, re-baseline or debug a guard that gates on a number (bundle budgets, and the two rules any such threshold obeys) | `[[wiki/conventions/bundle-size-guards]]` |
+| Colour a shared component, or map an app onto the token contract (the `ui-*` names, the scales, the conformance harness, why `base:` is a component's and not a caller's) | `[[wiki/architecture/design-tokens]]` |
 | Add or use UI component (Button, Card, Dialog…) | `[[wiki/architecture/component-library]]` |
 | Raise a toast, theme one for an app, or debug a toast's stacking/contrast | `[[wiki/systems/toast]]` |
 | Add drag-to-reorder to a list (and get the keyboard + screen-reader path for free) | `[[wiki/architecture/drag-and-drop]]` |
@@ -203,12 +205,12 @@ Monorepo by domain. Six dirs, six prefixes — see `[[wiki/architecture/monorepo
 
 | Dir | Prefix | What lives here |
 |-----|--------|-----------------|
-| `osn/` | `@osn/*` | **OSN, the system**: the headless identity core (auth, graph, orgs, recommendations, SDK, shared auth UI). No user interface of its own — crypto moved to `@shared/crypto` |
+| `osn/` | `@osn/*` | **OSN, the system**: the headless identity core (auth, graph, orgs, recommendations, SDK) plus `@osn/auth-ui`, the views for its named ceremonies. The core itself has no user interface — crypto lives in `@shared/crypto` |
 | `musubi/` | `@musubi/*` | **Musubi, our implementation**: the identity/social app and its marketing site, built on OSN |
 | `pulse/` | `@pulse/*` | Events stack (app, API, DB) |
 | `zap/` | `@zap/*` | Messaging stack (API on port 3002, DB) |
-| `cire/` | `@cire/*` | Wedding-invite stack (guest site, organiser portal, API, DB) |
-| `shared/` | `@shared/*` | Cross-cutting utils (`@shared/crypto` for ARC tokens, `@shared/email` for transactional mail, `@shared/observability`, `@shared/rate-limit`, `@shared/turnstile` for key-optional bot protection, `@shared/osn-auth-client` for downstream access-JWT verification, `@shared/toast` + `@shared/sortable` for the SolidJS toast and drag-to-reorder surfaces) |
+| `cire/` | `@cire/*` | Wedding-invite stack (guest site, organiser portal, vendor portal, marketing site, API, DB, plus `@cire/ui` — the house component layer all four surfaces share, version-less like the rest of `@cire/*`) |
+| `shared/` | `@shared/*` | Cross-cutting utils (`@shared/ui` for the SolidJS primitives every product renders, `@shared/design-tokens` for the `ui-*` token contract they read, `@shared/color` for the OKLCH and contrast maths under it, `@shared/crypto` for ARC tokens, `@shared/email` for transactional mail, `@shared/observability`, `@shared/rate-limit`, `@shared/turnstile` for key-optional bot protection, `@shared/osn-auth-client` for downstream access-JWT verification, `@shared/toast` + `@shared/sortable` for the SolidJS toast and drag-to-reorder surfaces) |
 
 ## Tech (one-liner)
 
@@ -244,7 +246,8 @@ One-line summaries — open wiki page for full contract, API surface, finding hi
 | Schema Layers | Elysia TypeBox at HTTP boundary, Effect Schema in services. Never mix. | `[[wiki/architecture/schema-layers]]` |
 | Review Finding IDs | S-C/H/M/L (security), P-C/W/I (perf), T-M/U/E/R/S (tests). Four-field format (Issue / Why / Solution / Rationale). | `[[wiki/conventions/review-findings]]` |
 | Stacked PRs | Branch cut from the parent branch, `git config branch.<name>.gh-merge-base <parent>` at worktree creation, `gh pr create --base` — that fixes the diff. The stack itself is a separate object GitHub never infers: register it with `gh stack link <bottom-pr> … <top-pr>` (extension `github/gh-stack`). | `[[wiki/conventions/stacked-prs]]` |
-| Component Library | Zaidan-style (shadcn for SolidJS) on Kobalte. Component defaults use `base:`-prefixed classes written directly in source; two class utils cover the rest: `clsx()` conditional joins, `cn()` only for arbitrary conflicts. | `[[wiki/architecture/component-library]]` |
+| Design-token contract | One neutral vocabulary in `@shared/design-tokens` — colour roles plus type/tracking/leading/radius scales — namespaced `ui-*`. **Library-facing**: shared packages write it, app code keeps its own names and maps onto it once in a `:root` block. `@theme inline`, so a token resolves at the element and a themed subtree is followed. No `:root` in the package (it would beat the app's mapping); fallbacks are a neutral greyscale, so an unmapped app renders legibly rather than correctly. A conformance harness every app calls from its own suite checks each pair against WCAG 2.2, and found 13 pre-existing defects. | `[[wiki/architecture/design-tokens]]` |
+| Component Library | Zaidan-style (shadcn for SolidJS) on Kobalte, in three layers: `@shared/ui` for the primitives, `@osn/auth-ui` for the views of OSN's named ceremonies, `@cire/ui` for the house style that is genuinely cire's. Component defaults use `base:`-prefixed classes written directly in source — `:where(&)`, zero specificity, so a caller's **plain** utility wins and a `base:` one ties. Two class utils cover the rest: `clsx()` conditional joins, `cn()` only for arbitrary conflicts. | `[[wiki/architecture/component-library]]` |
 | Share-source attribution | Closed `ShareSource` enum (`instagram | facebook | tiktok | x | whatsapp | copy_link | other`) drives the share picker, `?source=` URL injection, RSVP attribution columns (`share_source_first` sticky, `share_source_last` overwriting), and four bounded-cardinality counters. Single source of truth in `pulse/api/src/lib/shareSource.ts`; metric attribute type via `import type`. Lightweight `checkEventVisibility` (3 cols) gates the high-frequency share / exposure endpoints instead of the full `loadVisibleEvent`. Organiser self-RSVPs / self-views excluded. | `[[wiki/systems/event-access]]` |
 
 ## Conventions
@@ -259,6 +262,7 @@ One-line summaries — open wiki page for full contract, API surface, finding hi
 | Platform priority | iOS > Web > Android (Android deferred) |
 | Map-membership guards | A guard that narrows to `keyof typeof MAP` must test `Object.hasOwn(MAP, key)`, never `key in MAP`. `in` walks the prototype chain, so `constructor`, `toString` and `__proto__` pass and the predicate then asserts an inherited `Object.prototype` member is a real entry. `house/no-in-operator-key-guard` (in `tools/oxlint/house`) is an error, and it matches the narrowed parameter rather than the literal `keyof typeof` syntax, so an aliased predicate is caught too — see `cire/theme/src/palette.ts` for the house form |
 | Comments | A comment states what the code guarantees now — never a tracker issue, a finding tag, a phase code or a bug's history, all of which rot. Prefer a rename, then a `@see` to a wiki path or public issue, then an inline reason. `house/no-tracker-ref-in-comment` enforces it. See `[[wiki/conventions/code-comments]]` |
+| Instruction files state the present | A `SKILL.md`, this file and a wiki page tell an agent what to do **now**. They never narrate how they got there — "X used to live in Y", "this no longer does Z", "the first attempt tried W", "moved here in the 2026-09 refactor". That is a changelog, `git log` already holds it, and every sentence of it is read again on every future run that loads the file. The test is whether a reader who never saw the old state loses anything: if not, cut it. A **reason** is different and stays, because it stops a foreseeable mistake — "after `prep-pr`, because `prep-pr` dispatches three review agents" earns its place; "`prep-pr` used to do this" does not. Same rule as the `Comments` row above, applied to the files an agent reads rather than the code it edits. When a passage is worth keeping but only as history, it belongs in the pull-request body or the wiki page's own prose, never in the instruction |
 | Known issues and deferrals | **Never explain a deferral inline.** Work you are choosing not to do now — a limitation, a rule left at `warn`, a fix scoped out, a workaround awaiting a real one — gets an **issue**, and the code carries the link and nothing more: `// Bounded until xchromo/osn#412 lands.` The prose version has no owner, appears in no backlog, and is discovered only by whoever next reads that file. This is a deferral, not a decision: a settled choice with a reason is fine inline and needs no issue (`require-param` stays off because it demands restating types). The test is whether the sentence implies future work. Same rule in config comments, not just code. A finding goes to `xchromo/osn-tracker` and must **not** be linked from a public file — state the constraint instead. See `[[wiki/conventions/code-comments]]` |
 | Non-subscribing store reads | In a `*-store.ts` organiser cache (cire only), `entryFor(id).accessor()` is the subscribing read — it mints the cache entry, so a tracked read always has something to register a dependency on. `cache.get(id)?.accessor()` does not mint the entry: when it is absent the read short-circuits before `accessor` ever runs, so a tracked read registers zero dependencies and never re-runs once the entry is created. That non-minting form is confined to `peekCached*`/`hasCached*` functions, whether written as the direct `cache.get(id)?.accessor()` chain or split across a `const entry = cache.get(id)` and a later `entry?.accessor()` / guarded `entry.accessor()`. `house/no-non-subscribing-store-read` (in `tools/oxlint/house`) enforces it as an error, scoped to `cire/**/*-store.ts` |
 | Where tests live | `tests/` at the package root, mirroring `src/` — **never** beside the source. Test-only support code (mocks, request harnesses, fixtures) lives there too, so `src/` holds nothing test-shaped: `cire/api/tests/test-helpers/`, `cire/host/tests/test-support/`. `scripts/` is not a workspace but follows the same rule (`scripts/tests/`, shell tests included). The one deliberate carve-out is the Miniflare-backed D1 tier at `tests/d1/` (cire's at `tests/db/`), which the vitest configs exclude by path because it imports `bun:test` and boots workerd — `bun run test:d1` is the only thing that runs it. See `[[wiki/conventions/testing-patterns]]` |
@@ -380,10 +384,14 @@ bun run fmt              # oxfmt format
 bun run fmt:check        # oxfmt check (CI)
 
 # Database (run from the relevant package directory)
-bun run db:migrate       # Generate migrations
+bun run db:migrate       # Generate migrations — osn/db, pulse/db, zap/db only
 bun run db:push          # Push schema
 bun run db:studio        # Drizzle Studio
 # e.g. bun run --cwd pulse/db db:studio
+# cire/db names these differently and the difference is not cosmetic: generating
+# is `db:generate` there, and `db:migrate:local|dev|prod` APPLIES a migration to
+# a tier. A cire column also has three DDL surfaces, not two — see
+# [[wiki/apps/cire-development]] §Database.
 
 # Versioning
 bun run changeset        # Create changeset (required for every PR)
@@ -398,7 +406,7 @@ bun run reset            # clean + reinstall
 
 ```bash
 # Use --cwd (not --filter)
-bun add solid-js --cwd osn/landing
+bun add solid-js --cwd musubi/landing
 bun add drizzle-orm --cwd pulse/db
 ```
 

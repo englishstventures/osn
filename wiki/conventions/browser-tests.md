@@ -8,21 +8,35 @@ related:
 packages:
   - "@cire/invites"
   - "@cire/host"
-last-reviewed: 2026-09-07
+  - "@musubi/social"
+  - "@pulse/web"
+last-reviewed: 2026-09-17
 ---
 # Browser Tests
 
-A second Vitest project — in `@cire/invites` and, since 2026-08-06, in
-`@cire/host` — that runs a handful of tests in a **real Chromium** instead
-of jsdom/happy-dom. Files are named `*.browser.test.ts(x)`.
+A second Vitest project — in `@cire/invites`, in `@cire/host` since 2026-08-06,
+and in `@musubi/social` and `@pulse/web` since 2026-09-16 — that runs a handful
+of tests in a **real Chromium** instead of jsdom/happy-dom. Files are named
+`*.browser.test.ts(x)`.
 
 ```bash
 bun run --cwd cire/invites test                 # fast tier (jsdom) — the default
 bun run --cwd cire/invites test:browser         # browser tier
 bun run --cwd cire/host test:run       # fast tier (happy-dom)
 bun run --cwd cire/host test:browser   # browser tier
+bun run --cwd musubi/social test:browser
+bun run --cwd pulse/web test:browser
 bun run test:browser                        # every package that has one (turbo)
 ```
+
+> [!important] Every primitive carries `transition-colors`, so a theme flip lags
+> the assertion.
+> `getComputedStyle` read immediately after toggling `.dark` returns the value
+> part-way through the transition — at t=0, the **old** colour. A test that
+> switches themes and measures must kill transitions first
+> (`*, *::before, *::after { transition: none !important }` injected in
+> `beforeAll`). Without it the assertion fails while the token chain underneath
+> is entirely correct, and the failure points at the wrong thing.
 
 The organiser's tier exists for one thing the portal has and the guest site
 doesn't: **two ramps and mostly translucent ink tokens**. `tokens.test.ts`
@@ -154,6 +168,12 @@ unrunnable there short of a ~300MB download. Point it at the existing binary:
 VITEST_BROWSER_EXECUTABLE_PATH=/opt/pw-browsers/chromium bun run test:browser
 ```
 
+In this repository's cloud sessions the binary is a build-numbered directory
+rather than that bare path — as of 2026-09-16,
+`/opt/pw-browsers/chromium-1194/chrome-linux/chrome`, against a pinned
+Playwright that wants 1234. `ls /opt/pw-browsers` and use what is there; do not
+run `playwright install`, which is what the prebuilt browser exists to avoid.
+
 The variable is declared in `turbo.json` under `passThroughEnv`, not `env` — it
 says *where* Chromium is, never *what* the tests assert, so it must not enter
 the cache key.
@@ -182,12 +202,15 @@ nothing.
 | Package | File | Pins |
 |---|---|---|
 | `@cire/invites` | `tests/lib/z-index.browser.test.tsx` | Every `Z_CLASS` entry emits real CSS; a modal-launched popover hit-tests **above** the modal (#203); no ancestor traps it in a stacking context; the modal blocks page content beneath it |
+| `@cire/invites` | `tests/components/DietaryPresets.browser.test.tsx` | The dietary picker's preset track overflows **inside** the sheet rather than widening it (a `<fieldset>` sizes to its content unless every box down to the scrollport may be narrower than what it holds), and the picker stays inline at desktop width — a `showModal()` dialog paints above every stacking context, so a portalled popover opened from inside it would be unreachable at any z-index |
 | `@cire/invites` | `tests/components/RsvpModal.browser.test.tsx` | The sticky action bar sits on the scrollport's bottom edge, stays put while content scrolls under it, runs full-bleed to the panel's content box, and both buttons are the topmost element at their own centre |
 | `@cire/invites` | `tests/styles/reduced-motion.browser.test.tsx` | The clamp applies to transitions *and* animations, `animate-spin` keeps its documented exemption, and a clamped transition still lands on its end state and fires `transitionend` |
 | `@cire/invites` | `tests/components/EventCard.browser.test.tsx` | The RSVP confirmation fill **travels** (mid-sweep scale strictly between 0 and 1, so the transition is wired to the property Tailwind actually writes), lands on the `bloom` token, and is still painted seconds past `TOTAL_DURATION_MS`; a reply already on file paints filled on the first frame; the two `scale-x-*` utilities never coexist |
 | `@cire/invites` | `tests/components/rsvp-confirmation.browser.test.tsx` | The same fill, driven through the real `RsvpModal` → `EventCard` seam on real timers: nothing shows while the sheet still covers the button, a partial save leaves it plain, and a completing save's fill survives 5s+ |
 | `@cire/invites` | `tests/designs/InvitePage.browser.test.tsx` | The confirmation and the save toast inside the page they ship in, `describe.each`'d over **both** design packs — including the first-visit path, where Motion One's reveal has left its inline `transform` on the events section. The toast must have no fixed-position containing block between it and `<body>`, must stack above `Z_LAYER.MODAL` **and below `Z_LAYER.CONSENT`**, and must be anchored to the viewport |
 | `@cire/host` | `tests/components/ImportPanel.browser.test.tsx` | The mandatory-column chip's ink clears WCAG against the composited stack it actually sits on; the first-run `attention-glow` exists, animates `opacity` only, and honours the reduced-motion clamp |
+| `@musubi/social` | `tests/styles/token-contract.browser.test.tsx` | A contract utility emits CSS **at all** (an unresolvable one emits nothing, silently); `bg-ui-accent` paints exactly what `--primary` holds; the destructive button's ink comes from `--destructive-foreground` rather than the `text-white` it used to hard-code; the mapping follows `.dark` because it is aliases and not literals; `base:` still compiles to `:where(…)`, so a call-site `class` still wins |
+| `@pulse/web` | `tests/styles/token-contract.browser.test.tsx` | The same chain on a different ramp, plus the mapping decision that only a colour can check: `--ui-accent` paints `--primary` and **not** the coral `--pulse-accent`, so nobody can "fix" the mapping to the brand colour and repaint every shared button |
 | `@cire/host` | `tests/components/PreviewInviteButton.browser.test.tsx` | "Preview invite" is genuinely painted at phone width with its label clipped to the 1×1 `sr-only` box rather than `display: none`, and swaps to the written label — glyph gone — once the `frame` container passes 42rem |
 
 Three of these were verified against the bug rather than merely written green.

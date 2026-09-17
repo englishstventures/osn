@@ -1,5 +1,6 @@
 import { AuthProvider, useAuth } from "@shared/rp-auth/solid";
 import { toast, Toaster } from "@shared/toast";
+import { Notice } from "@shared/ui/ui/notice";
 import {
   createEffect,
   createResource,
@@ -38,7 +39,6 @@ import type { WeddingSummary } from "./CreateWeddingForm";
 import ModuleShell from "./ModuleShell";
 import SecurityPanel from "./SecurityPanel";
 import TopBar from "./TopBar";
-import Notice from "./ui/Notice";
 import WeddingList from "./WeddingList";
 
 /**
@@ -57,7 +57,7 @@ type WeddingsState =
 
 function Loading(props: { label: string }) {
   return (
-    <p class="font-body text-text-muted animate-pulse text-[0.88rem] tracking-[0.1em] uppercase">
+    <p class="font-body text-text-muted text-ui-base tracking-ui-wider animate-pulse uppercase">
       {props.label}
     </p>
   );
@@ -453,7 +453,9 @@ function Dashboard() {
 
         <Show when={view() === "weddings"}>
           <Show when={loaded()} fallback={<Loading label="Loading weddings…" />}>
-            <Show when={loadError()}>{(message) => <Notice tone="error">{message()}</Notice>}</Show>
+            <Show when={loadError()}>
+              {(message) => <Notice tone="danger">{message()}</Notice>}
+            </Show>
 
             <Show when={!loadError() && weddings()}>
               {(list) => (
@@ -508,7 +510,11 @@ export default function OrganiserApp() {
       <RequireAuth>
         <Dashboard />
       </RequireAuth>
-      <Toaster position="bottom-right" />
+      {/* `topLayer` because this app's dialogs are `showModal()` dialogs
+          (`@shared/ui`'s `Modal`), which paint in the top layer — above every
+          stacking context, so no `z-index` on the toast container could reach
+          over one. See `ToasterProps.topLayer`. */}
+      <Toaster position="bottom-right" topLayer />
     </AuthProvider>
   );
 }

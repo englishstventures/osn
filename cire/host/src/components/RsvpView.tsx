@@ -1,4 +1,12 @@
+import { formatDietaryCell, type DietaryPreset } from "@cire/dietary";
+import Button from "@cire/ui/button";
+import DietaryPresets from "@cire/ui/dietary-presets-popover";
 import { useAuth } from "@shared/rp-auth/solid";
+import { EmptyState } from "@shared/ui/ui/empty-state";
+import { Field } from "@shared/ui/ui/field";
+import { Input } from "@shared/ui/ui/input";
+import { Notice } from "@shared/ui/ui/notice";
+import { Table, Td, Th } from "@shared/ui/ui/table";
 import {
   createEffect,
   createMemo,
@@ -25,11 +33,6 @@ import {
   statusCounts,
 } from "../lib/rsvp-filter";
 import SectionIntro from "./SectionIntro";
-import EmptyState from "./ui/EmptyState";
-import Field, { Input } from "./ui/Field";
-import Notice from "./ui/Notice";
-import { Table, Td, Th } from "./ui/Table";
-
 interface RsvpViewProps {
   weddingId: string;
   /** Owner/editor may record RSVPs; a viewer sees the read-only summary only. */
@@ -60,7 +63,7 @@ const STATUS_META = {
 const CHIP_CLASS =
   "border-border hover:border-gold focus-visible:border-gold focus-visible:ring-gold/40 " +
   "font-body text-text-muted aria-pressed:border-gold aria-pressed:text-gold " +
-  "flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-[0.75rem] tracking-[0.06em] " +
+  "flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-ui-sm tracking-ui-wide " +
   "uppercase transition outline-none focus-visible:ring-2";
 
 /** Identifies the row being edited (event + guest) so only one form is open. */
@@ -70,6 +73,7 @@ interface EditTarget {
   guestName: string;
   status: RsvpStatus;
   dietary: string;
+  dietaryPresets: readonly DietaryPreset[];
 }
 
 /**
@@ -98,6 +102,7 @@ export default function RsvpView(props: RsvpViewProps) {
   const [edit, setEdit] = createSignal<EditTarget | null>(null);
   const [formStatus, setFormStatus] = createSignal<RsvpStatus>("attending");
   const [formDietary, setFormDietary] = createSignal("");
+  const [formPresets, setFormPresets] = createSignal<readonly DietaryPreset[]>([]);
   const [formConsent, setFormConsent] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [formError, setFormError] = createSignal<string | null>(null);
@@ -149,20 +154,25 @@ export default function RsvpView(props: RsvpViewProps) {
   const openEditor = (
     eventId: string,
     guest: { guestId: string; firstName: string; lastName: string },
-    existing?: { status: RsvpStatus; dietary: string },
+    existing?: { status: RsvpStatus; dietary: string; dietaryPresets: readonly DietaryPreset[] },
   ) => {
     setFormError(null);
     setFormStatus(existing?.status ?? "attending");
     setFormDietary(existing?.dietary ?? "");
-    // Prefill consent when editing a row that already carries dietary text
-    // (prior consent assumed) — mirrors the guest form's behaviour.
-    setFormConsent((existing?.dietary.trim().length ?? 0) > 0);
+    setFormPresets(existing?.dietaryPresets ?? []);
+    // Prefill consent when editing a row that already carries dietary data —
+    // presets or free text, since both are what consent authorises. Mirrors the
+    // guest form.
+    setFormConsent(
+      (existing?.dietary.trim().length ?? 0) > 0 || (existing?.dietaryPresets.length ?? 0) > 0,
+    );
     setEdit({
       eventId,
       guestId: guest.guestId,
       guestName: `${guest.firstName} ${guest.lastName}`,
       status: existing?.status ?? "attending",
       dietary: existing?.dietary ?? "",
+      dietaryPresets: existing?.dietaryPresets ?? [],
     });
   };
 
@@ -170,7 +180,11 @@ export default function RsvpView(props: RsvpViewProps) {
    *  blank when the guest has said nothing yet. */
   const openRow = (eventId: string, row: RsvpRow) => {
     if (row.responded && row.status !== "none") {
-      openEditor(eventId, row, { status: row.status, dietary: row.dietary });
+      openEditor(eventId, row, {
+        status: row.status,
+        dietary: row.dietary,
+        dietaryPresets: row.dietaryPresets,
+      });
       return;
     }
     openEditor(eventId, row);
@@ -214,7 +228,11 @@ export default function RsvpView(props: RsvpViewProps) {
     const target = edit();
     if (!target) return;
     const dietary = formDietary().trim();
-    if (dietary.length > 0 && !formConsent()) {
+    const dietaryPresets = formPresets();
+    // Presets are special-category exactly as the free text is, so either one
+    // being present is what the attestation has to cover.
+    const hasDietaryData = dietary.length > 0 || dietaryPresets.length > 0;
+    if (hasDietaryData && !formConsent()) {
       haptic("reject");
       setFormError("Confirm the guest consented before storing dietary requirements.");
       return;
@@ -232,7 +250,8 @@ export default function RsvpView(props: RsvpViewProps) {
           body: JSON.stringify({
             status: formStatus(),
             dietary,
-            dietaryConsent: dietary.length > 0 ? formConsent() : false,
+            dietaryPresets,
+            dietaryConsent: hasDietaryData ? formConsent() : false,
           }),
         },
       );
@@ -284,7 +303,7 @@ export default function RsvpView(props: RsvpViewProps) {
       </Show>
 
       <Show when={error()}>
-        <Notice tone="error">{error()}</Notice>
+        <Notice tone="danger">{error()}</Notice>
       </Show>
 
       <Show when={!loading() && !error() && !hasEvents()}>
@@ -321,7 +340,7 @@ export default function RsvpView(props: RsvpViewProps) {
                     onClick={() => setFilter(chip.key)}
                   >
                     {chip.label}
-                    <span class="text-text font-mono text-[0.72rem]">{counts()[chip.key]}</span>
+                    <span class="text-text text-ui-xs font-mono">{counts()[chip.key]}</span>
                   </button>
                 )}
               </For>
@@ -329,7 +348,7 @@ export default function RsvpView(props: RsvpViewProps) {
           </div>
           {/* Two readings of one fact: the printed count updates as you type,
               the announced one waits for you to stop. */}
-          <p class="font-body text-text-muted text-[0.78rem]">
+          <p class="font-body text-text-muted text-ui-sm">
             <Show when={filtering()}>
               Showing {shownCount()} of {counts().all} guest rows.
             </Show>
@@ -344,28 +363,28 @@ export default function RsvpView(props: RsvpViewProps) {
             {(section) => (
               <section class="border-border bg-surface/30 flex flex-col gap-4 rounded-sm border p-5">
                 <header class="flex flex-wrap items-end justify-between gap-3">
-                  <h3 class="font-display text-text text-[1.3rem] leading-none font-light">
+                  <h3 class="font-display text-text text-ui-lg leading-none font-light">
                     {section.event.name}
                   </h3>
-                  <dl class="font-body text-text-muted flex flex-wrap gap-x-4 gap-y-1 text-[0.78rem]">
+                  <dl class="font-body text-text-muted text-ui-sm flex flex-wrap gap-x-4 gap-y-1">
                     <div class="flex items-center gap-1.5">
-                      <dt class="text-gold tracking-[0.08em] uppercase">Attending</dt>
+                      <dt class="text-gold tracking-ui-wider uppercase">Attending</dt>
                       <dd class="text-text font-mono">{section.event.attending}</dd>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <dt class="tracking-[0.08em] uppercase">Declined</dt>
+                      <dt class="tracking-ui-wider uppercase">Declined</dt>
                       <dd class="text-text font-mono">{section.event.declined}</dd>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <dt class="tracking-[0.08em] uppercase">Maybe</dt>
+                      <dt class="tracking-ui-wider uppercase">Maybe</dt>
                       <dd class="text-text font-mono">{section.event.maybe}</dd>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <dt class="tracking-[0.08em] uppercase">No reply</dt>
+                      <dt class="tracking-ui-wider uppercase">No reply</dt>
                       <dd class="text-text font-mono">{section.event.noResponse}</dd>
                     </div>
                     <div class="flex items-center gap-1.5">
-                      <dt class="tracking-[0.08em] uppercase">Invited</dt>
+                      <dt class="tracking-ui-wider uppercase">Invited</dt>
                       <dd class="text-text font-mono">{section.event.invited}</dd>
                     </div>
                   </dl>
@@ -374,7 +393,7 @@ export default function RsvpView(props: RsvpViewProps) {
                 <Show
                   when={section.rows().length > 0}
                   fallback={
-                    <p class="font-body text-text-muted text-[0.82rem] italic">
+                    <p class="font-body text-text-muted text-ui-sm italic">
                       No guests to show for this event.
                     </p>
                   }
@@ -382,12 +401,12 @@ export default function RsvpView(props: RsvpViewProps) {
                   <Show
                     when={section.visible().length > 0}
                     fallback={
-                      <p class="font-body text-text-muted text-[0.82rem] italic">
+                      <p class="font-body text-text-muted text-ui-sm italic">
                         No guests match this filter.
                       </p>
                     }
                   >
-                    <Table label={`Replies for ${section.event.name}`} class="font-body">
+                    <Table label={`Replies for ${section.event.name}`}>
                       <caption class="sr-only">RSVPs for {section.event.name}</caption>
                       <thead>
                         <tr>
@@ -396,7 +415,7 @@ export default function RsvpView(props: RsvpViewProps) {
                           <Th>Status</Th>
                           <Th>Dietary</Th>
                           <Show when={props.canEdit}>
-                            <Th class="text-right">
+                            <Th align="end">
                               <span class="sr-only">Actions</span>
                             </Th>
                           </Show>
@@ -407,44 +426,54 @@ export default function RsvpView(props: RsvpViewProps) {
                           {(row) => (
                             <>
                               <tr class="hover:[&>td]:bg-surface">
-                                <Td class="align-middle">
+                                <Td valign="middle">
                                   {row.firstName} {row.lastName}
                                   <Show when={row.consentSource === "organiser_attested"}>
                                     {" "}
                                     <span
-                                      class="border-gold/40 text-gold ml-1 inline-block rounded-sm border px-1.5 py-0.5 text-[0.55rem] tracking-[0.12em] uppercase"
+                                      class="border-gold/40 text-gold text-ui-xs tracking-ui-wider ml-1 inline-block rounded-sm border px-1.5 py-0.5 uppercase"
                                       title="Recorded by a host (phone/paper RSVP)"
                                     >
                                       Host-entered
                                     </span>
                                   </Show>
                                 </Td>
-                                <Td class="text-text-muted align-middle">{row.familyName}</Td>
-                                <Td class="align-middle">
+                                <Td tone="muted" valign="middle">
+                                  {row.familyName}
+                                </Td>
+                                <Td valign="middle">
                                   <span
-                                    class={`font-body inline-block rounded-sm px-1.5 py-0.5 text-[0.6rem] tracking-[0.14em] uppercase ${STATUS_META[row.status].class}`}
+                                    class={`font-body text-ui-xs tracking-ui-widest inline-block rounded-sm px-1.5 py-0.5 uppercase ${STATUS_META[row.status].class}`}
                                   >
                                     {STATUS_META[row.status].label}
                                   </span>
                                 </Td>
-                                <Td class="text-text-muted align-middle">
+                                <Td tone="muted" valign="middle">
+                                  {/* The whole answer, presets and free text,
+                                      rendered the way the caterer's sheet
+                                      renders it. Showing `dietary` alone left a
+                                      preset-only reply blank — a host could
+                                      find the row by searching "nuts" and then
+                                      see nothing in it. */}
                                   <Show
-                                    when={row.dietary.trim().length > 0}
+                                    when={formatDietaryCell(row.dietaryPresets, row.dietary)}
                                     fallback={<span class="text-text-muted">--</span>}
                                   >
-                                    {row.dietary}
+                                    {formatDietaryCell(row.dietaryPresets, row.dietary)}
                                   </Show>
                                 </Td>
                                 <Show when={props.canEdit}>
-                                  <Td class="text-right align-middle">
-                                    <button
+                                  <Td align="end" valign="middle">
+                                    <Button
+                                      variant="quiet"
+                                      size="sm"
                                       type="button"
-                                      class="border-border text-text-muted hover:text-text hover:border-gold/40 rounded-sm border px-2.5 py-1 text-[0.7rem] tracking-[0.08em] uppercase"
+                                      class="hover:border-gold/40"
                                       aria-label={`${row.responded ? "Edit" : "Record"} reply for ${row.firstName} ${row.lastName}`}
                                       onClick={() => openRow(section.event.id, row)}
                                     >
                                       {row.responded ? "Edit" : "Record"}
-                                    </button>
+                                    </Button>
                                   </Td>
                                 </Show>
                               </tr>
@@ -479,17 +508,17 @@ export default function RsvpView(props: RsvpViewProps) {
           void save();
         }}
       >
-        <p class="font-body text-text text-[0.82rem]">
+        <p class="font-body text-text text-ui-sm">
           Recording for{" "}
           <span class="text-gold">
             {guest.firstName} {guest.lastName}
           </span>
         </p>
 
-        <label class="font-body text-text-muted flex flex-col gap-1 text-[0.75rem] tracking-[0.06em] uppercase">
+        <label class="font-body text-text-muted text-ui-sm tracking-ui-wide flex flex-col gap-1 uppercase">
           Status
           <select
-            class="border-border bg-bg text-text rounded-sm border px-2.5 py-1.5 text-[0.86rem] normal-case"
+            class="border-border bg-bg text-text text-ui-base rounded-sm border px-2.5 py-1.5 normal-case"
             value={formStatus()}
             onChange={(e) => setFormStatus(e.currentTarget.value as RsvpStatus)}
             disabled={saving()}
@@ -500,10 +529,26 @@ export default function RsvpView(props: RsvpViewProps) {
           </select>
         </label>
 
-        <label class="font-body text-text-muted flex flex-col gap-1 text-[0.75rem] tracking-[0.06em] uppercase">
+        <div class="font-body text-text-muted text-ui-sm tracking-ui-wide flex flex-col gap-1.5 uppercase">
           Dietary requirements (optional)
+          <div class="normal-case">
+            <DietaryPresets
+              value={formPresets()}
+              onChange={setFormPresets}
+              disabled={saving()}
+              label={`Dietary requirements for ${guest.firstName} ${guest.lastName}`}
+            />
+          </div>
+        </div>
+
+        {/* Free text for whatever the vocabulary has no key for. Always shown
+            here rather than behind an "Other" tick: an organiser is copying
+            down a reply someone gave on the phone, so the box has to be ready
+            for words they are already hearing. */}
+        <label class="font-body text-text-muted text-ui-sm tracking-ui-wide flex flex-col gap-1 uppercase">
+          Anything else
           <textarea
-            class="border-border bg-bg text-text rounded-sm border px-2.5 py-1.5 text-[0.86rem] normal-case"
+            class="border-border bg-bg text-text text-ui-base rounded-sm border px-2.5 py-1.5 normal-case"
             rows={2}
             maxlength={500}
             value={formDietary()}
@@ -512,8 +557,12 @@ export default function RsvpView(props: RsvpViewProps) {
           />
         </label>
 
-        <Show when={formDietary().trim().length > 0}>
-          <label class="font-body text-text-muted flex items-start gap-2.5 text-[0.78rem] leading-relaxed normal-case">
+        {/* Gated on the SAME condition the submit gate and the payload use.
+            Gating visibility on the free text alone left a preset-only reply
+            attested with no control on screen, and re-stamped that attestation
+            on every save. */}
+        <Show when={formDietary().trim().length > 0 || formPresets().length > 0}>
+          <label class="font-body text-text-muted text-ui-sm flex items-start gap-2.5 leading-relaxed normal-case">
             <input
               type="checkbox"
               class="accent-gold mt-0.5 h-4 w-4 shrink-0 cursor-pointer"
@@ -529,25 +578,19 @@ export default function RsvpView(props: RsvpViewProps) {
         </Show>
 
         <Show when={formError()}>
-          <p class="text-error text-[0.78rem]">{formError()}</p>
+          <p class="text-error text-ui-sm">{formError()}</p>
         </Show>
 
         <div class="flex items-center gap-2">
-          <button
-            type="submit"
-            class="bg-gold text-bg rounded-sm px-3 py-1.5 text-[0.78rem] tracking-[0.08em] uppercase disabled:opacity-50"
-            disabled={saving()}
-          >
+          {/* Both at the default size, which they were not: Cancel was already a
+              `<Button>` at `md` and Save was hand-written at `px-3 py-1.5`, so
+              the two controls in this one row were different heights. */}
+          <Button variant="primary" type="submit" disabled={saving()}>
             {saving() ? "Saving…" : "Save reply"}
-          </button>
-          <button
-            type="button"
-            class="border-border text-text-muted hover:text-text rounded-sm border px-3 py-1.5 text-[0.78rem] tracking-[0.08em] uppercase"
-            onClick={closeEditor}
-            disabled={saving()}
-          >
+          </Button>
+          <Button variant="quiet" type="button" onClick={closeEditor} disabled={saving()}>
             Cancel
-          </button>
+          </Button>
         </div>
       </form>
     );

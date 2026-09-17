@@ -1,6 +1,6 @@
 {
   "name": "@tools/lab",
-  "version": "0.1.24",
+  "version": "0.2.1",
   "private": true,
   "type": "module",
   "description": "Component lab — a Storybook-shaped scratchpad for spiking UI, three.js and canvas work",
@@ -18,7 +18,9 @@
     "script": "dev:app"
   },
   "dependencies": {
-    "@osn/ui": "workspace:*",
+    "@shared/color": "workspace:*",
+    "@shared/design-tokens": "workspace:*",
+    "@shared/ui": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",
     "solid-js": "^1.9.15",
     "tailwindcss": "^4.3.3",

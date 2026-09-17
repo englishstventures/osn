@@ -1,3 +1,6 @@
+import type { DietaryPreset } from "@cire/dietary";
+import Button from "@cire/ui/button";
+import DietaryPresets from "@cire/ui/dietary-presets";
 import { toast } from "@shared/toast";
 import {
   batch,
@@ -82,14 +85,33 @@ interface RsvpModalProps {
 
 type Attending = "attending" | "declined" | null;
 
+/**
+ * "Ana", "Ana and Ravi", "Ana, Ravi and Tom".
+ *
+ * The consent wording has to name whose data it authorises: a box reading only
+ * "the dietary requirements above" leaves a guest ticking on behalf of people it
+ * does not identify, which is the opposite of the specificity Art. 9(2)(a) asks
+ * for.
+ */
+function formatNames(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}
+
 interface MemberState {
   attending: Attending;
+  /** What this member typed under "Other". Everything nameable is a preset. */
   dietary: string;
-  // Explicit Art. 9(2)(a) opt-in for the special-category dietary free-text.
-  // Unticked by default; gates submit when `dietary` is non-empty. Prefilled
-  // true when an existing RSVP already carries dietary text (consent was
-  // captured at the prior submit). See cire-guest-data DPIA → C-H2.
-  dietaryConsent: boolean;
+  dietaryPresets: readonly DietaryPreset[];
+  /**
+   * Whether this member's dietary data is already covered by a stored
+   * Art. 9(2)(a) consent record.
+   *
+   * Not a control — the consent checkbox is one per submission, in the footer.
+   * This is what decides whether that single box may open ticked: see
+   * `consentAlreadyCovers`.
+   */
+  hadConsent: boolean;
 }
 
 export function RsvpModal(props: RsvpModalProps) {
@@ -122,20 +144,87 @@ export function RsvpModal(props: RsvpModalProps) {
         else if (existing.status === "declined") attending = "declined";
         // "maybe" → null (UX is binary now)
       }
-      const dietary = existing?.dietary ?? "";
       map[m.guestId] = {
         attending,
-        dietary,
-        // Existing dietary text was only stored because consent was given, so
-        // a prefilled value implies prior consent — keep the box ticked so an
-        // unchanged response re-submits cleanly.
-        dietaryConsent: dietary.length > 0,
+        dietary: existing?.dietary ?? "",
+        dietaryPresets: existing?.dietaryPresets ?? [],
+        // The server's own verdict, not an inference from the text. A row can
+        // carry presets and no text at all, so "they typed something, therefore
+        // they consented" stopped being a safe proxy — and a record against
+        // superseded consent wording is not consent to the wording on screen.
+        hadConsent: existing?.dietaryConsentCurrent === true,
       };
     }
     return map;
   }
 
   const [responses, setResponses] = createSignal<Record<string, MemberState>>(initialResponses());
+  /**
+   * Which attending members are offering dietary data on this submission.
+   *
+   * One predicate behind the consent checkbox's visibility, its wording, the
+   * submit gate and what goes on the wire, so those four can never disagree
+   * about whose data is being authorised.
+   */
+  const membersWithDietaryData = createMemo(() =>
+    eventMembers().filter((m) => {
+      const state = responses()[m.guestId];
+      if (!state || state.attending !== "attending") return false;
+      return state.dietary.trim().length > 0 || state.dietaryPresets.length > 0;
+    }),
+  );
+
+  /**
+   * May the single consent checkbox open already ticked?
+   *
+   * Only if EVERY member it covers already has a stored consent record. The
+   * checkbox is one per submission rather than one per guest — a household of
+   * four should not tick four boxes saying the same thing — and that collapse is
+   * exactly where a prefill can go wrong: if Ana consented last month and Ravi
+   * is answering for the first time, a box ticked on Ana's behalf would stamp
+   * Ravi's first-ever Art. 9(2)(a) consent from a control nobody touched for
+   * him. One person's consent never carries another's, so anyone new to it
+   * makes the box open empty and blocks submit until a human ticks it.
+   */
+  const consentAlreadyCovers = createMemo(() => {
+    const covered = membersWithDietaryData();
+    if (covered.length === 0) return false;
+    return covered.every((m) => responses()[m.guestId]?.hadConsent === true);
+  });
+
+  /**
+   * The consent checkbox's state. ONE signal, and the box's only source.
+   *
+   * Emphatically not `consentGiven() || consentAlreadyCovers()`. Under that
+   * form a pre-ticked box could not be unticked: `consentGiven` is already
+   * `false`, so `setConsentGiven(false)` is a no-op write, Solid's equality
+   * check suppresses the notification, the `checked` binding never re-runs, and
+   * the DOM keeps the browser's own unticked state while the derived value stays
+   * `true`. The guest sees an unticked box and the request carries
+   * `dietaryConsent: true` — an Art. 9(2)(a) record stamped against an
+   * affirmation that was actively withdrawn, and no way to withdraw it short of
+   * deleting every dietary answer in the household (Art. 7(3)).
+   */
+  const [consented, setConsented] = createSignal(false);
+
+  /**
+   * Seed and re-ask, as the set of covered members changes.
+   *
+   * Ticks the box when every member it covers already consented against the
+   * CURRENT copy, and un-ticks it the moment that stops being true — a member
+   * newly offering dietary data, or one whose record predates a consent-copy
+   * change. Writing the signal rather than deriving it is what keeps the box
+   * untickable by hand; the effect only reacts to the covered set changing, so
+   * it never fights a guest who has just made a choice about the same set.
+   */
+  let lastCovered: boolean | null = null;
+  createEffect(() => {
+    const covered = consentAlreadyCovers();
+    if (covered === lastCovered) return;
+    lastCovered = covered;
+    setConsented(covered);
+  });
+
   const [error, setError] = createSignal<string | null>(null);
   const [loading, setLoading] = createSignal(false);
   // Terminal success state: the reply is recorded, the Save button is filling
@@ -213,10 +302,10 @@ export function RsvpModal(props: RsvpModalProps) {
     }));
   }
 
-  function setDietaryConsent(guestId: string, dietaryConsent: boolean) {
+  function setDietaryPresets(guestId: string, dietaryPresets: readonly DietaryPreset[]) {
     setResponses((prev) => ({
       ...prev,
-      [guestId]: { ...prev[guestId]!, dietaryConsent },
+      [guestId]: { ...prev[guestId]!, dietaryPresets },
     }));
   }
 
@@ -315,17 +404,12 @@ export function RsvpModal(props: RsvpModalProps) {
     // true from — a host trying the flow still sees the full confirmation.
     const celebrate = nowComplete && !wasComplete;
 
-    // Art. 9(2)(a) gate: dietary free-text is special-category data and may only
-    // be sent with the guest's explicit opt-in. Block submit if anyone entered
-    // dietary text but left the consent box unticked. (The server also enforces
-    // this with a 422 — see cire-guest-data DPIA → C-H2.)
-    const missingConsent = visible.some((m) => {
-      const state = current[m.guestId]!;
-      return (
-        state.attending === "attending" && state.dietary.trim().length > 0 && !state.dietaryConsent
-      );
-    });
-    if (missingConsent) {
+    // Art. 9(2)(a) gate: dietary data is special-category — presets as much as
+    // free text, since `halal` and `nuts` name a belief and a health condition
+    // outright — and may only be sent with explicit consent. (The server also
+    // enforces this with a 422 — see
+    // `wiki/compliance/dpia/cire-guest-data.md`.)
+    if (membersWithDietaryData().length > 0 && !consented()) {
       setError("Please tick the box to let us store your dietary requirements.");
       return;
     }
@@ -346,13 +430,18 @@ export function RsvpModal(props: RsvpModalProps) {
       rsvps: answered.map((m) => {
         const state = current[m.guestId]!;
         const attending = state.attending === "attending";
+        // A member who switched to "not attending" sends no dietary data at all,
+        // and so nothing to consent to — the server clears their stored record.
         const dietary = attending ? state.dietary : "";
+        const dietaryPresets = attending ? state.dietaryPresets : [];
+        const hasDietaryData = dietary.trim().length > 0 || dietaryPresets.length > 0;
         return {
           guestId: m.guestId,
           eventId: props.event.id,
           status: state.attending!,
           dietary,
-          dietaryConsent: dietary.trim().length > 0 && state.dietaryConsent,
+          dietaryPresets,
+          dietaryConsent: hasDietaryData && consented(),
         };
       }),
     };
@@ -438,10 +527,10 @@ export function RsvpModal(props: RsvpModalProps) {
       // add its own bottom padding underneath it.
       flushBottom
     >
-      <p class="font-body text-gold-ink mb-3 text-[0.72rem] tracking-[0.2em] uppercase">Respond</p>
+      <p class="font-body text-gold-ink text-ui-xs tracking-ui-widest mb-3 uppercase">Respond</p>
       <h3
         id={titleId}
-        class="font-display text-text text-[1.6rem] font-light italic"
+        class="font-display text-text text-ui-xl font-light italic"
         classList={{
           "mb-6": !props.preview && !props.closed,
           "mb-3": props.preview || props.closed,
@@ -452,7 +541,7 @@ export function RsvpModal(props: RsvpModalProps) {
 
       <Show when={props.closed}>
         <p
-          class="border-border bg-surface-raised text-text-muted mb-6 rounded-sm border px-3.5 py-2.5 text-[0.74rem] leading-relaxed"
+          class="border-border bg-surface-raised text-text-muted text-ui-xs mb-6 rounded-sm border px-3.5 py-2.5 leading-relaxed"
           role="status"
         >
           {props.closedOn ? `RSVPs closed on ${props.closedOn}.` : "RSVPs have closed."} This is
@@ -463,7 +552,7 @@ export function RsvpModal(props: RsvpModalProps) {
 
       <Show when={props.preview}>
         <p
-          class="border-gold/40 bg-gold/5 text-gold-ink mb-6 rounded-sm border px-3.5 py-2.5 text-[0.74rem] leading-relaxed"
+          class="border-gold/40 bg-gold/5 text-gold-ink text-ui-xs mb-6 rounded-sm border px-3.5 py-2.5 leading-relaxed"
           role="status"
         >
           Preview — try the RSVP as a guest would. Nothing you send here is saved.
@@ -481,15 +570,19 @@ export function RsvpModal(props: RsvpModalProps) {
               // top-heavy (58px above the buttons vs 21px below). Zero top
               // padding puts the first control ~25px under the border — level
               // with the 20px inset on the other three sides.
-              <fieldset class="border-border m-0 rounded-sm border px-5 pt-0 pb-5">
-                <legend class="font-display text-text mb-3 text-[1.1rem] font-normal italic">
+              // `min-w-0` overrides a `<fieldset>`'s default `min-width: min-content`,
+              // which would otherwise let its content set the sheet's width — the
+              // dietary picker's scrolling track can only overflow inside a box
+              // that is allowed to be narrower than what it holds.
+              <fieldset class="border-border m-0 min-w-0 rounded-sm border px-5 pt-0 pb-5">
+                <legend class="font-display text-text text-ui-md mb-3 font-normal italic">
                   {member.firstName} {member.lastName}
                 </legend>
 
                 <div class="flex gap-2">
                   <button
                     type="button"
-                    class="font-body flex-1 cursor-pointer rounded-sm border px-3 py-2.5 text-[0.82rem] tracking-[0.06em] uppercase transition-colors duration-200"
+                    class="font-body text-ui-sm tracking-ui-wide flex-1 cursor-pointer rounded-sm border px-3 py-2.5 uppercase transition-colors duration-200"
                     classList={{
                       "border-gold text-gold-ink bg-gold/8":
                         responses()[guestId]?.attending === "attending",
@@ -504,7 +597,7 @@ export function RsvpModal(props: RsvpModalProps) {
                   </button>
                   <button
                     type="button"
-                    class="font-body flex-1 cursor-pointer rounded-sm border px-3 py-2.5 text-[0.82rem] tracking-[0.06em] uppercase transition-colors duration-200"
+                    class="font-body text-ui-sm tracking-ui-wide flex-1 cursor-pointer rounded-sm border px-3 py-2.5 uppercase transition-colors duration-200"
                     classList={{
                       "border-gold text-gold-ink bg-gold/8":
                         responses()[guestId]?.attending === "declined",
@@ -520,48 +613,42 @@ export function RsvpModal(props: RsvpModalProps) {
                 </div>
 
                 <Show when={responses()[guestId]?.attending === "attending"}>
-                  <label class="font-body text-text-muted mt-3 block text-[0.78rem] tracking-[0.06em] uppercase">
-                    Dietary requirements
-                    <input
-                      type="text"
-                      // No `focus:outline-none` here: it sits in Tailwind's
-                      // utilities layer and would beat the base-layer
-                      // `:focus-visible` ring, leaving a border tint as the
-                      // only focus cue on the invite's main data-entry field.
-                      class="border-border font-body text-text placeholder:text-text-muted focus:border-gold mt-1.5 block w-full rounded-sm border bg-transparent px-3 py-2.5 text-base transition-colors duration-200 sm:text-[0.9rem]"
-                      placeholder="e.g. Vegetarian, no nuts"
-                      value={responses()[guestId]?.dietary ?? ""}
-                      onInput={(e) => setDietary(guestId, e.currentTarget.value)}
-                      maxLength={200}
+                  <div class="mt-3">
+                    <DietaryPresets
+                      value={responses()[guestId]?.dietaryPresets ?? []}
+                      onChange={(next) => setDietaryPresets(guestId, next)}
                       disabled={locked()}
+                      label={`Dietary requirements for ${member.firstName}`}
                     />
-                  </label>
+                  </div>
 
-                  {/* Explicit, unticked-by-default consent — only shown once the
-                      guest has actually entered dietary text (special-category
-                      data). See cire-guest-data DPIA → C-H2. */}
-                  <Show when={(responses()[guestId]?.dietary.trim().length ?? 0) > 0}>
-                    <label class="font-body text-text-muted mt-3 flex items-start gap-2.5 text-[0.78rem] leading-relaxed normal-case">
+                  {/* The free-text box lives here rather than inside the picker,
+                      so it stays visible while the desktop popover is closed and
+                      a guest can see what they typed without reopening anything.
+                      Shown for a selected `other` OR for text already on file:
+                      a reply written before the picker existed carries prose and
+                      no presets, and that is how it opens intact. */}
+                  <Show
+                    when={
+                      responses()[guestId]?.dietaryPresets.includes("other") ||
+                      (responses()[guestId]?.dietary.trim().length ?? 0) > 0
+                    }
+                  >
+                    <label class="font-body text-text-muted text-ui-sm tracking-ui-wide mt-3 block uppercase">
+                      Anything else
                       <input
-                        type="checkbox"
-                        class="accent-gold mt-0.5 h-4 w-4 shrink-0 cursor-pointer"
-                        checked={responses()[guestId]?.dietaryConsent ?? false}
-                        onChange={(e) => setDietaryConsent(guestId, e.currentTarget.checked)}
+                        type="text"
+                        // No `focus:outline-none` here: it sits in Tailwind's
+                        // utilities layer and would beat the base-layer
+                        // `:focus-visible` ring, leaving a border tint as the
+                        // only focus cue on the invite's main data-entry field.
+                        class="border-border font-body text-text placeholder:text-text-muted focus:border-gold sm:text-ui-base mt-1.5 block w-full rounded-sm border bg-transparent px-3 py-2.5 text-base transition-colors duration-200"
+                        placeholder="e.g. no onion or garlic"
+                        value={responses()[guestId]?.dietary ?? ""}
+                        onInput={(e) => setDietary(guestId, e.currentTarget.value)}
+                        maxLength={500}
                         disabled={locked()}
                       />
-                      <span>
-                        I agree to my dietary requirements above being stored and shared with the
-                        caterers for this wedding. See our{" "}
-                        <a
-                          href="/privacy"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="text-gold-ink underline underline-offset-2"
-                        >
-                          privacy notice
-                        </a>
-                        .
-                      </span>
                     </label>
                   </Show>
                 </Show>
@@ -570,8 +657,41 @@ export function RsvpModal(props: RsvpModalProps) {
           }}
         </For>
 
+        {/* ONE consent, for the whole submission.
+            A household of four typing dietary notes used to tick four boxes
+            saying the same thing. Collapsing them is only safe because the box
+            names exactly who it covers and refuses to open ticked unless every
+            one of those people already has a stored consent record — see
+            `consentAlreadyCovers`. Unticked by default, and the submit gate
+            blocks on it. See `wiki/compliance/dpia/cire-guest-data.md`. */}
+        <Show when={membersWithDietaryData().length > 0}>
+          <label class="font-body text-text-muted text-ui-sm flex items-start gap-2.5 leading-relaxed normal-case">
+            <input
+              type="checkbox"
+              class="accent-gold mt-0.5 h-4 w-4 shrink-0 cursor-pointer"
+              checked={consented()}
+              onChange={(e) => setConsented(e.currentTarget.checked)}
+              disabled={locked()}
+            />
+            <span>
+              I agree to the dietary requirements above — for{" "}
+              {formatNames(membersWithDietaryData().map((m) => m.firstName))} — being stored and
+              shared with the caterers for this wedding. See our{" "}
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-gold-ink underline underline-offset-2"
+              >
+                privacy notice
+              </a>
+              .
+            </span>
+          </label>
+        </Show>
+
         <Show when={error()}>
-          <p class="font-body text-error py-1 text-[0.82rem]" role="alert">
+          <p class="font-body text-error text-ui-sm py-1" role="alert">
             {error()}
           </p>
         </Show>
@@ -596,9 +716,10 @@ export function RsvpModal(props: RsvpModalProps) {
             so a negative bottom margin lifts the bar up over the last card
             instead of stretching it down into the padding. */}
         <div class="border-border bg-surface sticky bottom-0 -mx-6 flex gap-3 border-t px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-4">
-          <button
+          <Button
+            variant="quiet"
             type="button"
-            class="border-border font-body text-text-muted hover:border-gold-dim hover:text-text flex-1 cursor-pointer rounded-sm border bg-transparent px-4 py-3 text-[0.82rem] tracking-[0.1em] uppercase transition-colors duration-200 disabled:opacity-40"
+            class="flex-1 duration-200"
             ref={dismissRef}
             onClick={() => props.onClose()}
             // Nothing left to cancel once the reply is in and the sheet is
@@ -620,7 +741,7 @@ export function RsvpModal(props: RsvpModalProps) {
             {/* Past the deadline there is nothing to cancel — the sheet is a
                 view, so its one button says so. */}
             {props.closed ? "Close" : "Cancel"}
-          </button>
+          </Button>
           {/* No submit button once RSVPs are closed: a disabled Save invites a
               guest to keep clicking at a door that won't open. */}
           <Show when={!props.closed}>
@@ -631,15 +752,17 @@ export function RsvpModal(props: RsvpModalProps) {
                 closes and this one is not. What stays here is the label swap
                 and the lock, so the sheet still visibly holds its result for
                 the dwell (`savedDwellMs`) rather than just vanishing. */}
+            {/* Deliberately not `@cire/ui`'s `Button`.
+                That component fades anything carrying `aria-disabled`, on the
+                reading that the attribute marks a control someone cannot press
+                and should be told why. Here it marks a control that has already
+                DONE its job — "Saved" — and the one state that must look most
+                alive is exactly the one it would grey out. The fade below is
+                keyed on `loading()` instead, which is the state that earns it. */}
             <button
               type="submit"
-              class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg disabled:hover:text-gold-ink flex-1 rounded-sm border bg-transparent px-4 py-3 text-[0.82rem] tracking-[0.1em] uppercase transition-colors duration-200 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+              class="border-gold font-body text-gold-ink hover:bg-gold hover:text-bg disabled:hover:text-gold-ink text-ui-sm tracking-ui-wider flex-1 rounded-sm border bg-transparent px-4 py-3 uppercase transition-colors duration-200 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               classList={{
-                // The in-flight fade, spelled out rather than left to
-                // `disabled:opacity-40`: the confirmed state also needs the
-                // button non-submittable, and a variant keyed on `disabled`
-                // would drag a 40% fade onto the one state that must look
-                // most alive.
                 "opacity-40": loading(),
                 "cursor-pointer": !saved(),
                 "cursor-default": saved(),
