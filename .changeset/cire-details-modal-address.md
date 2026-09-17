@@ -3,25 +3,32 @@
 ---
 
 The invite's event details modal: the venue address wraps instead of being cut
-off, and the map footer no longer offers two ways to open the same map.
+off, and the Open-in-Maps action becomes an icon.
 
 The address carried `truncate` — `white-space: nowrap` plus `text-overflow:
 ellipsis` — so it clipped at every width rather than only narrow ones, and a
 guest could not read where the event was. It now wraps. `wrap-anywhere` gives a
 single unbreakable token somewhere to break, so no address can push the row
-wider than the card; `line-clamp-4` bounds an address of unlimited length, which
-is a real case because nothing between the organiser's input and the render
-constrains it. Four lines is measured rather than guessed: in the narrowest
-column this footer renders in — 83px, the fallback branch at a 320px viewport —
-a street address takes three.
+wider than the card, and `line-clamp-3` bounds an address of unlimited length,
+which is a real case because nothing between the organiser's input and the
+render constrains it.
 
-The shared footer's "Open in Maps" action is now the CSS-card branch's alone.
-When the real Google Maps iframe renders, Google's own "View larger map" is
-already there, so the footer action was a second route to the same place. In the
-fallback branch it stays: the whole card is the link, and the action is the only
-visible sign of it. With nothing left using the footer's link mode, the `<a>`
-branch and its `href` prop are gone rather than kept as a shim.
+The footer's "Open in Maps" was the widest thing on that row and the reason the
+address had nowhere to go: 140.7px of a 236px footer at a 320px viewport,
+leaving the address 83.3px. The words move into an `sr-only` span and a glyph
+takes their place in a 44px box, which meets WCAG 2.2's target size. The
+accessible name does not change — the link still names the venue — and the words
+are clipped rather than removed, so nothing an assistive technology reads is
+lost. That returns the address column to 180px, where an ordinary address takes
+two lines and a full one down to its country takes three.
 
-`MapPreview.browser.test.tsx` measures the outcome in a real Chromium at 320,
+The action stays in **both** branches. It is a real link under the Google Maps
+iframe, because it follows `resolveMapsUrl` and so goes to the organiser's own
+`mapsUrl` where they set one — not the place Google's in-frame "View larger map"
+opens. In the CSS-card fallback it stays a non-interactive `<span>` inside the
+card's own anchor: the visible sign that the card is clickable, never a second
+tab stop for one destination.
+
+`MapPreview.browser.test.tsx` measures all of this in a real Chromium at 320,
 768 and 1440 — the fast tier can only see that the text is in the DOM, which
-truncation never changed.
+truncation never changed, and cannot tell an `sr-only` label from a hidden one.

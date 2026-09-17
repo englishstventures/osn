@@ -11,8 +11,7 @@ interface MapPreviewProps {
 /**
  * Map preview for a wedding event's "Where" section.
  *
- * Two render paths share one footer, which always names the venue and carries
- * the "Open in Maps" affordance only where its own path needs one:
+ * Two render paths share one footer (venue line + an "Open in Maps" icon):
  *
  *  - **Real map** — when `PUBLIC_GOOGLE_MAPS_EMBED_KEY` is configured at build
  *    time AND the event has a venue address AND the guest has allowed
@@ -72,7 +71,7 @@ export function MapPreview(props: MapPreviewProps) {
               vendor="google-maps"
               fallback={<MapCard href={href()} venue={venue()} />}
             >
-              <MapEmbed venue={venue()} src={src()} />
+              <MapEmbed href={href()} venue={venue()} src={src()} />
             </ConsentGate>
           )}
         </Show>
@@ -82,15 +81,15 @@ export function MapPreview(props: MapPreviewProps) {
 }
 
 /**
- * The real Google Maps Embed iframe + the shared footer.
+ * The real Google Maps Embed iframe + the shared footer. The iframe captures
+ * pointer events, so (unlike the CSS card) the actionable "open in maps" link
+ * lives in the footer rather than wrapping the whole card.
  *
- * The iframe captures pointer events, so nothing outside it can be the map's
- * control surface; Google's own "View larger map" inside the frame is the route
- * to a full map. The footer here is therefore the venue line alone — a second
- * "Open in Maps" beside it would be a duplicate of a control the guest can
- * already see.
+ * That link is not a duplicate of Google's own in-frame control. It follows
+ * `resolveMapsUrl`, which prefers the organiser's `mapsUrl` — a pinned entrance
+ * or car park — where Google's control opens a place query for the address.
  */
-function MapEmbed(props: { venue: string | null; src: string }) {
+function MapEmbed(props: { href: string; venue: string | null; src: string }) {
   const title = () => `Map of ${props.venue ?? "the venue"}`;
 
   return (
@@ -115,7 +114,7 @@ function MapEmbed(props: { venue: string | null; src: string }) {
         // shifts layout as the embed loads.
         class="block h-36 w-full border-0"
       />
-      <FooterRow venue={props.venue} />
+      <FooterRow href={props.href} venue={props.venue} />
     </div>
   );
 }
@@ -171,21 +170,32 @@ function MapCard(props: { href: string; venue: string | null }) {
         </div>
       </div>
 
-      <FooterRow venue={props.venue} showAction />
+      <FooterRow href={props.href} venue={props.venue} interactive={false} />
     </a>
   );
 }
 
 /**
- * Shared footer: the venue line, and the "Open in Maps" affordance on the path
- * that asks for one.
+ * Shared footer: the venue line and the "Open in Maps" action.
  *
- * The affordance is never itself a link. `MapCard` wraps its whole card in an
- * `<a>` and passes `showAction`, so the affordance is the visible signal that
- * the card is clickable rather than a second route to the same place; `MapEmbed`
- * leaves it out, because the map it renders carries its own control.
+ * **The action is an icon, and the words are clipped rather than dropped.** A
+ * `sr-only` span carries "Open in Maps" at every width, so the wording is still
+ * there for a screen reader while the glyph stands in for it on screen. The
+ * words cost the venue address 140px of a 236px row at phone widths, which is
+ * more of the footer than the thing the footer exists to say.
+ *
+ * **It is a link on one path and a decoration on the other**, and the two must
+ * not be flattened into each other. In the iframe path the map captures pointer
+ * events, so this is the only element that can carry the destination — and the
+ * destination is worth carrying, because it is the organiser's own `mapsUrl`
+ * where they set one, which is not the place Google's in-frame control opens.
+ * In the CSS-card path the enclosing `<a>` is already that link, so this is a
+ * non-interactive `<span>`: the visible signal that the card is clickable, never
+ * a second tab stop for one destination.
  */
-function FooterRow(props: { venue: string | null; showAction?: boolean }) {
+function FooterRow(props: { href: string; venue: string | null; interactive?: boolean }) {
+  const isLink = () => props.interactive !== false;
+
   return (
     <div class="border-border/70 bg-surface-raised flex items-center justify-between gap-3 border-t px-4 py-3">
       <Show
@@ -197,20 +207,37 @@ function FooterRow(props: { venue: string | null; showAction?: boolean }) {
           // this footer exists to say, and an ellipsis in place of the suburb
           // tells a guest nothing. `wrap-anywhere` gives a single unbreakable
           // token somewhere to break, so no address can push the row wider than
-          // the card; the four-line cap bounds one of unlimited length, since
-          // nothing between the organiser's input and here constrains it. Four
-          // is one line more than a street address needs in the narrowest
-          // column this footer renders in.
-          <span class="font-body text-text-muted text-ui-sm line-clamp-4 min-w-0 flex-1 text-left wrap-anywhere">
+          // the card; the three-line cap bounds one of unlimited length, since
+          // nothing between the organiser's input and here constrains it. Three
+          // is what the narrowest column this footer renders in fits, and a full
+          // address with its country needs all of them there.
+          <span class="font-body text-text-muted text-ui-sm line-clamp-3 min-w-0 flex-1 text-left wrap-anywhere">
             {line()}
           </span>
         )}
       </Show>
-      <Show when={props.showAction}>
-        <span class="border-gold font-body text-gold-ink group-hover:bg-gold group-hover:text-bg text-ui-xs tracking-ui-wider inline-flex shrink-0 items-center gap-1.5 rounded-sm border px-3.5 py-1.5 uppercase transition-colors duration-200">
-          Open in Maps
+      <Show
+        when={isLink()}
+        fallback={
+          <span class="border-gold text-gold-ink group-hover:bg-gold group-hover:text-bg inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border transition-colors duration-200">
+            <OpenIcon />
+            <span class="sr-only">Open in Maps</span>
+          </span>
+        }
+      >
+        <a
+          href={props.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          // Names the venue, so it is more specific than the clipped label
+          // inside and wins over it. The label is what names this action in the
+          // card path, where the element carrying it is not a link.
+          aria-label={`Open ${props.venue ?? "the venue"} in maps`}
+          class="border-gold text-gold-ink hover:bg-gold hover:text-bg focus-visible:ring-gold/60 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border transition-colors duration-200 focus:outline-none focus-visible:ring-2"
+        >
           <OpenIcon />
-        </span>
+          <span class="sr-only">Open in Maps</span>
+        </a>
       </Show>
     </div>
   );
@@ -219,8 +246,8 @@ function FooterRow(props: { venue: string | null; showAction?: boolean }) {
 function OpenIcon() {
   return (
     <svg
-      width="11"
-      height="11"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

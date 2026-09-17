@@ -236,7 +236,7 @@ nothing.
 | `@musubi/social` | `tests/styles/token-contract.browser.test.tsx` | A contract utility emits CSS **at all** (an unresolvable one emits nothing, silently); `bg-ui-accent` paints exactly what `--primary` holds; the destructive button's ink comes from `--destructive-foreground` rather than the `text-white` it used to hard-code; the mapping follows `.dark` because it is aliases and not literals; `base:` still compiles to `:where(…)`, so a call-site `class` still wins |
 | `@pulse/web` | `tests/styles/token-contract.browser.test.tsx` | The same chain on a different ramp, plus the mapping decision that only a colour can check: `--ui-accent` paints `--primary` and **not** the coral `--pulse-accent`, so nobody can "fix" the mapping to the brand colour and repaint every shared button |
 | `@cire/host` | `tests/components/PreviewInviteButton.browser.test.tsx` | "Preview invite" is genuinely painted at phone width with its label clipped to the 1×1 `sr-only` box rather than `display: none`, and swaps to the written label — glyph gone — once the `frame` container passes 42rem |
-| `@cire/invites` | `tests/components/MapPreview.browser.test.tsx` | The venue address in the details sheet is unclipped in **both** axes at 320 / 768 / 1440, `white-space` is not `nowrap` in the computed cascade, and the "Open in Maps" affordance still shares the address's row inside the footer. A fourth test pins that the address genuinely wraps at 320px, so the other three cannot pass by happening to fit |
+| `@cire/invites` | `tests/components/MapPreview.browser.test.tsx` | The venue address in the details sheet is unclipped in **both** axes at 320 / 768 / 1440 — for an ordinary address and for a full one down to its country, which is what pins the line cap at three — `white-space` is not `nowrap` in the computed cascade, and the Open-in-Maps action shares the address's row inside the footer in a box clearing WCAG 2.2's target size, its words `sr-only`-clipped rather than `display: none`. Two more pin that the address genuinely wraps at 320px, so the rest cannot pass by happening to fit, and that the cap fires on an address of unlimited length |
 
 Four of these were verified against the bug rather than merely written green.
 The #203 test fails when the popover is put back at `z-90`. The
@@ -247,13 +247,16 @@ the one a class-string assertion in the fast tier cannot distinguish. The
 `InvitePage` toast test fails when the `<Toaster>` is put back inside the events
 section: on the first-visit path it reports the section itself as the toast's
 containing block, which is precisely why the toast was painting behind the RSVP
-sheet. And the `MapPreview` test fails when `truncate` is put back on the venue
-address — five of its ten, including the inline axis in the 83px column, where
-the address's scroll box is nearly twice its visible one.
+sheet. And the `MapPreview` file fails against **two** reverts: putting
+`truncate` back on the venue address, and swapping the action's `sr-only` label
+for `hidden` — the same `display: none` mistake the `PreviewInviteButton` test
+exists for, on a different control.
 
 *Measured 2026-09-17 — `truncate` restored on `MapPreview.tsx`'s address line,
-then `bun run --cwd cire/invites test:browser`: 5 failed / 5 passed, reporting
-`scrollWidth 159 > clientWidth 84` at a 320px viewport*
+then `bun run --cwd cire/invites test:browser`: 9 failed / 8 passed, reporting
+`scrollWidth 307 > clientWidth 181` at a 320px viewport. Separately, `sr-only`
+replaced with `hidden` on the action's label: 3 failed / 14 passed, on
+`getComputedStyle(label).display` being `none`*
 
 The `EventCard` pair exists because of a **two-PR miss**. The RSVP
 confirmation's fill was reported as reverting twice in a row while every test in

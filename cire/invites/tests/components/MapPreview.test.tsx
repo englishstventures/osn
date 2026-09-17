@@ -54,15 +54,51 @@ describe("MapPreview", () => {
   });
 
   it("keeps the card's affordance a decoration on one link, not a second link", () => {
-    // The whole card is the anchor, so "Open in Maps" is a `<span>` inside it:
-    // the visible signal that the card is clickable. Two anchors here would be
-    // two tab stops and two announcements for one destination.
+    // The whole card is the anchor, so the action is a `<span>` inside it: the
+    // visible signal that the card is clickable. Two anchors here would be two
+    // tab stops and two announcements for one destination — the distinction
+    // between the two branches that is easiest to flatten by accident.
     const { container, getByText } = render(() => <MapPreview event={baseEvent} />);
 
     expect(container.querySelectorAll("a")).toHaveLength(1);
-    const action = getByText(/open in maps/i);
-    expect(action.tagName).toBe("SPAN");
-    expect(action.closest("a")).toBe(container.querySelector("a"));
+    const label = getByText(/open in maps/i);
+    expect(label.closest("a")).toBe(container.querySelector("a"));
+    // The label's own box is the `sr-only` span; the action that holds it is
+    // the element that must not be a link.
+    expect(label.parentElement?.tagName).toBe("SPAN");
+  });
+
+  it("names the action 'Open in Maps' in words in both branches, though it draws a glyph", () => {
+    // What the icon could silently take away. The words move into a clipped
+    // span rather than out of the document, so nothing an assistive technology
+    // reads is lost by drawing a glyph instead.
+    const card = render(() => <MapPreview event={baseEvent} />);
+    const cardLabel = card.getByText("Open in Maps");
+    expect(cardLabel.className).toContain("sr-only");
+    // The card itself is the link here, and it is the venue it names.
+    expect((card.getByRole("link") as HTMLAnchorElement).getAttribute("aria-label")).toBe(
+      "Open 12 Banksia Lane, Strathfield in maps",
+    );
+    cleanup();
+
+    vi.stubEnv("PUBLIC_GOOGLE_MAPS_EMBED_KEY", "test-embed-key");
+    const embed = render(() => <MapPreview event={baseEvent} />);
+    const embedLabel = embed.getByText("Open in Maps");
+    expect(embedLabel.className).toContain("sr-only");
+    // Here the action is itself the link, and it carries the same name the
+    // card's does — the venue, which is more than the clipped words say.
+    expect((embed.getByRole("link") as HTMLAnchorElement).getAttribute("aria-label")).toBe(
+      "Open 12 Banksia Lane, Strathfield in maps",
+    );
+  });
+
+  it("hides the glyph from assistive technology in both branches", () => {
+    // The glyph is decoration that stands in for the words beside it. Announced,
+    // it would be a second, wordless copy of the same action.
+    const { container } = render(() => <MapPreview event={baseEvent} />);
+    const label = container.querySelector(".sr-only") as HTMLElement;
+    const glyph = label.parentElement?.querySelector("svg");
+    expect(glyph?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("renders nothing when there is no address or mapsUrl", () => {
@@ -143,17 +179,33 @@ describe("MapPreview", () => {
       expect(sandbox).not.toContain("allow-top-navigation");
     });
 
-    it("offers no in-page maps control beside the iframe, and still names the venue", () => {
-      // The iframe carries Google's own "View larger map", so a second control
-      // in the footer would be two routes to one map. The venue line is not a
-      // control and stays in both branches.
+    it("keeps a real maps link beside the iframe, on the organiser's own destination", () => {
+      // Not a duplicate of Google's in-frame "View larger map": that opens a
+      // place query for the address, while this follows `resolveMapsUrl`, which
+      // prefers whatever the organiser pinned.
       vi.stubEnv("PUBLIC_GOOGLE_MAPS_EMBED_KEY", KEY);
-      const { container, getByText, queryByText } = render(() => <MapPreview event={baseEvent} />);
+      const { container, getByRole, getByText } = render(() => <MapPreview event={baseEvent} />);
 
       expect(container.querySelector("iframe")).not.toBeNull();
-      expect(container.querySelector("a")).toBeNull();
-      expect(queryByText(/open in maps/i)).toBeNull();
+      const link = getByRole("link") as HTMLAnchorElement;
+      expect(link.href).toContain("https://www.google.com/maps/search/?api=1&query=");
+      expect(link.href).toContain(encodeURIComponent("12 Banksia Lane, Strathfield"));
+      expect(link.target).toBe("_blank");
+      expect(link.rel).toBe("noopener noreferrer");
       expect(getByText("12 Banksia Lane, Strathfield")).toBeTruthy();
+    });
+
+    it("prefers the organiser's mapsUrl for the footer link beside the iframe", () => {
+      // The reason the link survives at all: the two destinations differ here,
+      // and this is the only one that reaches the organiser's own pin.
+      const url = "https://maps.apple.com/?address=12+Banksia+Lane";
+      vi.stubEnv("PUBLIC_GOOGLE_MAPS_EMBED_KEY", KEY);
+      const { container, getByRole } = render(() => (
+        <MapPreview event={{ ...baseEvent, mapsUrl: url }} />
+      ));
+
+      expect(container.querySelector("iframe")).not.toBeNull();
+      expect((getByRole("link") as HTMLAnchorElement).href).toBe(url);
     });
 
     it("falls back to the CSS card (no iframe) when there is no address to query", () => {
@@ -281,7 +333,7 @@ describe("MapPreview", () => {
       // clips at every width rather than only at narrow ones.
       expect(classes).not.toMatch(/(^|\s)truncate(\s|$)/);
       expect(classes).toContain("wrap-anywhere");
-      expect(classes).toContain("line-clamp-4");
+      expect(classes).toContain("line-clamp-3");
       // The action is what the address shares its row with, so the address must
       // still be allowed to shrink inside the flex row.
       expect(classes).toContain("min-w-0");
@@ -300,7 +352,7 @@ describe("MapPreview", () => {
       const classes = addressClasses(container);
       expect(classes).not.toMatch(/(^|\s)truncate(\s|$)/);
       expect(classes).toContain("wrap-anywhere");
-      expect(classes).toContain("line-clamp-4");
+      expect(classes).toContain("line-clamp-3");
     });
   });
 });
