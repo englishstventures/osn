@@ -543,7 +543,11 @@ export function RsvpModal(props: RsvpModalProps) {
               // top-heavy (58px above the buttons vs 21px below). Zero top
               // padding puts the first control ~25px under the border — level
               // with the 20px inset on the other three sides.
-              <fieldset class="border-border m-0 rounded-sm border px-5 pt-0 pb-5">
+              // `min-w-0` overrides a `<fieldset>`'s default `min-width: min-content`,
+              // which would otherwise let its content set the sheet's width — the
+              // dietary picker's scrolling track can only overflow inside a box
+              // that is allowed to be narrower than what it holds.
+              <fieldset class="border-border m-0 min-w-0 rounded-sm border px-5 pt-0 pb-5">
                 <legend class="font-display text-text text-ui-md mb-3 font-normal italic">
                   {member.firstName} {member.lastName}
                 </legend>
@@ -588,6 +592,14 @@ export function RsvpModal(props: RsvpModalProps) {
                       onChange={(next) => setDietaryPresets(guestId, next)}
                       disabled={locked()}
                       label={`Dietary requirements for ${member.firstName}`}
+                      // This sheet is a `showModal()` dialog, which paints in
+                      // the top layer above every stacking context — so a
+                      // portalled popover opened from inside it lands behind
+                      // the sheet at any z-index. `AddToCalendar` escapes that
+                      // by promoting its own menu into the top layer with the
+                      // native `popover` attribute; the shared Kobalte popover
+                      // does not, so the picker stays inline here.
+                      shell="inline"
                     />
                   </div>
 

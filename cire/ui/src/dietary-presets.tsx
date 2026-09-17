@@ -78,6 +78,30 @@ export interface DietaryPresetsProps {
   disabled?: boolean;
   /** Names whose requirements these are, for the group's accessible name. */
   label?: string;
+  /**
+   * Stacking class for the popover panel.
+   *
+   * `@shared/ui`'s popover defaults to `z-50`, which is correct on an ordinary
+   * page and wrong inside a modal: cire's guest sheet paints at `z-100`, so a
+   * panel opened from within it renders BEHIND the backdrop — visible nowhere,
+   * clickable nowhere. An app that opens this from inside a modal passes its own
+   * above-the-modal layer, since a shared component cannot know another
+   * package's stacking contract.
+   */
+  panelClass?: string;
+  /**
+   * Which shell to use.
+   *
+   * `"auto"` (default) picks by viewport: the scrolling track on a phone, the
+   * popover above it. `"inline"` pins the fields inline at every width.
+   *
+   * Inline exists because a popover cannot be opened from inside a
+   * `showModal()` dialog by z-index alone — a modal dialog paints above every
+   * stacking context in the document, so the panel lands behind it, visible and
+   * clickable nowhere. A caller rendering this inside such a dialog passes
+   * `"inline"` rather than shipping a control that silently does nothing.
+   */
+  shell?: "auto" | "inline";
 }
 
 function toggle(
@@ -168,48 +192,55 @@ export default function DietaryPresets(props: DietaryPresetsProps): JSX.Element 
   const fields = () => (
     <fieldset
       aria-label={props.label ?? "Dietary requirements"}
-      classList={{
-        // A fieldset carries a border, padding and margin by default; this is a
-        // grouping for semantics, not a box.
-        "m-0 flex min-w-0 gap-4 border-0 p-0": true,
-        "snap-x snap-proximity overflow-x-auto pb-1": !wide(),
-        "flex-col gap-3": wide(),
-      }}
+      // A fieldset carries a border, padding and margin by default; this is a
+      // grouping for semantics, not a box. `min-w-0` is load-bearing: a
+      // `<fieldset>` resolves its min-width from its CONTENT, so without it the
+      // scrolling track below cannot shrink and the sixteen pills push the whole
+      // sheet wider than the phone instead of overflowing inside it.
+      class="m-0 block min-w-0 border-0 p-0"
     >
-      <For each={bands()}>
-        {(group) => (
-          <div
-            classList={{
-              "flex gap-2": true,
-              "shrink-0 items-center": !wide(),
-              "flex-col items-start": wide(),
-            }}
-          >
-            <Show when={BAND_LABEL[group.band] !== ""}>
-              <p class="font-body text-ui-ink-muted shrink-0 text-[0.68rem] tracking-[0.12em] uppercase">
-                {BAND_LABEL[group.band]}
-              </p>
-            </Show>
-            <div classList={{ "flex gap-2": true, "shrink-0": !wide(), "flex-wrap": wide() }}>
-              <For each={group.presets}>
-                {(preset) => (
-                  <PresetCheckbox
-                    preset={preset}
-                    checked={selected().has(preset)}
-                    disabled={props.disabled}
-                    onChange={(on) => props.onChange(toggle(props.value, preset, on))}
-                  />
-                )}
-              </For>
+      <div
+        classList={{
+          "flex min-w-0 gap-4": true,
+          "snap-x snap-proximity overflow-x-auto pb-1": !wide(),
+          "flex-col gap-3": wide(),
+        }}
+      >
+        <For each={bands()}>
+          {(group) => (
+            <div
+              classList={{
+                "flex gap-2": true,
+                "shrink-0 items-center": !wide(),
+                "flex-col items-start": wide(),
+              }}
+            >
+              <Show when={BAND_LABEL[group.band] !== ""}>
+                <p class="font-body text-ui-ink-muted shrink-0 text-[0.68rem] tracking-[0.12em] uppercase">
+                  {BAND_LABEL[group.band]}
+                </p>
+              </Show>
+              <div classList={{ "flex gap-2": true, "shrink-0": !wide(), "flex-wrap": wide() }}>
+                <For each={group.presets}>
+                  {(preset) => (
+                    <PresetCheckbox
+                      preset={preset}
+                      checked={selected().has(preset)}
+                      disabled={props.disabled}
+                      onChange={(on) => props.onChange(toggle(props.value, preset, on))}
+                    />
+                  )}
+                </For>
+              </div>
             </div>
-          </div>
-        )}
-      </For>
+          )}
+        </For>
+      </div>
     </fieldset>
   );
 
   return (
-    <Show when={wide()} fallback={fields()}>
+    <Show when={wide() && props.shell !== "inline"} fallback={fields()}>
       {/* Kobalte owns placement, dismiss, focus return and the ARIA contract.
           Its content carries `data-kb-top-layer`, which is what keeps the panel
           reachable from inside a modal that marks everything outside itself
