@@ -93,10 +93,43 @@ export type ModalProps = Omit<ComponentProps<"dialog">, "open" | "onClose" | "ch
    * Default `centred`.
    */
   presentation?: ModalPresentation;
+  /**
+   * Which plane the panel is painted on. See {@link MODAL_SURFACE}.
+   *
+   * Defaults with the presentation: `raised` for `centred`, `surface` for
+   * `sheet` and `drawer`.
+   */
+  surface?: ModalSurface;
   children: JSX.Element;
 };
 
 export type ModalPresentation = "centred" | "sheet" | "drawer";
+
+export type ModalSurface = "raised" | "surface" | "ground";
+
+/**
+ * The plane the panel is painted on, as a choice rather than a `bg-` utility.
+ *
+ * It is separate from {@link MODAL_PRESENTATION} because the two vary
+ * independently: a dialog is `raised` when it floats above the page and
+ * `surface` when it is flush with an edge, but an app can want either at either
+ * anchor. `ground` is the third case and a real one — a panel whose own
+ * contents are cards has to sit *below* them, or the cards stop reading as
+ * cards. cire's consent sheet is exactly that: its category rows are raised
+ * surfaces, so the sheet behind them takes the page's own ground.
+ */
+const MODAL_SURFACE = {
+  raised: "base:bg-ui-surface-raised",
+  surface: "base:bg-ui-surface",
+  ground: "base:bg-ui-ground",
+} satisfies Readonly<Record<ModalSurface, string>>;
+
+/** What each presentation paints on unless the caller says otherwise. */
+const PRESENTATION_SURFACE = {
+  centred: "raised",
+  sheet: "surface",
+  drawer: "surface",
+} satisfies Readonly<Record<ModalPresentation, ModalSurface>>;
 
 /**
  * The three places a modal can sit, as one choice rather than a handful of
@@ -120,13 +153,12 @@ export type ModalPresentation = "centred" | "sheet" | "drawer";
  * and reads as part of the page, so it takes `surface`.
  */
 const MODAL_PRESENTATION = {
-  centred: "base:m-auto base:max-h-[85vh] base:rounded-ui-lg base:bg-ui-surface-raised",
+  centred: "base:m-auto base:max-h-[85vh] base:rounded-ui-lg",
   sheet:
     "base:mt-auto base:mb-0 base:max-h-[85dvh] base:rounded-t-ui-sheet base:rounded-b-none " +
-    "base:bg-ui-surface md:base:m-auto md:base:max-h-[85vh] md:base:rounded-ui-lg",
+    "md:base:m-auto md:base:max-h-[85vh] md:base:rounded-ui-lg",
   drawer:
-    "base:my-0 base:mr-0 base:ml-auto base:h-full base:max-h-none base:rounded-none " +
-    "base:border-l base:bg-ui-surface",
+    "base:my-0 base:mr-0 base:ml-auto base:h-full base:max-h-none base:rounded-none base:border-l",
 } satisfies Readonly<Record<ModalPresentation, string>>;
 
 /**
@@ -295,6 +327,7 @@ export function Modal(props: ModalProps) {
     "dismissable",
     "frame",
     "presentation",
+    "surface",
     "class",
     "children",
   ]);
@@ -496,6 +529,7 @@ export function Modal(props: ModalProps) {
         // dialog to the top-left corner.
         "base:w-full base:max-w-ui-sm",
         MODAL_PRESENTATION[own.presentation ?? "centred"],
+        MODAL_SURFACE[own.surface ?? PRESENTATION_SURFACE[own.presentation ?? "centred"]],
         "base:border base:border-ui-hairline",
         "base:text-ui-ink base:shadow-[var(--ui-elev-2)]",
         // Two shapes, never both: see {@link ModalProps.frame}.
