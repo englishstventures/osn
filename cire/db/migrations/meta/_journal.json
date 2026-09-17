@@ -26,8 +26,15 @@
     {
       "idx": 60,
       "version": "6",
-      "when": 1789647870041,
-      "tag": "0060_upgrade_purchases",
+      "when": 1789679218448,
+      "tag": "0060_helper_role_and_run_sheet_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "6",
+      "when": 1789681367622,
+      "tag": "0061_upgrade_purchases",
       "breakpoints": true
     }
   ]

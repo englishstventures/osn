@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "081fdcfe-62e1-4e9d-9517-9fe801b26efe",
-  "prevId": "d34d7814-2c5d-4fb6-b224-f26eda486aa9",
+  "id": "9a715b0a-cf59-4b89-8ee9-abd04c420499",
+  "prevId": "081fdcfe-62e1-4e9d-9517-9fe801b26efe",
   "tables": {
     "budget_items": {
       "name": "budget_items",
@@ -1217,6 +1217,66 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "platform_sales": {
+      "name": "platform_sales",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "purchase_id": {
+          "name": "purchase_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entitlement": {
+          "name": "entitlement",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount_minor": {
+          "name": "amount_minor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "settled_at": {
+          "name": "settled_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "platform_sales_purchase_id_unique": {
+          "name": "platform_sales_purchase_id_unique",
+          "columns": [
+            "purchase_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -3127,6 +3187,140 @@
         "wedding_invite_customisations_wedding_id_weddings_id_fk": {
           "name": "wedding_invite_customisations_wedding_id_weddings_id_fk",
           "tableFrom": "wedding_invite_customisations",
+          "tableTo": "weddings",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "wedding_upgrade_purchases": {
+      "name": "wedding_upgrade_purchases",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entitlement": {
+          "name": "entitlement",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "checkout_session_id": {
+          "name": "checkout_session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "payment_intent_id": {
+          "name": "payment_intent_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "amount_minor": {
+          "name": "amount_minor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_by_osn_profile_id": {
+          "name": "created_by_osn_profile_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "wedding_upgrade_purchases_checkout_session_id_unique": {
+          "name": "wedding_upgrade_purchases_checkout_session_id_unique",
+          "columns": [
+            "checkout_session_id"
+          ],
+          "isUnique": true
+        },
+        "wedding_upgrade_purchases_wedding_entitlement_idx": {
+          "name": "wedding_upgrade_purchases_wedding_entitlement_idx",
+          "columns": [
+            "wedding_id",
+            "entitlement"
+          ],
+          "isUnique": false
+        },
+        "wedding_upgrade_purchases_payment_intent_idx": {
+          "name": "wedding_upgrade_purchases_payment_intent_idx",
+          "columns": [
+            "payment_intent_id"
+          ],
+          "isUnique": false
+        },
+        "wedding_upgrade_purchases_one_pending_uniq": {
+          "name": "wedding_upgrade_purchases_one_pending_uniq",
+          "columns": [
+            "wedding_id",
+            "entitlement"
+          ],
+          "isUnique": true,
+          "where": "status = 'pending'"
+        }
+      },
+      "foreignKeys": {
+        "wedding_upgrade_purchases_wedding_id_weddings_id_fk": {
+          "name": "wedding_upgrade_purchases_wedding_id_weddings_id_fk",
+          "tableFrom": "wedding_upgrade_purchases",
           "tableTo": "weddings",
           "columnsFrom": [
             "wedding_id"
