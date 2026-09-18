@@ -47,13 +47,12 @@ interface HostRow {
  * A role change waiting on the owner to say yes.
  *
  * Held rather than applied because the grant it carries is the widest a seat
- * can be given. `from` is kept so dismissing it can put the select back where
- * it was — the change is made in the DOM the moment the option is chosen, and
- * nothing has been sent yet.
+ * can be given. While it is held, the row's select shows `to` — the option the
+ * owner picked — and dropping this puts the select back on the seat's own role,
+ * which is still whatever it was: nothing has been sent.
  */
 interface PendingPromotion {
   host: HostRow;
-  from: AssignableRole;
   to: AssignableRole;
 }
 
@@ -437,7 +436,7 @@ export default function HostsPanel(props: HostsPanelProps) {
   function selectRole(host: HostRow, nextRole: AssignableRole) {
     if (nextRole === host.role) return;
     if (needsPromotionConfirmation(host.role, nextRole)) {
-      setPending({ host, from: host.role, to: nextRole });
+      setPending({ host, to: nextRole });
       return;
     }
     void changeRole(host, nextRole);
