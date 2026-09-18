@@ -434,9 +434,9 @@ export default function InvitePage(props: InvitePageProps) {
           full-bleed section. Centered on mobile; at md+ it sits flush with the
           events column's left edge (both share this container's gutters). */}
       <section class="px-6 py-16 md:px-10 md:py-20">
-        <div class="mx-auto max-w-300">
+        <div class="max-w-column-4xl mx-auto">
           <div
-            class="border-border mx-auto max-w-100 rounded-sm border px-7 py-10 md:mx-0"
+            class="border-border max-w-column-xs mx-auto rounded-sm border px-7 py-10 md:mx-0"
             style={{
               ...filterThemeVars(welcomeVars()),
               "background-color": "var(--invite-section-bg)",
@@ -590,8 +590,8 @@ export default function InvitePage(props: InvitePageProps) {
               "background-color": "var(--invite-section-bg)",
             }}
           >
-            <div class="mx-auto max-w-300">
-              <div data-testid="events-column" class="max-w-240 text-left">
+            <div class="max-w-column-4xl mx-auto">
+              <div data-testid="events-column" class="max-w-column-2xl text-left">
                 <p class="font-body text-gold-ink text-ui-xs tracking-ui-widest mb-3 uppercase">
                   {detailsEyebrow()}
                 </p>

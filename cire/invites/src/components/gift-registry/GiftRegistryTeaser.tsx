@@ -150,7 +150,7 @@ export function GiftRegistryTeaser(props: GiftRegistryTeaserProps) {
             "background-color": "var(--invite-section-bg)",
           }}
         >
-          <div class="md:max-w-ui-xl mx-auto max-w-135 text-center">
+          <div class="md:max-w-ui-xl max-w-column-lg mx-auto text-center">
             <p class="font-body text-gold-ink text-ui-xs tracking-ui-widest mb-3 uppercase">
               {eyebrow()}
             </p>

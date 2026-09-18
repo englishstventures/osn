@@ -345,7 +345,7 @@ export default function InviteHeader(props: InviteHeaderProps) {
             cell), so the text spans the full width at every breakpoint.
           */}
           <div
-            class="group/story mx-auto grid max-w-135 items-center gap-10 text-center md:max-w-160 data-[has-image=true]:md:max-w-240 data-[has-image=true]:md:grid-cols-2 data-[has-image=true]:md:gap-14 data-[has-image=true]:md:text-left"
+            class="group/story max-w-column-lg md:max-w-column-xl data-[has-image=true]:md:max-w-column-2xl mx-auto grid items-center gap-10 text-center data-[has-image=true]:md:grid-cols-2 data-[has-image=true]:md:gap-14 data-[has-image=true]:md:text-left"
             data-has-image={storyImageUrl() ? "true" : "false"}
           >
             <Show when={storyImageUrl()}>
@@ -400,7 +400,7 @@ export default function InviteHeader(props: InviteHeaderProps) {
               <h2 class="font-display text-text leading-ui-none mb-5 text-[calc(clamp(2rem,5vw,3rem)*var(--invite-heading-scale,1))] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]">
                 {story()?.heading ?? "How It All Began"}
               </h2>
-              <div class="mx-auto max-w-120 group-data-[has-image=true]/story:md:mx-0">
+              <div class="max-w-column-md mx-auto group-data-[has-image=true]/story:md:mx-0">
                 <Show
                   when={story()?.body}
                   // Neutral fallback for a shown story with no body (heading- or

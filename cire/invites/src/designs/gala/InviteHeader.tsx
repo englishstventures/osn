@@ -357,7 +357,7 @@ export default function InviteHeader(props: InviteHeaderProps) {
             single left-aligned column at every breakpoint.
           */}
           <div
-            class="group/story mx-auto flex max-w-160 flex-col gap-8 text-left md:grid md:max-w-275 md:grid-cols-12 md:items-start md:gap-x-10"
+            class="group/story max-w-column-xl md:max-w-column-3xl mx-auto flex flex-col gap-8 text-left md:grid md:grid-cols-12 md:items-start md:gap-x-10"
             data-has-image={storyImageUrl() ? "true" : "false"}
           >
             <Show when={storyImageUrl()}>
@@ -420,7 +420,7 @@ export default function InviteHeader(props: InviteHeaderProps) {
               <h2 class="font-display text-text leading-ui-none mb-5 text-[calc(clamp(2rem,5vw,3rem)*var(--invite-heading-scale,1))] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]">
                 {story()?.heading ?? "How It All Began"}
               </h2>
-              <div class="max-w-120">
+              <div class="max-w-column-md">
                 <Show
                   when={story()?.body}
                   // Neutral fallback for a shown story with no body (heading- or

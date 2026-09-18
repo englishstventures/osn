@@ -345,7 +345,7 @@ export function GiftRegistryPage(props: GiftRegistryPageProps) {
         "background-color": "var(--invite-section-bg)",
       }}
     >
-      <div class="md:max-w-ui-2xl mx-auto max-w-135">
+      <div class="md:max-w-ui-2xl max-w-column-lg mx-auto">
         <Switch
           fallback={
             /* Before the first answer. The read is credentialed, so it cannot

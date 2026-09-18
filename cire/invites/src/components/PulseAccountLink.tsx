@@ -164,7 +164,7 @@ export function PulseAccountLink(props: PulseAccountLinkProps) {
     // invite is untouched.
     <Show when={probe()?.kind === "ready"}>
       <section
-        class="border-gold/30 bg-gold/5 mx-auto mt-10 max-w-105 rounded-sm border px-5 py-6 text-left"
+        class="border-gold/30 bg-gold/5 max-w-column-sm mx-auto mt-10 rounded-sm border px-5 py-6 text-left"
         aria-labelledby="pulse-link-heading"
       >
         <h3
