@@ -206,13 +206,8 @@
     "jsdoc/no-defaults": "warn",
     "jsdoc/implements-on-classes": "warn",
 
-    // `warn`, not `error`: 18 sites remain and each needs a decision rather than
-    // an edit — see the pull request. The two-way ratchet in
-    // scripts/lint-warning-ceiling.txt holds the number, so the count cannot
-    // grow while those are settled. It goes to `error` at zero, like
-    // `no-unknown-classes` did.
     "shadcn/no-arbitrary-values": [
-      "warn",
+      "error",
       {
         // Four shapes that are not off-token hardcodes and have no token to
         // move to. `var()`, `calc()` and `clamp()` read a value decided at
@@ -240,6 +235,29 @@
           "*[*vw]",
           "*[*dvh]",
           "*[*svh]"
+        ]
+      }
+    ],
+    // A call site may place a shared component; it may not restyle one. Colour,
+    // shape, typography and elevation belong to the component, so a treatment
+    // the design wants becomes a named variant there rather than a class list
+    // here — the migration this rule closes found four `@shared/ui` gaps and a
+    // handful of `cire/ui` ones by being blocked on exactly that.
+    //
+    // `allow: ["layout"]` because where a component sits is the caller's:
+    // margin, flex and grid placement, width in a parent's terms. The
+    // `contracts` entry extends that to `gap-*` on the containers whose
+    // children are the caller's — a Card or a Modal cannot know how far apart
+    // the things put inside it should be.
+    "shadcn/no-restyle": [
+      "error",
+      {
+        "allow": ["layout"],
+        "contracts": [
+          {
+            "pattern": "^(Card|CardContent|CardFooter|CardHeader|Modal|DialogFooter|DialogHeader|PopoverTrigger|DropdownMenuTrigger)$",
+            "allow": ["layout", "gap-*"]
+          }
         ]
       }
     ],
