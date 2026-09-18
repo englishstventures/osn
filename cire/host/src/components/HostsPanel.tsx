@@ -119,6 +119,10 @@ export default function HostsPanel(props: HostsPanelProps) {
   // The promotion waiting on a yes, or null. Held rather than sent: see
   // `PendingPromotion`.
   const [pending, setPending] = createSignal<PendingPromotion | null>(null);
+  // What the dialog renders. `Modal` unmounts its children only once the exit
+  // has played, and the body names a person — without this it would blank
+  // mid-fade. Built once, here: each call makes its own signal and effect.
+  const shownPromotion = heldWhileClosing(pending);
   // True row count from the API; compared against what we rendered.
   const [total, setTotal] = createSignal(0);
   const truncated = () => total() > hosts().length;
@@ -763,9 +767,8 @@ export default function HostsPanel(props: HostsPanelProps) {
         </Show>
       </Show>
 
-      {/* Kept mounted across the close so the exit animates, and `heldWhileClosing`
-          keeps the person's name on screen through it rather than blanking the
-          sentence mid-fade.
+      {/* Kept mounted across the close so the exit animates; `shownPromotion`
+          is what keeps the person's name on screen through it.
 
           `onClose` is the single place the pending change is dropped, not the
           Cancel button: the dialog closes on Escape and on a backdrop click
@@ -777,7 +780,7 @@ export default function HostsPanel(props: HostsPanelProps) {
         label="Confirm this role change"
         class="w-full max-w-md"
       >
-        <Show when={heldWhileClosing(pending)()}>
+        <Show when={shownPromotion()}>
           {(promotion) => (
             <div class="flex flex-col gap-4">
               <p class="font-display text-text text-ui-md font-light">
