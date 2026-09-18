@@ -1,9 +1,56 @@
 import { DropdownMenu as KobalteDropdownMenu } from "@kobalte/core/dropdown-menu";
+import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { clsx } from "clsx";
-import { splitProps, type ComponentProps, type ParentComponent } from "solid-js";
+import {
+  splitProps,
+  type ComponentProps,
+  type JSX,
+  type ParentComponent,
+  type ValidComponent,
+} from "solid-js";
 
 const DropdownMenu = KobalteDropdownMenu;
-const DropdownMenuTrigger = KobalteDropdownMenu.Trigger;
+
+/**
+ * What opens the menu.
+ *
+ * `treatment` exists for the trigger that *is* the control rather than a wrapper
+ * around one. `<DropdownMenuTrigger as={Button}>` needs nothing here — the
+ * button brings its own radius and focus ring — but an avatar-as-trigger has
+ * neither, and a keyboard user landing on it sees nothing at all. `bare` is
+ * therefore the default, so the `as={Button}` spelling is untouched.
+ *
+ * The ring and the radius are one choice rather than two because they cannot
+ * disagree: a rectangular focus ring drawn around a circular avatar is the
+ * defect, not a variation on it.
+ */
+const DROPDOWN_MENU_TRIGGER_TREATMENT = {
+  bare: "",
+  pill:
+    "base:cursor-pointer base:rounded-ui-pill base:outline-none " +
+    "base:focus-visible:ring-2 base:focus-visible:ring-ui-focus base:focus-visible:ring-offset-2",
+} satisfies Readonly<Record<"bare" | "pill", string>>;
+
+type DropdownMenuTriggerProps<T extends ValidComponent = "button"> = PolymorphicProps<
+  T,
+  {
+    treatment?: keyof typeof DROPDOWN_MENU_TRIGGER_TREATMENT;
+    class?: string;
+    children?: JSX.Element;
+  }
+>;
+
+function DropdownMenuTrigger<T extends ValidComponent = "button">(
+  props: DropdownMenuTriggerProps<T>,
+) {
+  const [local, others] = splitProps(props as DropdownMenuTriggerProps, ["class", "treatment"]);
+  return (
+    <KobalteDropdownMenu.Trigger
+      class={clsx(DROPDOWN_MENU_TRIGGER_TREATMENT[local.treatment ?? "bare"], local.class)}
+      {...others}
+    />
+  );
+}
 
 const DropdownMenuContent: ParentComponent<ComponentProps<"div">> = (props) => {
   const [local, others] = splitProps(props, ["class"]);

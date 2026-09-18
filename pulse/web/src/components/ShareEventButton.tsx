@@ -187,7 +187,9 @@ export function ShareEventButton(props: ShareEventButtonProps) {
             <PopoverTrigger as={Button} variant="secondary" size="sm" aria-label="Share event">
               Share
             </PopoverTrigger>
-            <PopoverContent class="w-72 p-0">{grid}</PopoverContent>
+            <PopoverContent padding="none" class="w-72">
+              {grid}
+            </PopoverContent>
           </Popover>
         }
       >
@@ -205,13 +207,10 @@ export function ShareEventButton(props: ShareEventButtonProps) {
             if (!o) setOpen(false);
           }}
         >
-          <DialogContent class="top-auto bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 translate-y-0 rounded-t-xl rounded-b-none">
+          <DialogContent presentation="sheet">
             <DialogHeader>
               <DialogTitle>Share event</DialogTitle>
-              <DialogClose
-                aria-label="Close"
-                class="text-muted-foreground hover:text-foreground text-xl leading-none"
-              >
+              <DialogClose aria-label="Close" treatment="glyph">
                 ×
               </DialogClose>
             </DialogHeader>

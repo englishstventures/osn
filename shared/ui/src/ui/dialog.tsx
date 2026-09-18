@@ -1,6 +1,14 @@
 import { Dialog as KobalteDialog } from "@kobalte/core/dialog";
+import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { clsx } from "clsx";
-import { splitProps, type Component, type ComponentProps, type ParentComponent } from "solid-js";
+import {
+  splitProps,
+  type Component,
+  type ComponentProps,
+  type JSX,
+  type ParentComponent,
+  type ValidComponent,
+} from "solid-js";
 
 const Dialog = KobalteDialog;
 const DialogTrigger = KobalteDialog.Trigger;
@@ -22,17 +30,27 @@ const DIALOG_CLOSE_TREATMENT = {
     "base:transition-colors",
 } satisfies Readonly<Record<"bare" | "glyph", string>>;
 
-const DialogClose: ParentComponent<
-  ComponentProps<"button"> & { treatment?: keyof typeof DIALOG_CLOSE_TREATMENT }
-> = (props) => {
-  const [local, others] = splitProps(props, ["class", "treatment"]);
+/**
+ * Polymorphic, because `as={Button}` is the documented way to spell the labelled
+ * close control the `bare` treatment exists for. A concrete
+ * `ComponentProps<"button">` here would drop Kobalte's `as` from the type while
+ * leaving it working at runtime — the prop lands in `others` and Kobalte honours
+ * it — so the contract and the behaviour would disagree silently.
+ */
+type DialogCloseProps<T extends ValidComponent = "button"> = PolymorphicProps<
+  T,
+  { treatment?: keyof typeof DIALOG_CLOSE_TREATMENT; class?: string; children?: JSX.Element }
+>;
+
+function DialogClose<T extends ValidComponent = "button">(props: DialogCloseProps<T>) {
+  const [local, others] = splitProps(props as DialogCloseProps, ["class", "treatment"]);
   return (
     <KobalteDialog.CloseButton
       class={clsx(DIALOG_CLOSE_TREATMENT[local.treatment ?? "bare"], local.class)}
       {...others}
     />
   );
-};
+}
 
 const DialogPortal: ParentComponent = (props) => {
   return <KobalteDialog.Portal>{props.children}</KobalteDialog.Portal>;

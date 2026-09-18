@@ -119,7 +119,7 @@ export function EventDetailPage() {
               <div class="p-4">
                 <div class="mb-2 flex items-center gap-2">
                   <Show when={e().category}>
-                    <Badge variant="secondary" class="tracking-wide uppercase">
+                    <Badge variant="secondary" treatment="eyebrow">
                       {e().category}
                     </Badge>
                   </Show>

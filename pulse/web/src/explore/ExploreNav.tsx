@@ -144,19 +144,17 @@ export function ExploreNav(props: {
 
             {/* Avatar dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger class="focus-visible:ring-ring cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2">
+              <DropdownMenuTrigger treatment="pill">
                 <Avatar class="h-8.5 w-8.5">
                   <Show when={avatar()}>
                     {(url) => <AvatarImage src={url()} alt={name() ?? "You"} />}
                   </Show>
-                  <AvatarFallback class="text-xs">{initialOf(name())}</AvatarFallback>
+                  <AvatarFallback>{initialOf(name())}</AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuGroup>
-                  <DropdownMenuLabel class="text-muted-foreground font-normal">
-                    {name() ?? "…"}
-                  </DropdownMenuLabel>
+                  <DropdownMenuLabel tone="identity">{name() ?? "…"}</DropdownMenuLabel>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => navigate("/settings")}>Settings</DropdownMenuItem>
@@ -198,7 +196,7 @@ export function ExploreNav(props: {
             </b>
           </div>
           <h1
-            class="m-0 max-w-[16ch] font-normal"
+            class="max-w-hero m-0 font-normal"
             style={{
               "font-family": "var(--font-serif)",
               "font-size": "clamp(32px, 4.4vw, 56px)",
@@ -207,7 +205,7 @@ export function ExploreNav(props: {
               "text-wrap": "pretty",
             }}
           >
-            <span class="mr-[0.2em]">Here's what's</span>{" "}
+            <span class="mr-accent-word">Here's what's</span>{" "}
             <span class="italic" style={{ color: "var(--pulse-accent)" }}>
               pulsing
             </span>{" "}

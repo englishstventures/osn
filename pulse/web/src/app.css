@@ -219,6 +219,15 @@
   --color-pulse-accent-strong: var(--pulse-accent-strong);
   --color-pulse-accent-soft: var(--pulse-accent-soft);
   --color-pulse-accent-fg: var(--pulse-accent-fg);
+  /* The explore hero's measure, counted in characters of Instrument Serif at
+     display size rather than taken from the `ui-*` measure scale: that scale is
+     in rem and library-facing, and a display headline's line length is a
+     property of the face it is set in. */
+  --container-hero: 16ch;
+  /* The optical gap before the headline's italic accent word. An italic serif
+     needs more room on its left than a word space gives it, or it collides with
+     the upright word in front. */
+  --spacing-accent-word: 0.2em;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
