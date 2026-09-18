@@ -41,11 +41,12 @@ describe("the vocabulary", () => {
     });
   });
 
-  it("gives every role a label and a summary", () => {
-    for (const role of ROLES) {
-      expect(ROLE_COPY[role].label.length).toBeGreaterThan(0);
-      expect(ROLE_COPY[role].summary.length).toBeGreaterThan(0);
-    }
+  it("gives every role a label, a summary and a badge title", () => {
+    const missing = ROLES.filter((role) => {
+      const copy = ROLE_COPY[role];
+      return !copy.label || !copy.summary || !copy.badgeTitle;
+    });
+    expect(missing).toEqual([]);
   });
 });
 

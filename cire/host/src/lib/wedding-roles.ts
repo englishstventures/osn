@@ -130,11 +130,18 @@ export function surfacesFor(role: WeddingRole): RoleSurfaces {
   return NO_SURFACES;
 }
 
-/** How the portal words a role: the label on a badge or a dropdown option, and
- *  the sentence saying what it carries. */
+/** How the portal words a role. */
 export interface RoleCopy {
+  /** The label on a badge, a dropdown option or an explainer. */
   label: string;
+  /** What the role carries, said ABOUT someone — the explainers beside the
+   *  handle input, and the dropdown that sets another person's seat. */
   summary: string;
+  /** The same fact said TO the person holding it, for the chip in the top bar.
+   *  Two strings rather than one: the chip is worn and the explainer is read
+   *  about a third party, and one sentence cannot be both without reading like
+   *  a translation. */
+  badgeTitle: string;
 }
 
 /**
@@ -149,18 +156,22 @@ export const ROLE_COPY = {
     label: "Owner",
     summary:
       "Created this wedding. The only one who can change who helps, rotate claim codes, or delete it.",
+    badgeTitle: "You created this wedding and manage who helps with it",
   },
   editor: {
     label: "Editor",
     summary: "Can change guests, events and the invite, and bring in more co-hosts.",
+    badgeTitle: "You can view and edit this wedding",
   },
   viewer: {
     label: "Viewer",
     summary: "Can see the whole dashboard and change nothing.",
+    badgeTitle: "You can view this wedding — ask the owner for editor access to make changes",
   },
   helper: {
     label: "Helper",
     summary: "Sees the run sheet for the day — not the guest list, the budget or the replies.",
+    badgeTitle: "You have the run sheet for the day; the rest of this wedding isn't yours to open",
   },
 } satisfies Record<WeddingRole, RoleCopy>;
 
