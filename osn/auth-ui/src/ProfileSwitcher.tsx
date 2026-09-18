@@ -84,7 +84,7 @@ export function ProfileSwitcher(props: ProfileSwitcherProps) {
           </Avatar>
           <span class="text-xs">@{activeProfile()?.handle ?? "..."}</span>
         </PopoverTrigger>
-        <PopoverContent class="w-56 p-0">
+        <PopoverContent padding="none" class="w-56">
           <div class="border-border border-b px-3 py-2">
             <p class="text-foreground text-xs font-semibold">Profiles</p>
           </div>

@@ -113,9 +113,7 @@ export function SettingsPage() {
                     />
                   )}
                 </Show>
-                <AvatarFallback class="text-display">
-                  {profileInitials(activeProfile())}
-                </AvatarFallback>
+                <AvatarFallback size="lg">{profileInitials(activeProfile())}</AvatarFallback>
               </Avatar>
               <div>
                 <p class="text-foreground font-medium">
@@ -126,18 +124,21 @@ export function SettingsPage() {
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label class="text-subtle text-meta">Handle</Label>
-              <Input value={`@${claims().handle ?? ""}`} disabled class="bg-muted/50 text-body" />
+              <Label tone="muted" size="sm">
+                Handle
+              </Label>
+              <Input value={`@${claims().handle ?? ""}`} disabled />
               <p class="text-subtle text-meta">Handles cannot be changed.</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label class="text-subtle text-meta">Display name</Label>
+              <Label tone="muted" size="sm">
+                Display name
+              </Label>
               <Input
                 value={activeProfile()?.displayName ?? ""}
                 disabled
                 placeholder="No display name set"
-                class="text-body"
               />
               <p class="text-subtle text-meta">Profile editing coming soon.</p>
             </div>
@@ -148,17 +149,17 @@ export function SettingsPage() {
         <Show when={section() === "account"}>
           <Card padding="md" class="flex flex-col gap-5">
             <div class="flex flex-col gap-1.5">
-              <Label class="text-subtle text-meta">Email</Label>
-              <Input value={claims().email ?? ""} disabled class="bg-muted/50 text-body" />
+              <Label tone="muted" size="sm">
+                Email
+              </Label>
+              <Input value={claims().email ?? ""} disabled />
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label class="text-subtle text-meta">Profile ID</Label>
-              <Input
-                value={claims().profileId ?? ""}
-                disabled
-                class="bg-muted/50 text-meta font-mono"
-              />
+              <Label tone="muted" size="sm">
+                Profile ID
+              </Label>
+              <Input value={claims().profileId ?? ""} disabled face="code" />
             </div>
 
             <div class="border-border border-t pt-4">
@@ -166,7 +167,7 @@ export function SettingsPage() {
               <p class="text-subtle text-meta mt-1 mb-3">
                 Account deletion is permanent and cannot be undone.
               </p>
-              <Button variant="ghost" size="sm" class="text-destructive" disabled>
+              <Button variant="ghostDanger" size="sm" disabled>
                 Delete account (coming soon)
               </Button>
             </div>

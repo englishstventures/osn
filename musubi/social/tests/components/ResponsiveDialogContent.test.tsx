@@ -9,9 +9,11 @@ afterEach(() => {
   cleanup();
 });
 
-/** Every app dialog routes through this component; its bottom-sheet face is
- *  pure classes, so the contract is locked with class assertions (same
- *  pattern as MobileNav.test.tsx's shell test). */
+/** Every app dialog routes through this component, and the bottom-sheet face it
+ *  selects is pure classes, so the contract is locked with class assertions
+ *  (same pattern as MobileNav.test.tsx's shell test). The classes are
+ *  `base:`-prefixed because they come from `DialogContent`'s own `presentation`
+ *  variant — zero specificity, so a call site's plain utility still wins. */
 describe("<ResponsiveDialogContent /> — sheet-class contract", () => {
   it("carries the mobile bottom-sheet tokens, and inherits the desktop card radius", () => {
     render(() => (
@@ -30,13 +32,14 @@ describe("<ResponsiveDialogContent /> — sheet-class contract", () => {
     // true — if the mapping is ever dropped, this is the test that notices.
     for (const token of [
       "rounded-ui-lg",
-      "max-md:bottom-0",
-      "max-md:top-auto",
-      "max-md:max-w-none",
-      "max-md:max-h-[85dvh]",
-      "max-md:overflow-y-auto",
-      "max-md:rounded-b-none",
-      "max-md:pb-safe",
+      "max-md:base:bottom-0",
+      "max-md:base:top-auto",
+      "max-md:base:max-w-none",
+      "max-md:base:max-h-[85dvh]",
+      "max-md:base:overflow-y-auto",
+      "max-md:base:rounded-t-ui-sheet",
+      "max-md:base:rounded-b-none",
+      "max-md:base:pb-[max(0px,env(safe-area-inset-bottom))]",
     ]) {
       expect(content.className).toContain(token);
     }
@@ -52,7 +55,7 @@ describe("<ResponsiveDialogContent /> — sheet-class contract", () => {
     ));
     const content = screen.getByText("sheet body").closest("[role=dialog]") as HTMLElement;
     const cls = content.className;
-    expect(cls.indexOf("max-w-sm")).toBeGreaterThan(cls.indexOf("max-md:bottom-0"));
+    expect(cls.indexOf("max-w-sm")).toBeGreaterThan(cls.indexOf("max-md:base:bottom-0"));
     expect(cls).toContain("p-0");
   });
 });

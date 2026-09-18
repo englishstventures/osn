@@ -197,9 +197,9 @@ export function ConnectionsPage() {
                       </div>
                       <div class="flex items-center gap-1.5">
                         <Button
-                          variant="ghost"
+                          variant="ghostDanger"
                           size="sm"
-                          class="text-destructive h-7 max-md:h-10"
+                          class="h-7 max-md:h-10"
                           onClick={() => requestRemove(conn)}
                         >
                           Remove
@@ -246,7 +246,7 @@ export function ConnectionsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          class="text-muted-foreground h-7 max-md:h-10"
+                          class="h-7 max-md:h-10"
                           onClick={() => rejectRequest(req.handle)}
                         >
                           Decline
@@ -284,9 +284,9 @@ export function ConnectionsPage() {
                       </div>
                       <div class="flex items-center gap-1.5">
                         <Button
-                          variant="ghost"
+                          variant="ghostDanger"
                           size="sm"
-                          class="text-destructive h-7 max-md:h-10"
+                          class="h-7 max-md:h-10"
                           onClick={() => cancelSentRequest(req.handle)}
                         >
                           Cancel
@@ -315,31 +315,31 @@ export function ConnectionsPage() {
                 Remove {removeTarget()?.displayName || `@${removeTarget()?.handle}`} as a friend?
               </DialogTitle>
             </DialogHeader>
-            <div class="flex flex-col gap-4 p-4">
+            <div class="p-4">
               <DialogDescription>You can always add them again later.</DialogDescription>
-              <DialogFooter class="border-0 p-0">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  class="max-md:h-10"
-                  onClick={() => setRemoveTarget(null)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  class="max-md:h-10"
-                  onClick={() => {
-                    void confirmRemove();
-                  }}
-                >
-                  Remove
-                </Button>
-              </DialogFooter>
             </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                class="max-md:h-10"
+                onClick={() => setRemoveTarget(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                class="max-md:h-10"
+                onClick={() => {
+                  void confirmRemove();
+                }}
+              >
+                Remove
+              </Button>
+            </DialogFooter>
           </ResponsiveDialogContent>
         </Dialog>
 

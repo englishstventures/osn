@@ -183,10 +183,10 @@ export function ConnectionsHero(props: ConnectionsHeroProps) {
       />
 
       <div class="relative mx-auto w-full max-w-3xl">
-        <p class="font-body text-accent mb-5 text-xs font-medium tracking-[0.26em] uppercase">
+        <p class="font-body text-accent tracking-eyebrow mb-5 text-xs font-medium uppercase">
           Musubi
         </p>
-        <h1 class="font-display text-text text-[clamp(2.1rem,7.5vw,5rem)] leading-[1.05] font-bold tracking-tight text-balance">
+        <h1 class="font-display text-text leading-display text-[clamp(2.1rem,7.5vw,5rem)] font-bold tracking-tight text-balance">
           Your social graph,
           <br />
           your control.
