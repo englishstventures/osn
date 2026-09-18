@@ -119,11 +119,19 @@ export const weddings = sqliteTable(
 // server-to-server ARC call to osn-api's `/graph/internal/profile-by-handle`
 // (cire never sees the handle→id mapping otherwise). `added_by_osn_profile_id`
 // records which owner added the host (audit only). `role` splits co-hosts into
-// `editor` (full module writes — a partner or hired planner) and `viewer`
-// (read-only). `host` is LEGACY: migration 0031 rewrote every 'host' row to
-// 'editor' and the app only ever writes editor/viewer, but the value stays in
-// the enum because the column's DDL DEFAULT 'host' can't change without a
-// table rebuild — readers normalise a stray 'host' to 'editor'.
+// `editor` (full module writes — a partner or hired planner), `viewer`
+// (read-only across the dashboard) and `helper` (the day-of run sheet and
+// nothing else — not the guest list, not the budget, not the RSVPs). `host` is
+// LEGACY: migration 0031 rewrote every 'host' row to 'editor' and the app only
+// ever writes editor/viewer, but the value stays in the enum because the
+// column's DDL DEFAULT 'host' can't change without a table rebuild — readers
+// normalise a stray 'host' to 'editor'.
+//
+// `run_sheet_scope` is a helper's own visibility setting, and applies to no
+// other role: `own` (the default) means they receive only the tasks assigned to
+// them, `full` means the host has opened the whole run sheet to them. It is
+// stored rather than derived because the route has to filter on it — a helper
+// who can read the unfiltered response is one network tab away from the lot.
 export const weddingHosts = sqliteTable(
   "wedding_hosts",
   {
@@ -133,9 +141,12 @@ export const weddingHosts = sqliteTable(
       .references(() => weddings.id, { onDelete: "cascade" }),
     osnProfileId: text("osn_profile_id").notNull(),
     addedByOsnProfileId: text("added_by_osn_profile_id").notNull(),
-    role: text("role", { enum: ["host", "editor", "viewer"] })
+    role: text("role", { enum: ["host", "editor", "viewer", "helper"] })
       .notNull()
       .default("host"),
+    runSheetScope: text("run_sheet_scope", { enum: ["own", "full"] })
+      .notNull()
+      .default("own"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   },
   (t) => [
@@ -868,7 +879,29 @@ export const rsvps = sqliteTable(
     status: text("status", {
       enum: ["attending", "declined", "maybe"],
     }).notNull(),
+    // Free text: what the guest typed under "Other". Everything nameable is a
+    // key in `dietary_presets` instead.
+    //
+    // Some rows carry whole prose here with no presets at all, and nothing
+    // back-fills them — guessing that "veggie, no nuts pls" means two specific
+    // keys is the unreliable inference the picker exists to remove. That is why
+    // the picker reveals its text box for a non-empty `dietary` as well as for a
+    // selected `other`: it is what makes such a row open intact.
     dietary: text("dietary").notNull().default(""),
+    // The guest's picks from the closed vocabulary in `@cire/dietary`, as a
+    // canonically-ordered comma-separated key list (`"vegetarian,nuts"`).
+    //
+    // Not JSON: every key is `[a-z_]+` from a fixed set, so nothing here can
+    // ever need escaping, the parse cannot throw, and the column stays legible
+    // in the D1 console. (`weddings.gift_summary_json` is JSON because it holds
+    // a nested object. A flat set of enum keys does not need it.)
+    //
+    // **Special-category, exactly like `dietary`** — `halal` and `kosher` reveal
+    // religious belief, `nuts` and `shellfish` reveal health. It sits inside the
+    // same Art. 9(2)(a) consent gate below, is cleared by the same erasure
+    // sweep, and is on the same log-redaction deny-list. A preset is not the
+    // safe half of this pair.
+    dietaryPresets: text("dietary_presets").notNull().default(""),
     // Explicit Art. 9(2)(a) consent record for the special-category `dietary`
     // free-text (see [[wiki/compliance/dpia/cire-guest-data]] → C-H2). Captured
     // here, 1:1 with the RSVP, because consent authorises exactly this row's
@@ -1211,3 +1244,92 @@ export const imports = sqliteTable(
     index("imports_wedding_uploaded_at_idx").on(t.weddingId, t.uploadedAt),
   ],
 );
+
+// ── Upgrade purchases (migration 0060) ───────────────────────────────────────
+// Self-serve purchase of a `wedding_entitlements` capability — `vendors` and
+// `registry` today. The money side of the entitlement table, which cannot hold
+// it: that table's primary key is (wedding_id, entitlement) and grants are
+// `onConflictDoNothing`, so a second purchase of a key the wedding already has
+// would be swallowed with no record that money changed hands.
+//
+// MERCHANT: cire, unlike every other payment in this product. Gift
+// contributions are DIRECT charges on the couple's own connected account (they
+// are the merchant of record, and cire never holds gift funds). An upgrade is
+// the opposite — a platform Checkout — which is why it has its own Stripe
+// endpoint, its own signing secret, and this table rather than a reuse of
+// `registry_contributions`.
+export const weddingUpgradePurchases = sqliteTable(
+  "wedding_upgrade_purchases",
+  {
+    id: text("id").primaryKey(), // upg_<ulid>, sent to Stripe as client_reference_id
+    weddingId: text("wedding_id")
+      .notNull()
+      .references(() => weddings.id, { onDelete: "cascade" }),
+    // Deliberately the same enum as `wedding_entitlements.entitlement` rather
+    // than only the two keys sold today: making another key purchasable is then
+    // a catalogue/config change, not a migration.
+    entitlement: text("entitlement", {
+      enum: ["premium_templates", "vendors", "ai", "capacity_500", "capacity_1000", "registry"],
+    }).notNull(),
+    status: text("status", { enum: ["pending", "succeeded", "failed", "expired"] })
+      .notNull()
+      .default("pending"),
+    // UNIQUE, and NULL until Stripe returns a session. The idempotency anchor
+    // for the webhook: Stripe delivers at least once and retries until it gets
+    // a 2xx, so a duplicate delivery is the ordinary case, not the edge.
+    checkoutSessionId: text("checkout_session_id").unique(),
+    paymentIntentId: text("payment_intent_id"),
+    // What Stripe ACTUALLY charged, recorded at settle — never what was asked
+    // for. Null while pending.
+    amountMinor: integer("amount_minor"),
+    currency: text("currency"),
+    // Who pressed buy. Also what the entitlement grant records as `granted_by`:
+    // a webhook has no actor of its own, and the buyer is the honest answer.
+    createdByOsnProfileId: text("created_by_osn_profile_id").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [
+    index("wedding_upgrade_purchases_wedding_entitlement_idx").on(t.weddingId, t.entitlement),
+    index("wedding_upgrade_purchases_payment_intent_idx").on(t.paymentIntentId),
+    // At most ONE attempt in flight per (wedding, entitlement). The service
+    // resolves an existing pending row before it ever reaches an insert — this
+    // is the backstop behind that, for the race the lookup cannot close, not
+    // the control flow. A violation surfaces as a 409, which is why the insert
+    // goes through `Effect.tryPromise` rather than `dbQuery` (whose throws are
+    // defects, i.e. 500s).
+    uniqueIndex("wedding_upgrade_purchases_one_pending_uniq")
+      .on(t.weddingId, t.entitlement)
+      .where(sql`status = 'pending'`),
+  ],
+);
+
+// The sales record, kept deliberately OUTSIDE the wedding's cascade.
+//
+// Every other cire table hangs off `weddings.id` and dies with it. That is
+// right for wedding data and wrong for a record of money cire took: the
+// reasoning behind the 2026-08-24 decision to let gift contributions go with
+// the 1-year guest sweep was explicitly "cire is never the merchant of record
+// and never holds the funds, so it carries no payment-record obligation of its
+// own" — and an upgrade is the case where cire IS the merchant.
+//
+// So: no foreign key, no wedding id, no profile id. Written at SETTLE rather
+// than at deletion, because there is no wedding-DELETE flow to trigger it and a
+// writer that only runs on deletion would be dead code.
+//
+// NOT anonymous, and the compliance pages must not say it is: `settled_at` is
+// the same timestamp the purchase row and the entitlement grant carry, and the
+// amount and entitlement repeat the purchase row, so while that row exists the
+// join is exact. Afterwards it stays linkable through Stripe's own retained
+// session. `purchase_id` therefore adds no linkability the timestamp does not
+// already give — and it is what makes the insert idempotent across retries.
+export const platformSales = sqliteTable("platform_sales", {
+  id: text("id").primaryKey(), // sal_<ulid>
+  // UNIQUE with no FK: after a future cascade this is an orphan opaque string.
+  // It exists so a redelivered webhook writes one row rather than a second.
+  purchaseId: text("purchase_id").notNull().unique(),
+  entitlement: text("entitlement").notNull(),
+  amountMinor: integer("amount_minor").notNull(),
+  currency: text("currency").notNull(),
+  settledAt: integer("settled_at", { mode: "timestamp" }).notNull(),
+});

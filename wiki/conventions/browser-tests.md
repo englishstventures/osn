@@ -10,7 +10,7 @@ packages:
   - "@cire/host"
   - "@musubi/social"
   - "@pulse/web"
-last-reviewed: 2026-09-16
+last-reviewed: 2026-09-18
 ---
 # Browser Tests
 
@@ -155,6 +155,30 @@ hold in both), and augments Vitest's `BrowserCommands` interface so `commands`
 is typed at the call site rather than cast — `@cire/invites`'s copy predates that
 and still casts.
 
+### Width
+
+Unlike the media preferences above, width is **not** a property of the browser
+context, so it needs no command. `page.viewport(width, height)` from
+`vitest/browser` resizes the iframe the tests render into, and everything inside
+it — `innerWidth`, `getBoundingClientRect`, `clientWidth`, media queries — is the
+CSS pixels asked for. A `<dialog>` opened with `showModal()` follows, because its
+containing block is that same viewport. The provider CSS-scales the iframe's
+wrapper to fit the Playwright page; every test in the tier already runs under
+that scaling at the default 414×896, so this is the existing code path with
+different numbers.
+
+Two rules, both cheap to get wrong:
+
+- **Every `it` sets its own viewport.** It persists for the rest of the file, so
+  otherwise the order tests happen to run in decides what they measure.
+- **Render after the resize, not before.** A component rendered at the previous
+  width plays its entry transition against a box that is about to change.
+
+And one that is not about the viewport at all but bites the same tests: **await
+`document.fonts.ready` before measuring anything text-shaped.** The invite's
+faces are self-hosted, and a line count taken against the fallback metrics is a
+different number.
+
 ## Running it locally
 
 Nothing extra on a normal machine — `playwright` is a devDependency of
@@ -202,6 +226,7 @@ nothing.
 | Package | File | Pins |
 |---|---|---|
 | `@cire/invites` | `tests/lib/z-index.browser.test.tsx` | Every `Z_CLASS` entry emits real CSS; a modal-launched popover hit-tests **above** the modal (#203); no ancestor traps it in a stacking context; the modal blocks page content beneath it |
+| `@cire/invites` | `tests/components/DietaryPresets.browser.test.tsx` | The dietary picker's preset track overflows **inside** the sheet rather than widening it (a `<fieldset>` sizes to its content unless every box down to the scrollport may be narrower than what it holds), and the picker stays inline at desktop width — a `showModal()` dialog paints above every stacking context, so a portalled popover opened from inside it would be unreachable at any z-index |
 | `@cire/invites` | `tests/components/RsvpModal.browser.test.tsx` | The sticky action bar sits on the scrollport's bottom edge, stays put while content scrolls under it, runs full-bleed to the panel's content box, and both buttons are the topmost element at their own centre |
 | `@cire/invites` | `tests/styles/reduced-motion.browser.test.tsx` | The clamp applies to transitions *and* animations, `animate-spin` keeps its documented exemption, and a clamped transition still lands on its end state and fires `transitionend` |
 | `@cire/invites` | `tests/components/EventCard.browser.test.tsx` | The RSVP confirmation fill **travels** (mid-sweep scale strictly between 0 and 1, so the transition is wired to the property Tailwind actually writes), lands on the `bloom` token, and is still painted seconds past `TOTAL_DURATION_MS`; a reply already on file paints filled on the first frame; the two `scale-x-*` utilities never coexist |
@@ -211,8 +236,9 @@ nothing.
 | `@musubi/social` | `tests/styles/token-contract.browser.test.tsx` | A contract utility emits CSS **at all** (an unresolvable one emits nothing, silently); `bg-ui-accent` paints exactly what `--primary` holds; the destructive button's ink comes from `--destructive-foreground` rather than the `text-white` it used to hard-code; the mapping follows `.dark` because it is aliases and not literals; `base:` still compiles to `:where(…)`, so a call-site `class` still wins |
 | `@pulse/web` | `tests/styles/token-contract.browser.test.tsx` | The same chain on a different ramp, plus the mapping decision that only a colour can check: `--ui-accent` paints `--primary` and **not** the coral `--pulse-accent`, so nobody can "fix" the mapping to the brand colour and repaint every shared button |
 | `@cire/host` | `tests/components/PreviewInviteButton.browser.test.tsx` | "Preview invite" is genuinely painted at phone width with its label clipped to the 1×1 `sr-only` box rather than `display: none`, and swaps to the written label — glyph gone — once the `frame` container passes 42rem |
+| `@cire/invites` | `tests/components/MapPreview.browser.test.tsx` | The venue address in the details sheet is unclipped in **both** axes at 320 / 768 / 1440 — for an ordinary address and for a full one down to its country, which is what pins the line cap at three — `white-space` is not `nowrap` in the computed cascade, and the Open-in-Maps action shares the address's row inside the footer in a box clearing WCAG 2.2's target size, its words `sr-only`-clipped rather than `display: none`. Two more pin that the address genuinely wraps at 320px, so the rest cannot pass by happening to fit, and that the cap fires on an address of unlimited length |
 
-Three of these were verified against the bug rather than merely written green.
+Four of these were verified against the bug rather than merely written green.
 The #203 test fails when the popover is put back at `z-90`. The
 `PreviewInviteButton` test fails when its label is put back to
 `hidden @2xl/frame:inline`, the exact class pair that left the invite preview
@@ -221,7 +247,16 @@ the one a class-string assertion in the fast tier cannot distinguish. The
 `InvitePage` toast test fails when the `<Toaster>` is put back inside the events
 section: on the first-visit path it reports the section itself as the toast's
 containing block, which is precisely why the toast was painting behind the RSVP
-sheet.
+sheet. And the `MapPreview` file fails against **two** reverts: putting
+`truncate` back on the venue address, and swapping the action's `sr-only` label
+for `hidden` — the same `display: none` mistake the `PreviewInviteButton` test
+exists for, on a different control.
+
+*Measured 2026-09-17 — `truncate` restored on `MapPreview.tsx`'s address line,
+then `bun run --cwd cire/invites test:browser`: 9 failed / 8 passed, reporting
+`scrollWidth 307 > clientWidth 181` at a 320px viewport. Separately, `sr-only`
+replaced with `hidden` on the action's label: 3 failed / 14 passed, on
+`getComputedStyle(label).display` being `none`*
 
 The `EventCard` pair exists because of a **two-PR miss**. The RSVP
 confirmation's fill was reported as reverting twice in a row while every test in

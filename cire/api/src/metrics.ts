@@ -19,6 +19,7 @@
  * cardinality contract and makes the call-sites permanent.
  */
 
+import type { DietaryPreset } from "@cire/dietary";
 import {
   BYTE_BUCKETS,
   createCounter,
@@ -69,6 +70,7 @@ export const CIRE_METRICS = {
   rsvpBatchSize: "cire.rsvp.batch.size",
   // Guest RSVP submits refused before any write.
   rsvpBlocked: "cire.rsvp.blocked",
+  dietaryPreset: "cire.rsvp.dietary_preset.selected",
   // Organiser spreadsheet import.
   importApplied: "cire.import.applied",
   importRows: "cire.import.rows",
@@ -121,6 +123,15 @@ export const CIRE_METRICS = {
   // a metric attribute (those belong in spans + logs).
   registryItemWrite: "cire.registry.item.write",
   registryGift: "cire.registry.gift",
+  // Self-serve upgrades. `entitlement` is a closed set of capability keys and
+  // never a wedding, purchase or profile id — the whole point of the two
+  // counters is that a spike is visible without anything per-tenant reaching
+  // an attribute. `started` is what an organiser pressed; `settled` is what
+  // Stripe's webhook concluded, and the gap between the two IS the health
+  // signal (money taken with no entitlement granted shows up as started
+  // without settled).
+  upgradeCheckoutStarted: "cire.upgrade.checkout.started",
+  upgradePurchaseSettled: "cire.upgrade.purchase.settled",
   // Link preview — the one outbound fetch a user's input aims. The result
   // attribute is how a spike in refused destinations becomes visible.
   registryLinkPreview: "cire.registry.link_preview",
@@ -293,8 +304,11 @@ type RsvpUpsertedAttrs = { status: RsvpStatus; source: RsvpWriter; result: "ok" 
 /** Why a guest RSVP submit was refused before reaching the write — bounded set,
  *  one label per gate on the route. `deadline` = the wedding's RSVP-by date has
  *  passed; `preview` = the organiser's host-preview family, which never writes. */
-export type RsvpBlockedReason = "deadline" | "preview";
+export type RsvpBlockedReason = "deadline" | "preview" | "dietary_consent";
 type RsvpBlockedAttrs = { reason: RsvpBlockedReason };
+/** The preset key itself — a closed sixteen-value union, so the cardinality
+ *  ceiling is the vocabulary and cannot grow with traffic. */
+type DietaryPresetAttrs = { preset: DietaryPreset };
 /** Which organiser write touched a registry item. Bounded, one per route. */
 export type RegistryItemAction = "create" | "update" | "remove";
 type RegistryItemWriteAttrs = { action: RegistryItemAction };
@@ -303,6 +317,51 @@ type RegistryItemWriteAttrs = { action: RegistryItemAction };
  *  different (and more suspicious) signal than thanking. */
 export type RegistryGiftAction = "thanked" | "unthanked";
 type RegistryGiftAttrs = { action: RegistryGiftAction };
+/** Which capability an upgrade counter is about. Deliberately the full
+ *  entitlement key set rather than only the two sold today, so making another
+ *  purchasable is a catalogue change and not a metrics migration. Bounded and
+ *  closed: this is the only dimension either upgrade counter carries. */
+export type UpgradeEntitlement =
+  | "premium_templates"
+  | "vendors"
+  | "ai"
+  | "capacity_500"
+  | "capacity_1000"
+  | "registry";
+/** How an attempt to start a checkout ended. `reused` and `processing` are the
+ *  two that keep a customer from paying twice and are worth watching apart:
+ *  `reused` handed back a payment page still open, `processing` refused because
+ *  a paid session has not been settled by the webhook yet. A sustained rise in
+ *  `processing` means deliveries are lagging, not that organisers are confused.
+ *  `unconfigured` is a key with no Stripe Price in this deployment. */
+export type UpgradeCheckoutResult =
+  | "ok"
+  | "reused"
+  | "processing"
+  | "already_held"
+  | "unconfigured"
+  | "error";
+type UpgradeCheckoutStartedAttrs = {
+  entitlement: UpgradeEntitlement;
+  result: UpgradeCheckoutResult;
+};
+/** What the webhook concluded about a purchase. `granted` is the only one that
+ *  moved an entitlement; `replayed` is Stripe's ordinary redelivery and is
+ *  expected, not a fault. `unknown` is an event this deployment has no purchase
+ *  row for — on a platform endpoint shared with whatever else the account does,
+ *  that is a normal outcome rather than an error. `unpaid` should be zero while
+ *  sessions are card-only; a non-zero count means that restriction slipped. */
+export type UpgradeSettleOutcome =
+  | "granted"
+  | "replayed"
+  | "unpaid"
+  | "failed"
+  | "expired"
+  | "unknown";
+type UpgradePurchaseSettledAttrs = {
+  entitlement: UpgradeEntitlement;
+  outcome: UpgradeSettleOutcome;
+};
 /** How a link-preview attempt ended. `blocked` is the SSRF guard refusing a
  *  destination — a sustained rise in it is someone probing, not a shop being
  *  slow, which is why it is its own value rather than folded into a failure. */
@@ -475,6 +534,18 @@ const registryGift = createCounter<RegistryGiftAttrs>({
   unit: "{gift}",
 });
 
+const upgradeCheckoutStarted = createCounter<UpgradeCheckoutStartedAttrs>({
+  name: CIRE_METRICS.upgradeCheckoutStarted,
+  description: "Self-serve upgrade checkouts started, by entitlement and outcome",
+  unit: "{attempt}",
+});
+
+const upgradePurchaseSettled = createCounter<UpgradePurchaseSettledAttrs>({
+  name: CIRE_METRICS.upgradePurchaseSettled,
+  description: "Upgrade purchases settled by the platform webhook, by entitlement and outcome",
+  unit: "{purchase}",
+});
+
 const registryLinkPreview = createCounter<RegistryLinkPreviewAttrs>({
   name: CIRE_METRICS.registryLinkPreview,
   description: "Registry link-preview attempts, by outcome",
@@ -491,6 +562,12 @@ const rsvpBlocked = createCounter<RsvpBlockedAttrs>({
   name: CIRE_METRICS.rsvpBlocked,
   description: "Guest RSVP submits refused before any write, by gate",
   unit: "{rsvp}",
+});
+
+const dietaryPreset = createCounter<DietaryPresetAttrs>({
+  name: CIRE_METRICS.dietaryPreset,
+  description: "Dietary presets selected on accepted RSVP replies, by preset",
+  unit: "{selection}",
 });
 
 const rsvpBatchSize = createHistogram<Record<never, never>>({
@@ -740,6 +817,16 @@ export const metricRegistryItemWrite = (action: RegistryItemAction): void =>
 export const metricRegistryGift = (action: RegistryGiftAction): void =>
   registryGift.inc({ action });
 
+export const metricUpgradeCheckoutStarted = (
+  entitlement: UpgradeEntitlement,
+  result: UpgradeCheckoutResult,
+): void => upgradeCheckoutStarted.inc({ entitlement, result });
+
+export const metricUpgradePurchaseSettled = (
+  entitlement: UpgradeEntitlement,
+  outcome: UpgradeSettleOutcome,
+): void => upgradePurchaseSettled.inc({ entitlement, outcome });
+
 export const metricRegistryLinkPreview = (result: RegistryLinkPreviewResult): void =>
   registryLinkPreview.inc({ result });
 
@@ -749,6 +836,17 @@ export const metricRegistryImageSave = (
 ): void => registryImageSave.inc({ source, result });
 
 export const metricRsvpBatchSize = (size: number): void => rsvpBatchSize.record(size, {});
+
+/**
+ * One increment per preset on an accepted reply.
+ *
+ * The attribute is the preset key, which is a closed sixteen-value union from
+ * `@cire/dietary` — bounded by construction, never a guest, household or event
+ * id. It is the only measure of whether the picker displaced free text, which is
+ * the claim the feature rests on: a caterer counting vegetarians by hand is the
+ * thing it exists to stop.
+ */
+export const metricDietaryPreset = (preset: DietaryPreset): void => dietaryPreset.inc({ preset });
 
 export const metricImportApplied = (
   result: "ok" | "error",

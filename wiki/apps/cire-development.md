@@ -19,7 +19,7 @@ related:
   - "[[d1-read-replication]]"
   - "[[commands]]"
   - "[[bundle-size-guards]]"
-last-reviewed: 2026-09-06
+last-reviewed: 2026-09-17
 ---
 
 # Cire development guide
@@ -76,12 +76,15 @@ Elysia plugins in `cire/api/src/middleware/`, all scoped `derive` + `onBeforeHan
 | `osn-auth.ts` | `osnAuth` — organiser JWT, via the shared Elysia adapter |
 | `wedding-owner.ts` | owner only — codes, settings, removing/demoting a co-host, delete |
 | `wedding-editor.ts` | owner or `editor` — module writes, the RSVP-by date, adding a co-host |
-| `wedding-member.ts` | any role including `viewer` — reads + invite preview |
+| `wedding-member.ts` | reads + invite preview — every role carrying the `member` capability (`editor`, `viewer`; **not** `helper`) |
+| `wedding-run-sheet.ts` | the day-of run sheet — every role including `helper`. Standalone: mount it INSTEAD OF `wedding-member.ts`, never after it |
+| `wedding-role.ts` | not a gate — the policy the three role gates ask. Exhaustive over the role enum, so a new role fails `check` until decided |
 | `rate-limit.ts`, `turnstile.ts` | abuse gates |
 
 Pick the gate from the roles matrix in [[cire-auth]], not by guessing from the
-route name. (An `ownedWedding` "single owned wedding" middleware existed before
-multi-wedding; it went when organisers could own several.)
+route name. Never add a role check inside a route handler: the roles live in
+`wedding-role.ts` so that adding one to the column is a compile error at every
+place that decides, and a check written in a handler is invisible to that.
 
 ## Tests
 
@@ -96,6 +99,14 @@ Platform conventions are in [[testing-patterns]]; the real-Chromium tier is in
   own with `bun run --cwd cire/api test:d1`. Unlike the vitest packages, which
   exclude that tier by path, `@cire/api` runs on `bun test` and so picks it up in
   the package's ordinary `test` script as well — expect workerd to boot there.
+- **Exercising the upgrade checkout locally** needs TWO `stripe listen`
+  forwarders, because there are two endpoints: `--forward-connect-to` for gift
+  events (which happen on a couple's connected account) and `--forward-to` for
+  the platform's own (an upgrade, where cire is the merchant). One `stripe
+  listen` prints ONE signing secret for everything it forwards, so locally
+  `STRIPE_WEBHOOK_SECRET` and `STRIPE_PLATFORM_WEBHOOK_SECRET` carry the same
+  value; deployed tiers have two dashboard endpoints and two different secrets.
+  The full command is in `wiki/systems/cire-upgrades.md`.
 - **Integration tests run against a local D1 via `wrangler dev` — do not mock the
   database.**
 - **`*.browser.test.tsx` runs in real Chromium**, not jsdom, for anything needing
@@ -138,6 +149,27 @@ cd cire/api && bunx wrangler types
 Local sign-in also needs an `oauth_clients` row in the local OSN D1 and
 `CIRE_OIDC_CLIENT_SECRET` in `cire/api/.dev.vars`. Without them `/api/auth/oidc/*`
 answers 503 and the rest of cire works as normal.
+
+### Adding a column
+
+Generating a migration here is `db:generate`, not `db:migrate` — cire is the one
+`*/db` package where `db:migrate:local|dev|prod` *applies* a migration to a tier
+rather than emitting one:
+
+```bash
+bun run --cwd cire/db db:generate --name rsvp_dietary_presets
+```
+
+Pass `--name`. Without it drizzle-kit invents one, and the journal entry's `tag`
+is the emitted filename — renaming the file by hand afterwards fails the first
+assertion in `cire/api/tests/db/ddl-lockstep.test.ts`.
+
+**A cire column has three DDL surfaces, not two.** The migration and
+`cire/db/src/schema.ts` are the two an agent reaches for; the third is the test
+DDL in `cire/api/src/db/setup.ts`, which the whole `@cire/api` suite boots
+against. Miss it and `bun test cire/api/tests/` fails in the lockstep test with
+the column's own name, after every other gate has passed. Full contract for the
+mirror is in [[cire-platform-plan]] §Code map.
 
 ### Deploying by hand
 

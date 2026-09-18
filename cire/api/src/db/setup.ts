@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS wedding_hosts (
   osn_profile_id TEXT NOT NULL,
   added_by_osn_profile_id TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'host',
+  run_sheet_scope TEXT NOT NULL DEFAULT 'own',
   created_at INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS wedding_hosts_wedding_profile_uniq ON wedding_hosts(wedding_id, osn_profile_id);
@@ -125,6 +126,7 @@ CREATE TABLE IF NOT EXISTS rsvps (
   event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
   status TEXT NOT NULL,
   dietary TEXT NOT NULL DEFAULT '',
+  dietary_presets TEXT NOT NULL DEFAULT '',
   dietary_consent_at INTEGER,
   dietary_consent_version TEXT,
   consent_source TEXT NOT NULL DEFAULT 'guest',
@@ -442,6 +444,30 @@ CREATE TABLE IF NOT EXISTS registry_contributions (
 CREATE INDEX IF NOT EXISTS registry_contributions_wedding_created_idx ON registry_contributions(wedding_id, created_at);
 CREATE INDEX IF NOT EXISTS registry_contributions_item_idx ON registry_contributions(item_id);
 CREATE INDEX IF NOT EXISTS registry_contributions_payment_intent_idx ON registry_contributions(stripe_payment_intent_id);
+CREATE TABLE IF NOT EXISTS wedding_upgrade_purchases (
+  id TEXT PRIMARY KEY,
+  wedding_id TEXT NOT NULL REFERENCES weddings(id) ON DELETE CASCADE,
+  entitlement TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  checkout_session_id TEXT UNIQUE,
+  payment_intent_id TEXT,
+  amount_minor INTEGER,
+  currency TEXT,
+  created_by_osn_profile_id TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS wedding_upgrade_purchases_wedding_entitlement_idx ON wedding_upgrade_purchases(wedding_id, entitlement);
+CREATE INDEX IF NOT EXISTS wedding_upgrade_purchases_payment_intent_idx ON wedding_upgrade_purchases(payment_intent_id);
+CREATE UNIQUE INDEX IF NOT EXISTS wedding_upgrade_purchases_one_pending_uniq ON wedding_upgrade_purchases(wedding_id, entitlement) WHERE status = 'pending';
+CREATE TABLE IF NOT EXISTS platform_sales (
+  id TEXT PRIMARY KEY,
+  purchase_id TEXT NOT NULL UNIQUE,
+  entitlement TEXT NOT NULL,
+  amount_minor INTEGER NOT NULL,
+  currency TEXT NOT NULL,
+  settled_at INTEGER NOT NULL
+);
 `;
 
 export function createDb(path: string = ":memory:") {

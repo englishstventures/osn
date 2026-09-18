@@ -106,6 +106,7 @@ One label is orthogonal to all of that: **`needs:decision`**, on both repos. It 
 | Add a third party to a cire page (cookies, CSP, the consent gate) | `[[wiki/architecture/cire-consent]]` |
 | Write a test that needs real CSS or layout (the Chromium Vitest project) | `[[wiki/conventions/browser-tests]]` |
 | Deploy osn-api + cire to production (secrets/vars, migrations, CI pipeline, smoke checks) | `[[wiki/runbooks/production-deploy]]` |
+| Create, run or debug a cire Stripe webhook — which of the two endpoints, which events, the local forwarders, how to verify a tier | `[[wiki/runbooks/stripe-webhooks]]` |
 | Use the dev tier — what deploys automatically, how to promote past the approval gate, how to reset dev | `[[wiki/runbooks/dev-environment]]` |
 | Check free-tier limits / what breaks at a cap / Cloudflare hardening TODO | `[[wiki/runbooks/free-tier-limits]]` |
 | Move OSN identity to `musubi.social` (RP-ID change, credential bridge, cutover order) | `[[wiki/runbooks/musubi-identity-migration]]` |
@@ -384,10 +385,14 @@ bun run fmt              # oxfmt format
 bun run fmt:check        # oxfmt check (CI)
 
 # Database (run from the relevant package directory)
-bun run db:migrate       # Generate migrations
+bun run db:migrate       # Generate migrations — osn/db, pulse/db, zap/db only
 bun run db:push          # Push schema
 bun run db:studio        # Drizzle Studio
 # e.g. bun run --cwd pulse/db db:studio
+# cire/db names these differently and the difference is not cosmetic: generating
+# is `db:generate` there, and `db:migrate:local|dev|prod` APPLIES a migration to
+# a tier. A cire column also has three DDL surfaces, not two — see
+# [[wiki/apps/cire-development]] §Database.
 
 # Versioning
 bun run changeset        # Create changeset (required for every PR)

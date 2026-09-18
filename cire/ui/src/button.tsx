@@ -45,6 +45,7 @@ export type ButtonVariant =
   | "choice"
   | "tile"
   | "dashed"
+  | "field"
   | "danger"
   | "link"
   | "subtle"
@@ -160,6 +161,25 @@ const VARIANT = {
   dashed:
     "base:border-ui-hairline base:border-dashed base:text-ui-ink-secondary " +
     "base:hover:border-ui-accent base:hover:text-ui-accent-ink",
+  /**
+   * A control shaped like the field it stands in for — the dietary picker's
+   * collapsed trigger, which sits in a column of text inputs and says what is
+   * currently selected.
+   *
+   * Not `quiet` with different padding. The other variants are all *actions*
+   * and read as actions: uppercase, tracked, centred. This one holds a value a
+   * guest typed the meaning of — "Vegetarian, no nuts" — and shouting it in
+   * small caps beside the text box below makes the pair look like two different
+   * kinds of thing when they are one. So it takes {@link FIELD_SIZE}: sentence
+   * case, no tracking, and an input's padding rather than a button's.
+   *
+   * Transparent rather than washed, for the same reason — it has to sit level
+   * with the inputs around it, which are transparent over the form's own
+   * surface.
+   */
+  field:
+    "base:border-ui-hairline base:bg-transparent base:text-ui-ink " +
+    "base:hover:border-ui-accent-soft",
   danger:
     "base:border-ui-danger/40 base:text-ui-danger base:hover:border-ui-danger base:hover:bg-ui-danger/10",
 
@@ -268,9 +288,26 @@ const TILE_SIZE = {
   icon: "base:h-8 base:w-8 base:shrink-0 base:p-0 base:text-ui-base base:uppercase",
 } satisfies Readonly<Record<ButtonSize, string>>;
 
-/** Which of the three tables a variant sizes from. */
+/**
+ * {@link SIZE} for `field`.
+ *
+ * An input's padding and sentence case — the two things that make a control
+ * read as a form field rather than as a button. The type steps are
+ * {@link SIZE}'s own, so a field and the text box under it are the same size of
+ * thing.
+ */
+const FIELD_SIZE = {
+  sm: "base:px-3 base:py-2 base:text-ui-sm",
+  md: "base:px-3 base:py-2.5 base:text-ui-base",
+  lg: "base:px-4 base:py-3 base:text-ui-md",
+  swatch: "base:p-1",
+  icon: "base:h-8 base:w-8 base:shrink-0 base:p-0 base:text-ui-base",
+} satisfies Readonly<Record<ButtonSize, string>>;
+
+/** Which of the four tables a variant sizes from. */
 function sizingFor(variant: ButtonVariant, size: ButtonSize): string {
   if (variant === "tile") return TILE_SIZE[size];
+  if (variant === "field") return FIELD_SIZE[size];
   return BORDERLESS.has(variant) ? BORDERLESS_SIZE[size] : SIZE[size];
 }
 

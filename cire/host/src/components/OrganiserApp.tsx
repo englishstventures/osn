@@ -1,5 +1,5 @@
 import { AuthProvider, useAuth } from "@shared/rp-auth/solid";
-import { Toaster } from "@shared/toast";
+import { toast, Toaster } from "@shared/toast";
 import { Notice } from "@shared/ui/ui/notice";
 import {
   createEffect,
@@ -27,6 +27,15 @@ import {
 import { CIRE_API_URL } from "../lib/osn";
 import { initTheme } from "../lib/theme";
 import { confirmNavigation } from "../lib/unsaved-guard";
+import { fetchPurchase } from "../lib/upgrade-api";
+import {
+  clearUpgradeParams,
+  POLL_ATTEMPTS,
+  pollDelayMs,
+  readUpgradeReturn,
+} from "../lib/upgrade-return";
+import { invalidateCatalogue } from "../lib/upgrade-store";
+import { normaliseWeddingRole, ROLE_COPY, surfacesFor } from "../lib/wedding-roles";
 import type { WeddingSummary } from "./CreateWeddingForm";
 import ModuleShell from "./ModuleShell";
 import SecurityPanel from "./SecurityPanel";
@@ -46,6 +55,19 @@ const CommandPalette = lazy(() => import("./CommandPalette"));
 type WeddingsState =
   | { kind: "error"; message: string }
   | { kind: "ready"; weddings: WeddingSummary[] };
+
+/**
+ * The boundary where a role off the wire becomes one the portal knows.
+ *
+ * `WeddingSummary.role` is a union asserted over parsed JSON, which makes it a
+ * claim rather than a fact. Everything downstream decides what to offer from
+ * this field, so a role the portal has never heard of is narrowed to the lowest
+ * rank here instead of reaching `surfacesFor()` as an unhandled value.
+ */
+const withKnownRole = (wedding: WeddingSummary): WeddingSummary => ({
+  ...wedding,
+  role: normaliseWeddingRole(wedding.role),
+});
 
 function Loading(props: { label: string }) {
   return (
@@ -87,13 +109,12 @@ function RequireAuth(props: ParentProps) {
  *  panel), scoped to whichever wedding the organiser opened. It has no header
  *  of its own: which wedding is open, the role badge and "preview invite" all
  *  live in the top bar now, so the first thing under the chrome is the work.
- *  Access follows the caller's role: EDITOR co-hosts get the full read/edit
- *  dashboard (import, invite design, event locations, and the settings panel's
- *  RSVP-by date — the API gates writes with weddingEditor); VIEWER co-hosts get
- *  the read views only (`canEdit` hides the write surfaces). The owner-only
- *  management actions (co-hosts, re-minting codes, deactivating household
- *  codes, the rest of the settings save) stay gated on `isOwner` via
- *  `canManage`.
+ *
+ *  Access follows the caller's role, and `surfacesFor()` in `lib/wedding-roles`
+ *  is what says so — this component asks it and never compares a role itself.
+ *  A role with no dashboard surface at all gets {@link RunSheetSeat} instead of
+ *  the shell: the API refuses its every read, so rendering the shell would be a
+ *  rail of modules that each answer 403.
  *
  *  The active module + sub are fully controlled by the parent (URL-hash driven)
  *  so a deep link / hard refresh restores the exact view; the shell reports
@@ -111,27 +132,46 @@ function WeddingDashboard(props: {
    *  (and the top bar's switcher) reflect it without a refetch. */
   onWeddingUpdated: (patch: { displayName: string; slug: string }) => void;
 }) {
-  const isOwner = () => props.wedding.role === "owner";
-  // Editors (and owners) get the write surfaces; viewers are read-only — the
-  // API enforces this with weddingEditor()/weddingOwner(); the flags just keep
-  // the portal from offering actions that would 403.
-  const canEdit = () => props.wedding.role !== "viewer";
+  // One decision, taken once, for every surface below. The API enforces all of
+  // it — weddingMember()/weddingEditor()/weddingOwner() — and these flags only
+  // keep the portal from offering what those gates would refuse.
+  const surfaces = () => surfacesFor(props.wedding.role);
 
   return (
-    <ModuleShell
-      weddingId={props.wedding.id}
-      weddingName={props.wedding.displayName}
-      weddingSlug={props.wedding.slug}
-      canManage={isOwner()}
-      canEdit={canEdit()}
-      module={props.module()}
-      sub={props.sub()}
-      onModule={props.onModule}
-      onSub={props.onSub}
-      onWeddingUpdated={props.onWeddingUpdated}
-      entitlements={props.wedding.entitlements ?? []}
-      guestCap={props.wedding.guestCap ?? 100}
-    />
+    <Show when={surfaces().canOpenDashboard} fallback={<RunSheetSeat />}>
+      <ModuleShell
+        weddingId={props.wedding.id}
+        weddingName={props.wedding.displayName}
+        weddingSlug={props.wedding.slug}
+        canManage={surfaces().canManage}
+        canEdit={surfaces().canEdit}
+        module={props.module()}
+        sub={props.sub()}
+        onModule={props.onModule}
+        onSub={props.onSub}
+        onWeddingUpdated={props.onWeddingUpdated}
+        entitlements={props.wedding.entitlements ?? []}
+        guestCap={props.wedding.guestCap ?? 100}
+      />
+    </Show>
+  );
+}
+
+/** What a seat with no dashboard surface opens onto.
+ *
+ *  A helper is handed a job on the day, not the wedding: the guest list, the
+ *  budget, the registry and the replies are all refused for them upstream. The
+ *  wedding is still listed for them — that is how they reach it at all — so
+ *  this says what the seat covers rather than leaving them on a dashboard whose
+ *  every panel errors. */
+function RunSheetSeat() {
+  return (
+    <div class="border-border bg-surface/30 flex flex-col gap-2 rounded-sm border border-dashed p-8 text-center">
+      <p class="font-display text-text text-ui-md font-light">{ROLE_COPY.helper.label} access</p>
+      <p class="font-body text-text-muted text-ui-sm mx-auto max-w-prose leading-relaxed">
+        {ROLE_COPY.helper.summary} Ask whoever runs this wedding if you need more.
+      </p>
+    </div>
   );
 }
 
@@ -280,8 +320,9 @@ function Dashboard() {
       }
       if (!res.ok) return { kind: "error", message: `Could not load weddings (${res.status}).` };
       const body = (await res.json()) as { weddings: WeddingSummary[] };
-      setWeddings(body.weddings);
-      return { kind: "ready", weddings: body.weddings };
+      const loadedWeddings = body.weddings.map(withKnownRole);
+      setWeddings(loadedWeddings);
+      return { kind: "ready", weddings: loadedWeddings };
     } catch (err) {
       if (isAuthExpired(err)) {
         redirectToLogin();
@@ -321,6 +362,87 @@ function Dashboard() {
   function handleWeddingUpdated(weddingId: string, patch: { displayName: string; slug: string }) {
     setWeddings((prev) => (prev ?? []).map((w) => (w.id === weddingId ? { ...w, ...patch } : w)));
   }
+
+  /**
+   * Back from Stripe.
+   *
+   * The entitlement is granted by the webhook, not by this page, so all this
+   * does is ask what happened and refresh the list once it has. The params are
+   * stripped the moment they are read: `setRoute` rebuilds the URL as
+   * `pathname + search + hash` on every hash write and the login bounce carries
+   * `search` through, so leaving them would re-run this on every later
+   * navigation, refresh and bookmark.
+   */
+  onMount(() => {
+    if (typeof window === "undefined") return;
+    const receipt = readUpgradeReturn(window.location.search);
+    if (!receipt) return;
+    history.replaceState(null, "", clearUpgradeParams(new URL(window.location.href)));
+
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
+    onCleanup(() => {
+      cancelled = true;
+      // Clearing it, not just flagging it: the flag is only read after the
+      // await, so an uncleared timer holds the dashboard's last sleep open for
+      // up to its full backoff after teardown.
+      if (pollTimer !== undefined) clearTimeout(pollTimer);
+    });
+
+    void (async () => {
+      /* Sequential by design, and every `await` below is inside this loop on
+         purpose: it is a poll with backoff, so running the attempts together
+         would defeat both the backoff and the early exit the moment the
+         purchase settles. `cancelled` is assigned in the `onCleanup` closure
+         above, which the unmodified-loop-condition rule cannot follow. */
+      // oxlint-disable no-await-in-loop, no-unmodified-loop-condition
+      for (let attempt = 0; attempt < POLL_ATTEMPTS && !cancelled; attempt += 1) {
+        let state: Awaited<ReturnType<typeof fetchPurchase>> = null;
+        try {
+          state = await fetchPurchase(authFetch, receipt.weddingId, receipt.purchaseId);
+        } catch {
+          // A failed poll is not a failed purchase. Keep asking; the loop is
+          // bounded, so this cannot become a spin.
+        }
+        if (cancelled) return;
+
+        if (state?.status === "succeeded") {
+          // The entitlement now exists server-side; the list is what the nav
+          // reads, so refetching it is what unlocks the module.
+          invalidateCatalogue(receipt.weddingId);
+          try {
+            const res = await authFetch(apiUrl("/api/organiser/weddings"));
+            if (res.ok) {
+              const body = (await res.json()) as { weddings: WeddingSummary[] };
+              if (!cancelled) setWeddings(body.weddings.map(withKnownRole));
+            }
+          } catch {
+            // The purchase landed even if this refresh did not; a reload shows
+            // it. Saying so beats a scary error about a payment that worked.
+          }
+          if (!cancelled) toast.success("Upgrade complete — the module is unlocked.");
+          return;
+        }
+        if (state?.status === "failed" || state?.status === "expired") {
+          if (!cancelled) toast.error("That payment did not go through. Nothing was charged.");
+          return;
+        }
+        // No sleep after the final attempt — there is nothing left to wait
+        // for, and sleeping there adds a full backoff to the one path where
+        // the webhook is genuinely slow.
+        if (attempt === POLL_ATTEMPTS - 1) break;
+        await new Promise((resolve) => {
+          pollTimer = setTimeout(resolve, pollDelayMs(attempt));
+        });
+      }
+      // oxlint-enable no-await-in-loop, no-unmodified-loop-condition
+      // Still pending after the last attempt. Not an error — Stripe is slow
+      // sometimes — so the honest message says where it got to.
+      if (!cancelled) {
+        toast.info("Your payment is still being confirmed. This page will show it once it is.");
+      }
+    })();
+  });
 
   function handleCreated(wedding: WeddingSummary) {
     setWeddings((prev) => [...(prev ?? []), wedding]);
