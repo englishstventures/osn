@@ -1,0 +1,18 @@
+{
+  "jsPlugins": ["@shadcn/lint"],
+  "settings": { "shadcn": { "componentImports": ["^@shared/ui(/|$)", "^@cire/ui(/|$)", "^@osn/auth-ui(/|$)"] } },
+  "rules": {
+    "shadcn/no-restyle": ["error", {
+      "allow": ["layout"],
+      "contracts": [
+        {
+          "pattern": "^(Card|CardContent|CardFooter|CardHeader|Modal|DialogFooter|DialogHeader|PopoverTrigger|DropdownMenuTrigger)$",
+          "allow": ["layout", "gap-*"]
+        }
+      ]
+    }]
+  },
+  "overrides": [
+    { "files": ["**/tests/**"], "rules": { "shadcn/no-restyle": "off" } }
+  ]
+}

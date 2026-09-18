@@ -206,7 +206,7 @@
     "jsdoc/no-defaults": "warn",
     "jsdoc/implements-on-classes": "warn",
 
-    // `warn`, not `error`: 17 sites remain and each needs a decision rather than
+    // `warn`, not `error`: 18 sites remain and each needs a decision rather than
     // an edit — see the pull request. The two-way ratchet in
     // scripts/lint-warning-ceiling.txt holds the number, so the count cannot
     // grow while those are settled. It goes to `error` at zero, like
