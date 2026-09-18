@@ -67,6 +67,23 @@ export const LEAST_PRIVILEGE_ROLE: WeddingRole = (Object.keys(ROLE_RANK) as Wedd
   (lowest, role) => (ROLE_RANK[role] < ROLE_RANK[lowest] ? role : lowest),
 );
 
+/** The same floor, among the roles a seat can hold. Separate from
+ *  {@link LEAST_PRIVILEGE_ROLE} only because that one is typed to include the
+ *  owner, who is not a seat. */
+export const LEAST_PRIVILEGE_SEAT_ROLE: AssignableRole = ASSIGNABLE_ROLES.reduce((lowest, role) =>
+  ROLE_RANK[role] < ROLE_RANK[lowest] ? role : lowest,
+);
+
+/**
+ * The role a co-host seat is created at.
+ *
+ * Someone is added able to read the wedding and change nothing, and is raised
+ * afterwards by its owner. Adding and granting are then two separate acts, and
+ * the one that hands over write access is the one that gets asked about — which
+ * is not true when the role is chosen in the same gesture as the handle.
+ */
+export const NEW_SEAT_ROLE: AssignableRole = "viewer";
+
 /**
  * Map a role string from the API onto the vocabulary, degrading anything the
  * portal does not know to {@link LEAST_PRIVILEGE_ROLE}.
@@ -87,6 +104,32 @@ export function normaliseWeddingRole(role: string): WeddingRole {
       return "helper";
   }
   return LEAST_PRIVILEGE_ROLE;
+}
+
+/**
+ * A role read off a co-host seat, narrowed to what a seat can actually hold.
+ *
+ * The co-host list is seats only — the API rows the wedding's owner separately
+ * — so `owner` is not a value this can honestly return. Exhaustive over
+ * {@link WeddingRole}, so a role added later has to be put on one side of that
+ * line rather than falling through as a seat by default.
+ */
+export function asSeatRole(role: string): AssignableRole {
+  const known = normaliseWeddingRole(role);
+  switch (known) {
+    case "editor":
+      return "editor";
+    case "viewer":
+      return "viewer";
+    case "helper":
+      return "helper";
+    case "owner":
+      // Never a seat. A row claiming to be one is shown as the narrowest seat
+      // rather than as an owner the panel would then offer to demote.
+      return LEAST_PRIVILEGE_SEAT_ROLE;
+  }
+  const _exhaustive: never = known;
+  return LEAST_PRIVILEGE_SEAT_ROLE;
 }
 
 /** The surfaces the portal offers a role — one field per API gate. */
