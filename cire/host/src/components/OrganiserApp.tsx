@@ -320,9 +320,9 @@ function Dashboard() {
       }
       if (!res.ok) return { kind: "error", message: `Could not load weddings (${res.status}).` };
       const body = (await res.json()) as { weddings: WeddingSummary[] };
-      const weddings = body.weddings.map(withKnownRole);
-      setWeddings(weddings);
-      return { kind: "ready", weddings };
+      const loadedWeddings = body.weddings.map(withKnownRole);
+      setWeddings(loadedWeddings);
+      return { kind: "ready", weddings: loadedWeddings };
     } catch (err) {
       if (isAuthExpired(err)) {
         redirectToLogin();

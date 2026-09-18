@@ -795,9 +795,12 @@ export default function HostsPanel(props: HostsPanelProps) {
                   variant="primary"
                   type="button"
                   onClick={() => {
-                    const promotion = pending();
+                    // Read from the signal rather than from the held copy above,
+                    // which survives the close for the exit animation and so is
+                    // no longer what is pending by the time this runs.
+                    const confirmed = pending();
                     setPending(null);
-                    if (promotion) void changeRole(promotion.host, promotion.to);
+                    if (confirmed) void changeRole(confirmed.host, confirmed.to);
                   }}
                 >
                   Yes, make them {ROLE_COPY[promotion().to].label.toLowerCase()}
