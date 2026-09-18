@@ -119,13 +119,7 @@ export function ConsentPlaceholder(props: { category: ConsentCategory; vendor: s
         <Button variant="cta" size="sm" type="button" onClick={() => grantCategory(props.category)}>
           Allow {categoryTitle()}
         </Button>
-        <Button
-          variant="bare"
-          size="sm"
-          type="button"
-          onClick={openConsentPreferences}
-          class="underline"
-        >
+        <Button variant="touchLink" size="sm" type="button" onClick={openConsentPreferences}>
           Privacy choices
         </Button>
       </div>

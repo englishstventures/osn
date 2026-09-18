@@ -259,7 +259,7 @@ export function LoginSection(props: LoginSectionProps) {
             </p>
           </Show>
           <Show when={props.onSignOut}>
-            <Button variant="bare" type="button" onClick={handleSignOut} class="underline">
+            <Button variant="touchLink" type="button" onClick={handleSignOut}>
               {signOutLabel()}
             </Button>
           </Show>

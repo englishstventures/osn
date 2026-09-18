@@ -551,7 +551,7 @@ export default function InvitePage(props: InvitePageProps) {
                   {welcomeMessage()}
                 </p>
               </Show>
-              <Button variant="bare" type="button" onClick={handleSignOut} class="underline">
+              <Button variant="touchLink" type="button" onClick={handleSignOut}>
                 {signOutLabel()}
               </Button>
             </div>

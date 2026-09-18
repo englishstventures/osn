@@ -478,6 +478,13 @@
   --toast-border: oklch(94.62% 0.0111 89.72 / 0.18);
   --toast-error: oklch(72% 0.1401 21.48);
   --toast-success: oklch(64% 0.1421 146.94);
+  /* The map preview's pin, which floats above a flat contour drawing. The
+     drop shadow is what separates it from the paper; the 1px blur is the
+     ellipse beneath it, soft enough to read as a shadow on the ground rather
+     than as a second mark on the map. */
+  --drop-shadow-pin: 0 2px 6px oklch(0% 0 0 / 0.45);
+  --blur-ground-shadow: 1px;
+
   --font-display: "Cormorant Garamond", "Cormorant Garamond Fallback", Georgia, serif;
   --font-body: "Lato", "Lato Fallback", system-ui, sans-serif;
   --default-font-family: var(--font-body);
@@ -726,6 +733,10 @@
   --ui-radius-pill: 999px;
   /* Sharp, like every other control here: the house look is stationery. */
   --ui-radius-control: var(--ui-radius-sm);
+  /* The exception the house rule allows for, and the only one. A bottom sheet
+     is not a card: its top corners are the grip the thumb reads as "drag me",
+     and at a card's 6px there is nothing there to read. */
+  --ui-radius-sheet: 1.75rem;
 
   --ui-font-body: var(--font-body);
   --ui-font-display: var(--font-display);

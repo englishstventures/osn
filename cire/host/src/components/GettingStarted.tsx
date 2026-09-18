@@ -215,13 +215,13 @@ export default function GettingStarted(props: {
           {/* Dismiss (X) — top-right, so an organiser who doesn't want the guide
             can hide it; the choice persists per wedding in localStorage. */}
           <Button
-            variant="quiet"
-            size="lg"
+            variant="bare"
+            size="icon"
             type="button"
             onClick={dismiss}
             aria-label="Dismiss getting started"
             title="Dismiss getting started"
-            class="absolute top-3 right-3 flex h-7 w-7 items-center justify-center border-transparent leading-none"
+            class="absolute top-3 right-3 flex h-7 w-7 items-center justify-center"
           >
             <span aria-hidden>✕</span>
           </Button>
@@ -260,11 +260,12 @@ export default function GettingStarted(props: {
               {(step, i) => (
                 <li>
                   <Button
-                    variant="quiet"
+                    variant="tile"
+                    size="sm"
                     type="button"
                     onClick={() => props.onJump(step.tab)}
                     data-complete={step.complete ? "true" : "false"}
-                    class="group bg-bg/30 flex w-full items-start gap-3 p-3 text-left"
+                    class="group flex w-full items-start text-left"
                   >
                     <StepMarker n={i() + 1} complete={step.complete} />
                     <span class="flex flex-col gap-0.5">

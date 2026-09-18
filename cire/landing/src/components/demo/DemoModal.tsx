@@ -31,16 +31,18 @@ interface DemoModalProps {
 
 export function DemoModal(props: DemoModalProps) {
   return (
-    // `mt-auto mb-0` overrides the UA's `margin: auto` on a modal dialog so the
-    // sheet sits on the bottom edge of a phone; `md:m-auto` hands it back for
-    // the centred desktop presentation. The width is a spacing-scale step
-    // rather than a contract measure because this is one fixed sheet width,
-    // not a run of prose.
+    // `presentation="sheet"` is the whole shape: bottom-anchored on a phone,
+    // centred above `md`, square bottom corners, a grip radius from the app's
+    // own `--ui-radius-sheet`, and the padding that goes with all of it —
+    // including the `env(safe-area-inset-bottom)` a sheet flush with the screen
+    // edge needs. The width is a spacing-scale step rather than a contract
+    // measure because this is one fixed sheet width, not a run of prose.
     <Modal
       open={props.open}
       onClose={props.onClose}
       labelledBy={props.labelledBy}
-      class="bg-surface relative mt-auto mb-0 max-h-[85dvh] w-full max-w-120 overflow-y-auto overscroll-contain rounded-t-[1.75rem] rounded-b-none pt-8 pb-[max(2.5rem,env(safe-area-inset-bottom))] md:m-auto md:max-h-[85vh] md:rounded-lg md:pb-10"
+      presentation="sheet"
+      class="relative max-w-120 overscroll-contain"
     >
       <Button
         variant="bare"

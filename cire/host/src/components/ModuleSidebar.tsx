@@ -122,7 +122,7 @@ function LockedRow(props: {
             type="button"
             disabled
             aria-disabled="true"
-            class="tracking-ui-widest mt-1"
+            class="mt-1"
           >
             Upgrade — coming soon
           </Button>
@@ -225,7 +225,7 @@ export default function ModuleSidebar(props: {
             const locked = () => isModuleLocked(mod.id, props.entitlements);
             const Body = () => (
               <>
-                <span aria-hidden="true" class="w-4 shrink-0 text-center text-[0.95em] opacity-80">
+                <span aria-hidden="true" class="text-glyph w-4 shrink-0 text-center opacity-80">
                   {mod.glyph}
                 </span>
                 <span class="min-w-0 truncate">{mod.label}</span>

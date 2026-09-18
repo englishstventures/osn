@@ -284,7 +284,7 @@ export default function ColorPicker(props: {
                   autocorrect="off"
                   spellcheck={false}
                   placeholder="#RRGGBB"
-                  class="tabular-nums"
+                  face="code"
                 />
                 <Show when={discarded()}>
                   {(kept) => (

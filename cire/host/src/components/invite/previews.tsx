@@ -60,12 +60,11 @@ export function DeviceToggle(props: {
 }) {
   const option = (device: PreviewDevice, label: string) => (
     <Button
-      variant="quiet"
+      variant="choice"
       size="sm"
       type="button"
       aria-pressed={props.value === device}
       onClick={() => props.onChange(device)}
-      class="aria-pressed:border-gold aria-pressed:text-gold"
     >
       {label}
     </Button>

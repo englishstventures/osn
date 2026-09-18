@@ -23,7 +23,7 @@ packages:
   - "@shared/ui"
   - "@osn/auth-ui"
   - "@cire/ui"
-last-reviewed: 2026-09-17
+last-reviewed: 2026-09-18
 ---
 
 # Component Library (Zaidan)
@@ -617,6 +617,40 @@ The reason the rule can be trusted at `error` is that it reads the component's
 own variants and names them in the diagnostic — `Use a variant: default,
 destructive, outline, secondary, ghost, link` — so the fix arrives with the
 error rather than needing a trip to the source.
+
+### cire's `Button`, as a vocabulary
+
+`@cire/ui`'s `Button` is the house style rather than the shadcn set — uppercase,
+tracked, a sharp 4px corner, a gold primary — and on a cire surface it is where a
+call site's colour, shape and padding have to come from. Fourteen variants,
+grouped by the job rather than by the look:
+
+| Group | Variants | What each is for |
+|---|---|---|
+| Commit | `primary`, `cta` | The one thing to do on the screen. `cta` is the guest site's: outlined at rest and filled on hover, because an invite is restrained enough that a gold fill at rest would be the loudest thing on a page whose job is a photograph and a date |
+| Secondary | `outline`, `quiet`, `dashed` | A gold wash, a neutral action, and the empty slot — a dashed box promises that something *appears*, a solid one that something *happens* |
+| Destructive | `danger`, `quietDanger`, `bareDanger` | Red at rest for the button that commits it; muted at rest and red on hover for the control that merely offers it, boxed (`quietDanger`) or as a glyph (`bareDanger`). A column of red-outlined buttons down a table reads as an error state |
+| Text | `link`, `subtle`, `touchLink` | Accent ink, muted ink, and muted ink carrying its underline at rest. The last belongs to `@cire/invites`, which is read on a phone — there is no hover there to reveal one |
+| Glyph | `bare` | An arrow, a cross, a disclosure caret. No underline, because there is no word to underline |
+| State and fill | `choice`, `tile` | One option among several, marked through `aria-pressed` **or** `aria-checked` so a toggle group and a radio group look the same; and the control that *is* a block — a card, a row — where a hairline stops describing the target |
+
+Five sizes, and they are not one scale:
+
+| Size | What it gives | For |
+|---|---|---|
+| `sm`, `md`, `lg` | three steps of label padding and type | An ordinary control |
+| `swatch` | one hairline of padding, no type at all | A control whose content is the thing itself — a colour swatch, a product thumbnail. The picture is what sizes it |
+| `icon` | square, sized to the glyph rather than to a label | A single glyph |
+
+Three sizing tables, picked by the variant. The borderless ones take the type
+step and none of the box padding, because `px-4 py-2` around a text link is a
+word floating in a gap. `tile` takes square block padding, because its interior
+is a small layout — a numbered marker beside two lines of text — rather than a
+word. Everything else takes the ordinary one.
+
+`cire/ui/src/button.tsx` carries the reason for each in its own doc comment, and
+that is the bar for adding one: a variant is a design concept somebody can name,
+not a colour somebody wanted. `custom`, `alt` and `variant2` are not names.
 
 ## Adding a new component
 

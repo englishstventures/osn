@@ -263,11 +263,10 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
             </Show>
             <Show when={props.claim}>
               <Button
-                variant="bare"
+                variant="touchLink"
                 type="button"
                 disabled={props.busy}
                 onClick={() => props.onRelease()}
-                class="underline"
               >
                 Release
               </Button>
@@ -327,11 +326,10 @@ export function GiftRegistryItemCard(props: GiftRegistryItemCardProps) {
                 {props.busy ? "Saving" : "Confirm"}
               </Button>
               <Button
-                variant="bare"
+                variant="touchLink"
                 type="button"
                 disabled={props.busy}
                 onClick={() => setOpen(false)}
-                class="underline"
               >
                 Cancel
               </Button>

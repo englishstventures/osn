@@ -122,11 +122,11 @@ export default function PaletteField(props: {
               const selected = () => (props.value.preset ?? DEFAULT_PRESET) === key;
               return (
                 <Button
-                  variant="quiet"
+                  variant="choice"
                   type="button"
                   aria-pressed={selected()}
                   onClick={() => choosePreset(key)}
-                  class="focus-visible:border-gold focus-visible:ring-gold/40 aria-pressed:border-gold flex items-center outline-none focus-visible:ring-2"
+                  class="flex items-center"
                 >
                   {/* The five colours themselves are the label — a scheme is
                       easier to recognise than to read. */}
