@@ -43,13 +43,18 @@ export interface InviteRevalidationOptions<Body, T> {
 }
 
 /**
- * The on-mount no-store revalidation every design pack's islands run.
+ * The no-store re-request of the invite payload every design pack's islands run.
  *
- * The static guest site bakes the build-time values into the island's props;
- * without this re-fetch a change the organiser saved after the last build would
- * never reach guests until a rebuild. The props seed the resource, so first
- * paint is immediate and the no-JS fallback still renders the server-rendered
- * values; the fresh response then overrides them.
+ * The props seed the resource, so first paint is immediate and the no-JS
+ * fallback still renders the server-rendered values; the fresh response then
+ * overrides them.
+ *
+ * Where it runs is not where the name suggests. With no `ssrLoadFrom: "initial"`
+ * Solid's server build calls the fetcher during the render, and Astro's Solid
+ * renderer awaits it, so this runs in the Worker and hydration reuses the
+ * serialised value rather than fetching again. Each island therefore adds a
+ * blocking subrequest for a payload the route already fetched and passed in as
+ * props.
  *
  * What is shared is the fetch, the `no-store`, the two failure paths and the
  * `initialValue` wiring. What each call site keeps is its own fallback and its

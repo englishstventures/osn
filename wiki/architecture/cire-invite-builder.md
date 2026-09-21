@@ -723,8 +723,8 @@ arrive on their own `/<slug>` link; nothing needs the bare domain to name a
 wedding.
 
 The server fetch still paints the hero with the real image/copy in the SSR'd
-HTML (fast LCP, no-JS fallback). Both guest islands then **revalidate at runtime**
-and let the fresh `/api/invite/:slug` response override the per-request snapshot.
+HTML (fast LCP, no-JS fallback). Both guest islands then **re-request
+`/api/invite/:slug`** and let that response override the per-request snapshot.
 Neither island owns that fetch: it lives in
 `cire/invites/src/components/invite-revalidation.ts` (`createInviteRevalidation`),
 which every design pack's islands call. The primitive owns the `no-store` fetch,
@@ -734,6 +734,17 @@ and its own `select()`, because the two are genuinely different: a header falls
 back to its whole `initial` prop and takes the payload unmapped, a page falls back
 to a value built from three props and maps three fields out of the payload. With
 no `slug` the primitive never fetches at all.
+
+> [!warning] Where that fetch actually runs
+> **On the server, not on mount.** The resource carries no `ssrLoadFrom: "initial"`,
+> and Solid's server build runs the fetcher unless it does (`if (options.ssrLoadFrom
+> !== "initial") load();` in `solid-js/dist/server.js`); Astro's Solid renderer
+> defaults to `renderToStringAsync`, so the HTML waits on it and hydration reuses the
+> serialised value instead of re-calling the fetcher. A `/<slug>` render therefore
+> issues **three** requests for the same payload — one from the route
+> (`fetchInvite`) and one per island — the two island ones inside the Worker,
+> on the critical path for TTFB. The props each island already holds are that
+> same response, so nothing is fresher for the round trip.
 
 - `cire/invites/src/designs/<pack>/InviteHeader.tsx` (`client:load`) — the hero +
   "Our Story" sections. Revalidates on mount through the primitive, seeded with the
