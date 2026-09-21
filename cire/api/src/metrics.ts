@@ -566,7 +566,8 @@ const rsvpBlocked = createCounter<RsvpBlockedAttrs>({
 
 const dietaryPreset = createCounter<DietaryPresetAttrs>({
   name: CIRE_METRICS.dietaryPreset,
-  description: "Dietary presets selected on accepted RSVP replies, by preset",
+  description:
+    "Dietary presets on stored RSVP replies that are attending or maybe, by preset — a declined reply stores its presets but feeds no plate, so it is not counted",
   unit: "{selection}",
 });
 

@@ -11,11 +11,14 @@ import { DbService } from "../../src/db";
 import { createDb, seedDb } from "../../src/db/setup";
 import type { TestDb } from "../../src/db/setup";
 import { parseSessionToken } from "../../src/lib/cookie";
+import { CIRE_METRICS } from "../../src/metrics";
 import { DIETARY_CONSENT_VERSION } from "../../src/schemas/rsvp";
 import { hostCodeService } from "../../src/services/host-code";
 import { eff } from "../test-helpers";
+import { counterValue } from "../test-helpers/metrics-harness";
 
 const HINDU_ID = eventsData.hindu.id;
+const RECEPTION_ID = eventsData.reception.id;
 // Ada (Testfamily) is invited to catholic + hindu + reception, NOT mehendi.
 const MEHENDI_ID = eventsData.mehendi.id;
 // A UUID that exists in no wedding — stands in for "another wedding's event".
@@ -33,7 +36,8 @@ interface RsvpOk {
 let db: TestDb;
 let app: ReturnType<typeof createApp>;
 let sharmaGuestId: string;
-let wilsonJamesGuestId: string;
+let sampletonBoGuestId: string;
+let sampletonCleoGuestId: string;
 
 beforeAll(() => {
   db = createDb(":memory:");
@@ -45,7 +49,8 @@ beforeAll(() => {
   const allGuests = db.select({ id: guests.id, firstName: guests.firstName }).from(guests).all();
 
   sharmaGuestId = allGuests.find((g) => g.firstName === "Ada")!.id;
-  wilsonJamesGuestId = allGuests.find((g) => g.firstName === "Bo")!.id;
+  sampletonBoGuestId = allGuests.find((g) => g.firstName === "Bo")!.id;
+  sampletonCleoGuestId = allGuests.find((g) => g.firstName === "Cleo")!.id;
 });
 
 const post = (body: unknown, cookie: string | null) =>
@@ -156,7 +161,7 @@ describe("POST /api/rsvp", () => {
           {
             rsvps: [
               {
-                guestId: wilsonJamesGuestId,
+                guestId: sampletonBoGuestId,
                 eventId: HINDU_ID,
                 status: "attending",
               },
@@ -371,6 +376,9 @@ describe("POST /api/rsvp", () => {
         // those is exactly as protected as one that types them out — and would
         // otherwise be stored with a NULL consent record.
         const cookie = yield* claimAndCookie("TESTONE-IVY-AA11");
+        const blockedBefore = yield* Effect.promise(() =>
+          counterValue(CIRE_METRICS.rsvpBlocked, { reason: "dietary_consent" }),
+        );
         const res = yield* post(
           {
             rsvps: [
@@ -388,6 +396,93 @@ describe("POST /api/rsvp", () => {
         expect(res.status).toBe(422);
         const data = yield* Effect.promise(() => res.json<{ error: string }>());
         expect(data.error).toBe("Dietary requirements need your consent to store");
+        // The status alone says nothing about the counter: a 422 with the
+        // `metricRsvpBlocked` call deleted looks identical from here.
+        const blockedAfter = yield* Effect.promise(() =>
+          counterValue(CIRE_METRICS.rsvpBlocked, { reason: "dietary_consent" }),
+        );
+        expect(blockedAfter).toBe(blockedBefore + 1);
+      }),
+    ),
+  );
+
+  it(
+    "counts a preset on an attending reply and not on a declined one",
+    eff(
+      Effect.gen(function* () {
+        // One batch, two household members, the same preset. A declined guest's
+        // presets are still stored — the row can be changed back — but they
+        // feed nobody, so the counter a caterer reads must not see them.
+        // Without the `declined` skip in the route this delta is 2.
+        //
+        // The Sampleton family, not Ada: several tests in this file read
+        // `rsvps` by `guestId` alone and take the first row, which only holds
+        // while Ada has exactly one.
+        const cookie = yield* claimAndCookie("TESTTWO-OAK-BB22");
+        const attrs = { preset: "vegetarian" } as const;
+        const before = yield* Effect.promise(() => counterValue(CIRE_METRICS.dietaryPreset, attrs));
+        const res = yield* post(
+          {
+            rsvps: [
+              {
+                guestId: sampletonBoGuestId,
+                eventId: HINDU_ID,
+                status: "attending",
+                dietaryPresets: ["vegetarian"],
+                dietaryConsent: true,
+              },
+              {
+                guestId: sampletonCleoGuestId,
+                eventId: HINDU_ID,
+                status: "declined",
+                dietaryPresets: ["vegetarian"],
+                dietaryConsent: true,
+              },
+            ],
+          },
+          cookie,
+        );
+        expect(res.status).toBe(200);
+        const after = yield* Effect.promise(() => counterValue(CIRE_METRICS.dietaryPreset, attrs));
+        expect(after).toBe(before + 1);
+
+        // Storage is untouched by the metric rule: the declined row keeps what
+        // the guest picked.
+        const data = yield* Effect.promise(() =>
+          res.json<{ rsvps: { guestId: string; status: string; dietaryPresets: string[] }[] }>(),
+        );
+        const declined = data.rsvps.find((r) => r.guestId === sampletonCleoGuestId);
+        expect(declined?.status).toBe("declined");
+        expect(declined?.dietaryPresets).toEqual(["vegetarian"]);
+      }),
+    ),
+  );
+
+  it(
+    "counts a preset on a `maybe` reply — only `declined` is excluded",
+    eff(
+      Effect.gen(function* () {
+        // A kitchen has to be ready for a maybe, so a maybe counts.
+        const cookie = yield* claimAndCookie("TESTTWO-OAK-BB22");
+        const attrs = { preset: "kosher" } as const;
+        const before = yield* Effect.promise(() => counterValue(CIRE_METRICS.dietaryPreset, attrs));
+        const res = yield* post(
+          {
+            rsvps: [
+              {
+                guestId: sampletonBoGuestId,
+                eventId: RECEPTION_ID,
+                status: "maybe",
+                dietaryPresets: ["kosher"],
+                dietaryConsent: true,
+              },
+            ],
+          },
+          cookie,
+        );
+        expect(res.status).toBe(200);
+        const after = yield* Effect.promise(() => counterValue(CIRE_METRICS.dietaryPreset, attrs));
+        expect(after).toBe(before + 1);
       }),
     ),
   );

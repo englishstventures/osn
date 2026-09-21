@@ -23,6 +23,15 @@ vi.mock("../../src/lib/api", async () => {
 
 import RsvpView from "../../src/components/RsvpView";
 import { authFetchMock, redirectSpy, resetOrganiserMocks } from "../test-support/mocks";
+import { mockViewport } from "../test-support/viewport";
+
+/**
+ * Set by the one test that needs the picker's narrow shell, and reset here for
+ * every other test in the file — a leaked narrow viewport adds sixteen preset
+ * checkboxes to the page, which breaks any test reaching for the singular
+ * `getByRole("checkbox")`.
+ */
+let restoreViewport = () => {};
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -142,6 +151,8 @@ describe("RsvpView", () => {
   afterEach(() => {
     cleanup();
     resetOrganiserMocks();
+    restoreViewport();
+    restoreViewport = () => {};
   });
 
   it("renders RSVPs grouped by event with correct counts", async () => {
@@ -415,6 +426,59 @@ describe("RsvpView", () => {
       status: "attending",
       dietary: "Nut allergy",
       dietaryPresets: [],
+      dietaryConsent: true,
+    });
+  });
+
+  it("editor records a preset-only reply: the attestation appears with no free text", async () => {
+    // The gap the free-text case above cannot see. Before this rule, ticking a
+    // preset and typing nothing sent `dietaryConsent: true` with no checkbox
+    // ever on screen — an Art. 9(2)(a) attestation nobody made. The picker is
+    // `@cire/ui/dietary-presets-popover`, which collapses behind a trigger above
+    // 48rem, so the narrow viewport is what puts the checkboxes on the page.
+    restoreViewport = mockViewport(false);
+    authFetchMock
+      .mockResolvedValueOnce(json(VIEW)) // initial load
+      .mockResolvedValueOnce(
+        json({ rsvp: { status: "attending", consentSource: "organiser_attested" } }),
+      ) // PUT
+      .mockResolvedValueOnce(json(VIEW)); // reload after save
+    render(() => <RsvpView weddingId="wed_a" canEdit />);
+
+    await waitFor(() => expect(screen.getByText("Bo Jones")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Record reply for Cleo Jones" }));
+
+    // Nothing picked and nothing typed → no attestation to make yet.
+    await screen.findByLabelText(/Anything else/i);
+    expect(screen.queryByLabelText(/I confirm the guest consented/i)).toBeNull();
+
+    // A preset alone is special-category data, so the attestation must appear.
+    fireEvent.click(screen.getByRole("checkbox", { name: "Halal" }));
+    const consent = await screen.findByLabelText(/I confirm the guest consented/i);
+
+    // And it gates the save, exactly as the free text does.
+    fireEvent.click(screen.getByRole("button", { name: /Save reply/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/before storing dietary requirements/i)).toBeTruthy(),
+    );
+    expect(authFetchMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(consent);
+    fireEvent.click(screen.getByRole("button", { name: /Save reply/i }));
+
+    await waitFor(() => expect(authFetchMock).toHaveBeenCalledTimes(3));
+    const putCall = authFetchMock.mock.calls[1]!;
+    expect(putCall[0]).toContain("/api/organiser/weddings/wed_a/guests/g3/rsvps/evt_1");
+    const body = JSON.parse(putCall[1]?.body as string) as {
+      status: string;
+      dietary: string;
+      dietaryPresets: readonly string[];
+      dietaryConsent: boolean;
+    };
+    expect(body).toEqual({
+      status: "attending",
+      dietary: "",
+      dietaryPresets: ["halal"],
       dietaryConsent: true,
     });
   });
