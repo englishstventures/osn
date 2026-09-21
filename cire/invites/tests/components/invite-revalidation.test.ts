@@ -67,6 +67,42 @@ describe("createInviteRevalidation", () => {
     dispose();
   });
 
+  it("encodes the slug into a single path segment", async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(new Response(JSON.stringify({}), { status: 200 })),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { data, dispose } = mount({ slug: () => "a b/../c?x" });
+    await settled(data);
+
+    // The slug comes off the request path, so an unencoded one could move the
+    // request to a different path or query on the API origin.
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.test/api/invite/a%20b%2F..%2Fc%3Fx",
+      expect.objectContaining({ cache: "no-store" }),
+    );
+    dispose();
+  });
+
+  it("keeps the fallback when an OK response has an unparseable body", async () => {
+    // `res.json()` and `select` both run after the `await`, inside the same
+    // try. A 200 carrying HTML — an edge interstitial, a misrouted request —
+    // must land on the same path as a thrown fetch, not settle the resource
+    // errored and rethrow at the render.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response("<html>oops</html>", { status: 200 }))),
+    );
+
+    const { data, dispose } = mount({});
+    await settled(data);
+
+    expect(data.error).toBeUndefined();
+    expect(data()).toBe(FALLBACK);
+    dispose();
+  });
+
   it("maps an OK response through `select`", async () => {
     const body: InviteCustomisationResponse = {
       theme: { headingFont: "Lato", bodyFont: null, palette: null, tones: null },

@@ -66,7 +66,11 @@ export function createInviteRevalidation<Body, T>(
       const slug = options.slug();
       if (!slug) return options.fallback();
       try {
-        const res = await fetch(`${options.apiUrl()}/api/invite/${slug}`, {
+        // Encoded, like the server-side `fetchInvite` in ../lib/invite.ts: the
+        // slug comes off the request path, so encoding is what keeps it one
+        // path segment rather than something that can move the request to a
+        // different path or query on the API origin.
+        const res = await fetch(`${options.apiUrl()}/api/invite/${encodeURIComponent(slug)}`, {
           cache: "no-store",
         });
         if (!res.ok) return options.fallback();
