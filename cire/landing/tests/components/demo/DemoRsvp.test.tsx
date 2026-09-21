@@ -107,11 +107,19 @@ describe("DemoRsvp", () => {
     fireEvent.click(amara.getByRole("checkbox", { name: "Other" }));
     const box = await amara.findByLabelText(/Anything else/i);
     fireEvent.input(box, { target: { value: "no onion or garlic" } });
-    expect((box as HTMLInputElement).value).toBe("no onion or garlic");
 
     // Untick "Other" and the box goes away again — the picker owns the reveal.
     fireEvent.click(amara.getByRole("checkbox", { name: "Other" }));
     await waitFor(() => expect(amara.queryByLabelText(/Anything else/i)).toBeNull());
+
+    // Re-tick it, and the text is still there. Asserting `box.value` straight
+    // after the `input` would prove nothing: `fireEvent.input` sets that
+    // property itself, so deleting the `onInput` handler leaves the DOM node
+    // reading back exactly what the test wrote onto it. Only a value that
+    // survives the `<Show>` remount can have come from the component's state.
+    fireEvent.click(amara.getByRole("checkbox", { name: "Other" }));
+    const reopened = (await amara.findByLabelText(/Anything else/i)) as HTMLInputElement;
+    expect(reopened.value).toBe("no onion or garlic");
   });
 
   it("confirms with a no-op message and never calls the network on a valid submit", async () => {

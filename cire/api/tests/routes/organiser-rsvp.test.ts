@@ -167,6 +167,8 @@ describe("PUT /api/organiser/weddings/:weddingId/guests/:guestId/rsvps/:eventId"
     // green while storing `halal` + `nuts` — religious belief and a health
     // condition — against a NULL consent record.
     const { db, app } = buildApp();
+    const guestId = guestByName(db, "Ada");
+    const eventId = eventBySlug(db, "hindu");
     const res = await put(app, rsvpPath(db), OWNER, {
       status: "attending",
       dietaryPresets: ["halal", "nuts"],
@@ -180,15 +182,15 @@ describe("PUT /api/organiser/weddings/:weddingId/guests/:guestId/rsvps/:eventId"
     const row = db
       .select({ presets: rsvps.dietaryPresets })
       .from(rsvps)
-      .where(
-        and(eq(rsvps.guestId, guestByName(db, "Ada")), eq(rsvps.eventId, eventBySlug(db, "hindu"))),
-      )
+      .where(and(eq(rsvps.guestId, guestId), eq(rsvps.eventId, eventId)))
       .get();
     expect(row).toBeUndefined();
   });
 
   it("returns 200 + stores presets when a preset-only reply IS attested", async () => {
     const { db, app } = buildApp();
+    const guestId = guestByName(db, "Ada");
+    const eventId = eventBySlug(db, "hindu");
     const res = await put(app, rsvpPath(db), OWNER, {
       status: "attending",
       // Submitted allergy-first and with a repeat; stored diet-first and
@@ -204,9 +206,7 @@ describe("PUT /api/organiser/weddings/:weddingId/guests/:guestId/rsvps/:eventId"
         at: rsvps.dietaryConsentAt,
       })
       .from(rsvps)
-      .where(
-        and(eq(rsvps.guestId, guestByName(db, "Ada")), eq(rsvps.eventId, eventBySlug(db, "hindu"))),
-      )
+      .where(and(eq(rsvps.guestId, guestId), eq(rsvps.eventId, eventId)))
       .get();
     // `parsePresets` is total, so a broken round trip returns [] rather than
     // throwing — the column itself is what has to be asserted.

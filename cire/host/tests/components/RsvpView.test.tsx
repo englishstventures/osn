@@ -484,6 +484,9 @@ describe("RsvpView", () => {
   });
 
   it("editor edits an existing reply (prefilled, overwrites)", async () => {
+    // Narrow, so the prefilled preset is a checkbox on the page rather than a
+    // label inside a closed popover trigger.
+    restoreViewport = mockViewport(false);
     authFetchMock
       .mockResolvedValueOnce(json(VIEW))
       .mockResolvedValueOnce(
@@ -498,14 +501,58 @@ describe("RsvpView", () => {
     // The status select is prefilled to her current status ("attending").
     const status = (await screen.findByLabelText(/Status/i)) as HTMLSelectElement;
     expect(status.value).toBe("attending");
+
+    // Ada's stored answer is `["gluten"]`, so the editor opens with that preset
+    // ticked and the attestation already made — a row that carries dietary data
+    // was consented to when it was recorded.
+    expect(
+      (screen.getByRole("checkbox", { name: "Gluten / coeliac" }) as HTMLInputElement).checked,
+    ).toBe(true);
+    const consent = screen.getByLabelText(/I confirm the guest consented/i) as HTMLInputElement;
+    expect(consent.checked).toBe(true);
+
     fireEvent.change(status, { target: { value: "declined" } });
     fireEvent.click(screen.getByRole("button", { name: /Save reply/i }));
 
     await waitFor(() => expect(authFetchMock).toHaveBeenCalledTimes(3));
     const putCall = authFetchMock.mock.calls[1]!;
     expect(putCall[0]).toContain("/api/organiser/weddings/wed_a/guests/g1/rsvps/evt_1");
-    const body = JSON.parse(putCall[1]?.body as string) as { status: string };
-    expect(body.status).toBe("declined");
+    // The WHOLE body, not just the status. This is the one place on this
+    // surface where Art. 9 data can be lost rather than miscounted: an
+    // organiser opening a reply to change its status must not silently wipe
+    // the guest's stored requirement, and a status-only assertion cannot tell
+    // a preserving save from a destroying one.
+    const body = JSON.parse(putCall[1]?.body as string) as {
+      status: string;
+      dietary: string;
+      dietaryPresets: readonly string[];
+      dietaryConsent: boolean;
+    };
+    expect(body).toEqual({
+      status: "declined",
+      dietary: "",
+      dietaryPresets: ["gluten"],
+      dietaryConsent: true,
+    });
+  });
+
+  it("editor shows no attestation when the existing reply carries no dietary data", async () => {
+    // The other branch of the prefill rule. Bo's stored reply has neither
+    // presets nor free text, so there is nothing to attest to and the checkbox
+    // must be absent — a prefill rewritten to tick unconditionally would pass
+    // the case above and fail here.
+    restoreViewport = mockViewport(false);
+    authFetchMock.mockResolvedValueOnce(json(VIEW));
+    render(() => <RsvpView weddingId="wed_a" canEdit />);
+
+    await waitFor(() => expect(screen.getByText("Bo Jones")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Edit reply for Bo Jones" }));
+
+    await screen.findByLabelText(/Anything else/i);
+    expect(screen.queryByLabelText(/I confirm the guest consented/i)).toBeNull();
+    expect(
+      (screen.getByRole("checkbox", { name: "Gluten / coeliac" }) as HTMLInputElement).checked,
+    ).toBe(false);
   });
 
   it("keeps an unrelated event's row identity across a reload, patches the one that changed", async () => {

@@ -42,8 +42,12 @@ export function isValidClaimResponse(data: unknown): data is ClaimResult {
     // against a closed list here it would make the whole claim response invalid
     // on a site that had not redeployed yet, and both callers read invalid as
     // "no session" — so a guest with a valid code would be shown the code form
-    // instead of their invite. An unrecognised key costs a missing label; an
-    // over-strict check costs the invite.
+    // instead of their invite.
+    //
+    // The cost of admitting an unrecognised key is the VALUE, not just a
+    // missing label: the sheet round-trips it untouched, but the first tick on
+    // that member's picker rebuilds the selection from the shipped vocabulary,
+    // so the unrecognised key is dropped and the row rewritten without it.
     if (!("dietaryPresets" in r) || !Array.isArray(r.dietaryPresets)) return false;
     if (!r.dietaryPresets.every((preset: unknown) => typeof preset === "string")) return false;
     return "dietaryConsentCurrent" in r && typeof r.dietaryConsentCurrent === "boolean";

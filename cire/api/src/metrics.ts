@@ -567,7 +567,7 @@ const rsvpBlocked = createCounter<RsvpBlockedAttrs>({
 const dietaryPreset = createCounter<DietaryPresetAttrs>({
   name: CIRE_METRICS.dietaryPreset,
   description:
-    "Dietary presets on stored RSVP replies that are attending or maybe, by preset — a declined reply stores its presets but feeds no plate, so it is not counted",
+    "Dietary presets on GUEST-submitted RSVP replies that are attending or maybe, by preset — a declined reply stores its presets but feeds no plate, so it is not counted, and the organiser-recorded path (PUT .../rsvps/:eventId) feeds this counter nothing at all",
   unit: "{selection}",
 });
 
