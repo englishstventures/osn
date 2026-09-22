@@ -44,12 +44,17 @@ export function DemoModal(props: DemoModalProps) {
       presentation="sheet"
       class="relative max-w-120 overscroll-contain"
     >
+      {/* `z-10` for the same reason the guest sheet's chip carries one: this is
+          a positioned box that has to stay above the panel's contents, and the
+          dietary pills below it are positioned too (`relative`, so their
+          `sr-only` inputs resolve inside the pill rather than against this
+          panel). Tree order would put the pills on top. */}
       <Button
         variant="bare"
         size="icon"
         aria-label="Close"
         onClick={props.onClose}
-        class="absolute top-2 right-2 h-11 w-11"
+        class="absolute top-2 right-2 z-10 h-11 w-11"
       >
         &times;
       </Button>

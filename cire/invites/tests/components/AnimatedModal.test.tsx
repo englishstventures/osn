@@ -93,9 +93,9 @@ describe("AnimatedModal", () => {
     // `autofocus` rather than an imperative `focus()`: a dialog's focusing
     // steps prefer the autofocus delegate over the first tabbable descendant,
     // which is the close button. That button is a sibling of the scrollport, so
-    // landing there leaves the keyboard with nothing to scroll — its nearest
-    // scrollable ancestor is the `overflow-hidden` frame, then a `<body>` this
-    // component locks. Measured in a real browser with focus on the button:
+    // landing there leaves the keyboard with nothing to scroll — the frame
+    // above it is `overflow-clip`, which is not a scroll container at all, and
+    // beyond it is a `<body>` this component locks. Measured in a real browser with focus on the button:
     // Arrow and PageDown moved a scrollable sheet 0px. With focus on the
     // scrollport: ArrowDown 0→40px, PageDown 40→594px, Home back to 0.
     // That it actually lands there is the browser tier's to check.
