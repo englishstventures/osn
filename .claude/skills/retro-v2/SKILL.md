@@ -1,6 +1,6 @@
 ---
 name: retro-v2
-description: Use when a branch has finished and the session-metrics card is all that is wanted — writes, commits and renders the card, and stops. The card-only half of `retro`, for sessions running close to their token budget. Where there is room to think, run `retro` instead: this one deliberately produces no findings and changes nothing.
+description: Use when a branch has finished and the session-metrics card is all that is wanted — writes, commits and renders the card, and stops. The card-only half of `retro`, for sessions running close to their token budget. Where there is room to think, run `retro` instead — this one deliberately produces no findings and changes nothing.
 ---
 
 Write the session-metrics card for the branch named in `$ARGUMENTS`, or the
