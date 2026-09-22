@@ -113,6 +113,26 @@ describe("the Anything else field", () => {
     expect(within(fieldset).getByPlaceholderText(/no onion/i)).toBeTruthy();
   });
 
+  it("clips the collapsing box on both axes, so it is not a scroll container", async () => {
+    // The same argument `Modal`'s frame panel makes one level up. `Reveal`
+    // wraps form fields; regressed to `overflow: hidden` the box would still be
+    // a scroll container holding a focusable input, and `scrollIntoView` or a
+    // focus landing inside it would scroll content the guest cannot scroll
+    // back. Both axes have to read `clip` — beside an `auto` axis a `clip`
+    // computes to `hidden` (CSS Overflow 3 §3.1) and the guard would pass while
+    // the box stayed scrollable.
+    await page.viewport(...NARROW);
+    const { fieldset } = mount();
+    fireEvent.click(within(fieldset).getByText("Attending"));
+    await settle();
+    (within(fieldset).getByText("Other").closest("label") as HTMLElement).click();
+    await new Promise(requestAnimationFrame);
+
+    const inner = trackOf(fieldset).firstElementChild as HTMLElement;
+    const style = window.getComputedStyle(inner);
+    expect([style.overflowX, style.overflowY]).toEqual(["clip", "clip"]);
+  });
+
   it("is simply open, with no animation, for a reply that already has prose", async () => {
     await page.viewport(...NARROW);
     const { fieldset } = mount([

@@ -169,6 +169,12 @@ describe("AnimatedModal", () => {
     // Opaque, because content now passes underneath the button as it scrolls.
     expect(close.className).toContain("bg-surface");
     expect(close.className).not.toContain("bg-transparent");
+    // And ranked, because some of what passes underneath is positioned. The
+    // dietary pills carry `relative` so their `sr-only` inputs resolve inside
+    // the pill, which puts sixteen positioned boxes later in the tree than this
+    // chip — and tree order alone then hands them the hit test. Measured in
+    // `DietaryPresets.browser.test.tsx`; this is the cheap half.
+    expect(close.className.split(/\s+/)).toContain("z-10");
 
     // Still the first thing in the tab order, as before the restructure.
     expect(panel.querySelector("button")).toBe(close);

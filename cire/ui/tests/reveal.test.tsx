@@ -61,9 +61,15 @@ describe("Reveal", () => {
         <input aria-label="Anything else" />
       </Reveal>
     ));
+    // Both halves, because two conflicting utilities on one element resolve by
+    // stylesheet order rather than by attribute order — so "the open class is
+    // present" is satisfied by an element carrying both, which would render at
+    // whichever height Tailwind's output happens to put last.
     const wrapper = container.firstElementChild as HTMLElement;
     expect(wrapper.className).toContain("grid-rows-[0fr]");
+    expect(wrapper.className).not.toContain("grid-rows-[1fr]");
     setOpen(true);
     expect(wrapper.className).toContain("grid-rows-[1fr]");
+    expect(wrapper.className).not.toContain("grid-rows-[0fr]");
   });
 });

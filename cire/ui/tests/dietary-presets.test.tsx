@@ -123,6 +123,9 @@ describe("the pill's containing block", () => {
     const { container } = render(() => <DietaryPresets value={[]} onChange={() => {}} />);
     const labels = [...container.querySelectorAll("label")];
     expect(labels.length).toBeGreaterThan(0);
-    for (const label of labels) expect(label.className).toContain("relative");
+    // A token, not a substring: `md:relative` and `has-[:checked]:relative` both
+    // contain the word and neither makes the pill a containing block at the
+    // moment the input is focused.
+    for (const label of labels) expect(label.className.split(/\s+/)).toContain("relative");
   });
 });
