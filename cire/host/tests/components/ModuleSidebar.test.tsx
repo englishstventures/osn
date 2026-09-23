@@ -60,16 +60,31 @@ describe("ModuleSidebar", () => {
       .getAllByRole("button")
       .map((b) => b.textContent);
     expect(labels).toEqual([
-      "◈Overview",
-      "◇Events",
-      "✓Checklist",
-      "$Budget",
-      "⬡Vendors",
-      "⊞Registry",
-      "✎Guests",
-      "✦Invite",
-      "✧Settings",
+      "Overview",
+      "Events",
+      "Checklist",
+      "Budget",
+      "Vendors",
+      "Registry",
+      "Guests",
+      "Invite",
+      "Settings",
     ]);
+  });
+
+  it("leads every row with one icon at the shared size, hidden from assistive tech", () => {
+    render(() => (
+      <ModuleSidebar weddingId="wed_test" active="overview" entitlements={[]} onSelect={vi.fn()} />
+    ));
+    // Locked rows too: an organiser without the entitlement still sees the mark.
+    for (const row of within(rail()).getAllByRole("button")) {
+      const icons = row.querySelectorAll("svg");
+      expect(icons).toHaveLength(1);
+      // `size-icon` is what only `ModuleIcon` applies, so this proves the row
+      // goes through it rather than drawing an icon at its own size.
+      expect(icons[0]!.classList.contains("size-icon")).toBe(true);
+      expect(icons[0]!.getAttribute("aria-hidden")).toBe("true");
+    }
   });
 
   it("marks the active module with aria-current and no others", () => {
@@ -446,7 +461,7 @@ describe("ModuleSidebar", () => {
         .getAllByRole("button")
         .filter((b) => (b.getAttribute("aria-label") ?? "").includes("locked"))
         .map((b) => b.textContent);
-      expect(locked).toEqual(["⬡Vendors"]);
+      expect(locked).toEqual(["Vendors"]);
     });
   });
 });
