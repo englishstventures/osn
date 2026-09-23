@@ -16,7 +16,7 @@ related:
   - "[[pulse]]"
 packages:
   - "@pulse/api"
-last-reviewed: 2026-08-31
+last-reviewed: 2026-09-23
 ---
 
 # Platform Limits
@@ -59,4 +59,3 @@ Events with more than 1000 guests belong to a future **verified-organisation tie
 
 - [pulse/api/src/lib/limits.ts](../../pulse/api/src/lib/limits.ts) -- limits constants
 - [pulse/api/src/services/graphBridge.ts](../../pulse/api/src/services/graphBridge.ts) -- consumes MAX_EVENT_GUESTS
-- [CLAUDE.md](../../CLAUDE.md) — "Platform limits" section

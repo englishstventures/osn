@@ -22,7 +22,7 @@ related:
   - "[[turnstile]]"
   - "[[data-map]]"
   - "[[dpia/cire-guest-data]]"
-last-reviewed: 2026-09-17
+last-reviewed: 2026-09-23
 ---
 
 # Cire
@@ -152,7 +152,7 @@ path that resolves nowhere:
 
 Cire's build conventions — the backend patterns, the two test tiers, and the
 commands that differ from the platform defaults — are in [[cire-development]].
-There is no `cire/CLAUDE.md` any more: the root `CLAUDE.md` is the one AI entry
+The root `AGENTS.md` is the one agent entry
 point, and everything product-specific is a wiki page.
 
 ## Marketing site + platform roadmap

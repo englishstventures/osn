@@ -349,7 +349,7 @@ leads the title. Planned work this branch completes goes in the same list, from
 the public repo. **Never delete an issue**; close it.
 
 `references/workflow-steps.md` carries the rest: the `gh issue list` searches,
-the Up Next promotion, and the docs pass — what to check in `CLAUDE.md` and the
+the Up Next promotion, and the docs pass — what to check in `AGENTS.md` and the
 wiki, and how to verify the wikilinks you wrote resolve.
 
 Report the issues opened and the issue numbers this branch closes — Step 8 needs

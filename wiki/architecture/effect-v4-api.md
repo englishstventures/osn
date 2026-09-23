@@ -18,7 +18,7 @@ packages:
   - "@pulse/api"
   - "@zap/api"
   - "@cire/api"
-last-reviewed: 2026-09-08
+last-reviewed: 2026-09-23
 ---
 
 # Effect v4 API Shapes
@@ -28,9 +28,9 @@ write instead. This page exists because the v3 shapes are still what a model
 reaches for from memory and what every pre-2026-09 example on the internet
 shows — knowing that a rename happened is not enough to write the new name.
 
-The repo moved off Effect v3 on 2026-09-06. Which packages are on it, and why
-the pin is exact rather than caret, is in `CLAUDE.md` under Conventions —
-kept there rather than repeated here so there is one place for it to be right.
+Every backend package is on v4. Which packages use Effect, and why the pin is
+exact rather than caret, is in [[contributing#Technology Choices]] — kept there
+rather than repeated here so there is one place for it to be right.
 
 Most of the surface is unchanged. `Effect.gen`, `provide`, `runPromise`,
 `tryPromise`, `fail`, `flip`, `withSpan`, `catchTag`, `provideService`,
@@ -131,7 +131,6 @@ across separate `runPromise` roots. A per-request `Effect.provide(scopedLayer)`
 is a new root every time, so it still **builds and tears the layer down on
 every request** — measured, 5 provides → 5 acquires and 5 releases, against a
 `ManagedRuntime`'s 1 acquire and 0 releases. So the v3 rebuild-cost argument
-for a shared runtime is not weakened at all where it matters; if anything the
-"Effect runtime" rule in `CLAUDE.md`'s Conventions table is understated. The
-pattern itself is in [[backend-patterns]].
+for a shared runtime is not weakened at all where it matters. The pattern
+itself is in [[backend-patterns]].
 

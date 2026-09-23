@@ -18,7 +18,7 @@ packages:
   - "@pulse/api"
   - "@osn/api"
   - "@osn/client"
-last-reviewed: 2026-09-06
+last-reviewed: 2026-09-23
 ---
 
 # Schema Layers
@@ -160,7 +160,6 @@ Four things about that table are worth knowing before you rely on them:
 
 ## Source Files
 
-- [CLAUDE.md](../../CLAUDE.md) — "Schema Layers" section
 - [pulse/api/src/routes/events.ts](../../pulse/api/src/routes/events.ts) — TypeBox usage
 - [pulse/api/src/services/events.ts](../../pulse/api/src/services/events.ts) — Effect Schema usage
 - [osn/client/src/tokens.ts](../../osn/client/src/tokens.ts) — Effect Schema in client SDK (decodeUnknownSync)

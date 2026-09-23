@@ -19,14 +19,14 @@ related:
   - "[[d1-read-replication]]"
   - "[[commands]]"
   - "[[bundle-size-guards]]"
-last-reviewed: 2026-09-17
+last-reviewed: 2026-09-23
 ---
 
 # Cire development guide
 
 What is true of cire and not of the rest of the monorepo. Everything else — branch
 strategy, changesets, commit signing, hooks, the issue workflow, the wiki rules —
-comes from the root `CLAUDE.md` and the platform pages, which are authoritative.
+comes from the root `AGENTS.md` and the platform pages, which are authoritative.
 
 > **This page is the per-product pattern.** A product with enough of its own build
 > conventions to be worth writing down gets `wiki/apps/<product>-development.md`,

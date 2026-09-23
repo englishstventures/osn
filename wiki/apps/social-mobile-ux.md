@@ -9,7 +9,7 @@ related:
   - "[[social]]"
   - "[[authorize-ui]]"
   - "[[component-library]]"
-last-reviewed: 2026-09-18
+last-reviewed: 2026-09-23
 ---
 
 # Social — Mobile UX analysis & plan
@@ -53,7 +53,7 @@ pulse consume them too).
 > written; T-S2 Layout-composition test deferred — `AuthProvider`
 > bootstraps a network `POST /token`, so it needs a heavier fixture).
 
-Platform priority is **iOS > Web > Android** (CLAUDE.md), so mobile Safari is
+Platform priority is **iOS > Web > Android** ([[monorepo-structure#Native apps (iOS)]]), so mobile Safari is
 the primary target for every fix below.
 
 ## Findings

@@ -303,7 +303,7 @@ Two things worth keeping in mind:
   unfairly. What stays deliberately uncarded is `orchestrate` at N>1 — there
   is no principled way to divide one session's overhead across several task
   branches, so it is not attributed to any of them.
-- **Assumes `main/`'s own checkout stays on `main`** (`CLAUDE.md` §Git: never
+- **Assumes `main/`'s own checkout stays on `main`** (the owner's global `~/.claude/CLAUDE.md`: never
   check out a feature branch inside an existing worktree). When violated, a
   session's records already carry that other branch's real name and fall
   outside `isAmbiguousBranch`'s trigger entirely — not reattributed by this
@@ -415,7 +415,7 @@ lists first.
 repository's pull requests close a finding in the private
 `xchromo/osn-tracker` repo instead, and that issue's labels are never fetched
 at all — its `severity:`/`area:` pair must not reach a card committed here
-(see `CLAUDE.md` §Comments on not linking a finding from a public file).
+(see `AGENTS.md` §Issues on not linking a finding from a public file).
 Such a card writes `complexity.method: "not-fetched"`, not `"none"`: a rating
 may well exist on that issue, nobody checked. `xchromo/osn#1012` tracks
 whether and how to surface it safely later.
@@ -480,7 +480,7 @@ rather than the model.
 > and read a high value on a subagent-heavy branch as probably an artefact.
 
 Two supporting signals: a rising **cache-read share** across PRs means the
-context surface — `CLAUDE.md`, the skills, the wiki pages an agent opens — is
+context surface — `AGENTS.md`, the skills, the wiki pages an agent opens — is
 bloating; and **`edit_churn.max_edits_one_file`** separates an agent that was
 lost from one that was building.
 

@@ -18,7 +18,7 @@ packages:
   - "@pulse/api"
   - "@osn/api"
   - "@shared/crypto"
-last-reviewed: 2026-07-22
+last-reviewed: 2026-09-23
 ---
 # Cross-Package S2S Patterns
 
@@ -95,4 +95,3 @@ See [[arc-tokens]] for the full ARC token system, `kid`-based key lookup, and `s
 
 - [pulse/api/src/services/graphBridge.ts](../../pulse/api/src/services/graphBridge.ts) — the bridge module
 - [osn/api/src/routes/graph-internal.ts](../../osn/api/src/routes/graph-internal.ts) — internal graph routes (`/register-service` + graph reads)
-- [CLAUDE.md](../../CLAUDE.md) — "Cross-package S2S patterns" section

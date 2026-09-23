@@ -282,7 +282,7 @@ bun run --cwd pulse/db db:studio    # Drizzle Studio
 bun run db:reset                    # reset every local database
 ```
 
-`CLAUDE.md` holds the full command list and the code conventions.
+`AGENTS.md` holds the everyday commands and code rules; `wiki/conventions/commands.md` has the full list.
 
 ## Data Models (conceptual)
 
@@ -349,7 +349,7 @@ On merge, CI runs `changeset version` to bump versions and update changelogs, co
 
 Read next:
 
-- [`CLAUDE.md`](CLAUDE.md) — conventions, commands, key patterns, wiki navigation
+- [`AGENTS.md`](AGENTS.md) — the entry point for coding agents: workflow, standing rules, commands
 - [`wiki/index.md`](wiki/index.md) — map of the knowledge base
 - [GitHub Issues](https://github.com/xchromo/osn/issues) — planned work, open decisions; findings live in the private `xchromo/osn-tracker`
 

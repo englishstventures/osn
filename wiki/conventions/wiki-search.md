@@ -5,12 +5,12 @@ tags: [convention, wiki, obsidian, search]
 related:
   - "[[index]]"
   - "[[contributing]]"
-last-reviewed: 2026-09-07
+last-reviewed: 2026-09-23
 ---
 
 # Searching the wiki
 
-`CLAUDE.md` carries the short version: three tiers, and grep is the one that
+`AGENTS.md` carries the short version: three tiers, and grep is the one that
 works everywhere. This page is the long version — what each tier can do, where
 it exists, and the traps in the two that talk to a running Obsidian.
 
@@ -18,7 +18,7 @@ it exists, and the traps in the two that talk to a running Obsidian.
 first two tiers below reach a local Obsidian over `127.0.0.1` and are simply
 absent in a remote or CI session, which is exactly the session most likely to
 need a search protocol. That is why the grep tier stays written out in
-`CLAUDE.md` itself rather than only here.
+`AGENTS.md` itself rather than only here.
 
 Three ways, in order. Try each; drop to the next when it isn't there.
 

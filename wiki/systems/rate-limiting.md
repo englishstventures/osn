@@ -22,7 +22,7 @@ packages:
   - "@cire/api"
   - "@shared/rate-limit"
   - "@shared/redis"
-last-reviewed: 2026-09-14
+last-reviewed: 2026-09-23
 ---
 # Rate Limiting
 
@@ -267,4 +267,3 @@ A consuming service migrates off the deprecated default by:
 - [pulse/api/src/lib/redis-rate-limiters.ts](../../pulse/api/src/lib/redis-rate-limiters.ts) — Pulse Redis-backed write + discover/share/exposure limiters
 - [pulse/api/src/redis.ts](../../pulse/api/src/redis.ts) — Pulse Redis composition root (env-driven backend selection)
 - [pulse/api/src/routes/events.ts](../../pulse/api/src/routes/events.ts) — per-IP discover/share/exposure limiting + `getClientIp` trust policy (P4)
-- [CLAUDE.md](../../CLAUDE.md) — "Rate Limiting" section

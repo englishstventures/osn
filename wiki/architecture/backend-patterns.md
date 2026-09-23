@@ -22,7 +22,7 @@ packages:
   - "@osn/api"
   - "@zap/api"
   - "@cire/api"
-last-reviewed: 2026-09-09
+last-reviewed: 2026-09-23
 ---
 
 # Backend Code Patterns
@@ -352,7 +352,6 @@ The two halves are pinned separately, because neither tier can see both:
 
 ## Source Files
 
-- [CLAUDE.md](../../CLAUDE.md) — "Backend Code Patterns" section
 - [pulse/api/src/routes/events.ts](../../pulse/api/src/routes/events.ts) — canonical route example
 - [pulse/api/src/services/events.ts](../../pulse/api/src/services/events.ts) — canonical service example
 - [osn/api/src/routes/auth/index.ts](../../osn/api/src/routes/auth/index.ts) — auth route factory (route-group composition root)

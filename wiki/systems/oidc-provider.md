@@ -9,7 +9,7 @@ related:
   - "[[rate-limiting]]"
   - "[[cire-auth]]"
   - "[[musubi-identity-migration]]"
-last-reviewed: 2026-09-09
+last-reviewed: 2026-09-23
 ---
 
 # OIDC provider
@@ -111,6 +111,8 @@ Everything is `cache-control: no-store`. `GET /authorize` also sends `Referrer-P
 
 **Reserved client ids do not exist.** `RESERVED_OIDC_CLIENT_IDS` (`osn-access`, `osn-recovery`, `osn-step-up`, and the ARC S2S audiences) is enforced in `findClient` — a row seeded under such a name reads as absent everywhere at once. Self-serve registration cannot collide by construction (`client_id` is server-generated), so the lookup guard covers hand-seeded rows. OIDC access tokens carry a `typ: "at+jwt"` header (RFC 9068), so no verifier can mistake one for an ID token or a first-party token even before checking `aud`. (S-M2 oidc.)
 
+**Authorization responses name their issuer.** Every redirect back to a relying party, success or failure, carries an `iss` parameter (RFC 9207), advertised in discovery, so a client talking to several providers can tell which one answered.
+
 ## `prompt` handling
 
 | Value | Signed out | Signed in |
@@ -172,7 +174,8 @@ Trust decisions, all server-owned (`registerClient` + `validateClientRegistratio
 - **`client_id` is server-generated** (`cid_` + random) — it can never collide with a reserved audience, and carries no user-chosen content. The `RESERVED_OIDC_CLIENT_IDS` lookup guard stays as defence in depth for hand-seeded rows.
 - **Redirect URIs are the open-redirect boundary**: 1–8 of them, ≤512 chars, valid URLs, `https:` only (`http:` tolerated solely for `localhost`/`127.0.0.1` development), no fragments, exact strings.
 - **`logo_url` must be https** — it flows into the first-party consent/connections UI as an image `src`.
-- **`sector_identifier` is derived** from the first redirect URI's host, never chosen — choosing a shared sector is how two colluding clients would defeat pairwise-subject isolation.
+- **`sector_identifier` is the client's own `client_id`**, never chosen and never derived from a redirect host — two colluding clients registering the same host could otherwise share a sector and defeat pairwise-subject isolation. A shared sector exists only on hand-seeded first-party rows, where an operator sets it deliberately.
+- **Display names that impersonate are refused.** `validateClientRegistration` folds the name to a confusable skeleton (NFKC, lowercase, digit/symbol and Cyrillic/Greek homoglyph folding) and rejects one matching a reserved first-party name such as "Musubi". The consent screen also marks whether an app is verified or a third-party host.
 - **`is_first_party` is not a registration input.** First-party status stays a hand-seeded trust decision.
 - **Cap: 5 live clients per account** (`MAX_OIDC_CLIENTS_PER_ACCOUNT`); disabling frees the slot.
 - **Ownership** (`owner_account_id`) gates list/disable; account erasure disables owned clients and severs the link (rows survive because other users' consents reference them, and they hold no personal data once unlinked). Owned clients appear in the DSAR export as `oidc_clients_owned`.

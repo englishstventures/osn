@@ -21,10 +21,12 @@ related:
 packages:
   - "@pulse/web"
   - "@shared/ui"
-last-reviewed: 2026-09-22
+last-reviewed: 2026-09-23
 ---
 
 # Frontend Patterns
+
+**The frontends do not use Effect.** Effect is the backend's (every API, the shared packages and `@osn/client`). Whether the Solid apps adopt it stays open until they move to Solid v2, and gets decided then.
 
 ## Component Library
 
@@ -297,4 +299,3 @@ these apps are opened in.
 - [pulse/web/src/lib/ui.ts](../../pulse/web/src/lib/ui.ts) — shared UI tokens
 - [osn/auth-ui/src/Register.tsx](../../osn/auth-ui/src/Register.tsx) — shared registration component
 - [osn/auth-ui/src/SignIn.tsx](../../osn/auth-ui/src/SignIn.tsx) — shared sign-in component
-- [CLAUDE.md](../../CLAUDE.md) — conventions and commands

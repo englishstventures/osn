@@ -18,7 +18,7 @@ related:
   - "[[event-visibility-bug]]"
 packages:
   - "@pulse/api"
-last-reviewed: 2026-08-19
+last-reviewed: 2026-09-23
 ---
 # Event Access Control
 
@@ -145,4 +145,3 @@ Both endpoints are unauthenticated. Per-IP fail-closed limiters make the metric 
 - [pulse/api/src/services/events.ts](../pulse/api/src/services/events.ts) -- `listEvents`, `listTodayEvents` (consume `buildVisibilityFilter`)
 - [pulse/api/src/services/discovery.ts](../pulse/api/src/services/discovery.ts) -- `discoverEvents` (consumes `buildVisibilityFilter`)
 - [pulse/api/src/routes/events.ts](../pulse/api/src/routes/events.ts) -- route-level usage including `/:id/share` + `/:id/exposure`
-- [CLAUDE.md](../CLAUDE.md) -- "Shared visibility gate" section

@@ -9,7 +9,7 @@ related:
   - "[[index]]"
   - "[[deferred-decisions]]"
   - "[[code-comments]]"
-last-reviewed: 2026-09-17
+last-reviewed: 2026-09-23
 ---
 
 # Decision records
@@ -39,8 +39,8 @@ Obsidian and nowhere else, and an editor cannot follow one.
   the code and stays there. Moving it to the wiki puts it where nobody editing
   the line will read it.
 - **A deferral.** Work you are choosing not to do now is a GitHub issue, and the
-  code carries the link and nothing more. See the *Known issues and deferrals*
-  row in `CLAUDE.md`.
+  code carries the link and nothing more. See **Deferrals** under Standing
+  rules in `AGENTS.md`.
 - **An open question.** Something not yet decided goes in [[deferred-decisions]],
   which has a "Revisit When" column for exactly that.
 - **A changelog.** How the code got here is in `git log`. A page here states the

@@ -20,7 +20,7 @@ packages:
   - "@shared/crypto"
   - "@osn/api"
   - "@pulse/api"
-last-reviewed: 2026-08-21
+last-reviewed: 2026-09-23
 ---
 # ARC Tokens (S2S Auth)
 
@@ -308,4 +308,3 @@ ARC token metrics live in `shared/crypto/src/arc-metrics.ts`:
 - [osn/api/src/routes/graph-internal.ts](../../osn/api/src/routes/graph-internal.ts) — internal graph routes + `/register-service` + `/service-keys/:keyId` (revoke)
 - [osn/db/src/schema/index.ts](../../osn/db/src/schema/index.ts) — `service_accounts` + `service_account_keys` table definitions
 - [pulse/api/src/services/graphBridge.ts](../../pulse/api/src/services/graphBridge.ts) — `startKeyRotation()`, ephemeral key auto-rotation
-- [CLAUDE.md](../../CLAUDE.md) — "ARC Tokens (S2S Auth)" section

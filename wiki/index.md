@@ -9,7 +9,7 @@ related:
   - "[[osn-and-musubi]]"
   - "[[monorepo-structure]]"
   - "[[compliance/index]]"
-last-reviewed: 2026-09-17
+last-reviewed: 2026-09-23
 ---
 
 # OSN Wiki
@@ -21,7 +21,7 @@ Map of Content for the OSN monorepo knowledge graph. Open this vault in Obsidian
 - [[TODO]] — a pointer to GitHub Issues, where the backlogs now live
 - [[deferred-decisions]] — open questions parked for later, and the ones already settled
 - [[decisions/README]] — decision records: the choices between named alternatives that source files no longer carry
-- [`../CLAUDE.md`](../CLAUDE.md) — slim repo-root entry point (lives outside the vault)
+- [`../AGENTS.md`](../AGENTS.md) — the agent entry point at the repo root (outside the vault)
 
 ## Architecture
 
@@ -55,6 +55,7 @@ Map of Content for the OSN monorepo knowledge graph. Open this vault in Obsidian
 - [[sessions]] — session introspection, per-device revocation, "sign out everywhere else", device/passkey management UI
 - [[oidc-provider]] — OpenID Connect provider: how other apps recognise an OSN account without holding a passkey
 - [[turnstile]] — Cloudflare Turnstile bot protection (key-optional, fail-closed; shipped inert)
+- [[email]] — transactional mail through `@shared/email`: the Resend, Cloudflare, log and no-op transports, and how one is chosen
 - [[social-graph]] — connections, blocks
 - [[pulse-close-friends]] — Pulse-scoped close-friends list (feed boost + hosting affordance)
 - [[pulse-onboarding]] — Pulse first-run onboarding flow (account-keyed, themed illustrations)
@@ -115,6 +116,8 @@ Map of Content for the OSN monorepo knowledge graph. Open this vault in Obsidian
 - [[component-lab]] — the in-repo Storybook replacement: prototyping components, three.js and canvas
 - [[bundle-size-guards]] — the two rules any guard that gates on a number obeys, and the guards that hold them: per-app Astro bundle size, the src/pages test-route check, D1 migration-cost, and the monorepo-wide lint-warning ceiling
 - [[wiki-search]] — the three ways to search this vault, which exist where, and the guard that stops a branch reading stale
+- [[house-lint-rules]] — the `house/*` oxlint rules this repo writes for itself, and the code rule each one enforces
+- [[agent-tooling]] — where agent sessions start, skills and their evals, third-party skills, subagent definitions, the vendored lint plugin
 
 ## Decisions
 
@@ -151,6 +154,7 @@ decided it — see [[decisions/README]] for what belongs here and what does not.
 
 ## Runbooks
 
+- [[github-issues-setup]] — the labels, issue types and Project behind the two issue repositories
 - [[dev-environment]] — the isolated cire + OSN dev tier: tier map, how a merge deploys dev, how to promote to production past the approval gate, how to reset dev by hand
 - [[production-deploy]] — first production cut-over of osn-api + the cire stack (secret/var checklist, migrations, CI pipeline, smoke checks)
 - [[stripe-webhooks]] — cire-api's two Stripe endpoints (Connect for gifts, platform for upgrades): which events each takes, how to recreate one in the dashboard, the two local forwarders, and how to verify a deployed tier
