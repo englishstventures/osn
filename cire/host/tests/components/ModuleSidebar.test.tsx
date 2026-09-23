@@ -135,6 +135,18 @@ describe("ModuleSidebar", () => {
     // Every module reachable in one screen — the point of replacing the strip.
     expect(sheetLabels.some((l) => l?.includes("Settings"))).toBe(true);
 
+    // Every sheet row leads with its icon, and only the current module's is
+    // tinted full gold — on a phone this list is the only navigation.
+    const rows = within(sheet)
+      .getAllByRole("button")
+      .filter((b) => b.getAttribute("aria-label") !== "Close modules");
+    for (const row of rows) {
+      const icons = row.querySelectorAll("svg.size-icon");
+      expect(icons).toHaveLength(1);
+      const active = row.textContent?.startsWith("Overview");
+      expect(icons[0]!.classList.contains(active ? "text-gold" : "text-gold-dim")).toBe(true);
+    }
+
     fireEvent.click(within(sheet).getByRole("button", { name: /Budget/ }));
     expect(onSelect).toHaveBeenCalledWith("budget");
     // Picking a module dismisses the sheet rather than leaving it over the panel.
