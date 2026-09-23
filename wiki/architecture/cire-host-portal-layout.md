@@ -142,9 +142,12 @@ component was previously reading a container it did not live in.
   rail, and the rail is `sticky top-6 self-start` from the same threshold. Without
   `self-start` the flex row stretches it to the panel's height and there is
   nothing left to slide against. Widening to `w-56` at `@5xl/shell`.
-- **Module icons** — every mark for a module is an inline SVG from
-  `lucide-solid`, imported one icon at a time (`lucide-solid/icons/<name>`) so
-  only the icons in use ship. `MODULE_NAV` (`src/lib/module-nav.ts`) holds each
+- **Module icons** — every mark for a module is an inline SVG. All but one
+  come from `lucide-solid`, imported one icon at a time
+  (`lucide-solid/icons/<name>`) so only the icons in use ship. Overview's is
+  `NestedDiamondIcon`, the portal's original `◈` redrawn on lucide's 24-unit
+  grid and stroke, because lucide has no nested diamond; it takes lucide's
+  props, so nothing downstream treats it differently. `MODULE_NAV` (`src/lib/module-nav.ts`) holds each
   module's icon, and every surface that marks a module — the rail, the sheet and
   its trigger, the command palette, Overview's agenda — draws it through
   `ModuleIcon`, which sets the size (`size-icon`, from `--size-icon: 1.125rem` in

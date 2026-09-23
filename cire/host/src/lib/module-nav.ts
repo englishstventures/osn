@@ -1,14 +1,14 @@
 import type { LucideIcon } from "lucide-solid";
-import CalendarHeart from "lucide-solid/icons/calendar-heart";
+import CalendarDays from "lucide-solid/icons/calendar-days";
 import Gift from "lucide-solid/icons/gift";
-import LayoutDashboard from "lucide-solid/icons/layout-dashboard";
 import ListChecks from "lucide-solid/icons/list-checks";
 import MailOpen from "lucide-solid/icons/mail-open";
+import PiggyBank from "lucide-solid/icons/piggy-bank";
 import Settings from "lucide-solid/icons/settings";
 import Store from "lucide-solid/icons/store";
 import Users from "lucide-solid/icons/users";
-import Wallet from "lucide-solid/icons/wallet";
 
+import NestedDiamondIcon from "../components/NestedDiamondIcon";
 import type { Module } from "./dashboard-route";
 
 /** What a module costs to reach, when the wedding has to pay for it. `title` and
@@ -52,11 +52,11 @@ export interface ModuleDef {
  *  cards — and a module that exists in one but not the others is a bug nobody
  *  notices. */
 export const MODULE_NAV: ModuleDef[] = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard, hint: "Your wedding at a glance" },
+  { id: "overview", label: "Overview", icon: NestedDiamondIcon, hint: "Your wedding at a glance" },
   {
     id: "events",
     label: "Events",
-    icon: CalendarHeart,
+    icon: CalendarDays,
     hint: "Your ceremony, reception, and more",
   },
   {
@@ -65,7 +65,7 @@ export const MODULE_NAV: ModuleDef[] = [
     icon: ListChecks,
     hint: "Your planning tasks by lead time",
   },
-  { id: "budget", label: "Budget", icon: Wallet, hint: "Estimates, quotes, and payments" },
+  { id: "budget", label: "Budget", icon: PiggyBank, hint: "Estimates, quotes, and payments" },
   {
     id: "vendors",
     label: "Vendors",
