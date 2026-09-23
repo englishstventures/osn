@@ -396,6 +396,7 @@ describe("PinterestBoard", () => {
 
     // The container still holds the rendered widget node, not the fallback-only state.
     expect(container.querySelector("iframe[data-pin-internal]")).not.toBeNull();
+    expect(fallbackLink(container)).toBeUndefined();
   });
 
   // No transformation by the cutoff (a downstream pidgets/CDN block that emits no
@@ -490,6 +491,40 @@ describe("PinterestBoard", () => {
       expect(fallbackLink(container)).toBeUndefined();
       await vi.advanceTimersByTimeAsync(4000);
       expect(fallbackLink(container)).toBeDefined();
+    });
+
+    it("announces the failure where a screen reader is already listening", async () => {
+      seedConsentForTest({ embeds: true });
+      const { container } = render(() => <PinterestBoard url={VALID_URL} eventName="Catholic" />);
+      scriptHandle.last().dispatchEvent(new Event("error"));
+      await waitFor(() => expect(fallbackLink(container)).toBeDefined());
+      const statuses = Array.from(container.querySelectorAll("[aria-live]"));
+      expect(statuses.some((s) => (s.textContent ?? "").includes("could not load"))).toBe(true);
+    });
+
+    // The observer normally sees the transform first; this pins the cutoff's own
+    // re-check, which must also count a late render as a success.
+    it("keeps the link hidden when the cutoff's re-check finds a rendered board", async () => {
+      seedConsentForTest({ embeds: true });
+      vi.useFakeTimers();
+      vi.stubGlobal(
+        "MutationObserver",
+        class {
+          observe() {}
+          disconnect() {}
+        },
+      );
+      try {
+        const { container } = render(() => <PinterestBoard url={VALID_URL} eventName="Catholic" />);
+        const anchor = container.querySelector<HTMLAnchorElement>("a[data-pin-do]")!;
+        anchor.removeAttribute("data-pin-do");
+        anchor.setAttribute("data-pin-internal", "true");
+        await vi.advanceTimersByTimeAsync(9000);
+        expect(fallbackLink(container)).toBeUndefined();
+        expect(container.querySelector("a[data-pin-internal]")).not.toBeNull();
+      } finally {
+        vi.unstubAllGlobals();
+      }
     });
 
     // Tests swap the post-revoke page reload for a no-op, so this proves the

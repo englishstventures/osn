@@ -191,6 +191,13 @@ export function PinterestBoard(props: PinterestBoardProps) {
             </a>
           </div>
         </Show>
+
+        {/* A failed embed takes its "Loading board…" status region with it, so */}
+        {/* the announcement that the link has appeared lives here, mounted */}
+        {/* throughout, where a screen reader is already listening. */}
+        <div class="sr-only" aria-live="polite" aria-atomic="true">
+          {status() === "failed" ? "The board could not load. Open it on Pinterest instead." : ""}
+        </div>
       </>
     </Show>
   );
