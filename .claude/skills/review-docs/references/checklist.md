@@ -16,7 +16,7 @@ The `SKILL.md` gives the retrieval procedure — which claims to extract from a 
 
 - **Runbooks describing shipped work as future work** — mark historical or delete. D-M.
 - **Duplicated detail between `AGENTS.md` and a wiki page** — the `AGENTS.md` line states the rule plus the wiki path; if both hold the detail, one drifts. D-M.
-- **"Phase N" language without a decision** — deferred decisions live for months with no resolution; suggest `wiki/deferred-decisions.md` or removal. D-M.
+- **"Phase N" language without a decision** — deferred decisions live for months with no resolution; suggest `wiki/decisions/deferred-decisions.md` or removal. D-M.
 - **Defunct config / env / store references** — env vars, Redis namespaces, columns, in-memory stores that no longer exist. D-H.
 - **Forward-looking "will migrate to"** for migrations that shipped. D-M.
 
@@ -58,7 +58,7 @@ Every `wiki/**/*.md` except `wiki/README.md`:
 - **Heading or block anchors that moved** — `[[page#Heading]]` breaks silently on a heading rename. For any page the branch reorganised, find what links in (`get_backlinks`, or `git grep '\[\[<page>#'`). D-M.
 - **Out-of-vault wikilinks** — the vault root is `wiki/`; `[[AGENTS]]` for the repo-root `AGENTS.md` does not resolve in graph view. Use `` [`../AGENTS.md`](../AGENTS.md) ``. D-L.
 - **Relative markdown links between wiki pages** — the convention is `[[wikilinks]]`. D-L.
-- **Source-file links** — relative and correct from the page's directory (`[osn/api/src/routes/auth.ts](../../osn/api/src/routes/auth.ts)` from `wiki/systems/`). A broken one is worse than none. D-M.
+- **Source-file links** — relative and correct from the page's directory (`[osn/api/src/routes/auth.ts](../../osn/api/src/routes/auth.ts)` from `wiki/osn/`; one more `../` from `wiki/shared/observability/`). A broken one is worse than none. D-M.
 
 ## 7. Docs-specific security hygiene
 

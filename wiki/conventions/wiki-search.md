@@ -82,7 +82,7 @@ obsidian files vault=wiki folder=systems               # list files in a folder
 
 Two repo-specific rules the skill can't know:
 
-- **Paths are vault-root-relative, and the vault root is `wiki/`.** `path=systems/arc-tokens.md`, not `path=wiki/systems/...` — the latter errors with `File not found`. `file=` takes a wikilink target (`file=arc-tokens`) instead.
+- **Paths are vault-root-relative, and the vault root is `wiki/`.** `path=osn/arc-tokens.md`, not `path=wiki/osn/...` — the latter errors with `File not found`. `file=` takes a wikilink target (`file=arc-tokens`) instead.
 - **Read only, same as the MCP and for the same reason.** The CLI acts on the vault, and the vault is `main`'s `wiki/`. `create`, `append`, and `property:set` would write to `main`'s working tree, not your branch. There are three vaults registered (`wiki`, `echo_chamber`, `vault_india_22`) — always pass `vault=wiki` rather than trusting the default.
 
 **3. grep** — works everywhere, including remote and CI. Reads your worktree's own `wiki/`:

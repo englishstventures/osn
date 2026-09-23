@@ -8,7 +8,17 @@ last-reviewed: 2026-09-23
 
 # OSN Wiki
 
-This directory is an [Obsidian](https://obsidian.md/) vault that holds the OSN project's knowledge graph — the whole monorepo's, cire included. Cire kept a second vault at `cire/wiki/` until 2026-08-21; it folded in here, and its pages carry a `cire-` prefix wherever a bare name would collide with an existing one.
+This directory is an [Obsidian](https://obsidian.md/) vault that holds the whole monorepo's knowledge graph. Its folders mirror the monorepo:
+
+| Folder | Holds |
+|---|---|
+| `osn/`, `musubi/`, `pulse/`, `cire/`, `zap/` | One per product: its overview, systems, architecture and runbooks |
+| `shared/` | What applies to more than one product; `shared/observability/` for logging, tracing and metrics |
+| `conventions/` | How we work |
+| `decisions/` | Decision records and the open questions in `deferred-decisions.md` |
+| `compliance/` | The legal programme |
+
+Filenames are unique across the vault, so a `[[wikilink]]` never needs a folder.
 
 ## Opening in Obsidian
 

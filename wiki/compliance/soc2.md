@@ -8,7 +8,7 @@ related:
   - "[[backup-dr]]"
   - "[[breach-response]]"
   - "[[subprocessors]]"
-  - "[[observability/overview]]"
+  - "[[shared/observability/overview]]"
   - "[[cire]]"
 last-reviewed: 2026-09-23
 ---
@@ -75,7 +75,7 @@ The full inventory lives in [[access-control]] (CC6 specifically) and
 
 | Control | Evidence | Gaps |
 |---|---|---|
-| OpenTelemetry across all services | [[observability/overview]] | — |
+| OpenTelemetry across all services | [[shared/observability/overview]] | — |
 | Grafana Cloud retention | 14 d traces, 50 GB logs, 50 GB metrics free tier | — |
 | Anomaly alerts | — | Set up after first dashboards land (currently in Up Next). |
 | Continuous-control monitoring tool (Vanta / Drata / Secureframe) | — | Pick one before Type I prep. |

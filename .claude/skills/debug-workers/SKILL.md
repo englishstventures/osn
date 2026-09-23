@@ -3,7 +3,7 @@ name: debug-workers
 description: Use when a deployed Cloudflare Worker in this repository misbehaves or fails to deploy — osn-api, cire-api or a cire Worker — or when setting or rotating a Worker secret. Covers where to look first, the secret-setting trap for JSON and JWK values, why a secret change needs a redeploy, and the module-evaluation crash on a first deploy.
 ---
 
-The tier map, secrets checklist and deploy steps are in `wiki/runbooks/production-deploy.md` and `wiki/runbooks/dev-environment.md`. This skill holds the traps that cost time.
+The tier map, secrets checklist and deploy steps are in `wiki/shared/production-deploy.md` and `wiki/shared/dev-environment.md`. This skill holds the traps that cost time.
 
 ## 1. Tail the failing Worker first
 

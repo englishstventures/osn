@@ -249,7 +249,7 @@ the task it struggled with as hard and the documentation it read as adequate.
 The defence is that every finding names an artefact and a moment, never a
 difficulty. "This was tricky" is not a finding. "The session read
 `osn/api/src/lib/origin-guard.ts` three times because
-`wiki/systems/rate-limiting.md` does not say which routes are exempt" is.
+`wiki/shared/rate-limiting.md` does not say which routes are exempt" is.
 
 **2. A new skill is almost never the answer.** Skills are context that every
 future session pays for, they are measured by evals, and one nobody invokes
@@ -326,7 +326,7 @@ reply it is nowhere.
 
 ## What this reads and feeds
 
-`wiki/observability/session-metrics.md` is the reference for every field and
+`wiki/conventions/session-metrics.md` is the reference for every field and
 for why the card holds exactly one scalar judgement.
 `tools/pr-metrics/README.md` has the commands. **`analyse-sessions` is the
 corpus-level counterpart**: this skill looks at one session and may propose a

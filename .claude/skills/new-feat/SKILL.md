@@ -55,7 +55,7 @@ gh issue create --repo xchromo/osn \
 
 **Done when** — the observable result. Not "implemented"; the thing a reviewer can check.
 
-**Notes** — constraints, the files or systems it touches, anything already decided. Wiki pages by repo path (`wiki/systems/rate-limiting.md`), and the fact they carry restated here — a `[[wikilink]]` does not resolve on GitHub.
+**Notes** — constraints, the files or systems it touches, anything already decided. Wiki pages by repo path (`wiki/shared/rate-limiting.md`), and the fact they carry restated here — a `[[wikilink]]` does not resolve on GitHub.
 BODY
 )
 ```
@@ -116,7 +116,7 @@ The plan names:
 - **the issue's premise, verified.** An issue states what was true when it was written; check the sentence the work rests on before the plan inherits it
 - Effect, WebSocket or E2E-encryption considerations, if any
 - the changeset — always needed unless every changed file is on the allowlist in `scripts/changeset-required.sh`; `@cire/*` packages are version-less and never share a changeset with a versioned one
-- **the observability plan** for every new service, route or service function — which error paths use `Effect.logError` and any new secret field for the redaction list; which functions get `Effect.withSpan("<domain>.<operation>")` and that outbound HTTP goes through `instrumentedFetch`; which counters or histograms join the owning `metrics.ts`, named `{namespace}.{domain}.{subject}.{measurement}` with a bounded string-literal attribute type — never a user, request or event id. `wiki/observability/overview.md` holds the rules.
+- **the observability plan** for every new service, route or service function — which error paths use `Effect.logError` and any new secret field for the redaction list; which functions get `Effect.withSpan("<domain>.<operation>")` and that outbound HTTP goes through `instrumentedFetch`; which counters or histograms join the owning `metrics.ts`, named `{namespace}.{domain}.{subject}.{measurement}` with a bounded string-literal attribute type — never a user, request or event id. `wiki/shared/observability/overview.md` holds the rules.
 
 ## Step 3 — Attack the plan before building on it
 

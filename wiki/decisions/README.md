@@ -7,7 +7,7 @@ tags:
   - index
 related:
   - "[[index]]"
-  - "[[deferred-decisions]]"
+  - "[[decisions/deferred-decisions]]"
   - "[[code-comments]]"
 last-reviewed: 2026-09-23
 ---
@@ -41,7 +41,7 @@ Obsidian and nowhere else, and an editor cannot follow one.
 - **A deferral.** Work you are choosing not to do now is a GitHub issue, and the
   code carries the link and nothing more. See **Deferrals** under Standing
   rules in `AGENTS.md`.
-- **An open question.** Something not yet decided goes in [[deferred-decisions]],
+- **An open question.** Something not yet decided goes in [[decisions/deferred-decisions]],
   which has a "Revisit When" column for exactly that.
 - **A changelog.** How the code got here is in `git log`. A page here states the
   decision as it stands, and its reasons.

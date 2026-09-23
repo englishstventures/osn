@@ -1,6 +1,6 @@
 # Skills to invoke while implementing
 
-Invoke these rather than reinventing what a skill already encodes. If none applies, follow the repo's own conventions (`AGENTS.md` and the `wiki/apps/<product>-development.md` page for the product). When unsure whether a skill fits, invoke it — a wrong fit costs little.
+Invoke these rather than reinventing what a skill already encodes. If none applies, follow the repo's own conventions (`AGENTS.md` and the `wiki/<product>/<product>-development.md` page for the product). When unsure whether a skill fits, invoke it — a wrong fit costs little.
 
 | Part of the task | Skill |
 |---|---|

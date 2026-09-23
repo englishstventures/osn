@@ -60,7 +60,7 @@ this run; the deliverable is merged pull requests.
 > ```
 >
 > A branch missing from that list was not attributed. See
-> `wiki/observability/session-metrics.md`.
+> `wiki/conventions/session-metrics.md`.
 
 ## The blackboard
 
@@ -180,7 +180,7 @@ lost to a directory that did not exist, and that was the orchestrator's fault.
 Then the instructions themselves:
 
 - Invoke the `new-feat` skill and follow it — it routes to the right sub-skills. Plan the implementation itself; do not wait for a plan from you.
-- Match repo conventions (`AGENTS.md`, the product's `wiki/apps/<product>-development.md`), add the changeset, follow the observability rules, write tests — TDD where there is logic.
+- Match repo conventions (`AGENTS.md`, the product's `wiki/<product>/<product>-development.md`), add the changeset, follow the observability rules, write tests — TDD where there is logic.
 - Edit wiki pages with Edit/Write in its own worktree, invoking `obsidian:obsidian-markdown` for the syntax. Say explicitly: the Obsidian MCP and the `obsidian` CLI both point at `main`'s `wiki/`; they read, never write.
 - **Commit on the branch; do not push and do not open a PR** — Step 4 owns that.
 - On a decision it cannot resolve from the context and sensible defaults, **stop and return `NEEDS INPUT: <question> + options + recommendation`** rather than guess.
