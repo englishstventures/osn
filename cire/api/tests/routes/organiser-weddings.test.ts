@@ -22,7 +22,7 @@ import { createApp } from "../../src/app";
 import type { Db } from "../../src/db";
 import { createDb, seedDb } from "../../src/db/setup";
 import type { TestDb } from "../../src/db/setup";
-import { appRequest } from "../test-helpers";
+import { appRequest, recordStatements } from "../test-helpers";
 import { makeOsnTestAuth } from "../test-helpers/osn-token";
 import type { OsnTestAuth } from "../test-helpers/osn-token";
 
@@ -1304,6 +1304,36 @@ describe("GET /api/organiser/weddings/:weddingId/events.csv", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/csv");
   });
+});
+
+describe("organiser CSV exports read the wedding row once", () => {
+  // The filename carries the wedding's slug. The member gate already reads the
+  // wedding row to authorise the caller, so the slug comes from that read
+  // rather than a second one.
+  const exportsByFilename = [
+    ["rsvps.csv", "cire-rsvps-cire-wedding.csv"],
+    ["guests.csv", "cire-guests-cire-wedding.csv"],
+    ["events.csv", "cire-events-cire-wedding.csv"],
+    ["gifts.csv", "cire-gifts-cire-wedding.csv"],
+    ["export/events.csv", "cire-export-events-cire-wedding.csv"],
+    ["export/guests.csv", "cire-export-guests-cire-wedding.csv"],
+  ] as const;
+
+  for (const [route, filename] of exportsByFilename) {
+    it(`${route} names the file from the gate's read`, async () => {
+      const { db, app } = buildApp();
+      const statements = recordStatements(db);
+      const res = await get(
+        app,
+        `/api/organiser/weddings/${BOOTSTRAP_WEDDING_ID}/${route}`,
+        BOOTSTRAP_OWNER,
+      );
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-disposition")).toContain(`filename="${filename}"`);
+      const weddingReads = statements.filter((s) => /\bfrom "weddings"/.test(s.sql));
+      expect(weddingReads).toHaveLength(1);
+    });
+  }
 });
 
 describe("GET /api/organiser/weddings/:weddingId/gifts.csv", () => {
