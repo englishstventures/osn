@@ -405,8 +405,7 @@ export function clearedHalves(
   plan: Pick<ImportPlan, "eventRemoves" | "familyRemoves">,
   scope: ChangeScope,
 ): ClearedHalves | null {
-  const events =
-    scope !== "guests" && desired.events.length === 0 ? plan.eventRemoves.length : 0;
+  const events = scope !== "guests" && desired.events.length === 0 ? plan.eventRemoves.length : 0;
   const households =
     scope !== "events" && desired.families.length === 0 ? plan.familyRemoves.length : 0;
   return events > 0 || households > 0 ? { events, households } : null;

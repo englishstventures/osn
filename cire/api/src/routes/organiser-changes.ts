@@ -476,7 +476,8 @@ export const createOrganiserChangeRoutes = (
 
             return runCire(
               Effect.gen(function* () {
-                const { changeId, confirmClears } = yield* Schema.decodeUnknownEffect(ApplyBody)(raw);
+                const { changeId, confirmClears } =
+                  yield* Schema.decodeUnknownEffect(ApplyBody)(raw);
                 const dbService = yield* DbService;
 
                 const [row] = yield* dbQuery(() =>
@@ -585,7 +586,8 @@ export const createOrganiserChangeRoutes = (
                       yield* Effect.logWarning("change refused: clear not confirmed", attributes);
                       set.status = 400;
                       return {
-                        error: "This save removes every event or household — confirm it from the preview",
+                        error:
+                          "This save removes every event or household — confirm it from the preview",
                         reason: "unconfirmed_clear",
                       };
                     }

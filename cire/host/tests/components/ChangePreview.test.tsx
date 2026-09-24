@@ -72,6 +72,47 @@ describe("ChangePreview", () => {
     expect(screen.getByText(/Before you apply/i)).toBeTruthy();
   });
 
+  it("names a whole list being removed, apart from the counts", () => {
+    render(() => (
+      <ChangePreview
+        plan={plan()}
+        warnings={[]}
+        clears={{ events: 3, households: 12 }}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    ));
+    expect(screen.getByText(/removes every household \(12\)/i)).toBeTruthy();
+    expect(screen.getByText(/removes every event \(3\)/i)).toBeTruthy();
+  });
+
+  it("names only the list that is actually emptied", () => {
+    render(() => (
+      <ChangePreview
+        plan={plan()}
+        warnings={[]}
+        clears={{ events: 0, households: 2 }}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    ));
+    expect(screen.getByText(/removes every household \(2\)/i)).toBeTruthy();
+    expect(screen.queryByText(/removes every event/i)).toBeNull();
+  });
+
+  it("says nothing extra when no list is emptied", () => {
+    render(() => (
+      <ChangePreview
+        plan={plan()}
+        warnings={[]}
+        clears={null}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    ));
+    expect(screen.queryByText(/removes every/i)).toBeNull();
+  });
+
   it("fires onConfirm / onCancel and honours busy + confirmLabel", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();

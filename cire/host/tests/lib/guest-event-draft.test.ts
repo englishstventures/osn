@@ -653,18 +653,23 @@ describe("createGuestEventDraft — guest-less households", () => {
 
   function loadedWithEmpty() {
     const store = createGuestEventDraft();
-    store.load(EVENTS, GUESTS, [
-      {
-        familyId: "fam_a",
-        publicId: "SHARMA-KITE-77Q2",
-        familyName: "Sharma",
-        guestCount: 2,
-        codeSharedAt: null,
-        firstOpenedAt: null,
-        deactivatedAt: null,
-      },
-      EMPTY_HOUSEHOLD,
-    ], REVISION);
+    store.load(
+      EVENTS,
+      GUESTS,
+      [
+        {
+          familyId: "fam_a",
+          publicId: "SHARMA-KITE-77Q2",
+          familyName: "Sharma",
+          guestCount: 2,
+          codeSharedAt: null,
+          firstOpenedAt: null,
+          deactivatedAt: null,
+        },
+        EMPTY_HOUSEHOLD,
+      ],
+      REVISION,
+    );
     return store;
   }
 

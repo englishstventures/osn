@@ -138,14 +138,12 @@ export default function ChangePreview(props: ChangePreviewProps) {
           <Notice tone="danger">
             <Show when={clears().households > 0}>
               <p>
-                This removes every household ({clears().households}), with their guests, RSVPs
-                and invite codes.
+                This removes every household ({clears().households}), with their guests, RSVPs and
+                invite codes.
               </p>
             </Show>
             <Show when={clears().events > 0}>
-              <p>
-                This removes every event ({clears().events}), with their invitations and RSVPs.
-              </p>
+              <p>This removes every event ({clears().events}), with their invitations and RSVPs.</p>
             </Show>
           </Notice>
         )}

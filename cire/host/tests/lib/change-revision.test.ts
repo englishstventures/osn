@@ -23,13 +23,15 @@ describe("loadHeadRevision", () => {
 
   it("sends a 401 to sign-in and rejects", async () => {
     const authFetch = vi.fn().mockResolvedValue(jsonRes({ error: "unauthorised" }, 401));
-    await expect(loadHeadRevision(authFetch, "wed_a")).rejects.toThrow();
+    await expect(loadHeadRevision(authFetch, "wed_a")).rejects.toThrow("unauthenticated");
     expect(redirectSpy).toHaveBeenCalled();
   });
 
   it("rejects on any other failure, so the editor shows a load error instead of a draft", async () => {
     const authFetch = vi.fn().mockResolvedValue(jsonRes({ error: "read_only_role" }, 403));
-    await expect(loadHeadRevision(authFetch, "wed_a")).rejects.toThrow();
+    await expect(loadHeadRevision(authFetch, "wed_a")).rejects.toThrow(
+      "Failed to load the change head",
+    );
     expect(redirectSpy).not.toHaveBeenCalled();
   });
 

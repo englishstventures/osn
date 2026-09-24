@@ -1250,7 +1250,7 @@ describe("GET /changes/head", () => {
     expect(res.status).toBe(200);
     // A cached copy would pin an editor to a stale revision.
     expect(res.headers.get("cache-control")).toBe("no-store");
-    expect(await res.json()).toEqual({ revision: "genesis" });
+    expect(await jsonBody(res)).toEqual({ revision: "genesis" });
   });
 
   it("moves when a change is applied, and again when it is reverted", async () => {
@@ -1333,7 +1333,7 @@ describe("POST /changes/preview — an editor draft is only as current as its lo
       baseRevision: loadedAt,
     });
     expect(stale.status).toBe(409);
-    expect(await stale.json()).toEqual({
+    expect(await jsonBody(stale)).toEqual({
       error: "State changed — reload the editor",
       reason: "stale_draft",
     });

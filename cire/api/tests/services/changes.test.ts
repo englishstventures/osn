@@ -205,9 +205,7 @@ describe("clearedHalves", () => {
   it("is null when the draft still populates the half it removes from", () => {
     // Removing some households is an ordinary edit; only removing ALL of them
     // is the case that needs confirming.
-    expect(
-      clearedHalves({ events: [EVENT], families: [FAMILY] }, plan(0, 2), "guests"),
-    ).toBeNull();
+    expect(clearedHalves({ events: [EVENT], families: [FAMILY] }, plan(0, 2), "guests")).toBeNull();
   });
 
   it("ignores the half the scope does not manage", () => {

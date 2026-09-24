@@ -839,7 +839,10 @@ describe("EventsEditor", () => {
   });
 
   /** Rename Ceremony and open the preview, answering it with `extra` merged in. */
-  async function renameAndPreview(onApply: (body: Record<string, unknown>) => Response, extra = {}) {
+  async function renameAndPreview(
+    onApply: (body: Record<string, unknown>) => Response,
+    extra = {},
+  ) {
     primeLoad();
     const view = render(() => <EventsEditor weddingId="wed_a" />);
     await waitFor(() => expect(screen.getByText("Ceremony")).toBeTruthy());
