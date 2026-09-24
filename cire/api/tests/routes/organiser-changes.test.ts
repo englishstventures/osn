@@ -12,9 +12,12 @@ import {
   weddings,
 } from "@cire/db";
 import { eq } from "drizzle-orm";
+import { Effect } from "effect";
 
 import { createApp } from "../../src/app";
+import { DbService } from "../../src/db";
 import { createDb, seedBootstrapWedding } from "../../src/db/setup";
+import { organiserSessionService } from "../../src/services/organiser-session";
 import { createR2Stub } from "../../src/services/r2-imports";
 import { appRequest, jsonBody } from "../test-helpers";
 import { makeOsnTestAuth } from "../test-helpers/osn-token";
@@ -1275,6 +1278,83 @@ describe("GET /changes/head", () => {
     expect(await headOf(app)).not.toBe(afterApply);
   });
 
+  it("401 with no credential at all", async () => {
+    const { app } = buildApp();
+    const res = await appRequest(app, `${CHANGES_BASE}/head`, { method: "GET" });
+    expect(res.status).toBe(401);
+  });
+
+  it("403 for a signed-in stranger, 404 for an unknown wedding", async () => {
+    const { app } = buildApp();
+    const stranger = await appRequest(app, `${CHANGES_BASE}/head`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${await auth.sign("usr_not_a_member")}` },
+    });
+    expect(stranger.status).toBe(403);
+    expect(await jsonBody(stranger)).toEqual({ error: "forbidden" });
+
+    const unknown = await ownerGet(app, "/api/organiser/weddings/wed_nope/changes/head");
+    expect(unknown.status).toBe(404);
+  });
+
+  it("serves the organiser's session cookie — the way the browser calls it", async () => {
+    const { app, db } = buildApp();
+    const { token } = await Effect.runPromise(
+      organiserSessionService
+        .create({
+          osnProfileId: "usr_dev_bootstrap_owner",
+          osnSub: "pw_owner",
+          email: "owner@example.test",
+          handle: "owner",
+          displayName: "Owner",
+          avatarUrl: null,
+        })
+        .pipe(Effect.provideService(DbService, db)),
+    );
+    const res = await appRequest(app, `${CHANGES_BASE}/head`, {
+      method: "GET",
+      headers: { cookie: `cire_org_session=${token}` },
+    });
+    expect(res.status).toBe(200);
+    expect(await jsonBody(res)).toEqual({ revision: "genesis" });
+
+    const forged = await appRequest(app, `${CHANGES_BASE}/head`, {
+      method: "GET",
+      headers: { cookie: "cire_org_session=nosuchtoken" },
+    });
+    expect(forged.status).toBe(401);
+  });
+
+  it("is per wedding — another wedding's change does not move it", async () => {
+    const { app, db } = buildApp();
+    await seedSheets(app);
+    const before = await headOf(app);
+    db.insert(weddings)
+      .values({
+        id: "wed_other_head",
+        slug: "other-head",
+        displayName: "Other",
+        ownerOsnProfileId: "usr_other_owner",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .run();
+    db.insert(imports)
+      .values({
+        id: "chg_other_wedding",
+        weddingId: "wed_other_head",
+        uploadedAt: Date.now(),
+        format: "csv",
+        eventsR2Key: "k",
+        guestsR2Key: "k",
+        summary: "{}",
+        status: "applied",
+        appliedAt: Date.now(),
+      })
+      .run();
+    expect(await headOf(app)).toBe(before);
+  });
+
   it("403 read_only_role for a viewer co-host", async () => {
     const { app, db } = buildApp();
     db.insert(weddingHosts)
@@ -1470,6 +1550,58 @@ describe("POST /changes/preview — a guests-scoped editor save leaves the sched
     expect(db.select().from(guestEvents).all()).toHaveLength(3);
   });
 
+  it("refuses a draft whose two events swapped names since it loaded", async () => {
+    const { app, db } = buildApp();
+    await seedSheets(app);
+    const draft = draftFromDb(db);
+    const linksBefore = db
+      .select()
+      .from(guestEvents)
+      .all()
+      .map((l) => `${l.guestId}::${l.eventId}`)
+      .toSorted();
+
+    // Every name the draft holds still resolves — to the other event. Only the
+    // id-and-name check on the draft's events can see that.
+    const [mehndi] = db.select().from(events).where(eq(events.name, "Mehndi")).all();
+    const [reception] = db.select().from(events).where(eq(events.name, "Reception")).all();
+    db.update(events).set({ name: "Swap" }).where(eq(events.id, mehndi!.id)).run();
+    db.update(events).set({ name: "Mehndi" }).where(eq(events.id, reception!.id)).run();
+    db.update(events).set({ name: "Reception" }).where(eq(events.id, mehndi!.id)).run();
+
+    const res = await editorPreview(app, { desiredState: draft, scope: "guests" });
+    expect(res.status).toBe(409);
+    expect(((await res.json()) as { reason: string }).reason).toBe("stale_draft");
+    expect(
+      db
+        .select()
+        .from(guestEvents)
+        .all()
+        .map((l) => `${l.guestId}::${l.eventId}`)
+        .toSorted(),
+    ).toEqual(linksBefore);
+  });
+
+  it("refuses a draft carrying an event that has since been deleted", async () => {
+    const { app, db } = buildApp();
+    await seedSheets(app);
+    const draft = draftFromDb(db);
+    // Nobody in the draft attends Mehndi, so no attendance name goes missing:
+    // only the draft's own event list shows it is out of date.
+    for (const family of draft.families) {
+      for (const guest of family.guests) {
+        guest.eventNames = guest.eventNames.filter((n) => n !== "Mehndi");
+      }
+    }
+    const [mehndi] = db.select().from(events).where(eq(events.name, "Mehndi")).all();
+    db.delete(guestEvents).where(eq(guestEvents.eventId, mehndi!.id)).run();
+    db.delete(events).where(eq(events.id, mehndi!.id)).run();
+
+    const res = await editorPreview(app, { desiredState: draft, scope: "guests" });
+    expect(res.status).toBe(409);
+    expect(((await res.json()) as { reason: string }).reason).toBe("stale_draft");
+  });
+
   it("refuses attendance naming an event that no longer exists", async () => {
     const { app, db } = buildApp();
     await seedSheets(app);
@@ -1579,6 +1711,21 @@ describe("POST /changes/apply — an editor save that empties a half must be con
     });
     expect(clears).toBeNull();
     expect((await ownerPost(app, `${CHANGES_BASE}/apply`, { changeId })).status).toBe(200);
+  });
+
+  it("400s a confirmation that is not two counts", async () => {
+    const { app, db } = buildApp();
+    await seedSheets(app);
+    for (const confirmClears of [null, { events: "0", households: 2 }]) {
+      const { changeId } = await previewClear(app, {
+        desiredState: { events: draftFromDb(db).events, families: [] },
+        scope: "guests",
+      });
+      const res = await ownerPost(app, `${CHANGES_BASE}/apply`, { changeId, confirmClears });
+      expect(res.status).toBe(400);
+      expect(await jsonBody(res)).toEqual({ error: "Missing or invalid fields" });
+      expect(db.select().from(families).all()).toHaveLength(2);
+    }
   });
 
   it("does not apply to a spreadsheet upload", async () => {

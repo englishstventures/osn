@@ -25,12 +25,21 @@ vi.mock("../../src/lib/api", async () => {
 });
 
 import GuestsEditor from "../../src/components/GuestsEditor";
-import { __resetEventsCache } from "../../src/lib/events-store";
+import { __resetEventsCache, ensureEventsLoaded } from "../../src/lib/events-store";
 import type { DesiredStateWire } from "../../src/lib/guest-event-draft";
 import { __resetGuestsCache, ensureGuestsLoaded } from "../../src/lib/guests-store";
-import { __resetHouseholdsCache, invalidateHouseholds } from "../../src/lib/households-store";
+import {
+  __resetHouseholdsCache,
+  ensureHouseholdsLoaded,
+  invalidateHouseholds,
+} from "../../src/lib/households-store";
 import { confirmNavigation } from "../../src/lib/unsaved-guard";
-import { authFetchMock, resetOrganiserMocks, toastSuccess } from "../test-support/mocks";
+import {
+  authFetchMock,
+  redirectSpy,
+  resetOrganiserMocks,
+  toastSuccess,
+} from "../test-support/mocks";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -231,6 +240,7 @@ describe("GuestsEditor", () => {
           json({
             changeId: "chg_1",
             baseRevision: "genesis",
+            clears: null,
             warnings: ["1 guest will keep their RSVPs (rename)."],
             plan: {
               eventCreates: [],
@@ -281,7 +291,9 @@ describe("GuestsEditor", () => {
     const applyCall = authFetchMock.mock.calls.find(
       (c) => String(c[0]) === "https://api.test/api/organiser/weddings/wed_a/changes/apply",
     )!;
-    expect(JSON.parse(String((applyCall[1] as RequestInit).body)).changeId).toBe("chg_1");
+    // Exactly the id: an ordinary save's `clears` is null, and a `confirmClears:
+    // null` would fail the API's decode and refuse every save.
+    expect(JSON.parse(String((applyCall[1] as RequestInit).body))).toEqual({ changeId: "chg_1" });
   });
 
   it("adds a household and a guest", async () => {
@@ -616,16 +628,78 @@ describe("GuestsEditor", () => {
       expect(posted!.baseRevision).toBe(HEAD);
     });
 
-    it("loads the rows fresh even when the shared caches already hold them", async () => {
-      // Another view filled the guest cache earlier. Those rows could predate
-      // the head the editor is about to read, so they must not seed the draft.
+    it("loads all three slices fresh even when the shared caches already hold them", async () => {
+      // Other views filled the caches earlier. Those rows could predate the
+      // head the editor is about to read, so none of them may seed the draft —
+      // a household missing from a stale households slice would be removed.
       await ensureGuestsLoaded("wed_a", async () => [{ ...GUESTS[0]!, firstName: "Stale" }]);
-      primeLoad();
+      await ensureHouseholdsLoaded("wed_a", async () => HOUSEHOLDS);
+      await ensureEventsLoaded("wed_a", async () => [{ ...EVENTS[0]!, name: "Stale Ceremony" }]);
+      const codeOnly = {
+        familyId: "fam_empty",
+        publicId: "EMPTY-CODE-0001",
+        familyName: "Code Only",
+        guestCount: 0,
+        codeSharedAt: null,
+        firstOpenedAt: null,
+        deactivatedAt: null,
+      };
+      authFetchMock.mockImplementation((url: string) => {
+        const u = String(url);
+        if (u.endsWith("/events")) return Promise.resolve(json(EVENTS));
+        if (u.endsWith("/guests")) return Promise.resolve(json(GUESTS));
+        if (u.endsWith("/households")) return Promise.resolve(json([...HOUSEHOLDS, codeOnly]));
+        return Promise.resolve(fallback(url));
+      });
       render(() => <GuestsEditor weddingId="wed_a" />);
 
       await waitFor(() => expect(screen.getByDisplayValue("Ada")).toBeTruthy());
       expect(screen.queryByDisplayValue("Stale")).toBeNull();
-      expect(authFetchMock.mock.calls.some((c) => String(c[0]).endsWith("/guests"))).toBe(true);
+      expect(screen.getByDisplayValue("Code Only")).toBeTruthy();
+      // One attendance column per household card, each named from the fresh schedule.
+      expect(screen.getAllByText("Ceremony").length).toBeGreaterThan(0);
+      expect(screen.queryByText("Stale Ceremony")).toBeNull();
+    });
+
+    it("saves again with the head read after the last save", async () => {
+      // The head moves with every commit, including this editor's own; a
+      // second save still sending the first head would be refused every time.
+      let heads = ["rev_1", "rev_2"];
+      const posted: Record<string, unknown>[] = [];
+      authFetchMock.mockImplementation((url: string, init?: RequestInit) => {
+        const u = String(url);
+        if (u.endsWith("/changes/head")) {
+          const revision = heads[0]!;
+          heads = heads.length > 1 ? heads.slice(1) : heads;
+          return Promise.resolve(json({ revision }));
+        }
+        if (u.endsWith("/changes/preview")) {
+          posted.push(JSON.parse(String(init?.body)));
+          return Promise.resolve(previewResponse());
+        }
+        if (u.endsWith("/changes/apply")) {
+          return Promise.resolve(json({ summary: { changeId: "chg_1" } }));
+        }
+        if (u.endsWith("/events")) return Promise.resolve(json(EVENTS));
+        if (u.endsWith("/guests")) return Promise.resolve(json(GUESTS));
+        if (u.endsWith("/households")) return Promise.resolve(json(HOUSEHOLDS));
+        return Promise.resolve(fallback(url));
+      });
+      render(() => <GuestsEditor weddingId="wed_a" />);
+      await waitFor(() => expect(screen.getByDisplayValue("Ada")).toBeTruthy());
+
+      fireEvent.input(screen.getByDisplayValue("Ada"), { target: { value: "Adaeze" } });
+      fireEvent.click(await waitFor(() => screen.getByRole("button", { name: /Save changes/i })));
+      await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
+      fireEvent.click(screen.getByRole("button", { name: /Confirm & save/i }));
+      await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
+
+      fireEvent.input(await waitFor(() => screen.getByDisplayValue("Ada")), {
+        target: { value: "Ada B" },
+      });
+      fireEvent.click(await waitFor(() => screen.getByRole("button", { name: /Save changes/i })));
+      await waitFor(() => expect(posted).toHaveLength(2));
+      expect(posted.map((p) => p.baseRevision)).toEqual(["rev_1", "rev_2"]);
     });
 
     it("shows a load error, not a draft, when the head cannot be read", async () => {
@@ -711,6 +785,35 @@ describe("GuestsEditor", () => {
     await waitFor(() => expect(screen.getByDisplayValue("Ada")).toBeTruthy());
     expect(screen.queryByDisplayValue("Newcomer")).toBeNull();
     expect(screen.queryByRole("button", { name: /Save changes/i })).toBeNull();
+  });
+
+  it("drops the draft before signing in again when the reload finds the session expired", async () => {
+    primeLoad();
+    render(() => <GuestsEditor weddingId="wed_a" />);
+    await waitFor(() => expect(screen.getByDisplayValue("Ada")).toBeTruthy());
+    fireEvent.input(screen.getByDisplayValue("Ada"), { target: { value: "Adaeze" } });
+
+    let applied = false;
+    authFetchMock.mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.endsWith("/changes/preview")) return Promise.resolve(previewResponse());
+      if (u.endsWith("/changes/apply")) {
+        applied = true;
+        return Promise.resolve(json({ summary: { changeId: "chg_1" } }));
+      }
+      if (applied) return Promise.reject(new Error("AuthExpiredError"));
+      return Promise.resolve(fallback(url));
+    });
+
+    fireEvent.click(await waitFor(() => screen.getByRole("button", { name: /Save changes/i })));
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: /Confirm & save/i }));
+
+    await waitFor(() => expect(redirectSpy).toHaveBeenCalled());
+    // A cancelled redirect must not leave the stale draft saveable either.
+    expect(screen.queryByRole("button", { name: /Save changes/i })).toBeNull();
+    expect(screen.queryByLabelText("Household name")).toBeNull();
+    expect(confirmNavigation()).toBe(true);
   });
 
   it("names a save that removes every household, and confirms the count on apply", async () => {

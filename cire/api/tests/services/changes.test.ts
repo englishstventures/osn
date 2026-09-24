@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 
-import { BOOTSTRAP_WEDDING_ID, imports } from "@cire/db";
+import { BOOTSTRAP_WEDDING_ID, imports, weddings } from "@cire/db";
 import { eq } from "drizzle-orm";
 import { Effect, Result } from "effect";
 
@@ -209,9 +209,10 @@ describe("clearedHalves", () => {
   });
 
   it("ignores the half the scope does not manage", () => {
-    // An events save carries no households at all, and that is not a removal.
-    expect(clearedHalves({ events: [EVENT], families: [] }, plan(0, 0), "events")).toBeNull();
-    expect(clearedHalves({ events: [], families: [FAMILY] }, plan(0, 0), "guests")).toBeNull();
+    // An events save carries no households at all, and that is not a removal —
+    // even with removals in the other half's slot, only the scope decides.
+    expect(clearedHalves({ events: [EVENT], families: [] }, plan(0, 3), "events")).toBeNull();
+    expect(clearedHalves({ events: [], families: [FAMILY] }, plan(3, 0), "guests")).toBeNull();
   });
 
   it("reports both halves on a 'both' save that empties both", () => {
@@ -326,6 +327,41 @@ describe("headRevision", () => {
         const before = yield* headRevision(BOOTSTRAP_WEDDING_ID);
         yield* commit("chg_2", 1_000);
         expect(yield* headRevision(BOOTSTRAP_WEDDING_ID)).not.toBe(before);
+      }),
+    ),
+  );
+
+  it(
+    "ignores another wedding's changes",
+    withDb(
+      Effect.gen(function* () {
+        yield* commit("chg_1", 1_000);
+        const before = yield* headRevision(BOOTSTRAP_WEDDING_ID);
+        const db = yield* DbService;
+        db.insert(weddings)
+          .values({
+            id: "wed_elsewhere",
+            slug: "elsewhere",
+            displayName: "Elsewhere",
+            ownerOsnProfileId: "usr_elsewhere",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .run();
+        db.insert(imports)
+          .values({
+            id: "chg_elsewhere",
+            weddingId: "wed_elsewhere",
+            uploadedAt: 2_000,
+            format: "csv",
+            eventsR2Key: "k",
+            guestsR2Key: "k",
+            summary: "{}",
+            status: "applied",
+            appliedAt: 2_000,
+          })
+          .run();
+        expect(yield* headRevision(BOOTSTRAP_WEDDING_ID)).toBe(before);
       }),
     ),
   );

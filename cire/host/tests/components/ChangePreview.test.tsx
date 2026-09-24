@@ -100,6 +100,20 @@ describe("ChangePreview", () => {
     expect(screen.queryByText(/removes every event/i)).toBeNull();
   });
 
+  it("names only the schedule when only the schedule is emptied", () => {
+    render(() => (
+      <ChangePreview
+        plan={plan()}
+        warnings={[]}
+        clears={{ events: 3, households: 0 }}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    ));
+    expect(screen.getByText(/removes every event \(3\)/i)).toBeTruthy();
+    expect(screen.queryByText(/removes every household/i)).toBeNull();
+  });
+
   it("says nothing extra when no list is emptied", () => {
     render(() => (
       <ChangePreview

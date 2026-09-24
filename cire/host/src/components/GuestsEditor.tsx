@@ -249,13 +249,14 @@ export default function GuestsEditor(props: { weddingId: string }) {
         await loadInto();
         store.commit();
       } catch (err) {
-        if (isAuthExpired(err)) return redirectToLogin();
         // The save went through, so the draft describes rows the server has
         // since given ids the draft never received: saving it again would post
         // every new household as new a second time, and the server would
-        // remove and re-create them under fresh claim codes. The draft is
-        // dropped instead, and the editor stays shut until it reloads.
+        // remove and re-create them under fresh claim codes. So the draft is dropped — before
+        // any redirect too, since the tab-close guard would otherwise hold a
+        // dirty draft open — and the editor stays shut until it reloads.
         store.reset();
+        if (isAuthExpired(err)) return redirectToLogin();
         setLoadError("Saved, but the editor could not reload. Refresh to continue.");
         return;
       }
