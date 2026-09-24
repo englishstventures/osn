@@ -224,17 +224,20 @@ describe("counting queries that ran outside a session", () => {
     expect(await counterValue(MISSING, { entry: "fetch" })).toBe(fetchBefore);
   });
 
-  it("warns once per client, not once per query", async () => {
+  it("warns once per client, but counts every query", async () => {
     // The `fetch` client lives as long as the isolate, so a warning per query
-    // would put one log line on every query a lost path makes.
+    // would put one log line on every query a lost path makes. The count is
+    // per query all the same: it is what measures how much a lost path costs.
     const log: string[] = [];
     const first = createSessionRoutedClient(recordingClient("binding", log), "scheduled");
+    const before = await counterValue(MISSING, { entry: "scheduled" });
 
     const out = await captureLogs(() => {
       first.prepare("one");
       first.prepare("two");
     });
 
+    expect(await counterValue(MISSING, { entry: "scheduled" })).toBe(before + 2);
     expect(warnings(out)).toHaveLength(1);
     // The fields print on the line after the message.
     expect(out).toContain('"entry":"scheduled"');
@@ -263,24 +266,33 @@ describe("counting queries that ran outside a session", () => {
     expect(warnings(out)).toHaveLength(1);
   });
 
-  it("still runs the query when the warning itself fails", () => {
+  it("keeps running and counting queries when the warning itself fails", async () => {
     // Losing the session must cost latency, never the query, so a logger that
-    // throws cannot be allowed to fail it.
+    // throws cannot be allowed to fail it. Nor may it stop the count, which is
+    // the one signal left, or be retried on every later query.
     const log: string[] = [];
     const client = createSessionRoutedClient(recordingClient("binding", log), "fetch");
+    const before = await counterValue(MISSING, { entry: "fetch" });
     const c = (globalThis as typeof globalThis & { console: Console }).console;
     const original = { log: c.log, info: c.info, warn: c.warn, error: c.error, debug: c.debug };
+    let logCalls = 0;
     const boom = (): never => {
+      logCalls += 1;
       throw new Error("logger down");
     };
     Object.assign(c, { log: boom, info: boom, warn: boom, error: boom, debug: boom });
+    let callsAfterFirst = 0;
     try {
-      expect(() => client.prepare("select 1")).not.toThrow();
+      expect(() => client.prepare("one")).not.toThrow();
+      callsAfterFirst = logCalls;
+      expect(() => client.prepare("two")).not.toThrow();
     } finally {
       Object.assign(c, original);
     }
 
-    expect(log).toEqual(["binding:prepare:select 1"]);
+    expect(log).toEqual(["binding:prepare:one", "binding:prepare:two"]);
+    expect(await counterValue(MISSING, { entry: "fetch" })).toBe(before + 2);
+    expect(logCalls).toBe(callsAfterFirst);
   });
 });
 

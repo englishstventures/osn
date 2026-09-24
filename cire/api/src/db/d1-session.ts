@@ -116,30 +116,28 @@ export function createSessionRoutedClient(
   let warned = false;
 
   const onMissingSession = (): void => {
+    // Counted before the log, so a failing log never stops the count.
     metricD1SessionMissing(entry);
     if (warned) return;
     // Set before logging: if the log throws, this client stays quiet rather
-    // than retry a failing call on every query it serves. The counter keeps
-    // counting either way.
+    // than retry a failing call on every query it serves.
     warned = true;
-    try {
-      // Re-entering the cire runtime from inside one of its own fibers (the
-      // query's) is sound: `runSync` runs a fresh fiber on its own scheduler.
-      runCireSync(
-        Effect.logWarning("D1 query ran outside a session, so it went to the primary", {
-          entry,
-        }),
-      );
-    } catch {
-      // Telemetry never fails a query. The query still runs on the binding.
-    }
+    // Re-entering the cire runtime from inside one of its own fibers (the
+    // query's) is sound: `runSync` runs a fresh fiber on its own scheduler.
+    runCireSync(
+      Effect.logWarning("D1 query ran outside a session, so it went to the primary", { entry }),
+    );
   };
 
   return {
     prepare: (query) => {
       const session = currentSession.getStore();
       if (session) return session.prepare(query);
-      onMissingSession();
+      try {
+        onMissingSession();
+      } catch {
+        // Telemetry never fails a query. The query still runs on the binding.
+      }
       return fallback.prepare(query);
     },
     batch: <T>(statements: D1PreparedStatement[]) =>
