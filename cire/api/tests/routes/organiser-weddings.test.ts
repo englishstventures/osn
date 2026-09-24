@@ -17,11 +17,14 @@ import {
 } from "@cire/db";
 import { createRateLimiter } from "@shared/rate-limit";
 import { eq } from "drizzle-orm";
+import { Effect } from "effect";
 
 import { createApp } from "../../src/app";
+import { DbService } from "../../src/db";
 import type { Db } from "../../src/db";
 import { createDb, seedDb } from "../../src/db/setup";
 import type { TestDb } from "../../src/db/setup";
+import { organiserSessionService } from "../../src/services/organiser-session";
 import { appRequest, recordStatements } from "../test-helpers";
 import { makeOsnTestAuth } from "../test-helpers/osn-token";
 import type { OsnTestAuth } from "../test-helpers/osn-token";
@@ -102,6 +105,25 @@ function seedOtherWedding(db: TestDb) {
       updatedAt: now,
     })
     .run();
+}
+
+/** Mints an organiser session directly against `db`, returning its raw token. */
+function seedOrganiserSession(db: Db, osnProfileId: string): Promise<string> {
+  return Effect.runPromise(
+    organiserSessionService
+      .create({
+        osnProfileId,
+        osnSub: `pw_${osnProfileId}`,
+        email: `${osnProfileId}@example.test`,
+        handle: osnProfileId,
+        displayName: "Organiser",
+        avatarUrl: null,
+      })
+      .pipe(
+        Effect.provideService(DbService, db),
+        Effect.map((session) => session.token),
+      ),
+  );
 }
 
 async function get(app: ReturnType<typeof buildApp>["app"], path: string, profileId?: string) {
@@ -1519,6 +1541,47 @@ describe("GET /api/organiser/weddings/:weddingId/gifts.csv", () => {
     const body = await res.text();
     expect(body).toContain("Copper Pan");
     expect(body).toContain("For the honeymoon");
+  });
+
+  it("answers a failed read with a plain 500, never part of a file", async () => {
+    const { db, app } = buildApp();
+    seedGifts(db);
+    // Every D1 error reaches the handler as a defect; breaking one of the two
+    // tables the union reads is the cheapest way to raise one here.
+    db.$client.exec("DROP TABLE registry_contributions");
+    const res = await get(app, path, BOOTSTRAP_OWNER);
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "Internal error" });
+    expect(res.headers.get("content-disposition")).toBeNull();
+  });
+
+  // A browser reaches the download with the organiser session cookie, not a
+  // bearer token. The six exports share one `osnAuth`, so one route stands
+  // for all of them.
+  it("serves the CSV to an organiser session cookie", async () => {
+    const { db, app } = buildApp();
+    const token = await seedOrganiserSession(db, BOOTSTRAP_OWNER);
+    const res = await appRequest(app, path, { headers: { cookie: `cire_org_session=${token}` } });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-disposition")).toContain(
+      'filename="cire-gifts-cire-wedding.csv"',
+    );
+  });
+
+  it("refuses a session cookie that names no live session", async () => {
+    const { app } = buildApp();
+    const res = await appRequest(app, path, {
+      headers: { cookie: "cire_org_session=not-a-live-session-token" },
+    });
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorised" });
+  });
+
+  it("refuses a bearer token that does not verify", async () => {
+    const { app } = buildApp();
+    const res = await appRequest(app, path, { headers: { authorization: "Bearer not-a-jwt" } });
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorised" });
   });
 
   it("serves a header-only CSV when the couple have had no gifts", async () => {

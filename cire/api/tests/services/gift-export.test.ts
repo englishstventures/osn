@@ -628,6 +628,35 @@ describe("giftExportService.giftsCsv", () => {
     });
   }, 30_000);
 
+  it("prints a log exactly at the ceiling whole, and does not warn", async () => {
+    const db = createDb(":memory:");
+    seedDb(db);
+    seedHousehold(db);
+    seedOverflow(db, MAX_GIFT_EXPORT_ROWS);
+
+    const warnings: string[] = [];
+    const capture = Logger.layer([
+      Logger.make(({ logLevel, message }) => {
+        if (logLevel === "Warn") warnings.push(String(message));
+      }),
+    ]);
+    const csv = await Effect.runPromise(
+      giftExportService
+        .giftsCsv(BOOTSTRAP_WEDDING_ID)
+        .pipe(Effect.provideService(DbService, db), Effect.provide(capture)),
+    );
+
+    // The other side of the boundary: a file that was not cut keeps its oldest
+    // row and raises no alarm.
+    const notes = lines(csv)
+      .slice(1)
+      .map((line) => line.split(",")[6]);
+    expect(notes).toEqual(
+      Array.from({ length: MAX_GIFT_EXPORT_ROWS }, (_, i) => `row-${MAX_GIFT_EXPORT_ROWS - 1 - i}`),
+    );
+    expect(warnings).toEqual([]);
+  }, 30_000);
+
   it("reads the whole log in one statement that stops one row past the ceiling", async () => {
     const db = createDb(":memory:");
     seedDb(db);
