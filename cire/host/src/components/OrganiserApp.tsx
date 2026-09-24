@@ -302,7 +302,10 @@ function Dashboard() {
       lastRecheckedAt = Date.now();
       if (answer === null) return;
       if (version === listVersion) {
-        writeWeddings(answer.map(withKnownRole));
+        const next = answer.map(withKnownRole);
+        // An unchanged answer is not written: a fresh array would wake every
+        // reader of the list for nothing.
+        if (JSON.stringify(next) !== JSON.stringify(untrack(weddings))) writeWeddings(next);
       } else if (retry) {
         await recheckWeddings(undefined, false);
       }

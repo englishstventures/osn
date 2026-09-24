@@ -100,13 +100,14 @@ export default function EnquiriesView(props: EnquiriesViewProps) {
     }
     // Put the sent message into the thread rather than re-reading the whole
     // thread to learn one row the server has just handed back. First, because
-    // the API lists a thread newest first. A thread still loading, or showing
-    // another enquiry, has no list to add it to, so that case reads the
-    // thread again instead.
+    // the API lists a thread newest first. A thread still loading has no list
+    // to add it to, and its load may have been sent before the reply, so it
+    // is read again. A thread the organiser has left is not: opening it again
+    // reads it fresh.
     const loaded = messages();
     if (loaded && loaded.enquiryId === id && !messages.loading) {
       mutate({ enquiryId: id, items: [sent, ...loaded.items] });
-    } else {
+    } else if (selectedId() === id) {
       await refetch();
     }
   };

@@ -378,6 +378,39 @@ describe("EnquiriesView", () => {
     expect(await screen.findByText("Hello!")).toBeInTheDocument();
   });
 
+  it("does not re-read a thread the organiser left while the reply was in flight", async () => {
+    const EnquiriesView = await importComponent();
+    setCachedEnquiries("wed_1", [
+      makeItem({ id: "enq_1", vendorName: "Blue Roses" }),
+      makeItem({ id: "enq_2", vendorName: "Green Cakes", lastMessageAt: Date.now() - 1000 }),
+    ]);
+    let releaseReply: (res: Response) => void = () => {};
+    const reads: string[] = [];
+    authFetch.mockImplementation((url: string, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        return new Promise<Response>((resolve) => (releaseReply = resolve));
+      }
+      reads.push(String(url));
+      return Promise.resolve(new Response(JSON.stringify({ messages: [] }), { status: 200 }));
+    });
+
+    render(() => <EnquiriesView weddingId="wed_1" currency="AUD" canEdit={true} />);
+    fireEvent.click(await screen.findByRole("button", { name: /Blue Roses/ }));
+    const draft = await screen.findByPlaceholderText(/write a reply/i);
+    fireEvent.input(draft, { target: { value: "Hello!" } });
+    fireEvent.click(screen.getByRole("button", { name: /^send$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Green Cakes/ }));
+    await waitFor(() => expect(reads.some((u) => u.includes("enq_2"))).toBe(true));
+
+    releaseReply(
+      new Response(JSON.stringify({ message: makeMessage({ body: "Hello!" }) }), { status: 201 }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(reads.filter((u) => u.includes("enq_2"))).toHaveLength(1);
+    expect(reads.filter((u) => u.includes("enq_1"))).toHaveLength(1);
+  });
+
   // The master-detail contract: opening a thread no longer UNMOUNTS the inbox.
   // On a wide panel the two sit side by side; on a narrow one the inbox is
   // hidden with `@max-3xl/enquiries:hidden`, which happy-dom never applies — so
