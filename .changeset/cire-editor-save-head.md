@@ -12,5 +12,6 @@ Check every in-app guest and schedule save against the state the editor loaded.
 - The guests editor saves with `scope: "guests"`. On that scope, a stale event or an attendance name that no longer resolves is refused, instead of dropping the invitation.
 - An editor save that empties every event or every household must echo the preview's `clears` counts back as `confirmClears`. The preview names that loss in its own warning.
 - If the reload after a successful save fails, the editor drops its draft instead of leaving it saveable.
+- Revert refuses a change that is not `applied` (409).
 
 Deploy `@cire/api` to production before `@cire/host`.
