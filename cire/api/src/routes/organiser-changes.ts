@@ -709,6 +709,12 @@ export const createOrganiserChangeRoutes = (
                     return { error: "No prior applied change to revert to" };
                   }),
                 ),
+                Effect.catchTag("ChangeNotApplied", () =>
+                  Effect.sync(() => {
+                    set.status = 409;
+                    return { error: "Change is not applied" };
+                  }),
+                ),
                 Effect.catchTag("R2Error", () =>
                   Effect.sync(() => {
                     set.status = 500;

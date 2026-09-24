@@ -1,7 +1,7 @@
 import Button from "@cire/ui/button";
 import { Notice } from "@shared/ui/ui/notice";
 import { Table, Td, Th } from "@shared/ui/ui/table";
-import { For, Show } from "solid-js";
+import { createUniqueId, For, Show } from "solid-js";
 // The SHARED change-preview renderer (guest+event editor §8): "extract
 // ImportPanel's plan-rendering into a shared component so both ImportPanel and
 // the editor save-flow render the same preview". Both front doors of the
@@ -130,12 +130,16 @@ export function PlanCounts(props: { plan: ChangePlan }) {
  * render this so the two save flows are visually identical.
  */
 export default function ChangePreview(props: ChangePreviewProps) {
+  // The dialog opens with focus on Confirm, so a warning that only sits above
+  // it is never read to a screen-reader user before one keypress applies the
+  // loss. Tying it to the button as its description is what reaches them.
+  const clearsId = createUniqueId();
   return (
     <div class="border-border bg-bg/40 flex flex-col gap-4 rounded-sm border p-4">
       <h3 class="font-display text-gold-dim text-ui-md">Diff preview</h3>
       <Show when={props.clears}>
         {(clears) => (
-          <Notice tone="danger">
+          <Notice tone="warn" id={clearsId}>
             <Show when={clears().households > 0}>
               <p>
                 This removes every household ({clears().households}), with their guests, RSVPs and
@@ -171,6 +175,7 @@ export default function ChangePreview(props: ChangePreviewProps) {
           type="button"
           onClick={() => props.onConfirm()}
           disabled={props.busy}
+          aria-describedby={props.clears ? clearsId : undefined}
         >
           {props.busy ? "Applying…" : (props.confirmLabel ?? "Apply changes")}
         </Button>

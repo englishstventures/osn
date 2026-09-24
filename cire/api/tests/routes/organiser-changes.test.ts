@@ -1757,6 +1757,44 @@ describe("POST /changes/revert", () => {
     // Before-image was the empty pre-import state → revert clears the families.
     expect(db.select().from(families).all()).toHaveLength(0);
   });
+
+  // Only an applied change has anything to undo. A preview has no before-image
+  // and would fall back to replaying an older import over everything since; a
+  // reverted change would be restored a second time.
+  it("409s a change that was only previewed, and changes nothing", async () => {
+    const { app, db } = buildApp();
+    await seedSheets(app);
+    const draft = draftFromDb(db);
+    const preview = await editorPreview(app, {
+      desiredState: { ...draft, families: draft.families.slice(0, 1) },
+      scope: "guests",
+    });
+    const { changeId } = (await preview.json()) as { changeId: string };
+    const head = await headOf(app);
+
+    const res = await ownerPost(app, `${CHANGES_BASE}/revert`, { changeId });
+    expect(res.status).toBe(409);
+    expect(await jsonBody(res)).toEqual({ error: "Change is not applied" });
+    expect(db.select().from(families).all()).toHaveLength(2);
+    expect(await headOf(app)).toBe(head);
+  });
+
+  it("409s a change that is already reverted", async () => {
+    const { app, db } = buildApp();
+    const preview = await ownerPost(app, `${CHANGES_BASE}/preview`, {
+      eventsCsv: EVENTS_CSV,
+      guestsCsv: GUESTS_CSV,
+    });
+    const id = ((await preview.json()) as { changeId: string }).changeId;
+    await ownerPost(app, `${CHANGES_BASE}/apply`, { changeId: id });
+    expect((await ownerPost(app, `${CHANGES_BASE}/revert`, { changeId: id })).status).toBe(200);
+
+    // Something new lands after the revert; a second revert must not touch it.
+    await seedSheets(app);
+    const again = await ownerPost(app, `${CHANGES_BASE}/revert`, { changeId: id });
+    expect(again.status).toBe(409);
+    expect(db.select().from(families).all()).toHaveLength(2);
+  });
 });
 
 // ── Provenance default at the route (CSV toggle) ────────────────────────────

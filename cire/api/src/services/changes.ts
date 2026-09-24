@@ -13,9 +13,10 @@
  *     "Concurrency guard"): a digest of every committed change. The editor
  *     reads it BEFORE loading the rows it seeds a draft from and sends it with
  *     the preview; preview refuses a draft whose token is no longer the head,
- *     stamps the head on the change row, and apply 409s if it moved since. Two
- *     co-hosts editing at once therefore get a clean conflict instead of a
- *     silent last-writer-wins, from the editor's load to the apply.
+ *     stamps the head on the change row, and apply 409s if it moved since.
+ *     The check is not part of apply's write: two applies that both read the
+ *     head before either commits can both land, so the window between apply's
+ *     head read and its final batch is still open.
  *  3. {@link clearedHalves} — whether an editor save empties a half of the
  *     wedding, which apply refuses unless the request confirms the count.
  */

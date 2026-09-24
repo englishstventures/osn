@@ -86,6 +86,24 @@ describe("ChangePreview", () => {
     expect(screen.getByText(/removes every event \(3\)/i)).toBeTruthy();
   });
 
+  it("describes the confirm button with the loss, so it is read where focus lands", () => {
+    render(() => (
+      <ChangePreview
+        plan={plan()}
+        warnings={[]}
+        clears={{ events: 0, households: 12 }}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    ));
+    const confirm = screen.getByRole("button", { name: /Apply changes/i });
+    const describedBy = confirm.getAttribute("aria-describedby");
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(describedBy!)?.textContent).toMatch(
+      /removes every household \(12\)/i,
+    );
+  });
+
   it("names only the list that is actually emptied", () => {
     render(() => (
       <ChangePreview
@@ -125,6 +143,9 @@ describe("ChangePreview", () => {
       />
     ));
     expect(screen.queryByText(/removes every/i)).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /Apply changes/i }).getAttribute("aria-describedby"),
+    ).toBeNull();
   });
 
   it("fires onConfirm / onCancel and honours busy + confirmLabel", () => {
