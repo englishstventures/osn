@@ -75,6 +75,22 @@ describe("DirectoryBrowseView", () => {
     expect(invalidateVendors).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["no row", () => json({}, 201)],
+    ["a body that will not parse", () => new Response("not json", { status: 201 })],
+  ])("marks the vendors list stale when a 201 carries %s", async (_label, created) => {
+    authFetch.mockResolvedValueOnce(
+      json({ listings: [listing({ categories: ["venue"] })], total: 1 }),
+    );
+    authFetch.mockResolvedValueOnce(created());
+    render(() => <DirectoryBrowseView weddingId="w1" canEdit={true} />);
+    await waitFor(() => screen.getByText("Acme Venue"));
+    fireEvent.click(screen.getAllByRole("button", { name: /add to wedding/i })[0]!);
+
+    await waitFor(() => expect(invalidateVendors).toHaveBeenCalledWith("w1"));
+    expect(upsertCachedVendor).not.toHaveBeenCalled();
+  });
+
   it("marks the vendors list stale when the vendor was already on it (409)", async () => {
     authFetch.mockResolvedValueOnce(
       json({ listings: [listing({ categories: ["venue"] })], total: 1 }),

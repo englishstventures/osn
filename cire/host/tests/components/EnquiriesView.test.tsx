@@ -339,13 +339,43 @@ describe("EnquiriesView", () => {
     fireEvent.input(draft, { target: { value: "Wonderful, please send a quote." } });
     fireEvent.click(screen.getByRole("button", { name: /^send$/i }));
 
-    expect(await screen.findByText("Wonderful, please send a quote.")).toBeInTheDocument();
-    expect(screen.getByText("We have your date free.")).toBeInTheDocument();
+    const reply = await screen.findByText("Wonderful, please send a quote.");
+    const earlierMessage = screen.getByText("We have your date free.");
+    // Newest first, as the API lists a thread.
+    expect(
+      reply.compareDocumentPosition(earlierMessage) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     const threadReads = authFetch.mock.calls.filter(
       ([url, init]: unknown[]) =>
         String(url).endsWith("/messages") && (init as RequestInit | undefined)?.method !== "POST",
     );
     expect(threadReads).toHaveLength(1);
+  });
+
+  it("reads the thread again when a reply lands before the thread has loaded", async () => {
+    const EnquiriesView = await importComponent();
+    setCachedEnquiries("wed_1", [makeItem()]);
+    const sent = makeMessage({ id: "msg_new", senderProfileId: "p_me", body: "Hello!" });
+    let threadReads = 0;
+    authFetch.mockImplementation((_url: string, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        return Promise.resolve(new Response(JSON.stringify({ message: sent }), { status: 201 }));
+      }
+      threadReads += 1;
+      // The first read never answers: the thread is still loading when the
+      // reply comes back, so there is no loaded thread to put it in.
+      if (threadReads === 1) return new Promise<Response>(() => {});
+      return Promise.resolve(new Response(JSON.stringify({ messages: [sent] }), { status: 200 }));
+    });
+
+    render(() => <EnquiriesView weddingId="wed_1" currency="AUD" canEdit={true} />);
+    fireEvent.click(await screen.findByRole("button", { name: /Blue Roses/ }));
+    const draft = await screen.findByPlaceholderText(/write a reply/i);
+    fireEvent.input(draft, { target: { value: "Hello!" } });
+    fireEvent.click(screen.getByRole("button", { name: /^send$/i }));
+
+    await waitFor(() => expect(threadReads).toBe(2));
+    expect(await screen.findByText("Hello!")).toBeInTheDocument();
   });
 
   // The master-detail contract: opening a thread no longer UNMOUNTS the inbox.

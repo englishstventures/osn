@@ -730,4 +730,147 @@ describe("OrganiserApp Dashboard", () => {
       clock.mockRestore();
     }
   });
+
+  /** A list read the test answers by hand. */
+  function heldList() {
+    let answer: (res: Response) => void = () => {};
+    const promise = new Promise<Response>((resolve) => (answer = resolve));
+    return { promise, answer };
+  }
+
+  it.each([
+    ["answers 500", () => Promise.resolve(new Response(null, { status: 500 }))],
+    ["fails outright", () => Promise.reject(new Error("network down"))],
+  ])("changes nothing when the recheck %s", async (_label, failedRead) => {
+    history.replaceState(null, "", "#/w/wed_a");
+    let listReads = 0;
+    authFetchMock.mockImplementation((url: string) => {
+      if (url !== LIST_URL) {
+        return Promise.resolve(new Response(JSON.stringify({ error: "x" }), { status: 403 }));
+      }
+      listReads += 1;
+      return listReads === 1
+        ? Promise.resolve(listResponse([{ id: "wed_a", slug: "a", displayName: "Alice & Bob" }]))
+        : failedRead();
+    });
+    render(() => <OrganiserApp />);
+    await waitFor(() => expect(shell().textContent).toContain("wed_a"));
+    const mount = shell().getAttribute("data-mount");
+    setCachedVendors("wed_a", [vendorRow("wed_a")]);
+
+    fireEvent.click(screen.getByText("read-vendors"));
+    await waitFor(() => expect(listReads).toBe(2));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(shell().getAttribute("data-mount")).toBe(mount);
+    expect(peekCachedVendors("wed_a")).toHaveLength(1);
+    expect(redirectSpy).not.toHaveBeenCalled();
+  });
+
+  it("sends the organiser to sign-in when the recheck finds the session gone", async () => {
+    history.replaceState(null, "", "#/w/wed_a");
+    let listReads = 0;
+    authFetchMock.mockImplementation((url: string) => {
+      if (url !== LIST_URL) {
+        return Promise.resolve(new Response(JSON.stringify({ error: "x" }), { status: 403 }));
+      }
+      listReads += 1;
+      return listReads === 1
+        ? Promise.resolve(listResponse([{ id: "wed_a", slug: "a", displayName: "Alice & Bob" }]))
+        : Promise.reject(new Error("AuthExpiredError"));
+    });
+    render(() => <OrganiserApp />);
+    await waitFor(() => expect(shell().textContent).toContain("wed_a"));
+
+    fireEvent.click(screen.getByText("read-vendors"));
+
+    await waitFor(() => expect(redirectSpy).toHaveBeenCalledTimes(1));
+  });
+
+  it("shares one list read between refusals that arrive together", async () => {
+    history.replaceState(null, "", "#/w/wed_a");
+    const held = heldList();
+    let listReads = 0;
+    authFetchMock.mockImplementation((url: string) => {
+      if (url !== LIST_URL) {
+        return Promise.resolve(new Response(JSON.stringify({ error: "x" }), { status: 403 }));
+      }
+      listReads += 1;
+      return listReads === 1
+        ? Promise.resolve(listResponse([{ id: "wed_a", slug: "a", displayName: "Alice & Bob" }]))
+        : held.promise;
+    });
+    render(() => <OrganiserApp />);
+    await waitFor(() => expect(shell().textContent).toContain("wed_a"));
+
+    for (let i = 0; i < 3; i += 1) fireEvent.click(screen.getByText("read-vendors"));
+    await waitFor(() => expect(authFetchMock.mock.calls.length).toBe(5));
+    expect(listReads).toBe(2);
+
+    held.answer(listResponse([{ id: "wed_a", slug: "a", displayName: "Alice & Bob" }]));
+  });
+
+  it("gives up on a recheck left unanswered, and lets the newest answer win", async () => {
+    const start = 1_900_000_000_000;
+    const clock = vi.spyOn(Date, "now").mockReturnValue(start);
+    try {
+      history.replaceState(null, "", "#/w/wed_a");
+      const wedA = [{ id: "wed_a", slug: "a", displayName: "Alice & Bob" }];
+      const hung = heldList();
+      const newer = heldList();
+      let listReads = 0;
+      authFetchMock.mockImplementation((url: string) => {
+        if (url !== LIST_URL) {
+          return Promise.resolve(new Response(JSON.stringify({ error: "x" }), { status: 403 }));
+        }
+        listReads += 1;
+        if (listReads === 2) return hung.promise;
+        if (listReads === 3) return newer.promise;
+        return Promise.resolve(listResponse(wedA));
+      });
+      render(() => <OrganiserApp />);
+      await waitFor(() => expect(shell().textContent).toContain("wed_a"));
+      setCachedVendors("wed_a", [vendorRow("wed_a")]);
+
+      fireEvent.click(screen.getByText("read-vendors"));
+      await waitFor(() => expect(listReads).toBe(2));
+
+      // Half a minute on, the first read is still unanswered: a new refusal
+      // sends a new read rather than waiting on it.
+      clock.mockReturnValue(start + 31_000);
+      fireEvent.click(screen.getByText("read-vendors"));
+      await waitFor(() => expect(listReads).toBe(3));
+
+      // The newer read says the organiser was removed...
+      newer.answer(listResponse([]));
+      await waitFor(() => expect(screen.getByTestId("wedding-list")).toBeTruthy());
+      expect(peekCachedVendors("wed_a")).toBeNull();
+
+      // ...and the older one, landing late with the wedding still in it,
+      // must not bring the wedding back.
+      hung.answer(listResponse(wedA));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(screen.getByTestId("count").textContent).toBe("0");
+      expect(screen.queryByTestId("module-shell")).toBeNull();
+      expect(peekCachedVendors("wed_a")).toBeNull();
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it("drops the wedding's rows when the organiser opens Security", async () => {
+    history.replaceState(null, "", "#/w/wed_a");
+    authFetchMock.mockResolvedValue(
+      listResponse([{ id: "wed_a", slug: "a", displayName: "Alice & Bob" }]),
+    );
+    render(() => <OrganiserApp />);
+    await waitFor(() => expect(shell().textContent).toContain("wed_a"));
+    setCachedVendors("wed_a", [vendorRow("wed_a")]);
+
+    window.location.hash = "#/security";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+
+    await waitFor(() => expect(screen.getByTestId("security-panel")).toBeTruthy());
+    expect(peekCachedVendors("wed_a")).toBeNull();
+  });
 });

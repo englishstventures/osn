@@ -154,4 +154,40 @@ describe("ChecklistView", () => {
     expect(screen.getByText("Send invites")).toBeInTheDocument();
     expect(reads).toBe(2);
   });
+
+  it("adds a task to a loaded list without reading the list again", async () => {
+    setCachedTasks("wed_1", [row({ id: "old", title: "Book venue" })]);
+    authFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ task: row({ id: "new", title: "Send invites" }) }), {
+        status: 201,
+      }),
+    );
+    render(() => <ChecklistView weddingId="wed_1" canEdit={true} />);
+    await screen.findByText("Book venue");
+
+    fireEvent.input(screen.getByPlaceholderText("Book the venue"), {
+      target: { value: "Send invites" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add task/i }));
+
+    expect(await screen.findByText("Send invites")).toBeInTheDocument();
+    expect(screen.getByText("Book venue")).toBeInTheDocument();
+    expect(authFetch).toHaveBeenCalledTimes(1);
+    expect(authFetch.mock.calls[0]![1].method).toBe("POST");
+  });
+
+  it("removes a deleted task before the server answers", async () => {
+    setCachedTasks("wed_1", [
+      row({ id: "a", title: "Book venue" }),
+      row({ id: "b", title: "Send invites", sortOrder: 1 }),
+    ]);
+    authFetch.mockReturnValueOnce(new Promise(() => {}));
+    render(() => <ChecklistView weddingId="wed_1" canEdit={true} />);
+    await screen.findByText("Book venue");
+
+    fireEvent.click(screen.getAllByRole("button", { name: /delete/i })[0]!);
+
+    await waitFor(() => expect(screen.queryByText("Book venue")).not.toBeInTheDocument());
+    expect(screen.getByText("Send invites")).toBeInTheDocument();
+  });
 });
