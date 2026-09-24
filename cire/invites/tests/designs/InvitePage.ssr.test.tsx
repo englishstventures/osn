@@ -32,13 +32,17 @@ describe.each(packs)("%s InvitePage, rendered on the server", (_pack, InvitePage
       <InvitePage
         apiUrl="https://api.test"
         slug="anita-and-ben"
-        theme={{ headingFont: null, bodyFont: null }}
-        details={{ eyebrow: "Join Us", heading: "The Festivities" }}
+        // Only the welcome tone is set, and it is the one thing that reaches the
+        // code-entry section before a claim — so the HTML carrying it proves
+        // the render used these props.
+        theme={{ headingFont: null, bodyFont: null, tones: { welcome: "card" } }}
+        details={null}
         welcomeMessage={null}
       />
     ));
 
     expect(html).toContain("Enter Your Code");
+    expect(html).toContain("--invite-section-bg:var(--color-surface)");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
