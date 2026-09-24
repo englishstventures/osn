@@ -645,10 +645,11 @@ export const hostsService = {
    * Is `osnProfileId` allowed to reach `weddingId`'s dashboard, and at what
    * level? True when they own it OR co-host it. Returns the owner id too so the
    * caller (the `weddingMember()` / `weddingEditor()` gates) can distinguish
-   * owner from co-host — and, via `role`, editor from viewer — in a single
-   * round-trip, and the wedding's slug from the same row. `null` result means
-   * the wedding doesn't exist (caller maps to 404); `role` is `null` when the
-   * caller is neither owner nor host.
+   * owner from co-host — and, via `role`, editor from viewer — and the
+   * wedding's slug from the same row. One query for the owner; a co-host or a
+   * stranger costs a second, for the seat. `null` result means the wedding
+   * doesn't exist (caller maps to 404); `role` is `null` when the caller is
+   * neither owner nor host.
    *
    * `entitlementKey`, when given, folds a presence check for that entitlement
    * into the SAME query as the owner/host lookup (an `EXISTS` column, same

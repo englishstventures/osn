@@ -163,13 +163,13 @@ export const createOrganiserWeddingsRoutes = (db: Db, osnAuthOptions: OsnAuthOpt
             ),
           );
         })
-        .get("/events", ({ weddingId, set }) => {
-          if (!weddingId) {
+        .get("/events", ({ weddingId, weddingSlug, set }) => {
+          if (!weddingId || !weddingSlug) {
             set.status = 500;
             return { error: "Internal error" };
           }
           return runCire(
-            claimService.listEvents(weddingId).pipe(
+            claimService.listEvents(weddingId, weddingSlug).pipe(
               Effect.provideService(DbService, db),
               Effect.catchDefect(() =>
                 Effect.sync(() => {
@@ -563,13 +563,13 @@ export const createOrganiserPreviewRoutes = (
       group
         .use(weddingMember(db))
         .use(rateLimitMiddleware(limiter))
-        .post("/preview-code", ({ weddingId, set }) => {
-          if (!weddingId) {
+        .post("/preview-code", ({ weddingId, weddingSlug, set }) => {
+          if (!weddingId || !weddingSlug) {
             set.status = 500;
             return { error: "Internal error" };
           }
           return runCire(
-            hostCodeService.ensureForWedding(weddingId).pipe(
+            hostCodeService.ensureForWedding(weddingId, weddingSlug).pipe(
               Effect.provideService(DbService, db),
               Effect.catchTag("HostCodeError", () =>
                 Effect.sync(() => {

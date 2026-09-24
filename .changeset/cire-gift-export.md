@@ -12,10 +12,13 @@ from the member gate's own read.
 - **The truncation warning no longer logs a row count.** The read stops one row
   past the ceiling, so the count was always that. The warning now carries
   `truncated: true` and the ceiling.
-- **The export filename comes from the gate.** `hostsService.authorize()`
-  reads the wedding's slug with its owner, and `weddingMember()` exposes it as
-  `weddingSlug`. The six organiser CSV exports use it instead of reading the
-  wedding row again, and `weddingsService.slugOf` is gone.
+- **The slug comes from the gate.** `hostsService.authorize()` reads the
+  wedding's slug with its owner, and `weddingMember()` exposes it as
+  `weddingSlug`. The six organiser CSV exports (for the filename), `GET
+  /events` (for event-image paths) and `POST /preview-code` (for the preview
+  link) use it instead of reading the wedding row again.
+  `weddingsService.slugOf` is gone; `claimService.listEvents` and
+  `hostCodeService.ensureForWedding` now take the slug as an argument.
 - **The ceiling comment says what binds.** Streaming the response would spend
   the same CPU, so it would not raise the ceiling; the comment no longer says
   it would.

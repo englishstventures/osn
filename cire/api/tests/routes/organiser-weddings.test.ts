@@ -25,7 +25,7 @@ import type { Db } from "../../src/db";
 import { createDb, seedDb } from "../../src/db/setup";
 import type { TestDb } from "../../src/db/setup";
 import { organiserSessionService } from "../../src/services/organiser-session";
-import { appRequest, recordStatements } from "../test-helpers";
+import { appRequest, jsonBody, recordStatements } from "../test-helpers";
 import { makeOsnTestAuth } from "../test-helpers/osn-token";
 import type { OsnTestAuth } from "../test-helpers/osn-token";
 
@@ -575,6 +575,20 @@ describe("GET /api/organiser/weddings/:weddingId/events", () => {
     const res = await get(app, "/api/organiser/weddings/wed_nope/events", BOOTSTRAP_OWNER);
     expect(res.status).toBe(404);
   });
+
+  it("scopes event image paths by the gate's slug, reading the wedding row once", async () => {
+    const { db, app } = buildApp();
+    db.update(events)
+      .set({ eventImageKey: "events/evt_other/v7.webp" })
+      .where(eq(events.id, "evt_other"))
+      .run();
+    const statements = recordStatements(db);
+    const res = await get(app, `/api/organiser/weddings/${OTHER_WEDDING_ID}/events`, OTHER_OWNER);
+    expect(res.status).toBe(200);
+    const [row] = (await res.json()) as { imageUrl: string | null }[];
+    expect(row!.imageUrl).toContain("other-wedding");
+    expect(statements.filter((s) => /\bfrom "weddings"/.test(s.sql))).toHaveLength(1);
+  });
 });
 
 async function post(app: ReturnType<typeof buildApp>["app"], path: string, profileId?: string) {
@@ -730,6 +744,15 @@ describe("POST /api/organiser/weddings/:weddingId/preview-code", () => {
     const { app } = buildApp();
     const res = await post(app, "/api/organiser/weddings/wed_nope/preview-code", BOOTSTRAP_OWNER);
     expect(res.status).toBe(404);
+  });
+
+  it("takes the preview link's slug from the gate, reading the wedding row once", async () => {
+    const { db, app } = buildApp();
+    const statements = recordStatements(db);
+    const res = await post(app, path, BOOTSTRAP_OWNER);
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { slug: string }).slug).toBe("cire-wedding");
+    expect(statements.filter((s) => /\bfrom "weddings"/.test(s.sql))).toHaveLength(1);
   });
 
   it("does not leak the host preview family into the organiser guest roster", async () => {
@@ -1551,7 +1574,7 @@ describe("GET /api/organiser/weddings/:weddingId/gifts.csv", () => {
     db.$client.exec("DROP TABLE registry_contributions");
     const res = await get(app, path, BOOTSTRAP_OWNER);
     expect(res.status).toBe(500);
-    expect(await res.json()).toEqual({ error: "Internal error" });
+    expect(await jsonBody(res)).toEqual({ error: "Internal error" });
     expect(res.headers.get("content-disposition")).toBeNull();
   });
 
@@ -1574,14 +1597,14 @@ describe("GET /api/organiser/weddings/:weddingId/gifts.csv", () => {
       headers: { cookie: "cire_org_session=not-a-live-session-token" },
     });
     expect(res.status).toBe(401);
-    expect(await res.json()).toEqual({ error: "unauthorised" });
+    expect(await jsonBody(res)).toEqual({ error: "unauthorised" });
   });
 
   it("refuses a bearer token that does not verify", async () => {
     const { app } = buildApp();
     const res = await appRequest(app, path, { headers: { authorization: "Bearer not-a-jwt" } });
     expect(res.status).toBe(401);
-    expect(await res.json()).toEqual({ error: "unauthorised" });
+    expect(await jsonBody(res)).toEqual({ error: "unauthorised" });
   });
 
   it("serves a header-only CSV when the couple have had no gifts", async () => {
