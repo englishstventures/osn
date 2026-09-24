@@ -75,7 +75,10 @@ export function upsertCachedVendor(weddingId: string, row: VendorRow): void {
     return;
   }
   const replaced = cur.some((v) => v.id === row.id);
-  setCachedVendors(weddingId, replaced ? cur.map((v) => (v.id === row.id ? row : v)) : [...cur, row]);
+  setCachedVendors(
+    weddingId,
+    replaced ? cur.map((v) => (v.id === row.id ? row : v)) : [...cur, row],
+  );
 }
 
 /** Subscribes only when the entry already exists — a read from a cold cache

@@ -118,4 +118,40 @@ describe("ChecklistView", () => {
     expect(init.method).toBe("PATCH");
     expect(JSON.parse(init.body)).toEqual({ status: "done" });
   });
+
+  it("loads the list for a task added before the list arrived, instead of passing it off as the list", async () => {
+    // The first read fails, so there is no list when the task is created. The
+    // new task alone must not be cached as the whole checklist: that would show
+    // one task and stop the next load from asking the server.
+    let reads = 0;
+    authFetch.mockImplementation(async (_url: string, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        return new Response(JSON.stringify({ task: row({ id: "new", title: "Send invites" }) }), {
+          status: 201,
+        });
+      }
+      reads += 1;
+      if (reads === 1) return new Response(null, { status: 500 });
+      return new Response(
+        JSON.stringify({
+          tasks: [
+            row({ id: "old", title: "Book venue" }),
+            row({ id: "new", title: "Send invites", sortOrder: 1 }),
+          ],
+        }),
+        { status: 200 },
+      );
+    });
+    render(() => <ChecklistView weddingId="wed_1" canEdit={true} />);
+    await screen.findByText(/couldn't load your checklist/i);
+
+    fireEvent.input(screen.getByPlaceholderText("Book the venue"), {
+      target: { value: "Send invites" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add task/i }));
+
+    expect(await screen.findByText("Book venue")).toBeInTheDocument();
+    expect(screen.getByText("Send invites")).toBeInTheDocument();
+    expect(reads).toBe(2);
+  });
 });

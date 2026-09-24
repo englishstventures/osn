@@ -315,6 +315,39 @@ describe("EnquiriesView", () => {
     expect(listReads).toHaveLength(0);
   });
 
+  // The reply's own response carries the message, so the thread shows it
+  // without reading the whole thread again.
+  it("shows a sent reply without re-reading the thread", async () => {
+    const EnquiriesView = await importComponent();
+    setCachedEnquiries("wed_1", [makeItem()]);
+    const earlier = makeMessage({ id: "msg_old", body: "We have your date free." });
+    const sent = makeMessage({
+      id: "msg_new",
+      senderProfileId: "p_me",
+      body: "Wonderful, please send a quote.",
+    });
+    authFetch.mockImplementation(async (_url: string, init?: RequestInit) =>
+      init?.method === "POST"
+        ? new Response(JSON.stringify({ message: sent }), { status: 201 })
+        : new Response(JSON.stringify({ messages: [earlier] }), { status: 200 }),
+    );
+
+    render(() => <EnquiriesView weddingId="wed_1" currency="AUD" canEdit={true} />);
+    fireEvent.click(await screen.findByRole("button", { name: /Blue Roses/ }));
+    await screen.findByText("We have your date free.");
+    const draft = await screen.findByPlaceholderText(/write a reply/i);
+    fireEvent.input(draft, { target: { value: "Wonderful, please send a quote." } });
+    fireEvent.click(screen.getByRole("button", { name: /^send$/i }));
+
+    expect(await screen.findByText("Wonderful, please send a quote.")).toBeInTheDocument();
+    expect(screen.getByText("We have your date free.")).toBeInTheDocument();
+    const threadReads = authFetch.mock.calls.filter(
+      ([url, init]: unknown[]) =>
+        String(url).endsWith("/messages") && (init as RequestInit | undefined)?.method !== "POST",
+    );
+    expect(threadReads).toHaveLength(1);
+  });
+
   // The master-detail contract: opening a thread no longer UNMOUNTS the inbox.
   // On a wide panel the two sit side by side; on a narrow one the inbox is
   // hidden with `@max-3xl/enquiries:hidden`, which happy-dom never applies — so
