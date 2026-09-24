@@ -19,4 +19,4 @@
 # conflict rather than silently agreeing on the same leading number while
 # disagreeing on what it was measured from.
 
-1046   # measured via scripts/guard-lint-warnings.sh (oxlint --format=json), fix/dietary-picker-desktop-layout @ 2026-09-22 — -1, a real fix: the doc comment atop cire/landing/src/components/demo/DemoModal.tsx narrated what the file used to be (a 130-line port of AnimatedModal) instead of what it now guarantees, which house/no-tracker-ref-in-comment reports. The file was already being edited on this branch to give its close button a z-index, so the comment was rewritten to state the present. No rule was disabled and nothing was suppressed.
+1043   # measured via scripts/guard-lint-warnings.sh (oxlint --format=json), fix/cire-entitlement-gates @ 2026-09-25 — -3, real fixes: three house/no-tracker-ref-in-comment finding tags dropped from comments this branch rewrote because their facts changed (cire/api/src/services/hosts.ts twice, cire/api/src/middleware/wedding-entitlement.ts once). No rule was disabled and nothing was suppressed.

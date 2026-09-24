@@ -8,6 +8,7 @@ import { createDb } from "../../src/db/setup";
 import { weddingEditor } from "../../src/middleware/wedding-editor";
 import { weddingEntitlement } from "../../src/middleware/wedding-entitlement";
 import { weddingMember } from "../../src/middleware/wedding-member";
+import { weddingOwner } from "../../src/middleware/wedding-owner";
 import { countingDb, appRequest, jsonBody } from "../test-helpers";
 
 /**
@@ -122,6 +123,36 @@ function standaloneApp(db: Db, profileId: string) {
     .group("/w/:weddingId", (g) =>
       g.use(weddingEntitlement(db, "vendors")).get("/thing", () => ({ ok: true })),
     );
+}
+
+/** The owner gate folding the same key as the entitlement gate after it — the
+ *  shape the Stripe onboarding routes use. */
+function ownerGatedApp(db: Db, profileId: string) {
+  return new Elysia({ aot: false })
+    .derive(() => ({ osnProfileId: profileId }))
+    .group("/w/:weddingId", (g) =>
+      g
+        .use(weddingOwner(db, "vendors"))
+        .use(weddingEntitlement(db, "vendors"))
+        .post("/thing", () => ({ ok: true })),
+    );
+}
+
+function ownerMismatchedApp(db: Db, profileId: string) {
+  return new Elysia({ aot: false })
+    .derive(() => ({ osnProfileId: profileId }))
+    .group("/w/:weddingId", (g) =>
+      g
+        .use(weddingOwner(db, "vendors"))
+        .use(weddingEntitlement(db, "registry"))
+        .post("/thing", () => ({ ok: true })),
+    );
+}
+
+function ownerUngatedApp(db: Db, profileId: string) {
+  return new Elysia({ aot: false })
+    .derive(() => ({ osnProfileId: profileId }))
+    .group("/w/:weddingId", (g) => g.use(weddingOwner(db)).post("/thing", () => ({ ok: true })));
 }
 
 function ungatedEditorApp(db: Db, profileId: string) {
@@ -258,5 +289,74 @@ describe("P-W1: role-gate/entitlement-gate query fold", () => {
     // No entitlement gate on this route at all, so a broken entitlement table
     // must not touch it — the role gate passes no key and never folds.
     expect(res.status).toBe(200);
+  });
+});
+
+describe("the owner gate folds the entitlement check too", () => {
+  const post = { method: "POST" };
+
+  it("an owner on a gated route costs 1 select, not 2", async () => {
+    const db = buildDb({ grantVendors: true });
+    const { db: counted, selectCount } = countingDb(db);
+    const res = await appRequest(ownerGatedApp(counted, OWNER), `/w/${WEDDING_ID}/thing`, post);
+    expect(res.status).toBe(200);
+    expect(await jsonBody(res)).toEqual({ ok: true });
+    expect(selectCount()).toBe(1);
+  });
+
+  it("answers an absent entitlement with 402 from that same single select", async () => {
+    const db = buildDb({ grantVendors: false });
+    const { db: counted, selectCount } = countingDb(db);
+    const res = await appRequest(ownerGatedApp(counted, OWNER), `/w/${WEDDING_ID}/thing`, post);
+    expect(res.status).toBe(402);
+    expect(await jsonBody(res)).toEqual({ error: "payment_required", entitlement: "vendors" });
+    expect(selectCount()).toBe(1);
+  });
+
+  it("refuses a co-host with 403 and never reads the entitlement on its own", async () => {
+    const db = buildDb({ grantVendors: true });
+    const { db: counted, selectCount } = countingDb(db);
+    const res = await appRequest(ownerGatedApp(counted, COHOST), `/w/${WEDDING_ID}/thing`, post);
+    expect(res.status).toBe(403);
+    expect(await jsonBody(res)).toEqual({ error: "forbidden" });
+    expect(selectCount()).toBe(1);
+  });
+
+  it("with no key, runs the query it always ran — 1 select, no fold", async () => {
+    const db = buildDb({ grantVendors: true });
+    const { db: counted, selectCount } = countingDb(db);
+    const res = await appRequest(ownerUngatedApp(counted, OWNER), `/w/${WEDDING_ID}/thing`, post);
+    expect(res.status).toBe(200);
+    expect(selectCount()).toBe(1);
+  });
+
+  it("a fold for a different key is ignored, and the entitlement gate pays for its own", async () => {
+    // "vendors" granted, "registry" not: trusting the fold would let the
+    // caller through.
+    const db = buildDb({ grantVendors: true });
+    const { db: counted, selectCount } = countingDb(db);
+    const res = await appRequest(
+      ownerMismatchedApp(counted, OWNER),
+      `/w/${WEDDING_ID}/thing`,
+      post,
+    );
+    expect(res.status).toBe(402);
+    expect(await jsonBody(res)).toEqual({ error: "payment_required", entitlement: "registry" });
+    expect(selectCount()).toBe(2);
+  });
+
+  it("degrades to a scoped 402, not a 500, when the entitlement table is broken", async () => {
+    const db = buildDb({ grantVendors: true });
+    db.$client.exec("DROP TABLE wedding_entitlements");
+    const res = await appRequest(ownerGatedApp(db, OWNER), `/w/${WEDDING_ID}/thing`, post);
+    expect(res.status).toBe(402);
+    expect(await jsonBody(res)).toEqual({ error: "payment_required", entitlement: "vendors" });
+  });
+
+  it("still refuses a non-owner through the fallback when the fold breaks", async () => {
+    const db = buildDb({ grantVendors: true });
+    db.$client.exec("DROP TABLE wedding_entitlements");
+    const res = await appRequest(ownerGatedApp(db, COHOST), `/w/${WEDDING_ID}/thing`, post);
+    expect(res.status).toBe(403);
   });
 });
