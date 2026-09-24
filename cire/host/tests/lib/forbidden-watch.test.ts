@@ -42,6 +42,24 @@ describe("watchForbidden", () => {
     expect(onRefused).toHaveBeenCalledTimes(1);
   });
 
+  it("reports when the refused request was sent, not when the answer came", async () => {
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1_000);
+    try {
+      let answer: (res: Response) => void = () => {};
+      const inner = vi.fn(() => new Promise<Response>((resolve) => (answer = resolve)));
+      const onRefused = vi.fn();
+      const pending = watchForbidden(inner, onRefused)(WEDDING_URL);
+
+      clock.mockReturnValue(5_000);
+      answer(new Response(null, { status: 403 }));
+      await pending;
+
+      expect(onRefused).toHaveBeenCalledWith(1_000);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   it("stays quiet on anything else, and lets a thrown error through", async () => {
     const onRefused = vi.fn();
     const ok = watchForbidden(vi.fn().mockResolvedValue(new Response(null)), onRefused);

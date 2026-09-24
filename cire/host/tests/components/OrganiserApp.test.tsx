@@ -741,6 +741,10 @@ describe("OrganiserApp Dashboard", () => {
   it.each([
     ["answers 500", () => Promise.resolve(new Response(null, { status: 500 }))],
     ["fails outright", () => Promise.reject(new Error("network down"))],
+    [
+      "answers without a list",
+      () => Promise.resolve(new Response(JSON.stringify({ weddings: null }), { status: 200 })),
+    ],
   ])("changes nothing when the recheck %s", async (_label, failedRead) => {
     history.replaceState(null, "", "#/w/wed_a");
     let listReads = 0;
@@ -872,5 +876,67 @@ describe("OrganiserApp Dashboard", () => {
 
     await waitFor(() => expect(screen.getByTestId("security-panel")).toBeTruthy());
     expect(peekCachedVendors("wed_a")).toBeNull();
+  });
+
+  it("rechecks when the organiser moves within the dashboard, at most once a minute", async () => {
+    // Loaded modules answer from their caches, so moving between them sends
+    // no request a refusal could come back on.
+    const start = 1_900_000_000_000;
+    const clock = vi.spyOn(Date, "now").mockReturnValue(start);
+    try {
+      history.replaceState(null, "", "#/w/wed_a");
+      authFetchMock.mockResolvedValue(
+        listResponse([{ id: "wed_a", slug: "a", displayName: "Alice & Bob" }]),
+      );
+      render(() => <OrganiserApp />);
+      await waitFor(() => expect(shell().textContent).toContain("wed_a"));
+
+      clock.mockReturnValue(start + 30_000);
+      fireEvent.click(screen.getByText("go-guests"));
+      expect(listCalls()).toBe(1);
+
+      clock.mockReturnValue(start + 61_000);
+      fireEvent.click(screen.getByText("go-rsvps"));
+      await waitFor(() => expect(listCalls()).toBe(2));
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it("asks again when a refusal comes from a request sent after the check in flight", async () => {
+    // The check in flight may have been answered before the change the new
+    // refusal reports; joining it would spend that evidence on a stale answer.
+    const start = 1_900_000_000_000;
+    const clock = vi.spyOn(Date, "now").mockReturnValue(start);
+    try {
+      history.replaceState(null, "", "#/w/wed_a");
+      const wedA = [{ id: "wed_a", slug: "a", displayName: "Alice & Bob" }];
+      const early = heldList();
+      let listReads = 0;
+      authFetchMock.mockImplementation((url: string) => {
+        if (url !== LIST_URL) {
+          return Promise.resolve(new Response(JSON.stringify({ error: "x" }), { status: 403 }));
+        }
+        listReads += 1;
+        if (listReads === 2) return early.promise;
+        return Promise.resolve(listResponse(listReads === 3 ? [] : wedA));
+      });
+      render(() => <OrganiserApp />);
+      await waitFor(() => expect(shell().textContent).toContain("wed_a"));
+
+      fireEvent.click(screen.getByText("read-vendors"));
+      await waitFor(() => expect(listReads).toBe(2));
+
+      clock.mockReturnValue(start + 1_000);
+      fireEvent.click(screen.getByText("read-vendors"));
+
+      await waitFor(() => expect(screen.getByTestId("wedding-list")).toBeTruthy());
+      expect(listReads).toBe(3);
+      early.answer(listResponse(wedA));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(screen.queryByTestId("module-shell")).toBeNull();
+    } finally {
+      clock.mockRestore();
+    }
   });
 });

@@ -23,14 +23,18 @@ export function refusesWedding(input: RequestInfo | URL, res: Response): boolean
 
 /**
  * Wrap `authFetch` so every refusal on a wedding-scoped route calls
- * `onRefused`. The response is handed back untouched: the caller still shows
- * its own error, and the refusal is only a prompt to ask the API what the
- * organiser may see now.
+ * `onRefused` with the time the refused request was sent. The response is
+ * handed back untouched: the caller still shows its own error, and the refusal
+ * is only a prompt to ask the API what the organiser may see now.
  */
-export function watchForbidden(authFetch: AuthFetch, onRefused: () => void): AuthFetch {
+export function watchForbidden(
+  authFetch: AuthFetch,
+  onRefused: (sentAt: number) => void,
+): AuthFetch {
   return async (input, init) => {
+    const sentAt = Date.now();
     const res = await authFetch(input, init);
-    if (refusesWedding(input, res)) onRefused();
+    if (refusesWedding(input, res)) onRefused(sentAt);
     return res;
   };
 }

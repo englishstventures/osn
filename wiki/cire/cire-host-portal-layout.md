@@ -379,16 +379,22 @@ drops the rows. The re-read runs on:
 - **a 403 from a wedding route.** `Dashboard` provides its own `AuthContext`
   whose `authFetch` is wrapped by `watchForbidden` (`lib/forbidden-watch.ts`).
   Every request below it is watched.
-- **the tab coming back into view.** It runs at most once a minute
-  (`RECHECK_ON_RETURN_AFTER_MS`). A 401 on the re-read signs the tab out, and
-  that full page load discards the heap.
+- **the tab coming back into view, or a move within the dashboard** (module,
+  sub-view or wedding). Either one runs at most once a minute
+  (`RECHECK_AFTER_MS`). A module already loaded answers from its cache and
+  sends no request, so without the move trigger a tab in use could go from
+  module to module and never be refused. A 401 on the re-read signs the tab
+  out, and that full page load discards the heap.
 
-Concurrent triggers share one request, and a request unanswered after 30 s is
-abandoned. A failed answer changes nothing. The list is also written locally:
-a created wedding, a rename, or the upgrade return's own refresh. An answer that
-arrives after one of those local writes is thrown away and the list is asked
-for once more. Nothing pushes a change to a tab nobody is using: it waits for
-its next request or its next return to view.
+Concurrent triggers share one request. The exception is a 403 on a request
+sent after the shared request started: the answer may predate the change the
+403 reports, so a new request goes out. A request unanswered after 30 s is
+abandoned, and only the newest request's answer is applied. A failed answer,
+or one without a list, changes nothing. The list is also written locally: a
+created wedding, a rename, or the upgrade return's own refresh. An answer
+that arrives after one of those local writes is thrown away and the list is
+asked for once more. Nothing pushes a change to a tab left untouched. It
+waits for the tab's next request, move or return to view.
 
 ## Testing
 

@@ -6,6 +6,7 @@ import {
   createResource,
   createSignal,
   lazy,
+  on,
   onCleanup,
   onMount,
   type ParentProps,
@@ -57,13 +58,13 @@ import WeddingList from "./WeddingList";
 const CommandPalette = lazy(() => import("./CommandPalette"));
 
 /**
- * How long after the last check a tab coming back into view asks the API again
- * which weddings the organiser holds, and in what role. Short enough that a
- * tab left open over a removal stops showing that wedding soon after it is
- * looked at again; long enough that flicking between tabs is not a request
- * each time.
+ * How long after the last check the portal asks the API again, when the tab
+ * comes back into view or the organiser moves within the dashboard, which
+ * weddings the organiser holds and in what role. Short enough that a removal
+ * stops a tab in use showing that wedding within a minute; long enough that
+ * flicking between tabs or modules is not a request each time.
  */
-const RECHECK_ON_RETURN_AFTER_MS = 60_000;
+const RECHECK_AFTER_MS = 60_000;
 
 /** A wedding-list check still unanswered after this long is abandoned: the
  *  next trigger sends a fresh one rather than waiting on it. */
@@ -259,15 +260,24 @@ function Dashboard() {
    * drops its rows. A role that keeps the dashboard only changes what the
    * dashboard offers; its rows are still the organiser's to read.
    *
-   * Runs on any 403 from a wedding route and when the tab comes back into
-   * view. Concurrent triggers share one request. An answer is thrown away if
-   * the list was written locally while it was in flight (a created wedding, a
-   * rename), and then asked for once more; an answer overtaken by a newer
-   * request is thrown away too.
+   * Runs on any 403 from a wedding route, and — at most once a minute — when
+   * the tab comes back into view or the organiser moves within the
+   * dashboard. Concurrent triggers share one request, except a refusal of a
+   * request sent after that one started: its answer may predate the change
+   * the refusal reports, so a new request is sent. An answer is thrown away
+   * if the list was written locally while it was in flight (a created
+   * wedding, a rename), and then asked for once more; an answer overtaken by
+   * a newer request is thrown away too.
+   *
+   * `refusedAt` is when the refused request was sent, for a 403 trigger.
    */
-  function recheckWeddings(retry = true): Promise<void> {
+  function recheckWeddings(refusedAt?: number, retry = true): Promise<void> {
     if (untrack(weddings) === null) return Promise.resolve();
-    if (recheck && Date.now() - recheck.startedAt < RECHECK_ABANDONED_AFTER_MS) {
+    if (
+      recheck &&
+      Date.now() - recheck.startedAt < RECHECK_ABANDONED_AFTER_MS &&
+      !(refusedAt !== undefined && refusedAt > recheck.startedAt)
+    ) {
       return recheck.done;
     }
     recheckSeq += 1;
@@ -279,7 +289,10 @@ function Dashboard() {
         const res = await authFetch(apiUrl("/api/organiser/weddings"));
         // A failed check changes nothing: an empty or partial answer read as
         // "no weddings" would drop every scope.
-        if (res.ok) answer = ((await res.json()) as { weddings: WeddingSummary[] }).weddings;
+        if (res.ok) {
+          const body = (await res.json()) as { weddings?: unknown };
+          if (Array.isArray(body.weddings)) answer = body.weddings as WeddingSummary[];
+        }
       } catch (err) {
         if (isAuthExpired(err)) redirectToLogin();
       }
@@ -291,18 +304,21 @@ function Dashboard() {
       if (version === listVersion) {
         writeWeddings(answer.map(withKnownRole));
       } else if (retry) {
-        await recheckWeddings(false);
+        await recheckWeddings(undefined, false);
       }
     })();
     recheck = { startedAt: Date.now(), done };
     return done;
   }
 
+  /** Recheck unless the last check is under a minute old. */
+  function recheckIfDue(): void {
+    if (Date.now() - lastRecheckedAt >= RECHECK_AFTER_MS) void recheckWeddings();
+  }
+
   onMount(() => {
     const onVisibility = () => {
-      if (document.visibilityState !== "visible") return;
-      if (Date.now() - lastRecheckedAt < RECHECK_ON_RETURN_AFTER_MS) return;
-      void recheckWeddings();
+      if (document.visibilityState === "visible") recheckIfDue();
     };
     document.addEventListener("visibilitychange", onVisibility);
     onCleanup(() => document.removeEventListener("visibilitychange", onVisibility));
@@ -312,7 +328,7 @@ function Dashboard() {
   // plus a recheck of the list whenever the API refuses a wedding route.
   const watchedAuth = {
     ...auth,
-    authFetch: watchForbidden(authFetch, () => void recheckWeddings()),
+    authFetch: watchForbidden(authFetch, (sentAt) => void recheckWeddings(sentAt)),
   };
 
   /**
@@ -409,6 +425,11 @@ function Dashboard() {
   });
 
   const view = () => route().view;
+
+  // A module already loaded is served from its cache with no request, so a
+  // tab in use can move between modules without the API being asked
+  // anything. Every move is a moment to ask.
+  createEffect(on(route, recheckIfDue, { defer: true }));
 
   function selectView(next: "weddings" | "security") {
     if (next === "security")
