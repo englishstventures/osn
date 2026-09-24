@@ -27,7 +27,7 @@ vi.mock("../../src/lib/api", async () => {
 import GuestsEditor from "../../src/components/GuestsEditor";
 import { __resetEventsCache } from "../../src/lib/events-store";
 import type { DesiredStateWire } from "../../src/lib/guest-event-draft";
-import { __resetGuestsCache } from "../../src/lib/guests-store";
+import { __resetGuestsCache, ensureGuestsLoaded } from "../../src/lib/guests-store";
 import { __resetHouseholdsCache, invalidateHouseholds } from "../../src/lib/households-store";
 import { confirmNavigation } from "../../src/lib/unsaved-guard";
 import { authFetchMock, resetOrganiserMocks, toastSuccess } from "../test-support/mocks";
@@ -37,6 +37,14 @@ function json(body: unknown, status = 200) {
     status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+/** The change head each editor reads before it loads its rows. */
+const HEAD = "rev_head";
+
+/** What an unrouted request gets: the change head for `/changes/head`, else `{}`. */
+function fallback(url: unknown) {
+  return String(url).endsWith("/changes/head") ? json({ revision: HEAD }) : json({});
 }
 
 const EVENTS = [
@@ -111,7 +119,7 @@ function primeLoad() {
     if (String(url).endsWith("/events")) return Promise.resolve(json(EVENTS));
     if (String(url).endsWith("/guests")) return Promise.resolve(json(GUESTS));
     if (String(url).endsWith("/households")) return Promise.resolve(json(HOUSEHOLDS));
-    return Promise.resolve(json({}));
+    return Promise.resolve(fallback(url));
   });
 }
 
@@ -155,7 +163,7 @@ describe("GuestsEditor", () => {
       if (u.endsWith("/events")) return Promise.resolve(json(EVENTS));
       if (u.endsWith("/guests")) return Promise.resolve(json(GUESTS));
       if (u.endsWith("/households")) return householdsFetch;
-      return Promise.resolve(json({}));
+      return Promise.resolve(fallback(url));
     });
 
     render(() => <GuestsEditor weddingId="wed_a" />);
@@ -247,7 +255,7 @@ describe("GuestsEditor", () => {
       if (u.endsWith("/households")) return Promise.resolve(json(HOUSEHOLDS));
       if (u.endsWith("/guests"))
         return Promise.resolve(json([{ ...GUESTS[0], firstName: "Adaeze" }]));
-      return Promise.resolve(json({}));
+      return Promise.resolve(fallback(url));
     });
 
     fireEvent.click(screen.getByRole("button", { name: /Save changes/i }));
@@ -302,7 +310,7 @@ describe("GuestsEditor", () => {
         if (u.endsWith("/guests")) return Promise.resolve(json([...GUESTS, BEN]));
         if (u.endsWith("/households"))
           return Promise.resolve(json([{ ...HOUSEHOLDS[0], guestCount: 2 }]));
-        return Promise.resolve(json({}));
+        return Promise.resolve(fallback(url));
       });
     }
 
@@ -343,7 +351,7 @@ describe("GuestsEditor", () => {
             }),
           );
         }
-        return Promise.resolve(json({}));
+        return Promise.resolve(fallback(url));
       });
       return { body: () => captured };
     }
@@ -405,7 +413,7 @@ describe("GuestsEditor", () => {
             },
           ]),
         );
-      return Promise.resolve(json({}));
+      return Promise.resolve(fallback(url));
     });
 
     render(() => <GuestsEditor weddingId="wed_a" />);
@@ -470,7 +478,7 @@ describe("GuestsEditor", () => {
       }
       if (u.endsWith("/changes/apply"))
         return Promise.resolve(json({ error: "Apply failed" }, 500));
-      return Promise.resolve(json({}));
+      return Promise.resolve(fallback(url));
     });
 
     fireEvent.click(screen.getByRole("button", { name: /Save changes/i }));
@@ -536,7 +544,7 @@ describe("GuestsEditor", () => {
       }
       if (u.endsWith("/changes/apply"))
         return Promise.resolve(json({ error: "State changed — re-preview" }, 409));
-      return Promise.resolve(json({}));
+      return Promise.resolve(fallback(url));
     });
 
     fireEvent.click(screen.getByRole("button", { name: /Save changes/i }));
@@ -547,5 +555,192 @@ describe("GuestsEditor", () => {
     // A 409 means the previewed diff is stale, so the modal is dismissed —
     // re-confirming it could only 409 again.
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  /** A preview body with nothing in it but what a test sets. */
+  function previewResponse(extra: Record<string, unknown> = {}) {
+    return json({
+      changeId: "chg_1",
+      baseRevision: HEAD,
+      warnings: [],
+      clears: null,
+      plan: {
+        eventCreates: [],
+        eventUpdates: [],
+        eventRemoves: [],
+        familyCreates: [],
+        familyRemoves: [],
+        guestCreates: [],
+        guestUpdates: [{}],
+        guestRemoves: [],
+        eventLinkCreates: [],
+        eventLinkRemoves: [],
+        warnings: [],
+      },
+      ...extra,
+    });
+  }
+
+  /**
+   * The draft is built once, at load, and the save reads every row it lacks as
+   * a removal. So it carries the change head it was loaded at, read BEFORE the
+   * rows: rows read first could miss a co-host's change the head already
+   * counts.
+   */
+  describe("the change head the draft is built on", () => {
+    it("reads the head before any row, and saves with it as a guests-only change", async () => {
+      primeLoad();
+      render(() => <GuestsEditor weddingId="wed_a" />);
+      await waitFor(() => expect(screen.getByDisplayValue("Ada")).toBeTruthy());
+
+      const urls = authFetchMock.mock.calls.map((c) => String(c[0]));
+      expect(urls[0]).toBe("https://api.test/api/organiser/weddings/wed_a/changes/head");
+      expect(urls.slice(1).some((u) => u.endsWith("/changes/head"))).toBe(false);
+
+      fireEvent.input(screen.getByDisplayValue("Ada"), { target: { value: "Adaeze" } });
+      let posted: Record<string, unknown> | null = null;
+      authFetchMock.mockImplementation((url: string, init?: RequestInit) => {
+        if (String(url).endsWith("/changes/preview")) {
+          posted = JSON.parse(String(init?.body));
+          return Promise.resolve(previewResponse());
+        }
+        return Promise.resolve(fallback(url));
+      });
+      fireEvent.click(await waitFor(() => screen.getByRole("button", { name: /Save changes/i })));
+      await waitFor(() => expect(posted).not.toBeNull());
+
+      // The guests editor never changes the schedule, so its save carries no
+      // authority over it.
+      expect(posted!.scope).toBe("guests");
+      expect(posted!.removeManual).toBe(true);
+      expect(posted!.baseRevision).toBe(HEAD);
+    });
+
+    it("loads the rows fresh even when the shared caches already hold them", async () => {
+      // Another view filled the guest cache earlier. Those rows could predate
+      // the head the editor is about to read, so they must not seed the draft.
+      await ensureGuestsLoaded("wed_a", async () => [{ ...GUESTS[0]!, firstName: "Stale" }]);
+      primeLoad();
+      render(() => <GuestsEditor weddingId="wed_a" />);
+
+      await waitFor(() => expect(screen.getByDisplayValue("Ada")).toBeTruthy());
+      expect(screen.queryByDisplayValue("Stale")).toBeNull();
+      expect(authFetchMock.mock.calls.some((c) => String(c[0]).endsWith("/guests"))).toBe(true);
+    });
+
+    it("shows a load error, not a draft, when the head cannot be read", async () => {
+      authFetchMock.mockImplementation((url: string) => {
+        if (String(url).endsWith("/changes/head")) {
+          return Promise.resolve(json({ error: "Internal error" }, 500));
+        }
+        return Promise.resolve(fallback(url));
+      });
+      render(() => <GuestsEditor weddingId="wed_a" />);
+      await waitFor(() => expect(screen.getByText(/Could not load the guest list/i)).toBeTruthy());
+      expect(screen.queryByLabelText("Household name")).toBeNull();
+    });
+
+    it("says to reload when the draft is older than the head", async () => {
+      primeLoad();
+      render(() => <GuestsEditor weddingId="wed_a" />);
+      await waitFor(() => expect(screen.getByDisplayValue("Ada")).toBeTruthy());
+      fireEvent.input(screen.getByDisplayValue("Ada"), { target: { value: "Adaeze" } });
+
+      authFetchMock.mockImplementation((url: string) => {
+        if (String(url).endsWith("/changes/preview")) {
+          return Promise.resolve(
+            json({ error: "State changed — reload the editor", reason: "stale_draft" }, 409),
+          );
+        }
+        return Promise.resolve(fallback(url));
+      });
+      fireEvent.click(await waitFor(() => screen.getByRole("button", { name: /Save changes/i })));
+      await waitFor(() => expect(screen.getByText(/reload the editor/i)).toBeTruthy());
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+  });
+
+  /**
+   * The apply went through, but the reload that would hand the draft the new
+   * rows' server ids did not. That draft still describes the households it
+   * just created as new, so saving it again would create them a second time
+   * (and remove the first ones, claim codes and all).
+   */
+  it("drops the draft when the reload after a successful apply fails, and re-seeds on remount", async () => {
+    primeLoad();
+    const first = render(() => <GuestsEditor weddingId="wed_a" />);
+    await waitFor(() => expect(screen.getByDisplayValue("Ada")).toBeTruthy());
+
+    // A new household — the kind of row that has no id until the reload.
+    fireEvent.click(screen.getAllByRole("button", { name: /Add household/i })[0]!);
+    const names = screen.getAllByLabelText("Household name") as HTMLInputElement[];
+    fireEvent.input(names[names.length - 1]!, { target: { value: "Newcomer" } });
+
+    let applied = false;
+    authFetchMock.mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.endsWith("/changes/preview")) return Promise.resolve(previewResponse());
+      if (u.endsWith("/changes/apply")) {
+        applied = true;
+        return Promise.resolve(json({ summary: { changeId: "chg_1" } }));
+      }
+      // Every read after the apply fails.
+      if (applied) return Promise.resolve(json({ error: "Internal error" }, 500));
+      return Promise.resolve(fallback(url));
+    });
+
+    fireEvent.click(await waitFor(() => screen.getByRole("button", { name: /Save changes/i })));
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: /Confirm & save/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/Saved, but the editor could not reload/i)).toBeTruthy(),
+    );
+    // Nothing left to save: no bar, no rows, no way to add one.
+    expect(screen.queryByRole("button", { name: /Save changes/i })).toBeNull();
+    expect(screen.queryByLabelText("Household name")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Add household/i })).toBeNull();
+    expect(toastSuccess).not.toHaveBeenCalled();
+    // Nothing unsaved to guard, either.
+    expect(confirmNavigation()).toBe(true);
+
+    // Opening the editor again seeds it from the server.
+    first.unmount();
+    primeLoad();
+    render(() => <GuestsEditor weddingId="wed_a" />);
+    await waitFor(() => expect(screen.getByDisplayValue("Ada")).toBeTruthy());
+    expect(screen.queryByDisplayValue("Newcomer")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Save changes/i })).toBeNull();
+  });
+
+  it("names a save that removes every household, and confirms the count on apply", async () => {
+    primeLoad();
+    render(() => <GuestsEditor weddingId="wed_a" />);
+    await waitFor(() => expect(screen.getByDisplayValue("Ada")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: /Delete household/i }));
+
+    let applyBody: Record<string, unknown> | null = null;
+    authFetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      const u = String(url);
+      if (u.endsWith("/changes/preview")) {
+        return Promise.resolve(previewResponse({ clears: { events: 0, households: 1 } }));
+      }
+      if (u.endsWith("/changes/apply")) {
+        applyBody = JSON.parse(String(init?.body));
+        return Promise.resolve(json({ summary: { changeId: "chg_1" } }));
+      }
+      if (u.endsWith("/events")) return Promise.resolve(json(EVENTS));
+      if (u.endsWith("/guests")) return Promise.resolve(json([]));
+      if (u.endsWith("/households")) return Promise.resolve(json([]));
+      return Promise.resolve(fallback(url));
+    });
+
+    fireEvent.click(await waitFor(() => screen.getByRole("button", { name: /Save changes/i })));
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
+    expect(screen.getByRole("dialog").textContent).toMatch(/removes every household \(1\)/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /Confirm & save/i }));
+    await waitFor(() => expect(applyBody).not.toBeNull());
+    expect(applyBody).toEqual({ changeId: "chg_1", confirmClears: { events: 0, households: 1 } });
   });
 });

@@ -40,6 +40,14 @@ function json(body: unknown, status = 200) {
   });
 }
 
+/** The change head each editor reads before it loads its rows. */
+const HEAD = "rev_head";
+
+/** What an unrouted request gets: the change head for `/changes/head`, else `{}`. */
+function fallback(url: unknown) {
+  return String(url).endsWith("/changes/head") ? json({ revision: HEAD }) : json({});
+}
+
 const EVENTS = [
   {
     id: "evt_1",
@@ -90,7 +98,7 @@ it("shows a load error instead of seeding an empty draft when the events load re
   authFetchMock.mockImplementation((url: string) => {
     const u = String(url);
     if (u.endsWith("/events")) return eventsFetch;
-    return Promise.resolve(json({}));
+    return Promise.resolve(fallback(url));
   });
 
   render(() => <EventsEditor weddingId="wed_a" />);

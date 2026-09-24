@@ -1,4 +1,5 @@
 import Button from "@cire/ui/button";
+import { Notice } from "@shared/ui/ui/notice";
 import { Table, Td, Th } from "@shared/ui/ui/table";
 import { For, Show } from "solid-js";
 // The SHARED change-preview renderer (guest+event editor §8): "extract
@@ -30,8 +31,19 @@ export interface ChangePlan {
   warnings: string[];
 }
 
+/** How many rows an editor save removes from each list it leaves EMPTY
+ *  (`clears` on the `changes/preview` response; 0 for a list it keeps). */
+export interface ClearedHalves {
+  events: number;
+  households: number;
+}
+
 interface ChangePreviewProps {
   plan: ChangePlan;
+  /** Set when the change removes every event or every household. Rendered as
+   *  its own warning, above the counts, because a whole list going is not the
+   *  kind of thing a diff table row says loudly enough. */
+  clears?: ClearedHalves | null;
   /** Impact warnings (RSVP loss on delete/un-invite, claim-code loss on
    *  household delete). Confirm-gated — surfaced but non-blocking. */
   warnings: string[];
@@ -121,6 +133,23 @@ export default function ChangePreview(props: ChangePreviewProps) {
   return (
     <div class="border-border bg-bg/40 flex flex-col gap-4 rounded-sm border p-4">
       <h3 class="font-display text-gold-dim text-ui-md">Diff preview</h3>
+      <Show when={props.clears}>
+        {(clears) => (
+          <Notice tone="danger">
+            <Show when={clears().households > 0}>
+              <p>
+                This removes every household ({clears().households}), with their guests, RSVPs
+                and invite codes.
+              </p>
+            </Show>
+            <Show when={clears().events > 0}>
+              <p>
+                This removes every event ({clears().events}), with their invitations and RSVPs.
+              </p>
+            </Show>
+          </Notice>
+        )}
+      </Show>
       <PlanCounts plan={props.plan} />
 
       <Show when={props.warnings.length > 0}>
