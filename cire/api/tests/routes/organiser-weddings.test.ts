@@ -22,7 +22,7 @@ import { createApp } from "../../src/app";
 import type { Db } from "../../src/db";
 import { createDb, seedDb } from "../../src/db/setup";
 import type { TestDb } from "../../src/db/setup";
-import { appRequest } from "../test-helpers";
+import { appRequest, jsonBody } from "../test-helpers";
 import { makeOsnTestAuth } from "../test-helpers/osn-token";
 import type { OsnTestAuth } from "../test-helpers/osn-token";
 
@@ -137,6 +137,19 @@ describe("GET /api/organiser/weddings", () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(401);
+    expect(await jsonBody(res)).toEqual({ error: "unauthorised" });
+  });
+
+  // `createApp` hands its `osnAudience` to the verifier; a token minted for any
+  // other audience must not pass, whatever else about it is right.
+  it("returns 401 for a token minted for another audience", async () => {
+    const { app } = buildApp();
+    const token = await auth.sign(BOOTSTRAP_OWNER, { audience: "osn-refresh" });
+    const res = await appRequest(app, "/api/organiser/weddings", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(401);
+    expect(await jsonBody(res)).toEqual({ error: "unauthorised" });
   });
 
   it("lists only the caller's weddings", async () => {
