@@ -11,7 +11,7 @@
  */
 
 import { Database } from "bun:sqlite";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -70,6 +70,16 @@ describe("createDrizzleClient", () => {
     expect(() => db.insert(children).values({ id: "c1", parentId: "missing" }).run()).toThrow(
       /FOREIGN KEY constraint failed/,
     );
+  });
+
+  it("creates the database file when none exists at the path", async () => {
+    const freshPath = join(dir, "fresh.db");
+    expect(existsSync(freshPath)).toBe(false);
+
+    const db = await createDrizzleClient(freshPath, schema);
+    await db.run(sql`CREATE TABLE parents (id TEXT PRIMARY KEY)`);
+
+    expect(existsSync(freshPath)).toBe(true);
   });
 
   it("writes to the file at the path it was given", async () => {

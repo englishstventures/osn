@@ -132,7 +132,7 @@ the editor finds it for test files (see [[testing-patterns#Rules]]).
 | Package | `tsconfig.json` (shipped source) | `tests/tsconfig.json` |
 |---|---|---|
 | `@cire/api` | The Worker: Workers types only, `lib` ES2023. Leaves out `src/local.ts` and `src/db/setup.ts`, the two files that only run under Bun | Adds `bun-types`; includes the tests and those two files |
-| `@cire/invites` | `lib` ES2022 + DOM, which the browser floor in the root `.browserslistrc` implements (see [[frontend-patterns#Supported browsers]]) | `lib` ES2023, for `toSorted` and `toReversed` in tests |
+| `@cire/invites` | `lib` ES2022 + DOM, set in the file rather than inherited, which the browser floor in the root `.browserslistrc` implements (see [[frontend-patterns#Supported browsers]]) | `lib` ES2023, for `toSorted` and `toReversed` in tests |
 
 What this does and does not catch:
 

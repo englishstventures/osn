@@ -176,8 +176,10 @@ The same file must not name `bun:sqlite` in a **type** either, for a second
 reason: `cire/api` type-checks its Worker source with Workers types only (see
 [[cire-development]]), and that program includes `@shared/db-utils/src/index.ts`
 because the Worker imports `rowsChanged` from it. A `typeof import("bun:sqlite")`
-there fails the cire Worker check. The `drizzle-orm/bun-sqlite` type import at
-the top of the file is fine only because `skipLibCheck` skips that package's
+there fails the cire Worker check, and `@shared/db-utils`' own `check` fails
+first: its `tsconfig.json` carries Workers types only, and its tests get
+`bun-types` from `tests/tsconfig.json`. The `drizzle-orm/bun-sqlite` type import
+at the top of the file is fine only because `skipLibCheck` skips that package's
 `.d.ts`.
 
 ## Testing

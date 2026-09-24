@@ -5,6 +5,9 @@
   // ES2023 in `tests/tsconfig.json`.
   "extends": "@shared/typescript-config/solid.json",
   "compilerOptions": {
+    // Stated here rather than inherited from `solid.json`, so a change to the
+    // shared config cannot quietly raise it.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "preserve",
     "jsxImportSource": "solid-js"
   },

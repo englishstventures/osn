@@ -51,8 +51,8 @@ export type Db<S extends DrizzleSchema> = BaseSQLiteDatabase<"sync" | "async", u
  *
  * No code in this file refers to the `bun:sqlite` module, not even as a type:
  * Worker type-checks that have no Bun types import this file for its D1
- * helpers (`cire/api`'s `tsconfig.json` is one), so drizzle opens the database
- * from the path itself. The `drizzle-orm/bun-sqlite` type import at the top is
+ * helpers (`cire/api`'s `tsconfig.json` is one, and this package's own is
+ * another), so drizzle opens the database from the path itself. The `drizzle-orm/bun-sqlite` type import at the top is
  * safe there only because `skipLibCheck` skips that package's `.d.ts`.
  */
 export async function createDrizzleClient<S extends DrizzleSchema>(

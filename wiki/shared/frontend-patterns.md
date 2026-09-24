@@ -88,6 +88,9 @@ Safari and iOS Safari 16.4. It is the target Vite 8 compiles plain-Vite apps to
 by default (`build.target: "baseline-widely-available"`), and
 `musubi/social/tests/browser-floor.test.ts` fails when the two differ. So a Vite
 major that moves its default fails a test instead of quietly moving the floor.
+The test resolves `musubi/social`'s Vite config; the other plain-Vite apps set no
+`build.target` and resolve to the same default (`pulse/web` checked by hand with
+Vite's `resolveConfig`, 2026-09-25).
 When it fails, edit `.browserslistrc` (and review the `lib` of `cire/invites`, see
 [[cire-development#Type-check configs]]), or pin `build.target` in the app's Vite
 config.
