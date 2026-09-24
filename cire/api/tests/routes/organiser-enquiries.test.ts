@@ -692,6 +692,14 @@ describe("vendors entitlement gate", () => {
     expect(await jsonBody(res)).toEqual({ error: "read_only_role" });
   });
 
+  it("the role gate answers first on reads too: a stranger gets 403, not 402", async () => {
+    // A 402 here would tell a stranger which weddings have paid for vendors.
+    const { app } = buildApp({ grantVendors: false });
+    const res = await req(app, enquiriesPath, { profileId: OTHER_OWNER });
+    expect(res.status).toBe(403);
+    expect(await jsonBody(res)).toEqual({ error: "forbidden" });
+  });
+
   it("authentication answers first: no token is 401, not 402", async () => {
     const { app } = buildApp({ grantVendors: false });
     const res = await req(app, enquiriesPath);

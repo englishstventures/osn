@@ -209,37 +209,86 @@ describe("the pairing checker", () => {
     });
   });
 
-  const failures: Record<string, string> = {
-    "a role gate with a different key": route(`.use(weddingMember(db, "vendors"))
+  it("follows a namespace import like a named one", () => {
+    const scan = checkSource(
+      "ok.ts",
+      route(`.use(gates.weddingOwner(db, "registry"))
+      .use(gates.weddingEntitlement(db, "registry"))`),
+    );
+    expect(scan).toEqual({ problems: [], pairs: 1 });
+  });
+
+  // Each fixture names every problem it expects by a fragment of its message,
+  // and all but one trip a single rule, so deleting any one rule turns its own
+  // case red.
+  const failures: Record<string, { source: string; reports: string[] }> = {
+    "a role gate with no key": {
+      source: route(`.use(weddingOwner(db))
       .use(weddingEntitlement(db, "registry"))`),
-    "a role gate with no key": route(`.use(weddingOwner(db))
+      reports: ["must be called with the same key"],
+    },
+    "a role gate with a different key": {
+      source: route(`.use(weddingMember(db, "vendors"))
       .use(weddingEntitlement(db, "registry"))`),
-    "a gate that cannot fold": route(`.use(weddingRunSheet(db))
+      // A keyed role gate before a different-key entitlement gate breaks the
+      // pairing in both directions.
+      reports: ["must be called with the same key", "folds an entitlement nothing reads"],
+    },
+    "a gate that cannot fold": {
+      source: route(`.use(weddingRunSheet(db, "vendors"))
       .use(weddingEntitlement(db, "vendors"))`),
-    "another plugin between the two": route(`.use(weddingMember(db, "vendors"))
+      reports: ["must sit directly after"],
+    },
+    "another plugin between the two": {
+      source: route(`.use(weddingMember(db))
       .use(rateLimitMiddlewareByUser(limiter))
       .use(weddingEntitlement(db, "vendors"))`),
-    "the entitlement gate first": route(`.use(weddingEntitlement(db, "vendors"))
-      .use(weddingMember(db, "vendors"))`),
-    "a key with no entitlement gate after it": route(`.use(weddingEditor(db, "vendors"))`),
-    "a key that is not a literal": route(`.use(weddingMember(db, key))
+      reports: ["must sit directly after"],
+    },
+    "the entitlement gate first": {
+      source: route(`.use(weddingEntitlement(db, "vendors"))
+      .use(weddingMember(db))`),
+      reports: ["must sit directly after"],
+    },
+    "a key with no entitlement gate after it": {
+      source: route(`.use(weddingEditor(db, "vendors"))`),
+      reports: ["folds an entitlement nothing reads"],
+    },
+    "an entitlement key that is not a literal": {
+      source: route(`.use(weddingMember(db))
       .use(weddingEntitlement(db, key))`),
-    "a gate built outside the chain": route(
-      `.use(gate)`,
-      `const gate = weddingEntitlement(db, "vendors");`,
-    ),
-    "a call through a namespace import": route(`.use(weddingMember(db))
+      reports: ["weddingEntitlement needs a string-literal key"],
+    },
+    "a role-gate key that is not a literal": {
+      source: route(`.use(weddingMember(db, key))`),
+      reports: ["entitlement key must be a string literal"],
+    },
+    "a gate built outside the chain": {
+      source: route(`.use(gate)`, `const gate = weddingEntitlement(db, "vendors");`),
+      reports: ["must be mounted inline"],
+    },
+    "a mismatched call through a namespace import": {
+      source: route(`.use(weddingMember(db))
       .use(gates.weddingEntitlement(db, "vendors"))`),
-    "an aliased import": route(
-      `.use(weddingMember(db, "vendors"))
+      reports: ["must be called with the same key"],
+    },
+    "an aliased import": {
+      source: route(
+        `.use(weddingMember(db))
       .use(entitled(db, "vendors"))`,
-      `import { weddingEntitlement as entitled } from "../middleware/wedding-entitlement";`,
-    ),
+        `import { weddingEntitlement as entitled } from "../middleware/wedding-entitlement";`,
+      ),
+      reports: ["imported under another name"],
+    },
   };
 
-  for (const [shape, source] of Object.entries(failures)) {
+  for (const [shape, { source, reports }] of Object.entries(failures)) {
     it(`reports ${shape}`, () => {
-      expect(checkSource("bad.ts", source).problems.length).toBeGreaterThan(0);
+      const { problems } = checkSource("bad.ts", source);
+      expect(problems).toHaveLength(reports.length);
+      for (const fragment of reports) {
+        expect(problems.some((problem) => problem.includes(fragment))).toBe(true);
+      }
     });
   }
 });

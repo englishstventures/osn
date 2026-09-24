@@ -353,10 +353,84 @@ describe("the owner gate folds the entitlement check too", () => {
     expect(await jsonBody(res)).toEqual({ error: "payment_required", entitlement: "vendors" });
   });
 
+  it("answers 404 for an unknown wedding, from that same single select", async () => {
+    const db = buildDb({ grantVendors: true });
+    const { db: counted, selectCount } = countingDb(db);
+    const res = await appRequest(ownerGatedApp(counted, OWNER), "/w/wed_missing/thing", post);
+    expect(res.status).toBe(404);
+    expect(await jsonBody(res)).toEqual({ error: "wedding_not_found" });
+    expect(selectCount()).toBe(1);
+  });
+
+  it("refuses a co-host with 403, not 402, when the wedding lacks the entitlement", async () => {
+    // The role refusal must win, or a stranger could learn which weddings paid.
+    const db = buildDb({ grantVendors: false });
+    const { db: counted, selectCount } = countingDb(db);
+    const res = await appRequest(ownerGatedApp(counted, COHOST), `/w/${WEDDING_ID}/thing`, post);
+    expect(res.status).toBe(403);
+    expect(await jsonBody(res)).toEqual({ error: "forbidden" });
+    expect(selectCount()).toBe(1);
+  });
+
   it("still refuses a non-owner through the fallback when the fold breaks", async () => {
     const db = buildDb({ grantVendors: true });
     db.$client.exec("DROP TABLE wedding_entitlements");
     const res = await appRequest(ownerGatedApp(db, COHOST), `/w/${WEDDING_ID}/thing`, post);
     expect(res.status).toBe(403);
+  });
+});
+
+describe("a fold answers for its own wedding only", () => {
+  // Another wedding holds `vendors`; this one holds nothing. Every folding
+  // gate must still answer 402 here, whichever query it folds into.
+  function withPaidNeighbour() {
+    const db = buildDb({ grantVendors: false });
+    const now = new Date();
+    db.insert(weddings)
+      .values({
+        id: "wed_paid",
+        slug: "paid-wedding",
+        displayName: "Paid Wedding",
+        ownerOsnProfileId: OWNER,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run();
+    db.insert(weddingEntitlements)
+      .values({
+        weddingId: "wed_paid",
+        entitlement: "vendors",
+        source: "comp",
+        grantedAt: now,
+        grantedBy: OWNER,
+      })
+      .run();
+    return db;
+  }
+  const paymentRequired = { error: "payment_required", entitlement: "vendors" };
+  const path = `/w/${WEDDING_ID}/thing`;
+
+  it("weddingMember, for the owner and a co-host", async () => {
+    for (const caller of [OWNER, COHOST]) {
+      const res = await appRequest(gatedApp(withPaidNeighbour(), caller), path);
+      expect(res.status).toBe(402);
+      expect(await jsonBody(res)).toEqual(paymentRequired);
+    }
+  });
+
+  it("weddingEditor, for a co-host", async () => {
+    const res = await appRequest(gatedEditorApp(withPaidNeighbour(), COHOST), path, {
+      method: "POST",
+    });
+    expect(res.status).toBe(402);
+    expect(await jsonBody(res)).toEqual(paymentRequired);
+  });
+
+  it("weddingOwner, for the owner", async () => {
+    const res = await appRequest(ownerGatedApp(withPaidNeighbour(), OWNER), path, {
+      method: "POST",
+    });
+    expect(res.status).toBe(402);
+    expect(await jsonBody(res)).toEqual(paymentRequired);
   });
 });
