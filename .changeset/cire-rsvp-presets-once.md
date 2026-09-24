@@ -9,6 +9,6 @@ to build the write and once again in the `cire.rsvp.dietary_preset.selected` cou
 now builds the normalised replies once, after every gate has passed, and both the write and the
 counter read them.
 
-The counter also counted a preset once per repeat. The schema accepts `["nuts", "nuts"]` and the
-row stores `nuts` once, but the counter went up by two. It now counts each distinct preset once per
-reply, which is what the counter measures: plates to cook for. Stored rows are unchanged.
+The counter also counted a preset once per repeat within a reply. The schema accepts
+`["nuts", "nuts"]` and the row stores `nuts` once, but the counter went up by two. It now counts
+each distinct preset once per submitted reply, matching the row. Stored rows are unchanged.

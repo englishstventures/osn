@@ -379,6 +379,9 @@ describe("POST /api/rsvp", () => {
         const blockedBefore = yield* Effect.promise(() =>
           counterValue(CIRE_METRICS.rsvpBlocked, { reason: "dietary_consent" }),
         );
+        const halalBefore = yield* Effect.promise(() =>
+          counterValue(CIRE_METRICS.dietaryPreset, { preset: "halal" }),
+        );
         const res = yield* post(
           {
             rsvps: [
@@ -402,6 +405,12 @@ describe("POST /api/rsvp", () => {
           counterValue(CIRE_METRICS.rsvpBlocked, { reason: "dietary_consent" }),
         );
         expect(blockedAfter).toBe(blockedBefore + 1);
+        // Presets on a refused reply were never stored, so they feed no count.
+        expect(
+          yield* Effect.promise(() =>
+            counterValue(CIRE_METRICS.dietaryPreset, { preset: "halal" }),
+          ),
+        ).toBe(halalBefore);
       }),
     ),
   );
@@ -503,12 +512,14 @@ describe("POST /api/rsvp", () => {
   );
 
   it(
-    "counts a preset named twice in one reply once",
+    "counts a preset once per reply, however often the reply names it",
     eff(
       Effect.gen(function* () {
         // The schema accepts a repeated key and the row stores it once, so one
         // guest is one plate however many times the request names it. The
-        // distinct key alongside proves the dedupe drops only the repeat.
+        // distinct key alongside proves the dedupe drops only the repeat, and
+        // the second guest naming `nuts` proves it is per reply, not per batch:
+        // two guests are two plates. No dedupe gives +3, per-batch dedupe +1.
         const cookie = yield* claimAndCookie("TESTTWO-OAK-BB22");
         const repeated = { preset: "nuts" } as const;
         const single = { preset: "shellfish" } as const;
@@ -528,6 +539,13 @@ describe("POST /api/rsvp", () => {
                 dietaryPresets: ["nuts", "shellfish", "nuts"],
                 dietaryConsent: true,
               },
+              {
+                guestId: sampletonCleoGuestId,
+                eventId: HINDU_ID,
+                status: "attending",
+                dietaryPresets: ["nuts"],
+                dietaryConsent: true,
+              },
             ],
           },
           cookie,
@@ -535,7 +553,7 @@ describe("POST /api/rsvp", () => {
         expect(res.status).toBe(200);
         expect(
           yield* Effect.promise(() => counterValue(CIRE_METRICS.dietaryPreset, repeated)),
-        ).toBe(repeatedBefore + 1);
+        ).toBe(repeatedBefore + 2);
         expect(yield* Effect.promise(() => counterValue(CIRE_METRICS.dietaryPreset, single))).toBe(
           singleBefore + 1,
         );
