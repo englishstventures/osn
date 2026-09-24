@@ -106,22 +106,25 @@ test("the real CLI exits non-zero on an un-prefixed *.spec.ts under src/pages", 
 
 // A fixture is test data, not a page, but Astro cannot tell: an un-prefixed
 // `fixtures.ts` under src/pages is an endpoint like any other `.ts` file there.
-test.each(["fixtures.ts", "invite.fixture.ts", "InviteFixture.ts", "guest-fixtures.json"])(
-  "the real CLI exits non-zero on an un-prefixed %s under src/pages",
-  async (name) => {
-    await withFixtureApp(
-      async (pagesDir) => {
-        await writeFile(join(pagesDir, name), "export const GET = () => new Response('ok');\n");
-      },
-      async (appRoot) => {
-        const { exitCode, stderr } = await runCli([appRoot]);
-        expect(stderr).toContain(`src/pages/${name}`);
-        expect(stderr).toContain("Rename it");
-        expect(exitCode).not.toBe(0);
-      },
-    );
-  },
-);
+test.each([
+  "fixtures.ts",
+  "invite.fixture.ts",
+  "InviteFixture.ts",
+  "guest-fixtures.json",
+  "Checkout.Test.ts",
+])("the real CLI exits non-zero on an un-prefixed %s under src/pages", async (name) => {
+  await withFixtureApp(
+    async (pagesDir) => {
+      await writeFile(join(pagesDir, name), "export const GET = () => new Response('ok');\n");
+    },
+    async (appRoot) => {
+      const { exitCode, stderr } = await runCli([appRoot]);
+      expect(stderr).toContain(`src/pages/${name}`);
+      expect(stderr).toContain("Rename it");
+      expect(exitCode).not.toBe(0);
+    },
+  );
+});
 
 // Every file under an un-prefixed `fixtures/` directory is routed
 // (`/fixtures/<name>`), whatever the file itself is called. The directory is
@@ -152,6 +155,29 @@ test("the real CLI exits non-zero on an un-prefixed *.spec.* directory under src
       const { exitCode, stderr } = await runCli([appRoot]);
       expect(stderr).toContain("src/pages/checkout.spec.d/");
       expect(exitCode).not.toBe(0);
+    },
+  );
+});
+
+// `test` and `spec` count only between dots, so an ordinary page whose name
+// merely contains the letters is left alone.
+test.each([
+  "latest.astro",
+  "contest.ts",
+  "test-drive.astro",
+  "inspect.astro",
+  "specials/index.astro",
+])("the real CLI exits 0 on %s, a page name that only contains test or spec", async (name) => {
+  await withFixtureApp(
+    async (pagesDir) => {
+      await mkdir(join(pagesDir, name, ".."), { recursive: true });
+      await writeFile(join(pagesDir, name), "<h1>hi</h1>\n");
+    },
+    async (appRoot) => {
+      const { exitCode, stdout, stderr } = await runCli([appRoot]);
+      expect(stderr).toBe("");
+      expect(stdout).toContain(SUCCESS_LINE);
+      expect(exitCode).toBe(0);
     },
   );
 });

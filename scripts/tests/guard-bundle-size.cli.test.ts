@@ -297,6 +297,24 @@ test.skipIf(Bun.which("bun", { PATH: PATH_WITHOUT_BUN }) !== null)(
   },
 );
 
+// The chunk a map is named after has to be a file. A directory of the same
+// name does not make the map a real one.
+test("a source-map-shaped *.map beside a directory of the same name is measured", async () => {
+  await withFixture(["fixture-app/pkg worker 999999999"], async ({ pkgDir, root, budgetsFile }) => {
+    await mkdir(join(pkgDir, "dist/server/chunks"), { recursive: true });
+    const entryPath = join(pkgDir, "dist/server/entry.mjs");
+    await writeFile(entryPath, "export default 1;\n");
+    const mapPath = join(pkgDir, "dist/server/chunks.map");
+    await writeFile(mapPath, sourceMapJson("chunks", 2000));
+
+    const expected = (await gzipSize(entryPath)) + (await gzipSize(mapPath));
+    const { exitCode, stdout, stderr } = await runCli(budgetsFile, root, pkgDir);
+    expect(stderr).toBe("");
+    expect(stdout).toContain(`gzip total: ${expected} bytes across 2 files`);
+    expect(exitCode).toBe(0);
+  });
+});
+
 test("only the top-level wrangler.json is skipped; one nested deeper is measured", async () => {
   await withFixture(["fixture-app/pkg worker 999999999"], async ({ pkgDir, root, budgetsFile }) => {
     await mkdir(join(pkgDir, "dist/server/chunks"), { recursive: true });
