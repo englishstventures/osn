@@ -54,7 +54,7 @@ const statusResponse = (status: number, json = vi.fn(() => Promise.resolve({})))
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe("createInviteRetry", () => {
-  it("fetches the invite endpoint once, no-store", async () => {
+  it("fetches the invite endpoint once, no-store and credentialed", async () => {
     const fetchMock = vi.fn(() => Promise.resolve(okResponse({})));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -62,9 +62,11 @@ describe("createInviteRetry", () => {
     await settle();
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Credentialed so it shares the connection the credentialed preconnect
+    // warmed; an anonymous request would open a second one.
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.test/api/invite/my-slug",
-      expect.objectContaining({ cache: "no-store" }),
+      expect.objectContaining({ cache: "no-store", credentials: "include" }),
     );
     dispose();
   });

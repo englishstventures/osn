@@ -79,8 +79,12 @@ export function createInviteRetry<Body, T>(options: InviteRetryOptions<Body, T>)
         // slug comes off the request path, so encoding is what keeps it one
         // path segment rather than something that can move the request to a
         // different path or query on the API origin.
+        // Credentialed like every other browser call to cire-api, so it rides
+        // the connection the document's (credentialed) preconnect opened
+        // instead of paying a fresh handshake in front of the hero.
         const res = await fetch(`${options.apiUrl()}/api/invite/${encodeURIComponent(slug)}`, {
           cache: "no-store",
+          credentials: "include",
           signal: controller.signal,
         });
         if (!res.ok) return;

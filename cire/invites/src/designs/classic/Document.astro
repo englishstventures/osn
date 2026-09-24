@@ -58,11 +58,11 @@ const registryVars = filterThemeVars(sectionVars(initialInvite?.theme ?? null, '
         claim POST (and the session restore beside it) is the interaction the
         guest is waiting on, and the hero image is served from here too.
 
-        Credentialed pool only (no `crossorigin`): the hero <img>, the claim
-        POST, the session restore and RSVP all use it. The one anonymous
-        request, the islands' `GET /api/invite/:slug` retry, runs only when the
-        route's own fetch failed, so warming a second pool for it would open a
-        connection that almost every page load leaves unused. */}
+        Credentialed pool only (no `crossorigin`): every browser request to
+        the API uses it — the hero <img>, the claim POST, the session restore,
+        RSVP, and the islands' `GET /api/invite/:slug` retry when the route's
+        own fetch failed. An anonymous preconnect would warm a pool nothing
+        uses. */}
     {apiPreconnect && <link rel="preconnect" href={apiPreconnect} />}
     {preloadHeroHref && <link rel="preload" as="image" href={preloadHeroHref} />}
   </head>
