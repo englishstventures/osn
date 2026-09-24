@@ -42,7 +42,7 @@
 // every other file under scripts/ (the `script-tests` CI job runs with none).
 
 import { expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -330,6 +330,34 @@ test("only the top-level wrangler.json is skipped; one nested deeper is measured
     expect(exitCode).toBe(0);
   });
 });
+
+// `find -type f` does not list a symlink, but wrangler uploads the file a
+// link points at and Pages serves it, so a link is refused rather than left
+// out of the total.
+test.each([
+  ["worker", "dist/server", "entry.mjs"],
+  ["static", "dist/_astro", "client.js"],
+] as const)(
+  "%s mode exits non-zero, naming the link, when the measured directory holds a symlink",
+  async (mode, dir, realName) => {
+    await withFixture(
+      [`fixture-app/pkg ${mode} 999999999`],
+      async ({ pkgDir, root, budgetsFile }) => {
+        await mkdir(join(pkgDir, dir), { recursive: true });
+        await writeFile(join(pkgDir, dir, realName), "export default 1;\n");
+        const outside = join(root, "payload.mjs");
+        await writeFile(outside, "export const big = 1;\n");
+        await symlink(outside, join(pkgDir, dir, "linked.mjs"));
+
+        const { exitCode, stdout } = await runCli(budgetsFile, root, pkgDir);
+        expect(stdout).toContain("symlink");
+        expect(stdout).toContain(`${dir}/linked.mjs`);
+        expect(stdout).not.toContain("gzip total");
+        expect(exitCode).not.toBe(0);
+      },
+    );
+  },
+);
 
 test("static mode counts only *.js and *.css, ignoring everything else in dist/_astro", async () => {
   const root = await mkdtemp(join(tmpdir(), "guard-bundle-size-cli-"));

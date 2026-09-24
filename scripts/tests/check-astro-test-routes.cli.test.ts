@@ -16,7 +16,7 @@
 // script under test, matching every other file under scripts/.
 
 import { expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -196,6 +196,50 @@ test("the real CLI exits 0 on `_`-prefixed fixture files and directories", async
       const { exitCode, stdout, stderr } = await runCli([appRoot]);
       expect(stderr).toBe("");
       expect(stdout).toContain(SUCCESS_LINE);
+      expect(exitCode).toBe(0);
+    },
+  );
+});
+
+// Astro follows a symlink under src/pages and routes what it points at,
+// whatever that is called, so the check refuses any link it would walk past.
+test.each([
+  ["a file", "about.astro", false],
+  ["a directory", "weddings", true],
+] as const)(
+  "the real CLI exits non-zero on an un-prefixed symlink to %s under src/pages",
+  async (_label, linkName, isDir) => {
+    await withFixtureApp(
+      async (pagesDir) => {
+        const target = join(pagesDir, "..", isDir ? "elsewhere" : "elsewhere.astro");
+        if (isDir) {
+          await mkdir(target, { recursive: true });
+          await writeFile(join(target, "drift-guard.test.ts"), "export const GET = () => 1;\n");
+        } else {
+          await writeFile(target, "<h1>hi</h1>\n");
+        }
+        await symlink(target, join(pagesDir, linkName));
+      },
+      async (appRoot) => {
+        const { exitCode, stderr } = await runCli([appRoot]);
+        expect(stderr).toContain(`src/pages/${linkName}`);
+        expect(stderr).toContain("symlink");
+        expect(exitCode).not.toBe(0);
+      },
+    );
+  },
+);
+
+test("the real CLI exits 0 on a `_`-prefixed symlink under src/pages", async () => {
+  await withFixtureApp(
+    async (pagesDir) => {
+      const target = join(pagesDir, "..", "elsewhere");
+      await mkdir(target, { recursive: true });
+      await symlink(target, join(pagesDir, "_linked"));
+    },
+    async (appRoot) => {
+      const { exitCode, stderr } = await runCli([appRoot]);
+      expect(stderr).toBe("");
       expect(exitCode).toBe(0);
     },
   );

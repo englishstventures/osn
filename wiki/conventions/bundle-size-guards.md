@@ -103,7 +103,9 @@ touching a threshold. In short:
   map (a JSON object with a numeric `version`, a `sources` array and a
   `mappings` string); any other file named `*.map` is measured, so a name
   alone cannot hide bytes. That check runs through `bun`, which every caller
-  already has. It separately refuses any `*.map` under the sibling
+  already has. Both modes refuse a symlink in the directory they measure,
+  since wrangler and Pages ship the file a link points at and `find -type f`
+  would skip it. It separately refuses any `*.map` under the sibling
   `dist/client`, which is served publicly as Static Assets. See [[cire-development]] for why
   cire/invites' bundle is shaped the way it is (sessions off, SSR-only
   minification, server-only source maps, why `zod` stays).
@@ -250,7 +252,8 @@ any case (`fixtures.ts`, `invite.fixture.ts`, `InviteFixture.ts`), and has no
 because every file under an un-prefixed `fixtures/` is routed whatever it is
 called; a failing directory is reported once. A real page whose name holds
 the word — a sports `fixtures.astro`, say — has to be renamed, since a `_`
-prefix would take it off the site.
+prefix would take it off the site. Any un-prefixed symlink fails too, because
+Astro follows it and routes whatever it points at.
 
 It needs no build and no per-app baseline — a plain directory walk — so it runs
 in the fast `lint` job in `ci.yml`, not `build-test`.

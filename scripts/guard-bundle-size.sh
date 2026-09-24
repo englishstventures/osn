@@ -145,7 +145,7 @@ is_source_map() {
         typeof m.mappings === "string";
     } catch {}
     console.log(ok ? "source-map" : "other");
-  ' "$f" </dev/null) || return 1
+  ' -- "$f" </dev/null) || return 1
   [ "$verdict" = "source-map" ]
 }
 
@@ -175,6 +175,16 @@ run_guard() {
 
     if [ ! -d "$measure_dir" ]; then
       echo "::error::${label} ${measure_dir} is missing — run \`astro build\` before this guard."
+      exit 1
+    fi
+
+    # The measurement below lists files with `find -type f`, which skips a
+    # symlink, but wrangler uploads and Pages serves the file a link points
+    # at. A build emits none today, so a link is refused rather than
+    # followed: the measured set stays at least as large as what ships.
+    links=$(find "$measure_dir" -type l | tr '\n' ' ')
+    if [ -n "$links" ]; then
+      echo "::error::${label} ${measure_dir} holds a symlink (${links% }), which this guard does not measure. Replace it with the file it points at."
       exit 1
     fi
 
