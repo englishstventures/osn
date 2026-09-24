@@ -120,8 +120,21 @@ describe("GET /api/organiser/weddings", () => {
   // wrong-key path is a separate case and would pass for the wrong reason.
   it("returns 401 for a token from a different issuer", async () => {
     const { app } = buildApp();
+    const token = await auth.sign(BOOTSTRAP_OWNER, { issuer: "https://id.evil.invalid" });
     const res = await appRequest(app, "/api/organiser/weddings", {
-      headers: { Authorization: `Bearer ${await auth.signAsOtherIssuer(BOOTSTRAP_OWNER)}` },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  // Same key, audience and issuer as a token this route accepts — only `exp`
+  // differs, and it sits two minutes back, past the verifier's 30-second clock
+  // tolerance.
+  it("returns 401 for an expired token", async () => {
+    const { app } = buildApp();
+    const token = await auth.sign(BOOTSTRAP_OWNER, { expiresIn: "-120s" });
+    const res = await appRequest(app, "/api/organiser/weddings", {
+      headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(401);
   });
