@@ -258,7 +258,11 @@ export const createRsvpRoutes = (db: Db, { turnstileVerifier = null }: RsvpRoute
               // named twice in one reply is one plate, as the row stores it once.
               for (const reply of replies) {
                 if (reply.status === "declined") continue;
-                for (const preset of new Set(reply.dietaryPresets)) metricDietaryPreset(preset);
+                const presets = reply.dietaryPresets;
+                // A list of one or none cannot repeat, so it skips the Set.
+                for (const preset of presets.length > 1 ? new Set(presets) : presets) {
+                  metricDietaryPreset(preset);
+                }
               }
             });
 
