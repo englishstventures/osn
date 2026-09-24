@@ -21,7 +21,7 @@ related:
 packages:
   - "@pulse/web"
   - "@shared/ui"
-last-reviewed: 2026-09-23
+last-reviewed: 2026-09-25
 ---
 
 # Frontend Patterns
@@ -80,6 +80,30 @@ Any OSN app (Pulse, Zap, Social, future apps) imports these from `@osn/auth-ui/*
 ## Lazy Loading
 
 Route-level components (`EventDetailPage`, `SettingsPage`) are `lazy()`-loaded in `App.tsx` to reduce the initial bundle. Components with heavy dependencies (like `MapPreview` with Leaflet at ~150KB) dynamic-import their dependencies inside `onMount` so pages that don't need them never load the chunk.
+
+## Supported browsers
+
+The root `.browserslistrc` states the floor: Chrome and Edge 111, Firefox 114,
+Safari and iOS Safari 16.4. It is the target Vite 8 compiles plain-Vite apps to
+by default (`build.target: "baseline-widely-available"`), and
+`musubi/social/tests/browser-floor.test.ts` fails when the two differ. So a Vite
+major that moves its default fails a test instead of quietly moving the floor.
+When it fails, edit `.browserslistrc` (and review the `lib` of `cire/invites`, see
+[[cire-development#Type-check configs]]), or pin `build.target` in the app's Vite
+config.
+
+What holds each kind of app to the floor:
+
+| Apps | Syntax | Library methods (`toSorted`, …) |
+|---|---|---|
+| Plain Vite: `musubi/social`, `pulse/web`, `tools/lab`, `tools/metrics` | Lowered to the floor by Vite's build target | Not checked: these apps type-check at `lib` ES2023 |
+| Astro: `cire/host`, `cire/invites`, `cire/landing`, `cire/vendor`, `musubi/landing`, `pulse/landing` | Not lowered: Astro builds the client bundle at `esnext` | `cire/invites` type-checks its own source at `lib` ES2022; the rest at their own `lib` |
+
+Nothing polyfills. Babel core finds the file when it resolves `targets` for the
+Solid transform, but no plugin in the build acts on them, so the file changes no
+build output. It is in `turbo.json`'s `globalDependencies` and in the deploy
+workflow's list of root build files, so an edit to it rebuilds and redeploys
+everything.
 
 ## Rendering and animation gotchas
 
