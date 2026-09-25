@@ -82,6 +82,16 @@ describe("vendor registry shape", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+  // What decides whether withdrawing consent reloads the page. The Pinterest
+  // widget's `pinit_main.js` runs in the invite page itself; the map runs only
+  // inside its own iframe, which unmounting destroys.
+  it("records which gated vendors run code in the page itself", () => {
+    const runsInPage = Object.fromEntries(
+      gatedVendorsInCategory("embeds").map((vendor) => [vendor.id, vendor.runsInPage]),
+    );
+    expect(runsInPage).toEqual({ "google-maps": false, pinterest: true });
+  });
+
   it("never marks a `necessary` vendor as gated", () => {
     // A strictly-necessary vendor by definition loads without consent; claiming
     // the toggle governs it would be false, and the toggle can't be switched off
