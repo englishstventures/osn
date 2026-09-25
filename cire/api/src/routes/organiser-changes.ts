@@ -184,9 +184,11 @@ interface ChangeSummary {
   matchByName?: boolean;
   /**
    * Which halves of the wedding the change is authoritative over — `"both"`
-   * unless the organiser uploaded a single sheet. Read back at apply so the
-   * re-diff manages exactly the halves the preview did; a legacy row written
-   * before partial uploads existed has no `scope` and defaults to `"both"`.
+   * for a two-sheet upload, one half for a single sheet or an editor save. Read
+   * back at apply so the re-diff manages exactly the halves the preview did, and
+   * at revert (`storedRevertScope`) so a revert restores only those halves. A
+   * row written before scopes existed has none: apply then refuses an editor
+   * row and treats a sheet as `"both"`; revert restores both.
    */
   scope?: ChangeScope;
   eventCreates: number;
