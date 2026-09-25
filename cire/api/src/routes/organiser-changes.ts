@@ -24,7 +24,7 @@ import { applyImport, diffAgainstDb } from "../services/import";
 import type { DeletableBucket } from "../services/r2-cleanup";
 import { R2Service, fetchUpload, storeUpload } from "../services/r2-imports";
 import type { R2Bucket } from "../services/r2-imports";
-import { revertImport } from "../services/revert";
+import { revertImport, storedRevertScope } from "../services/revert";
 import { parseEventsCsv, parseGuestsCsv } from "../services/spreadsheet";
 import type {
   MalformedSpreadsheetReason,
@@ -140,6 +140,17 @@ function catchParseErrors(set: { status?: number | string }) {
 // parse it by hand — a malformed payload degrades to the schema's 400 instead
 // of Elysia's parser error.
 const manualParse = { parse: () => ({}) };
+
+/** The 402 a change answers when it would take the wedding past its guest cap. */
+function paymentRequired(set: { status?: number | string }, e: CapacityExceeded) {
+  set.status = 402;
+  return {
+    error: "payment_required",
+    entitlement: "capacity",
+    limit: e.limit,
+    current: e.current,
+  } as const;
+}
 
 /**
  * The 409 for an editor draft built against state that has since changed —
@@ -664,15 +675,7 @@ export const createOrganiserChangeRoutes = (
                   }),
                 ),
                 Effect.catchTag("CapacityExceeded", (e) =>
-                  Effect.sync(() => {
-                    set.status = 402;
-                    return {
-                      error: "payment_required",
-                      entitlement: "capacity",
-                      limit: e.limit,
-                      current: e.current,
-                    };
-                  }),
+                  Effect.sync(() => paymentRequired(set, e)),
                 ),
               ),
             );
@@ -734,6 +737,11 @@ export const createOrganiserChangeRoutes = (
                     return { error: "Revert failed" };
                   }),
                 ),
+                // A guests revert re-creates the guests the change removed, so it
+                // can take a wedding past a cap that has shrunk since.
+                Effect.catchTag("CapacityExceeded", (e) =>
+                  Effect.sync(() => paymentRequired(set, e)),
+                ),
               ),
             );
           },
@@ -781,6 +789,9 @@ export const createOrganiserChangeRoutes = (
               appliedAt: r.appliedAt,
               revertedAt: r.revertedAt,
               revertable: Boolean(r.beforeEventsR2Key && r.beforeGuestsR2Key),
+              // The halves a revert of this change restores, decoded by the rule
+              // the revert itself uses — the portal names them in its confirm.
+              scope: storedRevertScope(r.summary),
               summary: (() => {
                 try {
                   return JSON.parse(r.summary);
