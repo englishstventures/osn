@@ -1836,22 +1836,17 @@ describe("POST /changes/revert — restores only the half the change saved", () 
 
     // Later, the guests editor adds Cy to Ada's household.
     const guestsDraft = draftFromDb(db);
+    const testfamily = guestsDraft.families.find((f) => f.familyName === "Testfamily")!;
+    const cy = { firstName: "Cy", lastName: "", nickname: null, eventNames: ["Mehndi"] };
     await applyChange(
       app,
       await editorPreview(app, {
         desiredState: {
           ...guestsDraft,
-          families: guestsDraft.families.map((f) =>
-            f.familyName === "Testfamily"
-              ? {
-                  ...f,
-                  guests: [
-                    ...f.guests,
-                    { firstName: "Cy", lastName: "", nickname: null, eventNames: ["Mehndi"] },
-                  ],
-                }
-              : f,
-          ),
+          families: [
+            ...guestsDraft.families.filter((f) => f !== testfamily),
+            { ...testfamily, guests: [...testfamily.guests, cy] },
+          ],
         },
         scope: "guests",
       }),
