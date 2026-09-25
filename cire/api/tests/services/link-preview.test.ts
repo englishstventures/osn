@@ -2,15 +2,18 @@ import { describe, it, expect } from "bun:test";
 
 import { Cause, Effect, Exit, Option } from "effect";
 
+import { runCire } from "../../src/observability";
 import {
   isBlockedAddress,
   isIpLiteral,
   linkPreviewService,
+  MAX_HOST_LOOKUPS,
   parseIpv4,
   parseIpv6,
   scanHtml,
 } from "../../src/services/link-preview";
 import type { HostResolver, LinkPreviewOptions } from "../../src/services/link-preview";
+import { captureLogs } from "../test-helpers/capture-logs";
 
 // ---------------------------------------------------------------------------
 // Harness
@@ -783,5 +786,148 @@ describe("preview — image candidates", () => {
       expect(exit.value.siteName).toBe("shop.example");
       expect(exit.value.title).toBe("Pan");
     }
+  });
+});
+
+describe("preview — DNS lookup budget", () => {
+  /**
+   * A page whose `og:image` tags each name a different host. Every host
+   * resolves private except, optionally, the last one — a usable image sitting
+   * past the budget.
+   */
+  const junkHost = (i: number) => `h${i}.junk.example`;
+  const junkPage = (count: number) =>
+    Array.from(
+      { length: count },
+      (_, i) => `<meta property="og:image" content="https://${junkHost(i)}/x.jpg">`,
+    ).join("");
+
+  it("resolves exactly its budget of hosts, however many a page lists", async () => {
+    const lookups: string[] = [];
+    const { fetchImpl } = recordingFetch(() => htmlResponse(junkPage(200)));
+    const exit = await run("https://shop.example/item", {
+      fetchImpl,
+      resolveHost: (host) => {
+        lookups.push(host);
+        const publicHost = host === "shop.example" || host === junkHost(199);
+        return Promise.resolve([publicHost ? "93.184.216.34" : "127.0.0.1"]);
+      },
+    });
+    // One page host, eight warmed candidate hosts, three more in the emit loop.
+    expect(lookups.length).toBe(MAX_HOST_LOOKUPS);
+    // The one public host sits past the budget, so it is never checked — and an
+    // unchecked host is never emitted.
+    expect(lookups).not.toContain(junkHost(199));
+    expect(failureTag(exit)).toBe("LinkPreviewNoImages");
+  });
+
+  it("makes two DoH fetches per lookup and nothing past the budget", async () => {
+    // No injected resolver: the real DoH client runs over the recording fetch,
+    // so this counts the outbound requests a preview actually makes.
+    const dohTypes: Record<string, number> = { A: 1, AAAA: 28 };
+    const { fetchImpl, fetched } = recordingFetch((url) => {
+      if (!url.startsWith("https://cloudflare-dns.com/dns-query?")) {
+        return htmlResponse(junkPage(200));
+      }
+      const params = new URL(url).searchParams;
+      const type = params.get("type") ?? "";
+      const answer =
+        type === "A"
+          ? params.get("name") === "shop.example"
+            ? "93.184.216.34"
+            : "127.0.0.1"
+          : null;
+      return new Response(
+        JSON.stringify({ Answer: answer ? [{ type: dohTypes[type], data: answer }] : [] }),
+        { headers: { "content-type": "application/dns-json" } },
+      );
+    });
+    const exit = await run("https://shop.example/item", { fetchImpl });
+    const doh = fetched.filter((url) => url.startsWith("https://cloudflare-dns.com/"));
+    expect(doh.length).toBe(2 * MAX_HOST_LOOKUPS);
+    expect(fetched.length).toBe(2 * MAX_HOST_LOOKUPS + 1);
+    expect(failureTag(exit)).toBe("LinkPreviewNoImages");
+  });
+
+  it("still emits an image on a host it vetted before the budget ran out", async () => {
+    const page = `${junkPage(20)}<meta property="og:image" content="https://shop.example/hero.jpg">`;
+    const { fetchImpl } = recordingFetch(() => htmlResponse(page));
+    const exit = await run("https://shop.example/item", {
+      fetchImpl,
+      resolveHost: (host) =>
+        Promise.resolve([host === "shop.example" ? "93.184.216.34" : "127.0.0.1"]),
+    });
+    expect(Exit.isSuccess(exit)).toBe(true);
+    if (Exit.isSuccess(exit)) {
+      expect(exit.value.imageUrls).toEqual(["https://shop.example/hero.jpg"]);
+    }
+  });
+
+  it("refuses a redirect hop once the budget is spent", async () => {
+    // Only reachable through the `maxRedirects` test seam: the default three
+    // redirects touch four hosts, well inside the budget.
+    const lookups: string[] = [];
+    const { fetchImpl, fetched } = recordingFetch((url) => {
+      const n = Number(/^https:\/\/hop(\d+)\.example\//.exec(url)?.[1] ?? 0);
+      return new Response(null, {
+        status: 302,
+        headers: { location: `https://hop${n + 1}.example/` },
+      });
+    });
+    const exit = await run("https://hop0.example/", {
+      fetchImpl,
+      maxRedirects: 20,
+      resolveHost: (host) => {
+        lookups.push(host);
+        return Promise.resolve(["93.184.216.34"]);
+      },
+    });
+    expect(lookups.length).toBe(MAX_HOST_LOOKUPS);
+    expect(fetched.length).toBe(MAX_HOST_LOOKUPS);
+    expect(failureTag(exit)).toBe("LinkPreviewBlocked");
+    if (Exit.isFailure(exit)) {
+      const failure = Cause.findErrorOption(exit.cause);
+      expect(Option.isSome(failure) && failure.value._tag === "LinkPreviewBlocked").toBe(true);
+      if (Option.isSome(failure) && failure.value._tag === "LinkPreviewBlocked") {
+        expect(failure.value.reason).toBe("lookup_budget");
+      }
+    }
+  });
+
+  it("logs one warning when the budget runs out, naming no host", async () => {
+    const { fetchImpl } = recordingFetch(() => htmlResponse(junkPage(40)));
+    const out = await captureLogs(() =>
+      runCire(
+        Effect.exit(
+          linkPreviewService.preview("https://shop.example/item", {
+            fetchImpl,
+            resolveHost: (host) =>
+              Promise.resolve([host === "shop.example" ? "93.184.216.34" : "127.0.0.1"]),
+          }),
+        ),
+      ),
+    );
+    // The capture sees the service's existing failure line, so an absent line
+    // below means absent, not unheard.
+    expect(out).toContain("link preview found no usable images");
+    expect(out.match(/link preview ran out of DNS lookups/g)?.length).toBe(1);
+    expect(out).not.toContain("junk.example");
+  });
+
+  it("logs no budget warning for an ordinary page", async () => {
+    const { fetchImpl } = recordingFetch(() =>
+      htmlResponse('<meta property="og:image" content="https://cdn.example/a.jpg">'),
+    );
+    const out = await captureLogs(() =>
+      runCire(
+        Effect.exit(
+          linkPreviewService.preview("https://shop.example/item", {
+            fetchImpl,
+            resolveHost: publicResolver,
+          }),
+        ),
+      ),
+    );
+    expect(out).not.toContain("ran out of DNS lookups");
   });
 });
