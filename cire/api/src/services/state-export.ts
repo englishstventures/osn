@@ -127,10 +127,22 @@ export const stateExportService = {
       const withIds = fidelity !== "import";
       const snapshot = fidelity === "snapshot";
 
+      const householdScope = and(eq(families.weddingId, weddingId), ne(families.kind, "host"));
+      const guestColumns = {
+        guestId: guests.id,
+        firstName: guests.firstName,
+        lastName: guests.lastName,
+        nickname: guests.nickname,
+        sortOrder: guests.sortOrder,
+        familyId: families.id,
+        familyName: families.familyName,
+        publicId: families.publicId,
+      };
+
       // The reads are independently wedding-scoped — collapse them to one D1
       // round-trip (matches the parallel shape in table-export.ts and
       // rsvp-export.ts).
-      const [eventRows, guestRows, linkRows, familyRows] = yield* Effect.all(
+      const [eventRows, householdRows, linkRows] = yield* Effect.all(
         [
           dbQuery(() =>
             db
@@ -140,23 +152,27 @@ export const stateExportService = {
               .orderBy(asc(events.sortOrder), asc(events.name))
               .all(),
           ),
-          dbQuery(() =>
-            db
-              .select({
-                guestId: guests.id,
-                firstName: guests.firstName,
-                lastName: guests.lastName,
-                nickname: guests.nickname,
-                sortOrder: guests.sortOrder,
-                familyId: families.id,
-                familyName: families.familyName,
-                publicId: families.publicId,
-              })
-              .from(guests)
-              .innerJoin(families, eq(guests.familyId, families.id))
-              .where(and(eq(families.weddingId, weddingId), ne(families.kind, "host")))
-              .all(),
-          ),
+          // One row per guest with its household. A snapshot also needs the
+          // households that have no guest, so it reads from `families` with a
+          // left join: a guest-less household comes back once, guest columns
+          // null. Every other level keeps the inner join it has always run.
+          snapshot
+            ? dbQuery(() =>
+                db
+                  .select(guestColumns)
+                  .from(families)
+                  .leftJoin(guests, eq(guests.familyId, families.id))
+                  .where(householdScope)
+                  .all(),
+              )
+            : dbQuery(() =>
+                db
+                  .select(guestColumns)
+                  .from(guests)
+                  .innerJoin(families, eq(guests.familyId, families.id))
+                  .where(householdScope)
+                  .all(),
+              ),
           // Wedding-scoped through guests → families, mirroring the import diff —
           // guest_events carries no wedding_id of its own.
           dbQuery(() =>
@@ -165,52 +181,50 @@ export const stateExportService = {
               .from(guestEvents)
               .innerJoin(guests, eq(guestEvents.guestId, guests.id))
               .innerJoin(families, eq(guests.familyId, families.id))
-              .where(and(eq(families.weddingId, weddingId), ne(families.kind, "host")))
+              .where(householdScope)
               .all(),
           ),
-          // Every household, guest-less ones included — only a snapshot writes
-          // those, so only a snapshot pays for the read.
-          snapshot
-            ? dbQuery(() =>
-                db
-                  .select({
-                    familyId: families.id,
-                    familyName: families.familyName,
-                    publicId: families.publicId,
-                  })
-                  .from(families)
-                  .where(and(eq(families.weddingId, weddingId), ne(families.kind, "host")))
-                  .all(),
-              )
-            : Effect.succeed([]),
         ],
-        { concurrency: 4 },
+        { concurrency: 3 },
       );
       const invited = new Set(linkRows.map((l) => `${l.guestId}::${l.eventId}`));
 
       // Group rows into households, then order deterministically: families by
       // case-insensitive name, guests by seeded sortOrder (then id for ties).
+      interface Guest {
+        readonly guestId: string;
+        readonly firstName: string;
+        readonly lastName: string;
+        readonly nickname: string | null;
+        readonly sortOrder: number;
+      }
       interface Household {
         readonly familyId: string;
         readonly familyName: string;
         readonly publicId: string;
-        readonly guests: (typeof guestRows)[number][];
+        readonly guests: Guest[];
       }
       const byFamily = new Map<string, Household>();
-      for (const row of guestRows) {
-        const household = byFamily.get(row.familyId);
-        if (household) household.guests.push(row);
-        else {
-          byFamily.set(row.familyId, {
+      for (const row of householdRows) {
+        let household = byFamily.get(row.familyId);
+        if (!household) {
+          household = {
             familyId: row.familyId,
             familyName: row.familyName,
             publicId: row.publicId,
-            guests: [row],
-          });
+            guests: [],
+          };
+          byFamily.set(row.familyId, household);
         }
-      }
-      for (const f of familyRows) {
-        if (!byFamily.has(f.familyId)) byFamily.set(f.familyId, { ...f, guests: [] });
+        // Null only on the snapshot's left join, for a household with no guest.
+        if (row.guestId === null || row.firstName === null || row.lastName === null) continue;
+        household.guests.push({
+          guestId: row.guestId,
+          firstName: row.firstName,
+          lastName: row.lastName,
+          nickname: row.nickname,
+          sortOrder: row.sortOrder ?? 0,
+        });
       }
       const householdKey = (h: Household) => h.familyName.trim().toLowerCase();
       const households = [...byFamily.values()].toSorted((a, b) => {
@@ -249,13 +263,13 @@ export const stateExportService = {
         for (const g of h.guests) {
           const cells = [
             familyKey,
-            g.familyName,
+            h.familyName,
             g.firstName,
             g.lastName,
             g.nickname ?? "",
             ...eventRows.map((e) => (invited.has(`${g.guestId}::${e.id}`) ? "x" : "")),
           ];
-          if (withIds) cells.push(g.publicId, g.guestId);
+          if (withIds) cells.push(h.publicId, g.guestId);
           data.push(cells);
         }
       });

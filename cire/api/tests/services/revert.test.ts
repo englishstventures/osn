@@ -1213,3 +1213,19 @@ describe("revertImport — scoped edge cases", () => {
     expect(db.select().from(families).all()).toHaveLength(2);
   });
 });
+
+describe("revertImport — reads only the sheets a scope needs", () => {
+  it("an events revert that re-creates no event never fetches the guests sheet", async () => {
+    const { db, r2, layer } = scopedLayer();
+    await applyChange(layer, "c0", { eventsCsv: EVENTS_V1, guestsCsv: GUESTS_V1 }, 1_000);
+    // c1 adds an event; reverting it only removes one, so nothing is re-created.
+    await applyChange(layer, "c1", { eventsCsv: EVENTS_V2 }, 2_000);
+    const [row] = db.select().from(imports).where(eq(imports.id, "c1")).all();
+    await r2.delete(row!.beforeGuestsR2Key!);
+
+    await revert(layer, "c1");
+
+    expect(db.select().from(events).all()).toHaveLength(2);
+    expect(db.select().from(imports).where(eq(imports.id, "c1")).all()[0]!.status).toBe("reverted");
+  });
+});

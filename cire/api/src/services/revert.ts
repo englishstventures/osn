@@ -46,7 +46,7 @@ export type RevertError =
   | ImportError
   | CapacityExceeded;
 
-const StoredScope = Schema.fromJsonString(Schema.Struct({ scope: ChangeScope }));
+const StoredScope = Schema.Struct({ scope: ChangeScope });
 
 /**
  * The halves a revert of this change restores: the `scope` the preview stored on
@@ -60,7 +60,18 @@ const StoredScope = Schema.fromJsonString(Schema.Struct({ scope: ChangeScope }))
  * pre-change state and cannot become a mass delete.
  */
 export function storedRevertScope(summary: string): ChangeScope {
-  return Option.match(Schema.decodeUnknownOption(StoredScope)(summary), {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(summary);
+  } catch {
+    return "both";
+  }
+  return revertScopeOf(parsed);
+}
+
+/** {@link storedRevertScope} for a summary the caller has already parsed. */
+export function revertScopeOf(parsedSummary: unknown): ChangeScope {
+  return Option.match(Schema.decodeUnknownOption(StoredScope)(parsedSummary), {
     onNone: (): ChangeScope => "both",
     onSome: (stored) => stored.scope,
   });
@@ -256,16 +267,16 @@ export function translateAttendance(
 function reinviteToRecreatedEvents(
   plan: ImportPlan,
   snapshotEvents: readonly ParsedEvent[],
-  guestsCsv: string,
+  guestsCsv: Effect.Effect<string, R2Error, R2Service>,
   weddingId: string,
-): Effect.Effect<EventLink[], RevertParseError, DbService> {
+): Effect.Effect<EventLink[], RevertParseError | R2Error, DbService | R2Service> {
   return Effect.gen(function* () {
     if (plan.eventCreates.length === 0) return [];
     const recreatedIdByName = new Map(
       plan.eventCreates.map((ec) => [normaliseName(ec.event.name), ec.id]),
     );
 
-    const snapshotFamilies = yield* parseGuestsCsv(guestsCsv, snapshotEvents, {
+    const snapshotFamilies = yield* parseGuestsCsv(yield* guestsCsv, snapshotEvents, {
       snapshot: true,
     }).pipe(Effect.mapError(parseFailed("guests")));
     const wanted: EventLink[] = [];
@@ -313,18 +324,28 @@ function reinviteToRecreatedEvents(
  * Each restored half is reset to the snapshot, so a row created in that half
  * since the checkpoint is removed. A row that has to be re-created gets a new
  * id; a household keeps its claim code when the code is still free.
+ *
+ * The two sheets are fetched only where they are read: an events revert that
+ * re-creates no event never reads the guests sheet.
  */
 function restoreBeforeImage(
   changeId: string,
   weddingId: string,
   scope: ChangeScope,
-  eventsCsv: string,
-  guestsCsv: string,
+  keys: { readonly events: string; readonly guests: string },
   finalize: BatchItem<"sqlite">[],
-): Effect.Effect<ImportSummary, RevertParseError | ImportError | CapacityExceeded, DbService> {
+): Effect.Effect<
+  ImportSummary,
+  RevertParseError | ImportError | CapacityExceeded | R2Error,
+  DbService | R2Service
+> {
   return Effect.gen(function* () {
     let plan: ImportPlan;
     if (scope === "guests") {
+      const [eventsCsv, guestsCsv] = yield* Effect.all(
+        [fetchUpload(keys.events), fetchUpload(keys.guests)],
+        { concurrency: 2 },
+      );
       const snapshotEvents = yield* readSnapshotEventKeys(eventsCsv);
       const snapshotFamilies = yield* parseGuestsCsv(guestsCsv, snapshotEvents, {
         snapshot: true,
@@ -343,29 +364,34 @@ function restoreBeforeImage(
         ...diffed,
         eventLinkRemoves: diffed.eventLinkRemoves.filter((link) => knownEventIds.has(link.eventId)),
       };
+    } else if (scope === "events") {
+      const snapshotEvents = yield* parseEventsCsv(yield* fetchUpload(keys.events)).pipe(
+        Effect.mapError(parseFailed("events")),
+      );
+      const diffed = yield* diffAgainstDb(snapshotEvents, [], weddingId, { scope }).pipe(
+        Effect.orDie,
+      );
+      const reinvites = yield* reinviteToRecreatedEvents(
+        diffed,
+        snapshotEvents,
+        fetchUpload(keys.guests),
+        weddingId,
+      );
+      plan = { ...diffed, eventLinkCreates: [...diffed.eventLinkCreates, ...reinvites] };
     } else {
+      const [eventsCsv, guestsCsv] = yield* Effect.all(
+        [fetchUpload(keys.events), fetchUpload(keys.guests)],
+        { concurrency: 2 },
+      );
       const snapshotEvents = yield* parseEventsCsv(eventsCsv).pipe(
         Effect.mapError(parseFailed("events")),
       );
-      if (scope === "events") {
-        const diffed = yield* diffAgainstDb(snapshotEvents, [], weddingId, { scope }).pipe(
-          Effect.orDie,
-        );
-        const reinvites = yield* reinviteToRecreatedEvents(
-          diffed,
-          snapshotEvents,
-          guestsCsv,
-          weddingId,
-        );
-        plan = { ...diffed, eventLinkCreates: [...diffed.eventLinkCreates, ...reinvites] };
-      } else {
-        const snapshotFamilies = yield* parseGuestsCsv(guestsCsv, snapshotEvents, {
-          snapshot: true,
-        }).pipe(Effect.mapError(parseFailed("guests")));
-        plan = yield* diffAgainstDb(snapshotEvents, snapshotFamilies, weddingId, { scope }).pipe(
-          Effect.orDie,
-        );
-      }
+      const snapshotFamilies = yield* parseGuestsCsv(guestsCsv, snapshotEvents, {
+        snapshot: true,
+      }).pipe(Effect.mapError(parseFailed("guests")));
+      plan = yield* diffAgainstDb(snapshotEvents, snapshotFamilies, weddingId, { scope }).pipe(
+        Effect.orDie,
+      );
     }
     return yield* applyImport(changeId, plan, weddingId, finalize);
   });
@@ -441,14 +467,11 @@ export function revertImport(
 
     if (current.beforeEventsR2Key && current.beforeGuestsR2Key) {
       // ── Before-image path ──────────────────────────────────────────────────
-      const eventsCsv = yield* fetchUpload(current.beforeEventsR2Key);
-      const guestsCsv = yield* fetchUpload(current.beforeGuestsR2Key);
       summary = yield* restoreBeforeImage(
         current.id,
         weddingId,
         scope,
-        eventsCsv,
-        guestsCsv,
+        { events: current.beforeEventsR2Key, guests: current.beforeGuestsR2Key },
         markReverted,
       );
     } else {

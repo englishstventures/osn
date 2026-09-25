@@ -24,7 +24,7 @@ import { applyImport, diffAgainstDb } from "../services/import";
 import type { DeletableBucket } from "../services/r2-cleanup";
 import { R2Service, fetchUpload, storeUpload } from "../services/r2-imports";
 import type { R2Bucket } from "../services/r2-imports";
-import { revertImport, storedRevertScope } from "../services/revert";
+import { revertImport, revertScopeOf } from "../services/revert";
 import { parseEventsCsv, parseGuestsCsv } from "../services/spreadsheet";
 import type {
   MalformedSpreadsheetReason,
@@ -782,26 +782,30 @@ export const createOrganiserChangeRoutes = (
           return {
             // The page is returned under `imports` — the table name — and is
             // keyset-paginated on `uploadedAt`.
-            imports: page.map((r) => ({
-              id: r.id,
-              uploadedAt: r.uploadedAt,
-              format: r.format,
-              status: r.status,
-              kind: r.kind,
-              appliedAt: r.appliedAt,
-              revertedAt: r.revertedAt,
-              revertable: Boolean(r.beforeEventsR2Key && r.beforeGuestsR2Key),
-              // The halves a revert of this change restores, decoded by the rule
-              // the revert itself uses — the portal names them in its confirm.
-              scope: storedRevertScope(r.summary),
-              summary: (() => {
+            imports: page.map((r) => {
+              const summary: unknown = (() => {
                 try {
                   return JSON.parse(r.summary);
                 } catch {
                   return {};
                 }
-              })(),
-            })),
+              })();
+              return {
+                id: r.id,
+                uploadedAt: r.uploadedAt,
+                format: r.format,
+                status: r.status,
+                kind: r.kind,
+                appliedAt: r.appliedAt,
+                revertedAt: r.revertedAt,
+                revertable: Boolean(r.beforeEventsR2Key && r.beforeGuestsR2Key),
+                // The halves a revert of this change restores, decoded by the
+                // rule the revert itself uses — the portal names them in its
+                // confirm.
+                scope: revertScopeOf(summary),
+                summary,
+              };
+            }),
             nextCursor,
           };
         }),
