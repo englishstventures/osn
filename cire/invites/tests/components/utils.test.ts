@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { isValidClaimResponse } from "../../src/components/utils";
+import { isValidClaimResponse, isValidRsvpSaveResponse } from "../../src/components/utils";
 
 describe("isValidClaimResponse", () => {
   const baseEvent = {
@@ -302,7 +302,7 @@ describe("isValidClaimResponse", () => {
     });
 
     it("rejects dietaryPresets that is present but not an array of strings", () => {
-      for (const dietaryPresets of ["vegetarian", [42], null, {}]) {
+      for (const dietaryPresets of ["vegetarian", [42], ["vegan", 42], null, {}]) {
         expect(
           isValidClaimResponse(wrap({ ...base, dietaryPresets, dietaryConsentCurrent: true })),
         ).toBe(false);
@@ -342,5 +342,39 @@ describe("isValidClaimResponse", () => {
         events: [{ ...baseEvent, sortOrder: "0" }],
       }),
     ).toBe(false);
+  });
+});
+
+describe("isValidRsvpSaveResponse", () => {
+  // The save response carries the same rows as the claim response, and they
+  // replace the page's copy, so they are held to the same row check.
+  const row = {
+    guestId: "g1",
+    eventId: "e1",
+    status: "attending",
+    dietary: "",
+    dietaryPresets: ["vegan"],
+    dietaryConsentCurrent: true,
+  };
+
+  it("accepts rows the claim guard would accept", () => {
+    expect(isValidRsvpSaveResponse({ rsvps: [row] })).toBe(true);
+    expect(isValidRsvpSaveResponse({ rsvps: [] })).toBe(true);
+  });
+
+  it("accepts rows lacking the two dietary fields, as the claim guard does", () => {
+    const { dietaryPresets: _p, dietaryConsentCurrent: _c, ...bare } = row;
+    expect(isValidRsvpSaveResponse({ rsvps: [bare] })).toBe(true);
+  });
+
+  it("rejects a body with no rows array, or a row of the wrong shape", () => {
+    for (const body of [null, "ok", {}, { rsvps: "x" }]) {
+      expect(isValidRsvpSaveResponse(body)).toBe(false);
+    }
+    expect(isValidRsvpSaveResponse({ rsvps: [{ ...row, dietaryPresets: "nuts" }] })).toBe(false);
+    expect(isValidRsvpSaveResponse({ rsvps: [{ ...row, status: "yolo" }] })).toBe(false);
+    expect(isValidRsvpSaveResponse({ rsvps: [{ ...row, dietaryConsentCurrent: "yes" }] })).toBe(
+      false,
+    );
   });
 });
