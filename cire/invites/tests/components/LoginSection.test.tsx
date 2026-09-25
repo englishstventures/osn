@@ -1,12 +1,45 @@
-import { cleanup, fireEvent, render } from "@solidjs/testing-library";
+import { cleanup, fireEvent, render, waitFor } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { LoginSection } from "../../src/components/LoginSection";
+import { LoginSection, type LoginSectionLayout } from "../../src/components/LoginSection";
 import type { RsvpDeadlineState } from "../../src/components/rsvp-deadline";
 import type { ClaimResult, FamilyMember, RsvpDeadline } from "../../src/components/types";
 
-afterEach(cleanup);
+// The account-link panel and the OSN auth client are stubbed file-wide: every
+// claimed render below mounts them, and the real ones would probe the account
+// API and the auth session over the network. Their own behaviour is covered in
+// PulseAccountLink.test.tsx; what this file asserts is where the panel puts
+// them and when.
+vi.mock("../../src/components/PulseAccountLink", () => ({
+  PulseAccountLink: (props: { members: FamilyMember[]; class?: string }) => (
+    <div
+      data-testid="pulse-account-link-stub"
+      class={props.class}
+      data-members={props.members.map((m) => m.guestId).join(",")}
+    />
+  ),
+}));
+
+vi.mock("@shared/rp-auth/solid", () => ({
+  AuthProvider: (props: { children: unknown }) => props.children,
+}));
+
+/** Answers every request with an empty 204 unless a test installs its own. */
+let fetchMock: ReturnType<typeof vi.fn>;
+
+beforeEach(() => {
+  fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+  vi.stubGlobal("fetch", fetchMock);
+});
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  // The claim and sign-out paths write the restore hint; keep it from leaking
+  // into the next case.
+  document.cookie = "cire_claimed=; Path=/; Max-Age=0";
+});
 
 function member(firstName: string, nickname: string | null = null): FamilyMember {
   return { guestId: `g-${firstName}`, firstName, lastName: "Okafor", nickname, eventIds: [] };
@@ -17,6 +50,11 @@ function result(members: FamilyMember[], familyName = "Okafor"): ClaimResult {
 }
 
 const noop = () => {};
+
+/** Let a `lazy()` import and its Suspense boundary settle. */
+async function settle() {
+  for (let i = 0; i < 5; i++) await new Promise((r) => setTimeout(r, 0));
+}
 
 describe("LoginSection greeting", () => {
   it("greets a multi-guest code as a family", () => {
@@ -186,6 +224,283 @@ describe("LoginSection sign-out control", () => {
 
     expect(onSignOut).toHaveBeenCalledTimes(1);
     expect(input.value).toBe("");
+  });
+
+  it("revokes the household session itself, so no design pack can forget to", async () => {
+    // `cire_session` is HttpOnly and host-scoped to the API origin: only this
+    // request can end it. The panel sends it, rather than trusting each pack's
+    // handler to, so a pack that renders the control cannot ship one that only
+    // resets the screen and leaves a live credential behind.
+    document.cookie = "cire_claimed=1; Path=/";
+    const { getByText } = render(() => (
+      <LoginSection
+        apiUrl="https://api.test"
+        result={result([member("Chidi")])}
+        onClaimed={noop}
+        onSignOut={noop}
+      />
+    ));
+
+    fireEvent.click(getByText(/Sign out/));
+
+    await waitFor(() => {
+      const call = fetchMock.mock.calls.find(
+        ([url]) => url === "https://api.test/api/claim/signout",
+      );
+      expect(call, "no sign-out request was sent").toBeTruthy();
+      expect((call![1] as RequestInit).method).toBe("POST");
+      expect((call![1] as RequestInit).credentials).toBe("include");
+    });
+    // The restore hint goes with it, so the next visit shows the code form.
+    expect(document.cookie).not.toContain("cire_claimed=1");
+  });
+
+  it("clears what the unlock animation left on the form, so it comes back painted", () => {
+    // The packs' unlock sequence fades the form out and leaves its end state
+    // inline (`opacity: 0` plus a `translateY`). Solid's binding on the element
+    // owns only `display`, so without this the form returns to the layout
+    // fully transparent. Measured for real in InvitePage.browser.test.tsx.
+    let formEl: HTMLDivElement | undefined;
+    const { getByText } = render(() => (
+      <LoginSection
+        apiUrl="https://api.test"
+        result={result([member("Chidi")])}
+        onClaimed={noop}
+        onSignOut={noop}
+        formRef={(el) => (formEl = el)}
+      />
+    ));
+    formEl!.style.opacity = "0";
+    formEl!.style.transform = "translateY(-8px)";
+
+    fireEvent.click(getByText(/Sign out/));
+
+    expect(formEl!.style.opacity).toBe("");
+    expect(formEl!.style.transform).toBe("");
+  });
+
+  it("moves focus to the code field once the page has swapped the form back", () => {
+    // The click removes the focused button from the accessibility tree; without
+    // this, focus falls to <body>. The page resets its own state inside
+    // `onSignOut`, so the field is displayed by the time focus moves.
+    const [claimed, setClaimed] = createSignal<ClaimResult | null>(result([member("Chidi")]));
+    const { getByText, getByLabelText } = render(() => (
+      <LoginSection
+        apiUrl="https://api.test"
+        result={claimed()}
+        onClaimed={noop}
+        onSignOut={() => setClaimed(null)}
+      />
+    ));
+
+    fireEvent.click(getByText(/Sign out/));
+
+    expect(document.activeElement).toBe(getByLabelText("Invitation code"));
+  });
+});
+
+describe("LoginSection claim", () => {
+  it("records the household session hint when a code is claimed", async () => {
+    // The page's restore reads this hint to decide whether a returning visitor
+    // is worth a request. The panel writes it, beside the claim it stands for,
+    // so a design pack cannot open the invite without leaving it.
+    const claimed = result([member("Chidi")]);
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify(claimed), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    const onClaimed = vi.fn();
+    const { getByLabelText, getByText } = render(() => (
+      <LoginSection apiUrl="https://api.test" result={null} onClaimed={onClaimed} />
+    ));
+
+    fireEvent.input(getByLabelText("Invitation code"), {
+      target: { value: "OKAFOR-LILY-AB12CD" },
+    });
+    fireEvent.click(getByText("Open Invitation"));
+
+    await waitFor(() => expect(onClaimed).toHaveBeenCalledTimes(1));
+    expect(onClaimed.mock.calls[0]![0]).toEqual(claimed);
+    expect(document.cookie).toContain("cire_claimed=1");
+  });
+
+  it("writes no hint when the claim fails", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
+    const onClaimed = vi.fn();
+    const { getByLabelText, getByText, findByRole } = render(() => (
+      <LoginSection apiUrl="https://api.test" result={null} onClaimed={onClaimed} />
+    ));
+
+    fireEvent.input(getByLabelText("Invitation code"), { target: { value: "WRONG-CODE" } });
+    fireEvent.click(getByText("Open Invitation"));
+
+    await findByRole("alert");
+    expect(onClaimed).not.toHaveBeenCalled();
+    expect(document.cookie).not.toContain("cire_claimed=1");
+  });
+});
+
+describe("LoginSection layout", () => {
+  const surface = { "--invite-section-bg": "var(--color-surface)" };
+
+  /** The element that paints the welcome tone. */
+  function painted(container: HTMLElement): HTMLElement[] {
+    return [...container.querySelectorAll<HTMLElement>("[style]")].filter(
+      (el) => el.style.getPropertyValue("background-color") === "var(--invite-section-bg)",
+    );
+  }
+
+  it("band: paints the tone across the whole section, on a centred column", () => {
+    // Classic's shape, and the default — a pack that passes no layout gets a
+    // working panel with no markup of its own.
+    const { container, getByText } = render(() => (
+      <LoginSection apiUrl="http://x" result={null} onClaimed={noop} themeVars={surface} />
+    ));
+    const section = getByText("Enter Your Code").closest("section") as HTMLElement;
+
+    expect(painted(container)).toEqual([section]);
+    expect(section.style.getPropertyValue("--invite-section-bg")).toBe("var(--color-surface)");
+    expect(section.className).toContain("border-b");
+    expect(getByText("Enter Your Code").closest(".text-center")).not.toBeNull();
+    // No inset card inside the band (the field and the preview chip draw their
+    // own borders; neither is a `div`).
+    expect(section.querySelector("div.rounded-sm.border")).toBeNull();
+  });
+
+  it("panel: paints only a bordered card, centred on phones and flush left from md", () => {
+    // Gala's shape. The tone belongs to the card, not the section around it:
+    // painting the section would turn the inset card back into a band.
+    const { container, getByText } = render(() => (
+      <LoginSection
+        apiUrl="http://x"
+        result={null}
+        onClaimed={noop}
+        themeVars={surface}
+        layout="panel"
+      />
+    ));
+    const section = getByText("Enter Your Code").closest("section") as HTMLElement;
+    const [card] = painted(container);
+
+    expect(painted(container)).toHaveLength(1);
+    expect(card).not.toBe(section);
+    expect(section.contains(card!)).toBe(true);
+    expect(card!.style.getPropertyValue("--invite-section-bg")).toBe("var(--color-surface)");
+    const classes = card!.className.split(/\s+/);
+    expect(classes).toEqual(expect.arrayContaining(["border", "max-w-column-xs", "md:mx-0"]));
+    // Left-aligned copy, against the band's centred column.
+    expect(getByText("Enter Your Code").closest(".text-center")).toBeNull();
+  });
+
+  it.each<LoginSectionLayout>(["band", "panel"])(
+    "%s: every heading follows the organiser's heading typography",
+    (layout) => {
+      const { container } = render(() => (
+        <LoginSection apiUrl="http://x" result={null} onClaimed={noop} layout={layout} />
+      ));
+      const headings = [...container.querySelectorAll("h2")];
+      // The code-entry heading plus both greetings (only one is displayed at a
+      // time, but a claim with no result renders the fallback greeting).
+      expect(headings.length).toBeGreaterThanOrEqual(2);
+      for (const h of headings) {
+        expect(h.className).toContain("*var(--invite-heading-scale,1))]");
+        expect(h.className).toContain("[font-weight:var(--invite-heading-weight,300)]");
+        expect(h.className).toContain("[font-style:var(--invite-heading-style,normal)]");
+        expect(h.className).not.toContain("font-light");
+      }
+    },
+  );
+
+  it("greets in the metal gold only where the heading is large text", () => {
+    // `text-gold` is held to the 3:1 UI floor, so it may only paint text that
+    // WCAG counts as large: the band's heading is at least 2rem × 0.85. The
+    // panel's starts at 1.5rem, which is not, so it takes the ink gold.
+    const band = render(() => (
+      <LoginSection apiUrl="http://x" result={result([member("Chidi")])} onClaimed={noop} />
+    ));
+    const bandGreeting = band.getByText(/Dear Chidi/);
+    expect(bandGreeting.className.split(/\s+/)).toContain("text-gold");
+    cleanup();
+
+    const panel = render(() => (
+      <LoginSection
+        apiUrl="http://x"
+        result={result([member("Chidi")])}
+        onClaimed={noop}
+        layout="panel"
+      />
+    ));
+    const classes = panel.getByText(/Dear Chidi/).className.split(/\s+/);
+    expect(classes).toContain("text-gold-ink");
+    expect(classes).not.toContain("text-gold");
+  });
+});
+
+describe("LoginSection household controls", () => {
+  it("puts the account link inside the welcome half, before the sign-out", async () => {
+    const { findByTestId, getByText, container } = render(() => (
+      <LoginSection
+        apiUrl="http://x"
+        result={result([member("Chidi"), member("Ada")])}
+        onClaimed={noop}
+        onSignOut={noop}
+      />
+    ));
+
+    const link = await findByTestId("pulse-account-link-stub");
+    const welcome = getByText(/Welcome, the Okafor Family/).parentElement as HTMLElement;
+    expect(welcome.contains(link)).toBe(true);
+    expect(container.querySelector("form")!.contains(link)).toBe(false);
+    // The seats it offers are this household's.
+    expect(link.dataset.members).toBe("g-Chidi,g-Ada");
+    // Sign-out ends the session, so it closes the panel.
+    const signOut = getByText(/Sign out/);
+    expect(link.compareDocumentPosition(signOut) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it.each([
+    // The band's measure centres it in the column…
+    ["band", ["max-w-column-sm", "mx-auto", "mb-8"], []],
+    // …while the panel's card is the measure, and its copy runs flush left.
+    ["panel", ["mb-8"], ["mx-auto", "max-w-column-sm"]],
+  ] as const)(
+    "%s: places the account link on the panel's own measure",
+    async (layout, expected, absent) => {
+      const { findByTestId } = render(() => (
+        <LoginSection
+          apiUrl="http://x"
+          result={result([member("Chidi")])}
+          onClaimed={noop}
+          layout={layout}
+        />
+      ));
+      const classes = (await findByTestId("pulse-account-link-stub")).className.split(/\s+/);
+      expect(classes).toEqual(expect.arrayContaining([...expected]));
+      expect(classes.filter((c) => (absent as readonly string[]).includes(c))).toEqual([]);
+    },
+  );
+
+  it("offers no account link before a claim", async () => {
+    const { queryByTestId } = render(() => (
+      <LoginSection apiUrl="http://x" result={null} onClaimed={noop} />
+    ));
+    await settle();
+    expect(queryByTestId("pulse-account-link-stub")).toBeNull();
+  });
+
+  it("offers no account link in host preview — a host is not a guest seat", async () => {
+    const { queryByTestId, getByText } = render(() => (
+      <LoginSection
+        apiUrl="http://x"
+        result={{ ...result([member("Chidi")]), preview: true }}
+        onClaimed={noop}
+      />
+    ));
+    await settle();
+    expect(getByText(/Preview mode/)).toBeTruthy();
+    expect(queryByTestId("pulse-account-link-stub")).toBeNull();
   });
 });
 
