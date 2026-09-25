@@ -18,9 +18,10 @@ related:
   - "[[backend-patterns]]"
   - "[[cire-development]]"
   - "[[free-tier-limits]]"
+  - "[[observability-setup]]"
 packages:
   - "@cire/api"
-last-reviewed: 2026-09-17
+last-reviewed: 2026-09-25
 ---
 
 # D1 Read Replication and the Sessions API
@@ -81,7 +82,7 @@ routes. The seam is `cire/api/src/db/d1-session.ts`:
 
 | Piece | Lifetime | Job |
 |---|---|---|
-| `createSessionRoutedClient(binding)` | One per isolate | A stable `{ prepare, batch }` the Drizzle handle is built over. Each call delegates to whichever session is current. |
+| `createSessionRoutedClient(binding, entry)` | One per isolate for `fetch`; one per invocation for `scheduled` | A stable `{ prepare, batch }` the Drizzle handle is built over. Each call delegates to whichever session is current. `entry` (`"fetch"` or `"scheduled"`) labels the queries that found none. |
 | `withD1Session(session, body)` | One per request | Puts a session on an `AsyncLocalStorage` for the duration of `body`. |
 | `runInD1Session(d1, body)` | One per request | Opens a fresh session and does the above. Called in `fetch`, wrapping the entire dispatch, and once around each of the six `scheduled` sweeps. |
 
@@ -101,6 +102,24 @@ routes. The seam is `cire/api/src/db/d1-session.ts`:
 > mechanism could cross stores. `d1-session.test.ts` asserts it does not, with
 > two interleaved requests run through the real scheduler.
 
+### Noticing a lost context
+
+Because a lost context gives no wrong answer, no test or error shows it. So the
+shim reports it itself:
+
+| Signal | When | Where to read it |
+|---|---|---|
+| Counter `cire.d1.session_missing`, attribute `entry` (`fetch` or `scheduled`) | Every query prepared on the raw binding. A batch is not counted again, since its statements were counted as they were prepared | Nowhere on a deployed tier yet: metrics are a no-op on workerd until a metric reader exists (see [[observability-setup]], Runtime split) |
+| Warning `D1 query ran outside a session, so it went to the primary`, field `entry` | The first such query per client: once per isolate for `fetch`, once per cron run for `scheduled` | Workers Logs for `cire-api` |
+
+Either should read zero. Both say that a context was lost, not where. To find
+the path, drive it through the probe binding in `cire/api/tests/index.test.ts`
+("D1 session routing at the entry points"), which records every query that
+reaches the raw binding.
+
+Neither sees a Drizzle handle built over `env.DB` directly, because such a
+handle never goes through the shim. The last rule below covers that case.
+
 ## The constraint: always `first-primary`
 
 `withSession()` takes `"first-primary"` or `"first-unconstrained"`.
@@ -112,8 +131,8 @@ routes. The seam is `cire/api/src/db/d1-session.ts`:
 
 cire uses `first-primary` Worker-wide — see [[d1-session-first-primary]] for the
 choice stated as a decision record. `routes/invite.ts` deliberately serves a
-`no-store`, edit-sensitive payload so an organiser's edit shows up when a guest
-revalidates the invite — `first-unconstrained` would reintroduce exactly the
+`no-store`, edit-sensitive payload so an organiser's edit shows up the next time
+a guest loads the invite — `first-unconstrained` would reintroduce exactly the
 staleness that header exists to prevent. One constraint for the whole Worker
 keeps that property from depending on which route a request happened to reach.
 

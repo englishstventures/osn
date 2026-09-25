@@ -8,13 +8,14 @@ import {
   registryClaims,
   registryContributions,
   registryItems,
+  registrySettings,
   rsvps,
   tasks,
   weddings,
   BOOTSTRAP_WEDDING_ID,
 } from "@cire/db";
 import { asc, eq } from "drizzle-orm";
-import { Effect } from "effect";
+import { Cause, Effect, Exit, Option } from "effect";
 import { Miniflare } from "miniflare";
 
 import { createSessionRoutedClient, runInD1Session } from "../../src/db/d1-session";
@@ -25,6 +26,7 @@ import type { ImportPlan } from "../../src/schemas/import";
 import { claimService } from "../../src/services/claim";
 import { giftExportService } from "../../src/services/gift-export";
 import { applyImport } from "../../src/services/import";
+import { registryService, SettingsChanged } from "../../src/services/registry";
 import { rsvpService } from "../../src/services/rsvp";
 import { tasksService } from "../../src/services/tasks";
 
@@ -160,7 +162,7 @@ beforeAll(async () => {
   // a raw binding the deployed Worker never uses. With no session in scope the
   // shim delegates straight to `d1`, which is the point: the shim has to be
   // transparent to all of this.
-  db = createD1Db(createSessionRoutedClient(d1));
+  db = createD1Db(createSessionRoutedClient(d1, "fetch"));
 }, MF_TIMEOUT_MS);
 
 afterAll(async () => {
@@ -173,7 +175,16 @@ afterAll(async () => {
 
 beforeEach(async () => {
   // FK-safe truncate, then reseed — keeps each test isolated on the shared D1.
-  for (const table of [rsvps, guestEvents, guests, families, events, tasks, weddings]) {
+  for (const table of [
+    rsvps,
+    guestEvents,
+    guests,
+    families,
+    events,
+    tasks,
+    registrySettings,
+    weddings,
+  ]) {
     await db.delete(table);
   }
   await seed();
@@ -560,6 +571,51 @@ describe("cire/api over real D1 (Miniflare)", () => {
         "Cash gift,Copper Pan,Test,Uncle Jo,,succeeded,Towards the pan,20000,JPY,204.00,AUD,0.0102,2026-08-20T10:06:00.000Z,2026-08-20T10:02:00.000Z",
         "Gift list,Copper Pan,Test,Auntie Ros,2,purchased,Bought the pair,,,,,,2026-08-20T10:05:00.000Z,2026-08-20T10:01:00.000Z",
       ]);
+    },
+    MF_TIMEOUT_MS,
+  );
+
+  it(
+    "registry settings: a stale expected value is refused on D1 and changes nothing",
+    async () => {
+      // The refusal rests on the upsert's `DO UPDATE ... WHERE` returning no row
+      // when the WHERE fails — a property of the engine, so it is pinned on D1
+      // as well as on bun:sqlite.
+      await run(
+        registryService.updateSettings(BOOTSTRAP_WEDDING_ID, {
+          published: true,
+          shippingAddress: "1 Example St",
+        }),
+      );
+      await run(registryService.updateSettings(BOOTSTRAP_WEDDING_ID, { shippingAddress: null }));
+
+      const exit = await Effect.runPromiseExit(
+        registryService
+          .updateSettings(BOOTSTRAP_WEDDING_ID, {
+            shippingAddress: "2 Example St",
+            expected: { shippingAddress: "1 Example St" },
+          })
+          .pipe(Effect.provideService(DbService, db)),
+      );
+      const error = Exit.isFailure(exit)
+        ? Option.getOrUndefined(Cause.findErrorOption(exit.cause))
+        : undefined;
+      expect(error).toBeInstanceOf(SettingsChanged);
+
+      const [row] = await db
+        .select({ shippingAddress: registrySettings.shippingAddress })
+        .from(registrySettings)
+        .where(eq(registrySettings.weddingId, BOOTSTRAP_WEDDING_ID));
+      expect(row?.shippingAddress).toBeNull();
+
+      // A matching expectation writes.
+      const saved = await run(
+        registryService.updateSettings(BOOTSTRAP_WEDDING_ID, {
+          shippingAddress: "2 Example St",
+          expected: { shippingAddress: null },
+        }),
+      );
+      expect(saved.shippingAddress).toBe("2 Example St");
     },
     MF_TIMEOUT_MS,
   );
