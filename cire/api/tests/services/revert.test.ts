@@ -1047,7 +1047,7 @@ describe("translateAttendance", () => {
     familyName: "Testfamily",
     guests: [{ id: "gst_a", firstName: "Ada", lastName: "", nickname: null, eventNames }],
   });
-  const namesOf = (families: readonly ParsedFamily[]) => families[0]!.guests[0]!.eventNames;
+  const namesOf = (translated: readonly ParsedFamily[]) => translated[0]!.guests[0]!.eventNames;
 
   it("follows an event renamed since by its id", () => {
     const { families: out, knownEventIds } = translateAttendance(
