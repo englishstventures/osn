@@ -161,7 +161,7 @@ describe("ConsentPreferences dialog", () => {
   it("says withdrawal stops a vendor without claiming to take back what it received", () => {
     const text = dialog()!.textContent ?? "";
     expect(text).toContain("Turning something off takes effect at once; the page may reload.");
-    expect(text).toContain("Data already sent can't be recalled.");
+    expect(text).toContain("Data already sent to that company can't be recalled.");
     expect(text).not.toMatch(/\b(removed|cleared|deleted)\b/i);
   });
 

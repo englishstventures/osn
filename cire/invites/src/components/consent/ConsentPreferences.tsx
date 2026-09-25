@@ -95,8 +95,8 @@ export function ConsentPreferences() {
             The second sentence is the short form of that; `/privacy` states
             it in full, naming the company and when the data left. */}
       <p class="font-body text-text-muted/80 text-ui-sm mt-1.5 leading-relaxed">
-        Turning something off takes effect at once; the page may reload. Data already sent can't be
-        recalled.
+        Turning something off takes effect at once; the page may reload. Data already sent to that
+        company can't be recalled.
       </p>
 
       <div class="mt-5 flex flex-col gap-4">
