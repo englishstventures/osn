@@ -438,6 +438,23 @@ export default function RegistryView(props: RegistryViewProps) {
       timeZone: "UTC",
     });
 
+  /**
+   * Everything the summary band derives, worked out once per summary. Below
+   * `giftSummary` and `summaryDate` because `createMemo` runs at once, and a
+   * memo above a `const` it reads would throw at start-up.
+   */
+  const summaryBand = createMemo(() => {
+    const summary = giftSummary();
+    if (!summary) return null;
+    return {
+      summary,
+      sweptOn: summaryDate(summary.sweptOn),
+      firstGiftOn: summaryDate(summary.firstGiftOn),
+      lastGiftOn: summaryDate(summary.lastGiftOn),
+      claimsTotal: summary.claims.reserved + summary.claims.purchased,
+    };
+  });
+
   /** The two money lines a gift renders as. Foreign-currency gifts show the
    *  as-given amount as the headline with the primary equivalent underneath;
    *  a primary-currency gift shows one line. */
@@ -818,46 +835,45 @@ export default function RegistryView(props: RegistryViewProps) {
             below, it is what stands INSTEAD of it. The copy has to say that
             outright, or a couple reads an empty log as an empty guest list.
             Rendered ONLY when a summary exists, i.e. only after the sweep. */}
-        <Show when={giftSummary()}>
-          {(summary) => (
+        <Show when={summaryBand()}>
+          {(band) => (
             <div class="border-border bg-surface/20 flex flex-col gap-2 rounded-sm border p-4">
               <span class="text-gold-dim font-body text-ui-xs tracking-ui-widest uppercase">
                 Your record of gifts
               </span>
               <p class="text-text-muted text-ui-sm">
-                On {summaryDate(summary().sweptOn)}, a year after your wedding, we deleted your
+                On {band().sweptOn}, a year after your wedding, we deleted your
                 guests' details — and the gifts went with them. Who gave what, and the notes they
                 wrote, are gone. These totals are what we kept.
               </p>
-              <Show when={summary().claims.reserved + summary().claims.purchased > 0}>
+              <Show when={band().claimsTotal > 0}>
                 <span class="text-text text-ui-md">
-                  {plural(summary().claims.reserved + summary().claims.purchased, "gift", "gifts")}{" "}
-                  from your list
+                  {plural(band().claimsTotal, "gift", "gifts")} from your list
                   <span class="text-text-muted text-ui-sm">
                     {" "}
-                    · {summary().claims.purchased} marked bought
+                    · {band().summary.claims.purchased} marked bought
                   </span>
                 </span>
               </Show>
-              <Show when={summary().contributions.count > 0}>
+              <Show when={band().summary.contributions.count > 0}>
                 {/* Per currency, side by side, never added together: a total
                     that re-values itself is not a record of anything, and
                     there is nothing left here to re-derive a rate from. */}
                 <span class="text-text text-ui-md">
-                  {summary()
-                    .contributions.totals.map((total) =>
+                  {band()
+                    .summary.contributions.totals.map((total) =>
                       formatMinor(total.amountMinor, total.currency),
                     )
                     .join(" · ")}
                   <span class="text-text-muted text-ui-sm">
                     {" "}
-                    · {plural(summary().contributions.count, "cash gift", "cash gifts")}
+                    · {plural(band().summary.contributions.count, "cash gift", "cash gifts")}
                   </span>
                 </span>
               </Show>
               <span class="text-text-muted text-ui-sm">
-                Gifts arrived between {summaryDate(summary().firstGiftOn)} and{" "}
-                {summaryDate(summary().lastGiftOn)}. Each currency is totalled as it was given.
+                Gifts arrived between {band().firstGiftOn} and {band().lastGiftOn}. Each currency is
+                totalled as it was given.
               </span>
             </div>
           )}
