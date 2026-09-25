@@ -605,6 +605,44 @@ describe("RsvpView", () => {
     expect(body.dietaryPresets).toEqual(["gluten", "dairy", "a_future_key"]);
   });
 
+  it("editor shows a stored preset key this build does not know, and unticking it drops the attestation", async () => {
+    // The organiser's side of the rule the guest sheet follows: a key missing
+    // from this build's vocabulary is still a dietary requirement, so it shows as
+    // a checked pill. Unticked, the row has no dietary data left, so there is
+    // nothing to attest to and the save must not claim consent.
+    restoreViewport = mockViewport(false);
+    const withUnknown = structuredClone(VIEW);
+    const ada = withUnknown.events[0]!.guests.find((g) => g.guestId === ADA.guestId)!;
+    ada.dietaryPresets = ["a_future_key"];
+    authFetchMock
+      .mockResolvedValueOnce(json(withUnknown))
+      .mockResolvedValueOnce(
+        json({ rsvp: { status: "attending", consentSource: "organiser_attested" } }),
+      )
+      .mockResolvedValueOnce(json(withUnknown));
+    render(() => <RsvpView weddingId="wed_a" canEdit />);
+
+    await waitFor(() => expect(screen.getByText("Bo Jones")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Edit reply for Ada Sharma" }));
+    await screen.findByLabelText(/Anything else/i);
+
+    const pill = screen.getByRole("checkbox", { name: "A future key" }) as HTMLInputElement;
+    expect(pill.checked).toBe(true);
+    expect(screen.getByLabelText(/I confirm the guest consented/i)).toBeTruthy();
+
+    fireEvent.click(pill);
+    expect(screen.queryByLabelText(/I confirm the guest consented/i)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Save reply/i }));
+
+    await waitFor(() => expect(authFetchMock).toHaveBeenCalledTimes(3));
+    const body = JSON.parse(authFetchMock.mock.calls[1]![1]?.body as string) as {
+      dietaryPresets: readonly string[];
+      dietaryConsent: boolean;
+    };
+    expect(body.dietaryPresets).toEqual([]);
+    expect(body.dietaryConsent).toBe(false);
+  });
+
   it("editor shows no attestation when the existing reply carries no dietary data", async () => {
     // The other branch of the prefill rule. Bo's stored reply has neither
     // presets nor free text, so there is nothing to attest to and the checkbox

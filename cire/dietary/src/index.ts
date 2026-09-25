@@ -140,13 +140,14 @@ export function isDietaryPreset(key: string): key is DietaryPreset {
  * "Gluten", not "Gluten / coeliac") until the page reloads onto a build that
  * knows the key.
  *
- * Keys are `[a-z_]+` by construction (see {@link serialisePresets}); a key with
- * no letters in it comes back unchanged rather than as an empty label.
+ * Keys are `[a-z_]+` by construction (see {@link serialisePresets}). A key that
+ * is only underscores comes back as itself; a key that is empty or only
+ * whitespace comes back as `""`, which every caller skips.
  */
 export function presetLabel(key: string): string {
   if (isDietaryPreset(key)) return DIETARY_PRESET_LABEL[key];
   const words = key.replaceAll("_", " ").replace(/\s+/g, " ").trim();
-  if (words === "") return key;
+  if (words === "") return key.trim();
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
@@ -205,7 +206,8 @@ export function parsePresets(stored: string): DietaryPreset[] {
  * CSV is built, on a Worker with a 10 ms CPU budget per invocation.
  *
  * Keys this build does not know trail the canonical ones, once each, in the
- * order they arrived, labelled by {@link presetLabel}; an empty key is skipped.
+ * order they arrived, labelled by {@link presetLabel}; a key with an empty label
+ * is skipped.
  * The server parses with {@link parsePresets} first, so the CSV never has one and
  * never pays for the second pass.
  */

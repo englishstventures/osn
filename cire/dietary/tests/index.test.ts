@@ -126,9 +126,13 @@ describe("presetLabel", () => {
     expect(presetLabel("toString")).toBe("ToString");
   });
 
-  it("returns a key with no words in it unchanged", () => {
+  it("returns a key of only underscores as itself", () => {
     expect(presetLabel("___")).toBe("___");
+  });
+
+  it("returns an empty label for a key that is empty or only whitespace", () => {
     expect(presetLabel("")).toBe("");
+    expect(presetLabel("   ")).toBe("");
   });
 });
 
@@ -157,8 +161,10 @@ describe("presetLabels", () => {
     expect(presetLabels(["no_mustard"])).toEqual(["No mustard"]);
   });
 
-  it("skips an empty key rather than emitting a blank label", () => {
+  it("skips an empty or blank key rather than emitting a blank label", () => {
     expect(presetLabels(["", "vegan"])).toEqual(["Vegan"]);
+    expect(presetLabels(["  ", "vegan"])).toEqual(["Vegan"]);
+    expect(formatDietaryCell(["  "], "")).toBe("");
   });
 });
 

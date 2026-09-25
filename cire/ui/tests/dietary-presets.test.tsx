@@ -198,8 +198,8 @@ describe("a key this build does not know", () => {
     ).toBe(true);
   });
 
-  it("renders no pill for an empty key, which has no words to show", () => {
-    render(() => <OpenHarness initial={[""]} />);
+  it("renders no pill for an empty or blank key, which has no words to show", () => {
+    render(() => <OpenHarness initial={["", "   "]} />);
     expect(screen.getAllByRole("checkbox")).toHaveLength(DIETARY_PRESETS.length);
   });
 });
