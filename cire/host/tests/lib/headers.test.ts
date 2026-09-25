@@ -36,7 +36,7 @@ describe("_headers", () => {
 
   it("allowlists cire-api and nothing else for fetches", () => {
     expect(csp).toContain("default-src 'self'");
-    expect(csp).toContain("connect-src 'self' https://api.cireweddings.com http://localhost:8787");
+    expect(csp).toContain("connect-src 'self' https://api.cireweddings.com;");
     // Sign-in is a top-level redirect to musubi, not a fetch — the OSN origin
     // must stay out of the policy.
     expect(csp).not.toContain("musubi.social");
@@ -49,7 +49,19 @@ describe("_headers", () => {
   });
 
   it("allows the image sources the crop editor and CSV export need", () => {
-    expect(csp).toContain("img-src 'self' data: blob: https://api.cireweddings.com");
+    expect(csp).toContain("img-src 'self' data: blob: https://api.cireweddings.com;");
+  });
+
+  it("is the production policy: no other tier's API, no loopback", () => {
+    // The build rewrites the production origin for each tier
+    // (`src/lib/tier-headers.ts`), so a dev or local origin written here would
+    // survive into production.
+    expect(contents).not.toMatch(/localhost|api\.dev\./);
+  });
+
+  it("names no private tracker issue or finding tag", () => {
+    // This file ships to every visitor as well as sitting in a public repo.
+    expect(contents).not.toMatch(/osn-tracker|\b[A-Z]{1,3}-[SPC]-[CHML]\d|\b[SPC]-[CHMLWI]\d/);
   });
 
   it("denies framing, embedding and workers", () => {

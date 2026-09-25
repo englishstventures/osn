@@ -32,7 +32,7 @@ describe("_headers", () => {
 
   it("allowlists cire-api and nothing else for fetches", () => {
     expect(csp).toContain("default-src 'self'");
-    expect(csp).toContain("connect-src 'self' https://api.cireweddings.com http://localhost:8787");
+    expect(csp).toContain("connect-src 'self' https://api.cireweddings.com;");
     // Sign-in redirects through cire/api's OIDC leg and account management
     // links out to musubi — both navigations, neither a `connect-src` subject.
     expect(csp).not.toContain("musubi.social");
@@ -68,6 +68,22 @@ describe("_headers", () => {
     ]) {
       expect(csp).toContain(directive);
     }
+  });
+
+  it("allows images from cire-api and inline data URIs only", () => {
+    expect(csp).toContain("img-src 'self' data: https://api.cireweddings.com;");
+  });
+
+  it("is the production policy: no other tier's API, no loopback", () => {
+    // The build rewrites the production origin for each tier
+    // (`src/lib/tier-headers.ts`), so a dev or local origin written here would
+    // survive into production.
+    expect(contents).not.toMatch(/localhost|api\.dev\./);
+  });
+
+  it("names no private tracker issue or finding tag", () => {
+    // This file ships to every visitor as well as sitting in a public repo.
+    expect(contents).not.toMatch(/osn-tracker|\b[A-Z]{1,3}-[SPC]-[CHML]\d|\b[SPC]-[CHMLWI]\d/);
   });
 
   it("/claim* rule overrides Referrer-Policy to no-referrer", () => {
