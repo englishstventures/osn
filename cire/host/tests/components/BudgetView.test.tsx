@@ -87,7 +87,7 @@ describe("BudgetView", () => {
   // reorder arrows resolving indices against the flattened item list rather than
   // their own category — would be invisible to a single-category test. DOM
   // containment, so it holds with or without the grid applied.
-  it("keeps each category's rows and reorder arrows inside their own section", async () => {
+  it("keeps each category's rows and reorder controls inside their own section", async () => {
     const item = (
       id: string,
       category: BudgetSnapshot["items"][number]["category"],
@@ -132,9 +132,9 @@ describe("BudgetView", () => {
     expect(catering.queryByText("Reception venue")).not.toBeInTheDocument();
 
     // Per-category edges, and a reorder that names only that category's ids.
-    expect(venue.getAllByRole("button", { name: "Move up" })[0]).toBeDisabled();
-    expect(catering.getAllByRole("button", { name: "Move down" })[1]).toBeDisabled();
-    fireEvent.click(catering.getAllByRole("button", { name: "Move up" })[1]!);
+    expect(venue.getByRole("button", { name: "Move Reception venue up" })).toBeDisabled();
+    expect(catering.getByRole("button", { name: "Move Cake down" })).toBeDisabled();
+    fireEvent.click(catering.getByRole("button", { name: "Move Cake up" }));
     await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(1));
     const [url, init] = authFetch.mock.calls[0]!;
     expect(String(url)).toMatch(/\/budget\/items\/reorder$/);
