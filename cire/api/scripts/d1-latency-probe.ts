@@ -231,11 +231,13 @@ export function coloFromRay(ray: string | null): string | null {
 
 const ms = (value: number) => `${value.toFixed(1)} ms`;
 
-const coloList = (colos: Readonly<Record<string, number>>) =>
-  Object.entries(colos)
-    .toSorted(([, a], [, b]) => b - a)
-    .map(([colo, count]) => `${colo} ×${count}`)
-    .join(", ");
+/** One colo by its code alone; several with how many requests each served. */
+const coloList = (colos: Readonly<Record<string, number>>) => {
+  const entries = Object.entries(colos).toSorted(([, a], [, b]) => b - a);
+  return entries.length === 1
+    ? (entries[0]?.[0] ?? "")
+    : entries.map(([colo, count]) => `${colo} ×${count}`).join(", ");
+};
 
 /** Markdown for stdout and the step summary, ending with lines to paste into the wiki. */
 export function renderReport(run: ProbeRun): string {
@@ -260,7 +262,7 @@ export function renderReport(run: ProbeRun): string {
     "| | |",
     "|---|---|",
     `| Runner region (as the runner reports it) | ${region} |`,
-    `| Cloudflare colo (from \`cf-ray\`) | ${colos} |`,
+    `| Cloudflare colo (from \`cf-ray\`; ×N counts requests) | ${colos} |`,
     `| Pairs | ${summary.n} measured, ${run.warmUpPairs} warm-up pairs discarded, arm order alternating |`,
     `| Spacing | ${run.spacingMs} ms between requests |`,
     `| Window | from ${run.startedAt.toISOString()}, ${Math.round(run.windowSeconds)} s |`,

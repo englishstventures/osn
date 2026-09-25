@@ -242,8 +242,9 @@ binding = "IMAGES"
 # ahead of the approval-gated production jobs. Fully isolated from production:
 # its own D1, its own R2 buckets, its own rate-limit namespaces, and its own OSN
 # identity origin (id.dev.musubi.social) — nothing here reads or writes a byte of
-# live-wedding data. Its D1 is wiped and re-seeded on every deploy, so treat any
-# data in it as disposable. See [[wiki/shared/dev-environment]].
+# live-wedding data. Its D1 is wiped and re-seeded every night by
+# .github/workflows/cire-dev-db-rebuild.yml, so treat any data in it as
+# disposable. See [[wiki/shared/dev-environment]].
 #
 # Named environments inherit NOTHING from the top level, so every section below
 # is a deliberate redeclaration: vars, routes, unsafe.bindings, d1_databases,
@@ -342,8 +343,9 @@ namespace_id = "1105"
 simple = { limit = 20, period = 60 }
 
 # Created 2026-08-13 (`wrangler d1 create cire-db-dev`, primary location OC to
-# match prod). Reset + re-migrated + re-seeded on every dev deploy, so each
-# deploy also replays the migration chain from zero — a free migration test.
+# match prod). Each dev deploy applies new migrations to it, as production
+# does; .github/workflows/cire-dev-db-rebuild.yml resets it, replays the whole
+# migration chain from zero and re-seeds it every night.
 [[env.dev.d1_databases]]
 binding = "DB"
 database_name = "cire-db-dev"

@@ -270,6 +270,14 @@ describe("renderReport", () => {
     );
   });
 
+  it("names a lone colo by its code alone", () => {
+    const report = renderReport({ ...run, colos: { SYD: 10 } });
+
+    expect(report).toContain("| GitHub-hosted runner (eastus) | SYD |");
+    expect(report).toContain("colo SYD, n=5*");
+    expect(report).not.toContain("SYD ×");
+  });
+
   it("lists every raw pair so a reader can recompute", () => {
     expect(renderReport(run)).toContain("10.0, 40.0");
   });
