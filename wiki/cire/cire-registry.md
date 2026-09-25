@@ -241,6 +241,19 @@ The order in `registryService.claim` is the security property, not a detail. Che
 
 The image route stays **unauthenticated on purpose**. A name is `registry-<uuid>`, minted per save and reachable only from the list the session now gates, so the bytes are not enumerable without that read — while authenticating them would put a session lookup on every image request on the page, the one place on the guest surface where requests arrive in dozens. If the couple's pictures ever become sensitive on their own, that route moves and `visibility: "public"` moves with it.
 
+So an image URL is a **bearer credential while the list is published**: a household that loses its invite can still fetch every image it saw, and so can anyone it passed a URL to. What the couple keep is withdrawing the whole list — unpublishing it, or losing the entitlement — and each copy of the bytes has a lifetime chosen so that reaches it:
+
+| Copy                                    | Lifetime                               | After an unpublish                                                         |
+| --------------------------------------- | -------------------------------------- | -------------------------------------------------------------------------- |
+| A browser's or a proxy's                | `public, max-age=3600`, no `immutable` | Gone within the hour; no gate sees this copy, so its lifetime is the bound |
+| The Worker's own (Cloudflare Cache API) | a year                                 | Unreachable at once: every lookup in it runs after the gate                |
+
+The route passes `lifetime: "revocable"` to `serveTransformedImage` for this. Every other cire image route keeps `max-age=31536000, immutable`, because its URL changes with its bytes, so a long life never serves a stale picture.
+
+**Withdrawing one gift is not covered.** The gate checks the list, not the item, and deleting a gift reaps its R2 object but not the Worker's cached copy, so a deleted gift's image stays fetchable by name while the list is published.
+
+A Worker-cache hit goes to the browser with **no `Age` and a `Date` of now**. The store hands back the age the entry has built up; passed on, a copy stored more than an hour ago would arrive already stale, and every page load would fetch every gift image again.
+
 `/registry/items/reorder` is registered **before** `/registry/items/:itemId` so the literal wins over the param. `:kind` is decoded through the same Effect Schema a body field would be — an unknown value 400s rather than falling through to a table by coincidence.
 
 ### Bounded reads
@@ -368,13 +381,11 @@ Two endpoints, both on the write group's gates (`osnAuth` 401 → `weddingEditor
 
 Serving is the existing gated route, `GET .../registry/image/:name`, through the Cloudflare Images transform binding: the key is **rebuilt server-side** from the route's `:weddingId` (the client's `:name` is charset-pinned and never a path), the cache version comes from `versionFromKey`, not the client's `?v=`, and the response is `private` — unlike the public invite image route, because this one sits behind an organiser session. That is why the portal's thumbnail goes through `authFetch` into an object URL rather than a bare `<img src>`, and why it asks for `?variant=thumb` (320px) rather than the 800px `card` default — the field paints it at 80px.
 
-The transform caches through the Cloudflare Cache API under a synthetic key. A `private` response is not something the platform cache is obliged to store, so the copy handed to `cache.put` carries `public, max-age=31536000, immutable` and the copy returned to the browser is re-stamped with the route's own visibility on both the miss and the hit path — the synthetic key is unreachable from outside and the lookup happens after the gates, so `public` on the stored copy never reaches a client. This is unverified against a live Worker; see the open **P-W2** in `wiki/todo/perf.md`.
+The transform caches through the Cloudflare Cache API under a synthetic key. The Cache API refuses to store a `private` response (`cache.put` rejects it), so the copy handed to `cache.put` carries `public, max-age=31536000, immutable` and the copy returned to the browser is re-stamped with the route's own visibility on both the miss and the hit path — the synthetic key is unreachable from outside and the lookup happens after the gates, so `public` on the stored copy never reaches a client. The comment on `STORABLE_CACHE_CONTROL` in `cire/api/src/services/invite-image-transform.ts` records the check against the deployed dev Worker on 2026-08-19: a repeat request was a Cache API hit, the client got `private`, and no `image cache put failed` event appeared.
 
 Errors: `blocked_url` 400 (same opaque code, same no-reason rule as preview), `image_fetch_failed` 502, `unsupported_image_type` 415, `image_too_large` 413.
 
 **Nothing leaks on delete, and nothing is reaped out from under a second item.** Two items can hold the same key — an organiser duplicating a row, or two saves of the same picked picture — so the delete counts the remaining holders of that key **in the same step as the delete**, and only reaps when the count is zero. Counting later would race the next delete. The reap itself runs after the response, through `getWaitUntil(request)`, because R2 latency is not something the organiser should wait on; outside a Worker (unit tests, the Bun local entry) there is no `waitUntil`, so it falls back to an inline await and behaves identically, just slower. `asset-reconcile.ts` counts `registry_items.image_key` as a live reference, so a picture saved into an add form the organiser then abandoned — the form has no item id to hang it off, so the save happens first — is swept once it is past the grace window instead of sitting in the bucket forever.
-
-This is what closed **S-L2** in `wiki/todo/security.md`.
 
 ---
 
