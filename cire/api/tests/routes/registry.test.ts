@@ -23,6 +23,7 @@ import type {
 } from "../../src/services/registry";
 import { appRequest, jsonBody, recordStatements } from "../test-helpers";
 import type { RecordedStatement } from "../test-helpers";
+import { seedOrganiserSession } from "../test-helpers/organiser-session";
 import { makeOsnTestAuth } from "../test-helpers/osn-token";
 import type { OsnTestAuth } from "../test-helpers/osn-token";
 
@@ -685,6 +686,59 @@ describe("GET /registry/gifts", () => {
     const app = buildApp({ grantRegistry: true });
     expect((await req(app, "GET", `${base}/gifts`, STRANGER)).status).toBe(403);
     expect((await req(app, "GET", `${base}/gifts`, undefined)).status).toBe(401);
+  });
+
+  // The portal reaches this route with the organiser session cookie, not a
+  // bearer token, so the cookie path is the one that has to hold.
+  it("serves a page to an organiser session cookie and refuses a dead one", async () => {
+    let token: Promise<string> = Promise.resolve("");
+    const app = buildApp({
+      grantRegistry: true,
+      seed: (db) => {
+        seedGifts(db, 1);
+        token = seedOrganiserSession(db, OWNER);
+      },
+    });
+    const live = await appRequest(app, `${base}/gifts`, {
+      headers: { cookie: `cire_org_session=${await token}` },
+    });
+    expect(live.status).toBe(200);
+    expect(((await live.json()) as GiftPage).gifts).toHaveLength(1);
+
+    const dead = await appRequest(app, `${base}/gifts`, {
+      headers: { cookie: "cire_org_session=not-a-live-session-token" },
+    });
+    expect(dead.status).toBe(401);
+    const forged = await appRequest(app, `${base}/gifts`, {
+      headers: { authorization: "Bearer not-a-jwt" },
+    });
+    expect(forged.status).toBe(401);
+  });
+
+  it("answers a failed read with a plain 500, never a partial page", async () => {
+    const app = buildApp({
+      grantRegistry: true,
+      seed: (db) => {
+        seedGifts(db, 3);
+        // Every D1 error reaches the handler as a defect; breaking one of the
+        // two tables the page reads is the cheapest way to raise one here.
+        db.$client.exec("DROP TABLE registry_contributions");
+      },
+    });
+    const res = await req(app, "GET", `${base}/gifts?offset=1`, OWNER);
+    expect(res.status).toBe(500);
+    expect(await jsonBody(res)).toEqual({ error: "Internal error" });
+  });
+
+  it("marks the gift log uncacheable on both reads that carry it", async () => {
+    // Guest-written notes and amounts against named households: the same class
+    // of payload `gifts.csv` already refuses to let anything on the path keep.
+    const app = buildApp({ grantRegistry: true, seed: (db) => seedGifts(db, 1) });
+    for (const path of [base, `${base}/gifts`, `${base}/gifts?offset=1`]) {
+      const res = await req(app, "GET", path, OWNER);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("cache-control")).toBe("no-store");
+    }
   });
 });
 

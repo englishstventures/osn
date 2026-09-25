@@ -488,7 +488,7 @@ export default function RsvpView(props: RsvpViewProps) {
                                     when={formatDietaryCell(row.dietaryPresets, row.dietary)}
                                     fallback={<span class="text-text-muted">--</span>}
                                   >
-                                    {formatDietaryCell(row.dietaryPresets, row.dietary)}
+                                    {(cell) => cell()}
                                   </Show>
                                 </Td>
                                 <Show when={props.canEdit}>

@@ -365,6 +365,8 @@ interface Samples {
   widening: number[];
   /** Whole narrowing steps — Solid's update and the layout together. */
   narrowingStep: number[];
+  /** Rows left in the document after each narrowing step. */
+  rowsLeft: number[];
 }
 
 /**
@@ -383,7 +385,10 @@ function pass(into: Samples) {
     whole?.push(end - start);
   };
   for (const steps of NARROWING) {
-    for (const value of steps) step(value, into.narrowing, into.narrowingStep);
+    for (const value of steps) {
+      step(value, into.narrowing, into.narrowingStep);
+      into.rowsLeft.push(document.querySelectorAll("tbody > tr").length);
+    }
     step("", into.widening);
   }
 }
@@ -392,7 +397,12 @@ describe.runIf(import.meta.env.VITE_RSVP_LAYOUT_BENCH === "1")("RSVP table layou
   it("times the forced layout after each search step, fixed against auto", async ({ annotate }) => {
     await page.viewport(1280, 900);
     await renderList();
-    const empty = (): Samples => ({ narrowing: [], widening: [], narrowingStep: [] });
+    const empty = (): Samples => ({
+      narrowing: [],
+      widening: [],
+      narrowingStep: [],
+      rowsLeft: [],
+    });
     const samples: Record<Arm, Samples> = { auto: empty(), fixed: empty() };
     // Warm-up, then alternate which arm goes first so neither always runs cold.
     useArm("auto");
@@ -410,6 +420,11 @@ describe.runIf(import.meta.env.VITE_RSVP_LAYOUT_BENCH === "1")("RSVP table layou
       `${ms(samples[arm].narrowingStep)} step (n=${samples[arm].narrowing.length}), ` +
       `widening layout ${ms(samples[arm].widening)} (n=${samples[arm].widening.length})`;
     await annotate(`${ROWS} rows, medians. ${summary("auto")}; ${summary("fixed")}`);
-    expect(samples.fixed.narrowing).toHaveLength(samples.auto.narrowing.length);
+    // The numbers mean something only if every timed step really removed rows,
+    // and the two arms walked the same list.
+    for (const arm of ["auto", "fixed"] as const) {
+      expect(samples[arm].rowsLeft.every((left) => left < ROWS)).toBe(true);
+    }
+    expect(samples.fixed.rowsLeft).toEqual(samples.auto.rowsLeft);
   });
 });

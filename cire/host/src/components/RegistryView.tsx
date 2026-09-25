@@ -209,9 +209,11 @@ export default function RegistryView(props: RegistryViewProps) {
 
   // Declared below the accessors it reads: `createMemo` computes eagerly, so a
   // memo above its dependencies throws at component-init rather than on read.
-  const items = createMemo(() =>
-    (snapshot()?.items ?? []).toSorted((a, b) => a.sortOrder - b.sortOrder),
-  );
+  // Two memos, so a write that leaves the item array alone — a page of the gift
+  // log, a thank-you — stops at the first one: the snapshot object is new, the
+  // array inside it is not, and nothing re-sorts up to 500 rows for it.
+  const unsortedItems = createMemo(() => snapshot()?.items ?? []);
+  const items = createMemo(() => unsortedItems().toSorted((a, b) => a.sortOrder - b.sortOrder));
 
   // The gift log, already ordered by the server. A memo rather than two
   // `snapshot()?.gifts ?? []` reads, so the empty-state `<Show>` and the `<For>`

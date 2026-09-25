@@ -626,6 +626,40 @@ describe("RegistryView — gifts received", () => {
     );
   });
 
+  it("keeps what it has and says so when a further page fails", async () => {
+    // A refused page — a 404 from an API older than this portal included —
+    // must leave the rows already shown, and the button, where they were.
+    setCachedRegistry(
+      "wed_1",
+      snapshot({ gifts: [gift({ id: "a", familyName: "The Nguyens" })], giftsHasMore: true }),
+    );
+    authFetch.mockResolvedValueOnce(new Response("{}", { status: 404 }));
+    render(() => (
+      <RegistryView weddingId="wed_1" weddingSlug="wed-1" view="gifts" canEdit={true} />
+    ));
+    fireEvent.click(await screen.findByRole("button", { name: /load more gifts/i }));
+    expect(await screen.findByText("Couldn't load more gifts.")).toBeInTheDocument();
+    expect(screen.getByText("The Nguyens")).toBeInTheDocument();
+    expect(peekCachedRegistry("wed_1")!.gifts).toHaveLength(1);
+    expect(screen.getByRole("button", { name: /load more gifts/i })).toBeEnabled();
+  });
+
+  it("sends an expired session to sign in rather than appending anything", async () => {
+    redirectToLoginMock.mockReset();
+    setCachedRegistry(
+      "wed_1",
+      snapshot({ gifts: [gift({ id: "a", familyName: "The Nguyens" })], giftsHasMore: true }),
+    );
+    authFetch.mockResolvedValueOnce(new Response("{}", { status: 401 }));
+    render(() => (
+      <RegistryView weddingId="wed_1" weddingSlug="wed-1" view="gifts" canEdit={true} />
+    ));
+    fireEvent.click(await screen.findByRole("button", { name: /load more gifts/i }));
+    await waitFor(() => expect(redirectToLoginMock).toHaveBeenCalledTimes(1));
+    expect(peekCachedRegistry("wed_1")!.gifts).toHaveLength(1);
+    expect(screen.queryByText("Couldn't load more gifts.")).not.toBeInTheDocument();
+  });
+
   it("says what a status means rather than printing the enum value", async () => {
     // The column is raw on the wire and shared by two tables that do not share
     // its values. A couple reading their own gift log should not meet the word

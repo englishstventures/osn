@@ -171,6 +171,11 @@ function parseOffset(raw: unknown): number {
  * here. That is the whole mechanism by which the feature ships built but
  * unreachable — in the portal the module's nav row fades and offers the upgrade
  * rather than opening.
+ *
+ * Both reads carry guest-written notes and gift amounts against named
+ * households, so both say `no-store` themselves — the same rule `gifts.csv` and
+ * the roster reads follow — rather than depending on a header another route
+ * factory happens to leave set.
  */
 export const createRegistryReadRoutes = (db: Db, osnAuthOptions: OsnAuthOptions) =>
   new Elysia({ prefix: "/api/organiser" })
@@ -181,6 +186,7 @@ export const createRegistryReadRoutes = (db: Db, osnAuthOptions: OsnAuthOptions)
         .use(weddingEntitlement(db, "registry"))
         .get("/registry", async ({ weddingId, set }) => {
           if (!weddingId) return internalSync(set);
+          set.headers["cache-control"] = "no-store";
           return runCire(
             registryService.get(weddingId).pipe(
               Effect.provideService(DbService, db),
@@ -191,6 +197,7 @@ export const createRegistryReadRoutes = (db: Db, osnAuthOptions: OsnAuthOptions)
         })
         .get("/registry/gifts", async ({ weddingId, query, set }) => {
           if (!weddingId) return internalSync(set);
+          set.headers["cache-control"] = "no-store";
           const offset = parseOffset(isGiftPageQuery(query) ? query.offset : undefined);
           return runCire(
             registryService.giftLog(weddingId, { offset }).pipe(

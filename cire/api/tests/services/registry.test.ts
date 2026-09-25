@@ -1029,14 +1029,25 @@ describe("gift log paging", () => {
     // marked `hasMore`, so every "load more" appended the same fifty rows.
     const db = db0();
     seedRun(db, 560);
+    // The page before the last still leads on to it: the cap is the deepest
+    // offset that may be asked for, not the last row that may be shown.
+    const penultimate = await ok(
+      db,
+      registryService.giftLog(BOOTSTRAP_WEDDING_ID, { offset: 450 }),
+    );
+    expect(penultimate.entries).toHaveLength(50);
+    expect(penultimate.hasMore).toBe(true);
+
     const last = await ok(db, registryService.giftLog(BOOTSTRAP_WEDDING_ID, { offset: 500 }));
     expect(last.entries).toHaveLength(50);
     // More rows exist, but no page after this one can be asked for.
     expect(last.hasMore).toBe(false);
 
-    const past = await ok(db, registryService.giftLog(BOOTSTRAP_WEDDING_ID, { offset: 550 }));
-    expect(past.entries).toEqual([]);
-    expect(past.hasMore).toBe(false);
+    for (const offset of [501, 550]) {
+      const past = await ok(db, registryService.giftLog(BOOTSTRAP_WEDDING_ID, { offset }));
+      expect(past.entries).toEqual([]);
+      expect(past.hasMore).toBe(false);
+    }
   });
 });
 
