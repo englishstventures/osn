@@ -152,6 +152,20 @@ describe("claimed-listing handoff", () => {
       expect(takeSeededListing("o1")).toBeUndefined();
     });
 
+    // `drainClaimedListing` runs at the top of the dashboard island with nothing
+    // above it to catch, so no JSON value, however odd, may make it throw.
+    it.each([
+      ["null", "null"],
+      ["a number", "42"],
+      ["a string", '"o1"'],
+      ["an object with a null listing", JSON.stringify({ orgId: "o1", listing: null })],
+      ["an object with a numeric listing", JSON.stringify({ orgId: "o1", listing: 7 })],
+    ])("holds nothing, without throwing, when the stored value parses to %s", (_label, raw) => {
+      sessionStorage.setItem(CLAIMED_LISTING_KEY, raw);
+      expect(() => drainClaimedListing()).not.toThrow();
+      expect(takeSeededListing("o1")).toBeUndefined();
+    });
+
     it.each([
       ["missing", { listing }],
       ["not a string", { orgId: 7, listing }],
