@@ -143,6 +143,12 @@ describe("a key this build does not know", () => {
     expect(valueOf()).toBe("a_future_key");
   });
 
+  it("hands back every such key, in the order they arrived", () => {
+    render(() => <OpenHarness initial={["vegan", "future_b", "future_a"]} />);
+    fireEvent.click(screen.getByRole("checkbox", { name: /^nuts$/i }));
+    expect(valueOf()).toBe("vegan,nuts,future_b,future_a");
+  });
+
   it("is handed back once, however often it arrived", () => {
     render(() => <OpenHarness initial={["a_future_key", "a_future_key"]} />);
     fireEvent.click(screen.getByRole("checkbox", { name: /^egg$/i }));

@@ -56,8 +56,14 @@ const surfaces = [...filters.keys()].filter((output) => output.startsWith("cire_
 
 test("the workflow names cire surfaces, and each is a cire package", () => {
   // Guards the parse above: a regex that matched no `emit` line would make the
-  // map test below pass over nothing.
-  expect(surfaces.length).toBeGreaterThan(0);
+  // map test below pass over nothing, and an `emit` line lost or re-quoted
+  // would drop its surface out of the check while its deploy jobs still gate
+  // on the output.
+  const declared = [
+    ...workflow.matchAll(/^\s+(cire_\w+): \$\{\{ steps\.filter\.outputs\.\1 \}\}/gm),
+  ].map(([, output]) => output!);
+  expect(declared.length).toBeGreaterThan(0);
+  expect([...surfaces].sort()).toEqual(declared.sort());
   for (const output of surfaces) {
     expect(existsSync(join(root, "cire", output.slice("cire_".length), "package.json"))).toBe(true);
   }
