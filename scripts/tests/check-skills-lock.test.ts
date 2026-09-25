@@ -152,6 +152,14 @@ describe("checkSkillsLock", () => {
     expect(findings.length).toBeGreaterThan(0);
     expect(findings[0]!.skill).toBe("skills-lock.json");
   });
+
+  test("a lock with no skills object is flagged, not read as empty", async () => {
+    await installClean();
+    await writeFile(join(root, "skills-lock.json"), JSON.stringify({ version: 1 }));
+    expect(await checkSkillsLock(root)).toEqual([
+      { skill: "skills-lock.json", problem: "has no `skills` object" },
+    ]);
+  });
 });
 
 // The cases above prove the check works; this one proves the tree the
