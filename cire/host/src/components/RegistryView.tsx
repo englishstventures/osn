@@ -34,6 +34,7 @@ import {
   stillWanted,
 } from "../lib/registry-store";
 import RegistryImageField from "./RegistryImageField";
+import ReorderControls from "./ReorderControls";
 interface RegistryViewProps {
   weddingId: string;
   /** Which sub-view this instance is: the gift list the couple authors, or the
@@ -685,36 +686,7 @@ export default function RegistryView(props: RegistryViewProps) {
                       >
                         <div class="flex flex-wrap items-center gap-3">
                           <Show when={props.canEdit}>
-                            {/* The grip is dragged, or moved with the arrow keys. The
-                          two move buttons beside it are for screen readers in
-                          browse mode, which keep the arrow keys for themselves;
-                          they show when focused. `dragActivators` BEFORE
-                          `gripProps`, which carries the key handler and label. */}
-                            <div class="flex items-center">
-                              <Button
-                                variant="bare"
-                                size="icon"
-                                {...sortable.dragActivators}
-                                {...sortableItem.gripProps()}
-                                class="cursor-grab touch-none active:cursor-grabbing"
-                              >
-                                ⠿
-                              </Button>
-                              <span class="flex flex-col">
-                                <For each={[-1, 1] as const}>
-                                  {(delta) => (
-                                    <Button
-                                      variant="primary"
-                                      size="sm"
-                                      {...sortableItem.moveProps(delta)}
-                                      class="sr-only focus:not-sr-only focus:relative focus:z-20"
-                                    >
-                                      {sortableItem.moveLabel(delta)}
-                                    </Button>
-                                  )}
-                                </For>
-                              </span>
-                            </div>
+                            <ReorderControls sortable={sortable} item={sortableItem} />
                           </Show>
                           <span class="text-text text-ui-base min-w-40 flex-1 font-medium">
                             {item.title}
