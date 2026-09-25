@@ -40,10 +40,11 @@
 # from an emailed invite: a Google stylesheet there would tell Google about
 # every vendor who followed the link, before rendering a word.
 #
-# `script-src 'unsafe-inline'` is load-bearing: the theme-boot script
-# (`THEME_BOOT_SCRIPT`) is `is:inline` on all three shells so it can run before
-# first paint, and an inline script cannot be an external hashed file. Astro's
-# island bootstrap is external `/_astro/*` and covered by 'self'.
+# `script-src 'unsafe-inline'` is load-bearing: every built page carries three
+# inline scripts — the theme-boot script (`THEME_BOOT_SCRIPT`, `is:inline` on
+# all three shells so it can run before first paint), and Astro's own island
+# loader and `astro-island` definition. The island chunks they load are
+# `/_astro/*`, covered by 'self'.
 #
 # Other differences from `cire/host/public/_headers`, audited from source:
 #   - No `blob:` in `img-src`: no cropper, no object URLs (`data:` is kept for

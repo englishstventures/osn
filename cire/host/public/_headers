@@ -54,11 +54,12 @@
 #
 # WHY EACH SOURCE IS THERE (audited against the portal's source, not guessed):
 #
-#   script-src 'unsafe-inline'  The theme-boot script (`THEME_BOOT_SCRIPT`, both
-#                               page shells) is `is:inline` so it runs before
-#                               first paint and can't be a hashed external file.
-#                               Astro's island bootstrap is external `/_astro/*`
-#                               and covered by 'self'.
+#   script-src 'unsafe-inline'  Every built page carries three inline scripts:
+#                               the theme-boot script (`THEME_BOOT_SCRIPT`, both
+#                               page shells, `is:inline` so it runs before first
+#                               paint), and Astro's own island loader and
+#                               `astro-island` definition. The island chunks
+#                               they load are `/_astro/*`, covered by 'self'.
 #   style-src 'unsafe-inline'   Astro inlines small critical CSS; Solid writes
 #                               `style={{…}}` attributes (hence style-src-attr).
 #   font-src 'self'             Schibsted Grotesk + Cormorant Garamond are
