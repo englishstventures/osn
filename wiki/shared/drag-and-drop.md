@@ -287,10 +287,12 @@ Two rules every consumer follows, both found converting those three:
   list — per bucket inside a `<For>` over the fixed bucket array, never inside a
   `<For>` over a memo that rebuilds its group objects on every write, which
   re-creates the section, the list and the live region on every move.
-- **A move rewrites only the rows whose position changed.** `<For>` keys by
-  object identity, so a blanket `{ ...row }` rebuilds every row and loses whatever
-  is open in them — an inline editor's caret, a half-typed payment. The moved rows
-  themselves are rebuilt, which is fine: `move` calls `onMove` (a synchronous cache
+- **A move rewrites only the rows whose stored `sortOrder` changes.** `<For>`
+  keys by object identity, so a blanket `{ ...row }` rebuilds every row and loses
+  whatever is open in them — an inline editor's caret, a half-typed payment. A
+  delete leaves a gap in the stored order (nothing renumbers on delete), so the
+  first move after one rewrites every row past the gap; the reorder then stores a
+  dense order again. The moved rows themselves are rebuilt, which is fine: `move` calls `onMove` (a synchronous cache
   write, so a synchronous render) before it focuses the grip, and the new grip has
   registered itself by then.
 

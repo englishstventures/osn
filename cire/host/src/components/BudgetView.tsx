@@ -14,7 +14,7 @@ import { Field } from "@shared/ui/ui/field";
 import { Input } from "@shared/ui/ui/input";
 import { Notice } from "@shared/ui/ui/notice";
 import { Select } from "@shared/ui/ui/select";
-import { createMemo, createSignal, For, onMount, Show } from "solid-js";
+import { createMemo, createSignal, For, onMount, Show, untrack } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
 import {
@@ -46,6 +46,15 @@ interface BudgetViewProps {
  *  currency's real minor-unit exponent, which a fixed `/ 100` gets wrong for JPY
  *  and the three-decimal currencies. */
 const fmtMinor = (minor: number, currency: string): string => formatMinor(minor, currency);
+
+/** A category with nothing in it. One shared array, so `sameRows` sees an empty
+ *  category as unchanged from one write to the next. */
+const NO_ITEMS: BudgetItemRow[] = [];
+
+/** Same rows, same order, same objects: a write elsewhere in the budget left this
+ *  category alone, so nothing that reads it needs to run again. */
+const sameRows = <T,>(a: readonly T[], b: readonly T[]): boolean =>
+  a.length === b.length && a.every((row, k) => row === b[k]);
 
 export default function BudgetView(props: BudgetViewProps) {
   const { authFetch } = useAuth();
@@ -216,9 +225,9 @@ export default function BudgetView(props: BudgetViewProps) {
 
   /**
    * Move an item within its category, then save the category's new order. A drag
-   * can move it several places at once. Only items whose position changed get a
-   * new object, so every other row — an open payments panel included — keeps its
-   * DOM. `onFailure` withdraws the move's announcement, since the reload that
+   * can move it several places at once. Only items whose stored `sortOrder`
+   * changes get a new object, so every other row — an open payments panel
+   * included — keeps its DOM. `onFailure` withdraws the move's announcement, since the reload that
    * follows puts the old order back.
    */
   const move = async (
@@ -516,13 +525,19 @@ export default function BudgetView(props: BudgetViewProps) {
         <div class="auto-grid items-start [--auto-grid-gap:1.5rem] [--auto-grid-min:32rem]">
           <For each={SERVICE_CATEGORIES}>
             {(category) => {
-              const categoryItems = createMemo(() => itemsByCategory().get(category.key) ?? []);
+              const categoryItems = createMemo(
+                () => itemsByCategory().get(category.key) ?? NO_ITEMS,
+                NO_ITEMS,
+                { equals: sameRows },
+              );
+              const count = createMemo(() => categoryItems().length);
               const ids = createMemo(() => categoryItems().map((it) => it.id));
               // One list per category: an item only moves within its own
               // category, because moving it to another changes what it is.
               const reorder = createSortableList({
                 ids,
-                labelFor: (id) => categoryItems().find((it) => it.id === id)?.name ?? "item",
+                labelFor: (id) =>
+                  untrack(() => categoryItems().find((it) => it.id === id)?.name) ?? "item",
                 noun: "item",
                 onMove: (from, to) => void move(category.key, from, to, reorder.clearAnnouncement),
                 onPhase: (phase) => haptic(phase),
@@ -551,11 +566,7 @@ export default function BudgetView(props: BudgetViewProps) {
                               const sortable = createSortable(item.id);
                               // Non-null: rendered inside the DragDropProvider above.
                               const [dndState] = useDragDropContext()!;
-                              const sortableItem = reorder.item(
-                                item.id,
-                                i,
-                                () => categoryItems().length,
-                              );
+                              const sortableItem = reorder.item(item.id, i, count);
                               return (
                                 <li
                                   ref={sortable.ref}

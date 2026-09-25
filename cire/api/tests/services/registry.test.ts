@@ -390,12 +390,20 @@ describe("registry settings from two organisers at once", () => {
     expect(saved.published).toBe(true);
   });
 
-  it("answers an empty patch with the row as it stands", async () => {
+  it("answers an empty patch with the row as it stands, without writing it", async () => {
     const db = db0();
     await opened(db);
+    const before = db.select().from(registrySettings).all()[0]!.updatedAt;
     const saved = await ok(db, registryService.updateSettings(BOOTSTRAP_WEDDING_ID, {}));
     expect(saved.headline).toBe("Our list");
     expect(saved.shippingAddress).toBe("1 Example St");
+    expect(db.select().from(registrySettings).all()[0]!.updatedAt).toEqual(before);
+
+    // And a wedding with no row yet gets the defaults, and still no row.
+    const fresh = db0();
+    const defaults = await ok(fresh, registryService.updateSettings(BOOTSTRAP_WEDDING_ID, {}));
+    expect(defaults.published).toBe(false);
+    expect(fresh.select().from(registrySettings).all()).toHaveLength(0);
   });
 
   it("does not check a row that does not exist yet", async () => {

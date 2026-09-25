@@ -1207,6 +1207,16 @@ export const registryService = {
         set.shippingVisibleFrom = patch.shippingVisibleFrom;
       }
 
+      // A save that changes nothing and expects nothing reads the row instead
+      // of writing it. The answer is the same, and an absent row already reads
+      // as the defaults.
+      const expectsSomething = SETTINGS_FIELDS.some(
+        (field) => patch.expected?.[field] !== undefined,
+      );
+      if (Object.keys(set).length === 1 && !expectsSomething) {
+        return toSettingsDto(yield* registryService.settingsOnly(weddingId));
+      }
+
       // `IS` is SQLite's null-safe equality, so a field the caller saw as empty
       // matches a NULL column. Each value is bound through its column, which is
       // what turns a boolean into the 0/1 the column stores.

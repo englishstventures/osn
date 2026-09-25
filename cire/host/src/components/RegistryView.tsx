@@ -16,7 +16,7 @@ import { Field } from "@shared/ui/ui/field";
 import { Input } from "@shared/ui/ui/input";
 import { Notice } from "@shared/ui/ui/notice";
 import { Textarea } from "@shared/ui/ui/textarea";
-import { createMemo, createSignal, For, onMount, Show } from "solid-js";
+import { createMemo, createSignal, For, onMount, Show, untrack } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
 import { downloadBlob } from "../lib/download";
@@ -225,6 +225,9 @@ export default function RegistryView(props: RegistryViewProps) {
   /** Title by id, for the grip labels and move announcements. A map rather than
    *  a `find` per label: the list runs to 500 rows. */
   const titleById = createMemo(() => new Map(items().map((it) => [it.id, it.title])));
+  /** Its own memo so a row's move controls re-run when the length changes, not
+   *  on every write to the list. */
+  const itemCount = createMemo(() => items().length);
 
   // ── Add item ──────────────────────────────────────────────────────────────
   const addItem = async (e: Event) => {
@@ -390,7 +393,7 @@ export default function RegistryView(props: RegistryViewProps) {
     reordered.splice(to, 0, moved!);
     const orderedIds = reordered.map((it) => it.id);
     const bySort = new Map(orderedIds.map((id, i) => [id, i]));
-    // Rewrite ONLY the rows whose position actually changed, and hand every
+    // Rewrite ONLY the rows whose stored `sortOrder` changes, and hand every
     // other row back by reference. `<For>` reconciles by item identity, so a
     // blanket `{ ...it }` would tear down and rebuild all up-to-500 rows on
     // every move — losing the inputs and the caret of an inline editor left
@@ -422,7 +425,9 @@ export default function RegistryView(props: RegistryViewProps) {
 
   const reorder = createSortableList({
     ids: itemIds,
-    labelFor: (id: Id) => titleById().get(String(id)) ?? "gift",
+    // Untracked: an edit replaces the item object, which rebuilds its row, so a
+    // row's title never changes under it and its label need not follow the map.
+    labelFor: (id: Id) => untrack(() => titleById().get(String(id))) ?? "gift",
     noun: "gift",
     onMove: (from, to) => void move(from, to),
     onPhase: (phase) => haptic(phase),
@@ -669,7 +674,7 @@ export default function RegistryView(props: RegistryViewProps) {
                     const sortable = createSortable(item.id);
                     // Non-null: the row only renders inside the DragDropProvider above.
                     const [dndState] = useDragDropContext()!;
-                    const sortableItem = reorder.item(item.id, i, () => items().length);
+                    const sortableItem = reorder.item(item.id, i, itemCount);
                     return (
                       <li
                         ref={sortable.ref}

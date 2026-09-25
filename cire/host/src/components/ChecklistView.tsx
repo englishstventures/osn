@@ -14,7 +14,7 @@ import { Field } from "@shared/ui/ui/field";
 import { Input } from "@shared/ui/ui/input";
 import { Notice } from "@shared/ui/ui/notice";
 import { Select } from "@shared/ui/ui/select";
-import { createMemo, createSignal, For, onMount, Show } from "solid-js";
+import { createMemo, createSignal, For, onMount, Show, untrack } from "solid-js";
 
 import { apiUrl, isAuthExpired, redirectToLogin } from "../lib/api";
 import { TIMEFRAME_BUCKETS, type TimeframeBucket } from "../lib/checklist-buckets";
@@ -28,6 +28,15 @@ import {
   tasksAccessor,
 } from "../lib/tasks-store";
 import ReorderControls from "./ReorderControls";
+/** A bucket with nothing in it. One shared array, so `sameRows` sees an empty
+ *  bucket as unchanged from one write to the next. */
+const NO_TASKS: TaskRow[] = [];
+
+/** Same rows, same order, same objects: a write elsewhere in the checklist left
+ *  this bucket alone, so nothing that reads it needs to run again. */
+const sameRows = <T,>(a: readonly T[], b: readonly T[]): boolean =>
+  a.length === b.length && a.every((row, k) => row === b[k]);
+
 interface ChecklistViewProps {
   weddingId: string;
   /** Owner/editor may add, edit, complete, reorder; a viewer sees a read-only list. */
@@ -173,8 +182,8 @@ export default function ChecklistView(props: ChecklistViewProps) {
 
   /**
    * Move a task within its bucket, then save the bucket's new order. A drag can
-   * move it several places at once. Only tasks whose position changed get a new
-   * object, so every other row keeps its DOM. `onFailure` withdraws the move's
+   * move it several places at once. Only tasks whose stored `sortOrder` changes
+   * get a new object, so every other row keeps its DOM. `onFailure` withdraws the move's
    * announcement, since the reload that follows puts the old order back.
    */
   const move = async (bucket: TimeframeBucket, from: number, to: number, onFailure: () => void) => {
@@ -275,13 +284,21 @@ export default function ChecklistView(props: ChecklistViewProps) {
             and its live region, so it has to outlive every write to the tasks. */}
         <For each={TIMEFRAME_BUCKETS}>
           {(bucket) => {
-            const bucketTasks = createMemo(() => tasksByBucket().get(bucket.key) ?? []);
+            const bucketTasks = createMemo(
+              () => tasksByBucket().get(bucket.key) ?? NO_TASKS,
+              NO_TASKS,
+              {
+                equals: sameRows,
+              },
+            );
+            const count = createMemo(() => bucketTasks().length);
             const ids = createMemo(() => bucketTasks().map((t) => t.id));
             // One list per bucket: a task only ever moves within its own bucket,
             // because moving it to another is a change of when, not of order.
             const reorder = createSortableList({
               ids,
-              labelFor: (id) => bucketTasks().find((t) => t.id === id)?.title ?? "task",
+              labelFor: (id) =>
+                untrack(() => bucketTasks().find((t) => t.id === id)?.title) ?? "task",
               noun: "task",
               onMove: (from, to) => void move(bucket.key, from, to, reorder.clearAnnouncement),
               onPhase: (phase) => haptic(phase),
@@ -304,7 +321,7 @@ export default function ChecklistView(props: ChecklistViewProps) {
                             const sortable = createSortable(task.id);
                             // Non-null: rendered inside the DragDropProvider above.
                             const [dndState] = useDragDropContext()!;
-                            const item = reorder.item(task.id, i, () => bucketTasks().length);
+                            const item = reorder.item(task.id, i, count);
                             return (
                               <li
                                 ref={sortable.ref}
