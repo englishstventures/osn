@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { PRODUCTION_API_ORIGIN, retargetHeaders } from "../../src/lib/tier-headers";
+
 /**
  * `public/_headers` is served by Cloudflare Pages' asset layer, so nothing in
  * the app can assert these at runtime — this file is the only guard against a
@@ -57,6 +59,29 @@ describe("_headers", () => {
     // (`src/lib/tier-headers.ts`), so a dev or local origin written here would
     // survive into production.
     expect(contents).not.toMatch(/localhost|api\.dev\./);
+  });
+
+  it("names cire-api only in forms the build can point at another tier", () => {
+    // Retarget the file that ships, not a fixture: an origin spelled some way
+    // the rewrite skips (a port, a trailing dot) would carry the production API
+    // into the dev tier's policy.
+    expect(retargetHeaders(contents, PRODUCTION_API_ORIGIN)).toBe(contents);
+    const headerLines = retargetHeaders(contents, "https://api.dev.cireweddings.com")
+      .split("\n")
+      .filter((line) => !line.trimStart().startsWith("#"));
+    expect(headerLines.filter((line) => line.includes("api.cireweddings.com"))).toEqual([]);
+  });
+
+  it("is wired into the build", () => {
+    // Without the integration every tier ships this production file unchanged.
+    // A text pin: importing the config pulls Astro's build toolchain into the
+    // test runner, which cannot load it.
+    const config = readFileSync(
+      fileURLToPath(new URL("../../astro.config.mjs", import.meta.url)),
+      "utf8",
+    );
+    expect(config).toMatch(/^import tierHeaders from "\.\/src\/lib\/tier-headers";$/m);
+    expect(config).toMatch(/^\s*integrations: \[[^\]]*\btierHeaders\(\)[^\]]*\],$/m);
   });
 
   it("names no private tracker issue or finding tag", () => {

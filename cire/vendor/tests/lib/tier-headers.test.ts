@@ -126,6 +126,27 @@ describe("the build hooks", () => {
     expect(headers).toContain("connect-src 'self' http://localhost:8787;");
   });
 
+  it("reads the legacy name when the canonical one is unset", async () => {
+    await writeFile(join(dist, "_astro", "osn.js"), '"https://legacy.example.test"');
+    const { headers } = await build({ PUBLIC_API_URL: "https://legacy.example.test" });
+    expect(headers).toContain("connect-src 'self' https://legacy.example.test;");
+  });
+
+  it("prefers the canonical name over the legacy one", async () => {
+    await writeFile(join(dist, "_astro", "osn.js"), '"https://api.dev.cireweddings.com"');
+    const { headers } = await build({
+      PUBLIC_CIRE_API_URL: "https://api.dev.cireweddings.com",
+      PUBLIC_API_URL: "https://legacy.example.test",
+    });
+    expect(headers).toContain("connect-src 'self' https://api.dev.cireweddings.com;");
+    expect(headers).not.toContain("legacy.example.test");
+  });
+
+  it("fails the build on an empty API URL and leaves the file alone", async () => {
+    await expect(build({ PUBLIC_CIRE_API_URL: "" })).rejects.toThrow(/cire-api URL/);
+    expect(await readFile(join(dist, "_headers"), "utf8")).toBe(HEADERS);
+  });
+
   it("adds the env probe only to a build", async () => {
     const plugins: unknown[] = [];
     await tierHeaders().hooks["astro:config:setup"]!({

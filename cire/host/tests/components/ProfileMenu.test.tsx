@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen } from "@solidjs/testing-library";
+import { createSignal } from "solid-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import ProfileMenu from "../../src/components/ProfileMenu";
@@ -64,6 +65,24 @@ describe("ProfileMenu", () => {
     fireEvent.error(trigger.querySelector("img")!);
     expect(trigger.querySelector("img")).toBeNull();
     expect(trigger.textContent).toBe("A");
+  });
+
+  it("tries a new avatar URL after an earlier one failed", () => {
+    const [avatarUrl, setAvatarUrl] = createSignal("https://avatars.test/old.png");
+    render(() => (
+      <ProfileMenu
+        session={{ ...SESSION, avatarUrl: avatarUrl() }}
+        onSecurity={() => {}}
+        onSignOut={() => {}}
+      />
+    ));
+    const trigger = screen.getByRole("button", { name: /account menu/i });
+    fireEvent.error(trigger.querySelector("img")!);
+    expect(trigger.querySelector("img")).toBeNull();
+
+    setAvatarUrl("https://avatars.test/new.png");
+    const img = trigger.querySelector("img") as HTMLImageElement;
+    expect(img.src).toBe("https://avatars.test/new.png");
   });
 
   it("refuses a non-https avatar URL and falls back to the initial", () => {
