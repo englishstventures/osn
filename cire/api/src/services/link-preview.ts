@@ -391,20 +391,48 @@ const LINK_RE = /<link\s[^<>]*>/gi;
 const IMG_RE = /<img\s[^<>]*>/gi;
 
 /**
- * How many `<img>` candidates are worth collecting.
+ * How many candidates each rank band collects: social-card images, then
+ * `image_src` links, then `<img>` tags.
  *
- * Only {@link MAX_IMAGES} URLs are ever emitted, and every `<img>` shares the
- * bottom rank band, so the sort keeps the FIRST six of them in document order —
- * a decision the 33rd `<img>` cannot change. Higher-ranked candidates
- * (`og:image`, `image_src`) keep being collected without a cap, so nothing that
- * could win is dropped. The headroom over six is for the emit loop, which walks
- * past candidates a redirect or a DNS check refuses.
+ * Only {@link MAX_IMAGES} URLs are ever emitted, and the sort is stable, so
+ * inside a band the FIRST ones in document order win — the 33rd `og:image`
+ * could only matter if the 32 before it and every higher band gave fewer than
+ * six usable images. The headroom over six is for the emit loop, which walks
+ * past candidates a DNS check refuses. The cap is a CPU bound: a 512 KB page
+ * holds thousands of these tags, and every one collected is one more string
+ * the emit loop decodes and parses — well past the 10 ms of CPU a Workers
+ * Free invocation gets.
  */
-const MAX_IMG_CANDIDATES = 32;
+const MAX_CANDIDATES_PER_BAND = 32;
+
+/**
+ * A candidate URL longer than this is skipped. No product image URL comes near
+ * it, and decoding and parsing one costs CPU in proportion to its length — a
+ * single 512 KB `og:image` spelled in entities is tens of milliseconds.
+ */
+const MAX_CANDIDATE_URL_CHARS = 2048;
+
+/**
+ * How much of a raw title or site name is decoded. Past {@link MAX_TITLE_CHARS}
+ * decoded characters the rest is cut anyway, and the longest entity the decoder
+ * reads is ten characters, so sixteen raw per kept character is room enough.
+ */
+const MAX_RAW_TEXT_CHARS = MAX_TITLE_CHARS * 16;
+
+/**
+ * One compiled pattern per attribute name. The names are a fixed handful, and
+ * compiling per call cost more than the match on a page of thousands of tags.
+ * No `g` or `y` flag, so a shared instance carries no state between calls.
+ */
+const ATTR_PATTERNS = new Map<string, RegExp>();
 
 /** Pull one attribute out of a raw tag string. Quoted or bare, any case. */
 function attr(tag: string, name: string): string | null {
-  const re = new RegExp(`\\b${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s"'>]+))`, "i");
+  let re = ATTR_PATTERNS.get(name);
+  if (re === undefined) {
+    re = new RegExp(`\\b${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s"'>]+))`, "i");
+    ATTR_PATTERNS.set(name, re);
+  }
   const m = re.exec(tag);
   if (!m) return null;
   return m[2] ?? m[3] ?? m[4] ?? null;
@@ -433,7 +461,7 @@ function decodeEntities(value: string): string {
 
 function clean(value: string | null): string | null {
   if (value === null) return null;
-  const text = decodeEntities(value).replace(/\s+/g, " ").trim();
+  const text = decodeEntities(value.slice(0, MAX_RAW_TEXT_CHARS)).replace(/\s+/g, " ").trim();
   if (text.length === 0) return null;
   return text.length > MAX_TITLE_CHARS ? text.slice(0, MAX_TITLE_CHARS) : text;
 }
@@ -465,7 +493,8 @@ interface ScannedHtml {
  * purpose (`og:image`, `twitter:image`), then the legacy `<link rel="image_src">`,
  * then `<img>` tags in document order with the ones that declare themselves tiny
  * dropped. Order inside a band is document order, which for a product page puts
- * the hero shot first.
+ * the hero shot first. Each band keeps its first {@link MAX_CANDIDATES_PER_BAND},
+ * and a URL longer than {@link MAX_CANDIDATE_URL_CHARS} is never collected.
  *
  * URLs come back exactly as the document wrote them — entity decoding happens
  * where a candidate is EMITTED, so a page with a thousand images pays for
@@ -477,29 +506,41 @@ export function scanHtml(html: string): ScannedHtml {
   let siteName: string | null = null;
   const candidates: Candidate[] = [];
 
+  // The meta loop cannot stop at the cap: a title or site name can follow the
+  // images. Past the cap it skips image tags before reading their content.
+  let socialCount = 0;
   for (const [tag] of html.matchAll(META_RE)) {
     const key = (attr(tag, "property") ?? attr(tag, "name"))?.toLowerCase();
     if (!key) continue;
+    const isImage = SOCIAL_IMAGE_KEYS.has(key);
+    if (isImage && socialCount >= MAX_CANDIDATES_PER_BAND) continue;
     const content = attr(tag, "content");
     if (content === null) continue;
-    if (SOCIAL_IMAGE_KEYS.has(key)) candidates.push({ url: content, rank: 0 });
-    else if (key === "og:title") ogTitle = content;
+    if (isImage) {
+      if (content.length > MAX_CANDIDATE_URL_CHARS) continue;
+      candidates.push({ url: content, rank: 0 });
+      socialCount += 1;
+    } else if (key === "og:title") ogTitle = content;
     else if (key === "twitter:title") twitterTitle = content;
     else if (key === "og:site_name") siteName = content;
   }
 
+  let linkCount = 0;
   for (const [tag] of html.matchAll(LINK_RE)) {
+    if (linkCount >= MAX_CANDIDATES_PER_BAND) break;
     const rel = attr(tag, "rel")?.toLowerCase();
     if (rel !== "image_src") continue;
     const href = attr(tag, "href");
-    if (href) candidates.push({ url: href, rank: 1 });
+    if (!href || href.length > MAX_CANDIDATE_URL_CHARS) continue;
+    candidates.push({ url: href, rank: 1 });
+    linkCount += 1;
   }
 
   let imgCount = 0;
   for (const [tag] of html.matchAll(IMG_RE)) {
-    if (imgCount >= MAX_IMG_CANDIDATES) break;
+    if (imgCount >= MAX_CANDIDATES_PER_BAND) break;
     const src = attr(tag, "src");
-    if (!src) continue;
+    if (!src || src.length > MAX_CANDIDATE_URL_CHARS) continue;
     // A declared dimension is the only size signal available without fetching
     // the bytes. Absent dimensions are kept — most product images declare none.
     const width = Number(attr(tag, "width") ?? Number.NaN);

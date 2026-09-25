@@ -569,6 +569,48 @@ describe("scanHtml", () => {
     ]);
   });
 
+  it("stops collecting social-card images at the same cap, and still reads the title after them", () => {
+    // Every candidate collected is one more the emit loop may walk, and a
+    // 512 KB page holds thousands of these tags.
+    const metas = Array.from(
+      { length: 400 },
+      (_, i) => `<meta property="og:image" content="https://h${i}.example/x.jpg">`,
+    ).join("");
+    const scanned = scanHtml(`${metas}<meta property="og:title" content="Late Title">`);
+    expect(scanned.candidates.length).toBe(32);
+    expect(scanned.candidates.slice(0, 2).map((c) => c.url)).toEqual([
+      "https://h0.example/x.jpg",
+      "https://h1.example/x.jpg",
+    ]);
+    expect(scanned.title).toBe("Late Title");
+  });
+
+  it("stops collecting link rel=image_src at the same cap", () => {
+    const links = Array.from(
+      { length: 400 },
+      (_, i) => `<link rel="image_src" href="https://h${i}.example/x.jpg">`,
+    ).join("");
+    expect(scanHtml(links).candidates.length).toBe(32);
+  });
+
+  it("skips a candidate url too long to be a product image", () => {
+    const long = `https://cdn.example/${"a".repeat(2100)}.jpg`;
+    const scanned = scanHtml(
+      [
+        `<meta property="og:image" content="${long}">`,
+        `<link rel="image_src" href="${long}">`,
+        `<img src="${long}" width="600">`,
+        '<img src="https://cdn.example/ok.jpg" width="600">',
+      ].join(""),
+    );
+    expect(scanned.candidates.map((c) => c.url)).toEqual(["https://cdn.example/ok.jpg"]);
+  });
+
+  it("decodes only as much of a huge title as it can keep", () => {
+    const scanned = scanHtml(`<title>${"&#65;".repeat(100_000)}</title>`);
+    expect(scanned.title).toBe("A".repeat(200));
+  });
+
   it("keeps a social-card image no matter how many <img> precede it", () => {
     const imgs = Array.from(
       { length: 400 },
