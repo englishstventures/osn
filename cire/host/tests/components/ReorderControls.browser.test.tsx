@@ -18,10 +18,8 @@ import "../../src/styles/global.css";
  * SC 2.5.8 (Target Size, Minimum) puts a 24x24 CSS-pixel floor under it. Only an
  * engine can measure that, so this mounts `ReorderControls` itself — not a copy
  * of its button — inside the narrowest row shape the three lists use: a flex row
- * with a greedy sibling.
+ * with a greedy sibling. `MINIMUM_TARGET` is SC 2.5.8's floor, in CSS pixels.
  */
-
-/** SC 2.5.8's floor, in CSS pixels. */
 const MINIMUM_TARGET = 24;
 
 function Row() {
