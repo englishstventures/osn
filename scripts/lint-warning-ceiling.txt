@@ -19,4 +19,4 @@
 # conflict rather than silently agreeing on the same leading number while
 # disagreeing on what it was measured from.
 
-1043   # measured via scripts/guard-lint-warnings.sh (oxlint --format=json), fix/cire-entitlement-gates @ 2026-09-25 — -3, real fixes: three house/no-tracker-ref-in-comment finding tags dropped from comments this branch rewrote because their facts changed (cire/api/src/services/hosts.ts twice, cire/api/src/middleware/wedding-entitlement.ts once). No rule was disabled and nothing was suppressed.
+1036   # measured via scripts/guard-lint-warnings.sh (oxlint --format=json), fix/cire-entitlement-gates @ 2026-09-25 — -3 after merging main at 1039: rewritten route comments no longer carry finding tags. No rule was disabled and nothing was suppressed.

@@ -22,7 +22,7 @@ import { createApp } from "../../src/app";
 import type { Db } from "../../src/db";
 import { createDb, seedDb } from "../../src/db/setup";
 import type { TestDb } from "../../src/db/setup";
-import { appRequest } from "../test-helpers";
+import { appRequest, jsonBody } from "../test-helpers";
 import { makeOsnTestAuth } from "../test-helpers/osn-token";
 import type { OsnTestAuth } from "../test-helpers/osn-token";
 
@@ -123,10 +123,36 @@ describe("GET /api/organiser/weddings", () => {
   // wrong-key path is a separate case and would pass for the wrong reason.
   it("returns 401 for a token from a different issuer", async () => {
     const { app } = buildApp();
+    const token = await auth.sign(BOOTSTRAP_OWNER, { issuer: "https://id.evil.invalid" });
     const res = await appRequest(app, "/api/organiser/weddings", {
-      headers: { Authorization: `Bearer ${await auth.signAsOtherIssuer(BOOTSTRAP_OWNER)}` },
+      headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(401);
+  });
+
+  // Same key, audience and issuer as a token this route accepts — only `exp`
+  // differs, and it sits two minutes back, past the verifier's 30-second clock
+  // tolerance.
+  it("returns 401 for an expired token", async () => {
+    const { app } = buildApp();
+    const token = await auth.sign(BOOTSTRAP_OWNER, { expiresIn: "-120s" });
+    const res = await appRequest(app, "/api/organiser/weddings", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(401);
+    expect(await jsonBody(res)).toEqual({ error: "unauthorised" });
+  });
+
+  // `createApp` hands its `osnAudience` to the verifier; a token minted for any
+  // other audience must not pass, whatever else about it is right.
+  it("returns 401 for a token minted for another audience", async () => {
+    const { app } = buildApp();
+    const token = await auth.sign(BOOTSTRAP_OWNER, { audience: "osn-refresh" });
+    const res = await appRequest(app, "/api/organiser/weddings", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(401);
+    expect(await jsonBody(res)).toEqual({ error: "unauthorised" });
   });
 
   it("lists only the caller's weddings", async () => {
@@ -540,6 +566,14 @@ describe("GET /api/organiser/weddings/:weddingId/events", () => {
     expect(res.status).toBe(200);
     const rows = (await res.json()) as { id: string }[];
     expect(rows.map((r) => r.id)).toEqual(["evt_other"]);
+  });
+
+  it("is marked uncacheable — the events editor seeds a draft from it", async () => {
+    // The draft is checked against the change head the editor read just before
+    // this load, so a cached copy older than that head must never be served.
+    const { app } = buildApp();
+    const res = await get(app, `/api/organiser/weddings/${OTHER_WEDDING_ID}/events`, OTHER_OWNER);
+    expect(res.headers.get("cache-control")).toBe("no-store");
   });
 
   it("returns 403 for a non-owner", async () => {
