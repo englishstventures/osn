@@ -28,13 +28,6 @@ platform's own redirect follower would go there happily; and one `AbortSignal`
 budget across all hops, a 512 KB cap read off the stream rather than trusted from
 `Content-Length`, and a `text/html` content-type requirement.
 
-The one gap is stated rather than hidden: **DoH pre-resolution is
-time-of-check/time-of-use imperfect.** We vet the name's answers and then hand
-the name to `fetch`, which resolves it again, so an attacker who controls the
-zone can answer differently the second time. Closing that needs a connect-time
-hook and workerd exposes none. It is recorded as S-M1 in the security backlog and
-in the module's own doc comment, with what would change the answer.
-
 Blocked URLs come back as a 400 with a stable `blocked_url` code and **no
 reason** — telling a caller which rule fired turns the endpoint into a network
 scanner with a clean oracle. The reason goes to the log instead. Ports are an
@@ -86,8 +79,7 @@ read it from there. Deleting an item reaps its object through `waitUntil` — bu
 only after a wedding-scoped count proves no other item still holds that key,
 since two items may legitimately share one picture. The R2 reconciler counts
 registry keys as live references, so an abandoned add form leaves nothing behind
-past the grace window. This closes S-L2 in the security backlog, which asked for
-exactly this.
+past the grace window.
 
 On the portal, `RegistryImageField` gives an item its picture either way: upload
 a file, or paste a shop link and **choose** among what that page offers. The
