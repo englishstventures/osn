@@ -258,7 +258,10 @@ already written. Three conditions gate it, all load-bearing:
 
 The preferences dialog states this plainly rather than leaving it implicit — a
 silent reload the guest didn't expect is its own kind of surprising — and says
-the page "may" reload, because condition 2 means it does not always happen.
+the page "may" reload, because condition 2 means it does not always happen. It
+also says that anything already sent to the company can't be recalled, in the
+same terms as `/privacy`: neither the unmount nor the reload takes back what a
+vendor received or stored. `ConsentBanner.test.tsx` pins both sentences.
 
 ### Two versions, two jobs
 
