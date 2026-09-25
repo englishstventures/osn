@@ -40,23 +40,24 @@ type LockEntry = {
   readonly computedHash?: unknown;
 };
 
-async function collectFiles(
-  base: string,
-  dir: string,
-  out: { relativePath: string; content: Buffer }[],
-): Promise<void> {
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === ".git" || entry.name === "node_modules") continue;
-      await collectFiles(base, full, out);
-    } else if (entry.isFile()) {
-      out.push({
-        relativePath: relative(base, full).split("\\").join("/"),
-        content: await readFile(full),
-      });
-    }
-  }
+type SkillFile = { readonly relativePath: string; readonly content: Buffer };
+
+async function collectFiles(base: string, dir: string): Promise<readonly SkillFile[]> {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const nested = await Promise.all(
+    entries.map(async (entry): Promise<readonly SkillFile[]> => {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === ".git" || entry.name === "node_modules") return [];
+        return collectFiles(base, full);
+      }
+      if (!entry.isFile()) return [];
+      return [
+        { relativePath: relative(base, full).split("\\").join("/"), content: await readFile(full) },
+      ];
+    }),
+  );
+  return nested.flat();
 }
 
 /**
@@ -66,8 +67,7 @@ async function collectFiles(
  * path then its bytes.
  */
 export async function hashSkillFolder(dir: string): Promise<string> {
-  const files: { relativePath: string; content: Buffer }[] = [];
-  await collectFiles(dir, dir, files);
+  const files = [...(await collectFiles(dir, dir))];
   files.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
   const hash = createHash("sha256");
   for (const file of files) {
@@ -114,27 +114,31 @@ export async function checkSkillsLock(root: string): Promise<readonly Finding[]>
   if ("unreadable" in lock) return [lock.unreadable];
   const { entries } = lock;
   const installed = new Set(await installedSkills(root));
-  const findings: Finding[] = [];
 
-  for (const [skill, entry] of Object.entries(entries)) {
-    if (typeof entry.ref !== "string" || !COMMIT_SHA.test(entry.ref)) {
-      findings.push({
-        skill,
-        problem: `ref ${JSON.stringify(entry.ref ?? null)} is not a 40-character commit SHA`,
-      });
-    }
-    if (!installed.has(skill)) {
-      findings.push({ skill, problem: `is in ${LOCK} but ${SKILLS_DIR}/${skill}/ does not exist` });
-      continue;
-    }
-    const actual = await hashSkillFolder(join(root, SKILLS_DIR, skill));
-    if (actual !== entry.computedHash) {
-      findings.push({
-        skill,
-        problem: `folder hash ${actual} is not the computedHash in ${LOCK} — a file changed after install`,
-      });
-    }
-  }
+  const perEntry = await Promise.all(
+    Object.entries(entries).map(async ([skill, entry]): Promise<readonly Finding[]> => {
+      const found: Finding[] = [];
+      if (typeof entry.ref !== "string" || !COMMIT_SHA.test(entry.ref)) {
+        found.push({
+          skill,
+          problem: `ref ${JSON.stringify(entry.ref ?? null)} is not a 40-character commit SHA`,
+        });
+      }
+      if (!installed.has(skill)) {
+        found.push({ skill, problem: `is in ${LOCK} but ${SKILLS_DIR}/${skill}/ does not exist` });
+        return found;
+      }
+      const actual = await hashSkillFolder(join(root, SKILLS_DIR, skill));
+      if (actual !== entry.computedHash) {
+        found.push({
+          skill,
+          problem: `folder hash ${actual} is not the computedHash in ${LOCK} — a file changed after install`,
+        });
+      }
+      return found;
+    }),
+  );
+  const findings: Finding[] = perEntry.flat();
 
   for (const skill of installed) {
     if (!Object.hasOwn(entries, skill)) {
@@ -150,18 +154,21 @@ if (import.meta.main) {
   const findings = await checkSkillsLock(root);
 
   if (findings.length > 0) {
-    console.error("❌ check-skills-lock: third-party skills do not match skills-lock.json.");
-    for (const { skill, problem } of findings) console.error(`   ${skill} — ${problem}`);
-    console.error("");
-    console.error(
-      "   Install or move a pin only with the recipe in wiki/conventions/agent-tooling.md",
+    process.stderr.write(
+      [
+        "❌ check-skills-lock: third-party skills do not match skills-lock.json.",
+        ...findings.map(({ skill, problem }) => `   ${skill} — ${problem}`),
+        "",
+        "   Install or move a pin only with the recipe in wiki/conventions/agent-tooling.md",
+        "   §Third-party skills, never by editing the tree or the lock. A fix to the skill's",
+        "   text goes upstream and comes back as a new pin.",
+        "",
+      ].join("\n"),
     );
-    console.error(
-      "   §Third-party skills, never by editing the tree or the lock. A fix to the skill's",
-    );
-    console.error("   text goes upstream and comes back as a new pin.");
     process.exit(1);
   }
 
-  console.log("✅ check-skills-lock: every third-party skill matches its pinned lock entry.");
+  process.stdout.write(
+    "✅ check-skills-lock: every third-party skill matches its pinned lock entry.\n",
+  );
 }
