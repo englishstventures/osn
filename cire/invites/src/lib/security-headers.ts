@@ -230,11 +230,18 @@ export function securityHeaders() {
 }
 
 /**
+ * The header set, built once at module load. Every input is a module constant,
+ * so rebuilding it — CSP string included — on each response would produce the
+ * same entries every time.
+ */
+const SECURITY_HEADER_ENTRIES = Object.entries(securityHeaders());
+
+/**
  * Apply the security headers to a response's `Headers`. Only sets a header that
  * is not already present, so a route that deliberately set its own value wins.
  */
 export function applySecurityHeaders(headers: Headers): void {
-  for (const [name, value] of Object.entries(securityHeaders())) {
+  for (const [name, value] of SECURITY_HEADER_ENTRIES) {
     if (!headers.has(name)) headers.set(name, value);
   }
 }
