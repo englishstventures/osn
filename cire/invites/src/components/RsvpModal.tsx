@@ -1,4 +1,3 @@
-import type { DietaryPreset } from "@cire/dietary";
 import Button from "@cire/ui/button";
 import DietaryPresets from "@cire/ui/dietary-presets";
 import Reveal from "@cire/ui/reveal";
@@ -103,7 +102,8 @@ interface MemberState {
   attending: Attending;
   /** What this member typed under "Other". Everything nameable is a preset. */
   dietary: string;
-  dietaryPresets: readonly DietaryPreset[];
+  /** May hold a key this build has no pill for; see `RsvpSummary`. */
+  dietaryPresets: readonly string[];
   /**
    * Whether this member's dietary data is already covered by a stored
    * Art. 9(2)(a) consent record.
@@ -303,7 +303,7 @@ export function RsvpModal(props: RsvpModalProps) {
     }));
   }
 
-  function setDietaryPresets(guestId: string, dietaryPresets: readonly DietaryPreset[]) {
+  function setDietaryPresets(guestId: string, dietaryPresets: readonly string[]) {
     setResponses((prev) => ({
       ...prev,
       [guestId]: { ...prev[guestId]!, dietaryPresets },

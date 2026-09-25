@@ -844,6 +844,69 @@ describe("RsvpModal", () => {
     expect((consentBox() as HTMLInputElement).checked).toBe(false);
   });
 
+  it("opens a row from an API that sends neither dietary field with nothing picked and no consent", () => {
+    // What the claim guard lets through when this site reaches production
+    // before the API that serves the fields. No pill may light, and the consent
+    // box must not open ticked on the strength of a verdict that never arrived.
+    render(() => (
+      <RsvpModal
+        event={event}
+        members={[priya]}
+        existingRsvps={[
+          { guestId: "guest-priya", eventId: "event-1", status: "attending", dietary: "" },
+        ]}
+        apiUrl="https://api.test"
+        onClose={() => {}}
+      />
+    ));
+    const fs = fieldsetFor("Priya");
+    for (const box of within(fs).getAllByRole("checkbox") as HTMLInputElement[]) {
+      expect(box.checked).toBe(false);
+    }
+    pickPreset(fs, /^nuts$/i);
+    expect((consentBox() as HTMLInputElement).checked).toBe(false);
+  });
+
+  it("sends back a preset key this build does not know after the guest edits the picker", async () => {
+    // The key is still the guest's answer — possibly an allergy the server added
+    // after this page was built. Ticking another pill must not drop it, or the
+    // save stores the shorter answer under a freshly stamped consent.
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ rsvps: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { getByText } = render(() => (
+      <RsvpModal
+        event={event}
+        members={[priya]}
+        existingRsvps={[
+          {
+            guestId: "guest-priya",
+            eventId: "event-1",
+            status: "attending",
+            dietary: "",
+            dietaryPresets: ["vegan", "a_future_key"],
+            dietaryConsentCurrent: true,
+          },
+        ]}
+        apiUrl="https://api.test"
+        onClose={() => {}}
+      />
+    ));
+
+    pickPreset(fieldsetFor("Priya"), /^nuts$/i);
+    fireEvent.click(getByText("Save"));
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    const parsed = JSON.parse(fetchSpy.mock.calls[0]![1].body);
+    expect(parsed.rsvps[0].dietaryPresets).toEqual(["vegan", "nuts", "a_future_key"]);
+    expect(parsed.rsvps[0].dietaryConsent).toBe(true);
+  });
+
   it("blocks submit when a newly-covered member has no prior consent (C-H2)", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
