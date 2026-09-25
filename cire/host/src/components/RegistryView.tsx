@@ -26,6 +26,7 @@ import {
   ensureRegistryLoaded,
   type GiftLogEntry,
   type GiftLogPage,
+  type GiftNoteView,
   invalidateRegistry,
   peekCachedRegistry,
   registryAccessor,
@@ -525,6 +526,44 @@ export default function RegistryView(props: RegistryViewProps) {
     } catch {
       haptic("reject");
       setError("Couldn't save that thank-you.");
+      void reload();
+    }
+  };
+
+  /** Hide a guest's note from the couple's log, or show it again. A hide takes
+   *  the words off screen before the server answers; the answer then settles
+   *  both directions, because only the server holds a hidden note's words and
+   *  knows whether the guest has changed them since this page loaded. */
+  const setNoteHidden = async (gift: GiftLogEntry, hidden: boolean) => {
+    const patchNote = (view: GiftNoteView) =>
+      patchSnap((s) => ({
+        ...s,
+        gifts: s.gifts.map((g) =>
+          g.kind === gift.kind && g.id === gift.id ? { ...g, ...view } : g,
+        ),
+      }));
+    if (hidden) patchNote({ note: null, noteHidden: true });
+    haptic("commit");
+    try {
+      const res = await authFetch(
+        apiUrl(
+          `/api/organiser/weddings/${wedding()}/registry/gifts/${encodeURIComponent(
+            gift.kind,
+          )}/${encodeURIComponent(gift.id)}/note-hidden`,
+        ),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hidden }),
+        },
+      );
+      if (res.status === 401) return redirectToLogin();
+      if (!res.ok) throw new Error(`note-hidden ${res.status}`);
+      const view = (await res.json()) as GiftNoteView;
+      patchNote({ note: view.note, noteHidden: view.noteHidden });
+    } catch {
+      haptic("reject");
+      setError(hidden ? "Couldn't hide that note." : "Couldn't show that note again.");
       void reload();
     }
   };
@@ -1056,9 +1095,46 @@ export default function RegistryView(props: RegistryViewProps) {
                         This one went back to the guest, so it is not counted in the total above.
                       </p>
                     </Show>
-                    <Show when={gift.note}>
-                      {/* Guest-authored — a text node, never markup (S-L3). */}
-                      <p class="text-text-muted text-ui-sm italic">{gift.note}</p>
+                    {/* A hidden note arrives without its words, so there is
+                        nothing of the guest's to render — only the fact. An
+                        owner or editor can hide a shown note or show a hidden
+                        one; a viewer sees which, and changes neither. */}
+                    <Show
+                      when={gift.noteHidden}
+                      fallback={
+                        <Show when={gift.note}>
+                          <div class="flex flex-wrap items-baseline gap-x-3">
+                            {/* Guest-authored — a text node, never markup (S-L3). */}
+                            <p class="text-text-muted text-ui-sm min-w-0 flex-1 italic">
+                              {gift.note}
+                            </p>
+                            <Show when={props.canEdit}>
+                              <Button
+                                variant="link"
+                                type="button"
+                                aria-label={`Hide note from ${giftFrom(gift)}`}
+                                onClick={() => void setNoteHidden(gift, true)}
+                              >
+                                Hide note
+                              </Button>
+                            </Show>
+                          </div>
+                        </Show>
+                      }
+                    >
+                      <div class="flex flex-wrap items-baseline gap-x-3">
+                        <p class="text-text-muted text-ui-sm">Note hidden</p>
+                        <Show when={props.canEdit}>
+                          <Button
+                            variant="link"
+                            type="button"
+                            aria-label={`Unhide note from ${giftFrom(gift)}`}
+                            onClick={() => void setNoteHidden(gift, false)}
+                          >
+                            Unhide
+                          </Button>
+                        </Show>
+                      </div>
                     </Show>
                   </li>
                 );
