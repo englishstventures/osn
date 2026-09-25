@@ -216,6 +216,7 @@ describe("registry settings", () => {
     expect(snap.settings.published).toBe(false);
     expect(snap.settings.cashGiftsEnabled).toBe(false);
     expect(snap.settings.updatedAt).toBeNull();
+    expect(snap.settings.stripeConnected).toBe(false);
     expect(snap.items).toEqual([]);
     expect(snap.gifts).toEqual([]);
   });
@@ -361,6 +362,42 @@ describe("registry settings from two organisers at once", () => {
     expect(again.published).toBe(true);
   });
 
+  it("checks a field the caller only names in `expected`, without writing it", async () => {
+    const db = db0();
+    await opened(db);
+    await ok(db, registryService.updateSettings(BOOTSTRAP_WEDDING_ID, { published: true }));
+
+    // The caller changes the heading on condition the list is still a draft.
+    const refused = await run(
+      db,
+      registryService.updateSettings(BOOTSTRAP_WEDDING_ID, {
+        headline: "Gifts",
+        expected: { published: false },
+      }),
+    );
+    expect(failureOf(refused)).toBeInstanceOf(SettingsChanged);
+    const snap = await ok(db, registryService.get(BOOTSTRAP_WEDDING_ID));
+    expect(snap.settings.headline).toBe("Our list");
+
+    const saved = await ok(
+      db,
+      registryService.updateSettings(BOOTSTRAP_WEDDING_ID, {
+        headline: "Gifts",
+        expected: { published: true },
+      }),
+    );
+    expect(saved.headline).toBe("Gifts");
+    expect(saved.published).toBe(true);
+  });
+
+  it("answers an empty patch with the row as it stands", async () => {
+    const db = db0();
+    await opened(db);
+    const saved = await ok(db, registryService.updateSettings(BOOTSTRAP_WEDDING_ID, {}));
+    expect(saved.headline).toBe("Our list");
+    expect(saved.shippingAddress).toBe("1 Example St");
+  });
+
   it("does not check a row that does not exist yet", async () => {
     const db = db0();
     const saved = await ok(
@@ -376,6 +413,15 @@ describe("registry settings from two organisers at once", () => {
   it("sends the organiser a connected flag, never the account id or the payouts flag", async () => {
     const db = db0();
     await opened(db);
+    // No account on the row yet: not connected, on the read and on a save.
+    expect((await ok(db, registryService.get(BOOTSTRAP_WEDDING_ID))).settings.stripeConnected).toBe(
+      false,
+    );
+    expect(
+      (await ok(db, registryService.updateSettings(BOOTSTRAP_WEDDING_ID, { message: "Hi" })))
+        .stripeConnected,
+    ).toBe(false);
+
     db.update(registrySettings)
       .set({ stripeAccountId: "acct_live", stripeChargesEnabled: true, stripePayoutsEnabled: true })
       .where(eq(registrySettings.weddingId, BOOTSTRAP_WEDDING_ID))

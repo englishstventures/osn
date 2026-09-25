@@ -190,6 +190,7 @@ describe("registry routes (entitled)", () => {
     const body = (await res.json()) as RegistrySnapshot;
     expect(body.settings.published).toBe(false);
     expect(body.items).toEqual([]);
+    expect(body.settings.stripeConnected).toBe(false);
     expect(body.gifts).toEqual([]);
     expect(body.currency).toBe("AUD");
     expect(body.contributionsPrimaryMinor).toBe(0);
@@ -413,6 +414,41 @@ describe("registry routes (entitled)", () => {
     expect(body.settings.published).toBe(false);
     snap = (await (await req(app, "GET", base, OWNER)).json()) as RegistrySnapshot;
     expect(snap.settings.shippingAddress).toBeNull();
+  });
+
+  it("lets only an owner or editor save the settings", async () => {
+    const app = buildApp({ grantRegistry: true });
+    await req(app, "PUT", `${base}/settings`, OWNER, { published: true });
+
+    expect(
+      (await req(app, "PUT", `${base}/settings`, undefined, { published: false })).status,
+    ).toBe(401);
+    const viewer = await req(app, "PUT", `${base}/settings`, VIEWER, { published: false });
+    expect(viewer.status).toBe(403);
+    expect(((await viewer.json()) as { error: string }).error).toBe("read_only_role");
+    expect((await req(app, "PUT", `${base}/settings`, STRANGER, { published: false })).status).toBe(
+      403,
+    );
+
+    const snap = (await (await req(app, "GET", base, OWNER)).json()) as RegistrySnapshot;
+    expect(snap.settings.published).toBe(true);
+  });
+
+  it("400s a malformed `expected`, and answers an empty save with the row", async () => {
+    const app = buildApp({ grantRegistry: true });
+    await req(app, "PUT", `${base}/settings`, OWNER, { headline: "Ours" });
+
+    const bad = await req(app, "PUT", `${base}/settings`, EDITOR, {
+      published: true,
+      expected: { published: "no" },
+    });
+    expect(bad.status).toBe(400);
+
+    const empty = await req(app, "PUT", `${base}/settings`, EDITOR, {});
+    expect(empty.status).toBe(200);
+    const body = (await empty.json()) as { settings: RegistrySnapshot["settings"] };
+    expect(body.settings.headline).toBe("Ours");
+    expect(body.settings.published).toBe(false);
   });
 
   it("tells a co-host whether an account is connected, never its id or the payouts flag", async () => {
