@@ -368,6 +368,90 @@ describe("registry routes (entitled)", () => {
     expect(snap.settings.cashGiftsEnabled).toBe(false);
   });
 
+  it("lets a stale tab change what it touched and nothing else, and refuses a field that moved", async () => {
+    const app = buildApp({ grantRegistry: true });
+    // Both organisers open the settings on a published list with an address.
+    await req(app, "PUT", `${base}/settings`, OWNER, {
+      published: true,
+      shippingAddress: "1 Example St",
+    });
+
+    // The owner unpublishes and clears the address.
+    const owner = await req(app, "PUT", `${base}/settings`, OWNER, {
+      published: false,
+      shippingAddress: null,
+      expected: { published: true, shippingAddress: "1 Example St" },
+    });
+    expect(owner.status).toBe(200);
+
+    // The co-host, an hour stale, changes the heading only. The two fields
+    // they never touched are not sent, so nothing re-publishes the list or
+    // restores the address the couple withdrew.
+    const heading = await req(app, "PUT", `${base}/settings`, EDITOR, {
+      headline: "Gifts",
+      expected: { headline: null },
+    });
+    expect(heading.status).toBe(200);
+    let snap = (await (await req(app, "GET", base, OWNER)).json()) as RegistrySnapshot;
+    expect(snap.settings.published).toBe(false);
+    expect(snap.settings.shippingAddress).toBeNull();
+    expect(snap.settings.headline).toBe("Gifts");
+
+    // The same stale co-host now edits the address they still see. It moved
+    // under them, so the write is refused and says what the row holds now.
+    const address = await req(app, "PUT", `${base}/settings`, EDITOR, {
+      shippingAddress: "2 Example St",
+      expected: { shippingAddress: "1 Example St" },
+    });
+    expect(address.status).toBe(409);
+    const body = (await address.json()) as {
+      error: string;
+      settings: RegistrySnapshot["settings"];
+    };
+    expect(body.error).toBe("settings_changed");
+    expect(body.settings.shippingAddress).toBeNull();
+    expect(body.settings.published).toBe(false);
+    snap = (await (await req(app, "GET", base, OWNER)).json()) as RegistrySnapshot;
+    expect(snap.settings.shippingAddress).toBeNull();
+  });
+
+  it("tells a co-host whether an account is connected, never its id or the payouts flag", async () => {
+    const app = buildApp({
+      grantRegistry: true,
+      seed: (db) => {
+        const now = new Date();
+        db.insert(registrySettings)
+          .values({
+            weddingId: BOOTSTRAP_WEDDING_ID,
+            stripeAccountId: "acct_live",
+            stripeChargesEnabled: true,
+            stripePayoutsEnabled: true,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .run();
+      },
+    });
+
+    const read = await req(app, "GET", base, VIEWER);
+    const readText = await read.text();
+    const snap = JSON.parse(readText) as RegistrySnapshot;
+    expect(snap.settings.stripeConnected).toBe(true);
+    expect(snap.settings.stripeChargesEnabled).toBe(true);
+    expect(readText).not.toContain("acct_live");
+    expect(readText).not.toContain("stripePayoutsEnabled");
+
+    const write = await req(app, "PUT", `${base}/settings`, EDITOR, { headline: "Gifts" });
+    expect(write.status).toBe(200);
+    const writeText = await write.text();
+    expect(writeText).not.toContain("acct_live");
+    expect(writeText).not.toContain("stripePayoutsEnabled");
+    expect(
+      (JSON.parse(writeText) as { settings: RegistrySnapshot["settings"] }).settings
+        .stripeConnected,
+    ).toBe(true);
+  });
+
   it("400s an image key that names another wedding's upload", async () => {
     // The schema pins the SHAPE (`assets/<segment>/registry-<name>`), so only the
     // service can tell whose upload it is. A distinct code, not the generic 400,
