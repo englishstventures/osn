@@ -2715,6 +2715,10 @@ export const registryService = {
                 and(
                   eq(registryContributions.id, giftId),
                   eq(registryContributions.weddingId, weddingId),
+                  // The gift log and its CSV never show a `failed` row, and an
+                  // unhide answers with the words, so this route may not reach
+                  // one either.
+                  ne(registryContributions.status, "failed"),
                 ),
               )
               .returning({

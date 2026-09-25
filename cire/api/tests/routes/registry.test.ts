@@ -811,6 +811,20 @@ describe("POST /registry/gifts/:kind/:giftId/note-hidden", () => {
     expect(((await res.json()) as { error: string }).error).toBe("registry_gift_not_found");
   });
 
+  it("404s a failed contribution and never answers with its words", async () => {
+    const { app } = appWithNote((db) => {
+      db.update(registryContributions)
+        .set({ status: "failed" })
+        .where(eq(registryContributions.id, "rct_note"))
+        .run();
+    });
+    for (const hidden of [true, false]) {
+      const res = await req(app, "POST", notePath, EDITOR, { hidden });
+      expect(res.status).toBe(404);
+      expect(await res.text()).not.toContain(NOTE);
+    }
+  });
+
   it("404s another wedding's gift and leaves it shown", async () => {
     const { app, db } = appWithNote((db) => seedNote(db, "rct_elsewhere", "wed_other"));
     const before = await noteMetric("note_hidden");

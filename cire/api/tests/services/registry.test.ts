@@ -1097,6 +1097,29 @@ describe("hiding a gift note", () => {
     expect(entries[0]).toMatchObject({ note: null, noteHidden: false });
   });
 
+  it("refuses a failed contribution, which the gift log never shows", async () => {
+    const db = db0();
+    const failedId = seedContribution(db, { status: "failed", message: "Card declined words" });
+    for (const hidden of [true, false]) {
+      const exit = await run(
+        db,
+        registryService.setNoteHidden({
+          weddingId: BOOTSTRAP_WEDDING_ID,
+          kind: "contribution",
+          giftId: failedId,
+          hidden,
+          actorOsnProfileId: "usr_editor",
+        }),
+      );
+      expect(Exit.isFailure(exit)).toBe(true);
+      if (Exit.isFailure(exit)) {
+        expect(exit.cause.toString()).toContain(new GiftNotInWedding()._tag);
+        expect(exit.cause.toString()).not.toContain("Card declined words");
+      }
+    }
+    expect(hiddenColumns(db, "contribution", failedId).at).toBeNull();
+  });
+
   it("refuses a gift that is not this wedding's, on both kinds", async () => {
     const db = db0();
     const { claimId, contributionId } = await seedNotes(db);
