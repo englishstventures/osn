@@ -91,8 +91,9 @@ export function ConsentPreferences() {
             the removal could not stop: a guest who never opened an event's
             details sheet loaded no embed, and an embed that runs in its own
             frame (the map) stops with the frame. Neither the removal nor the
-            reload takes back what the company already received or stored,
-            and the second sentence says the same thing `/privacy` does. */}
+            reload takes back what the company already received or stored.
+            The second sentence is the short form of that; `/privacy` states
+            it in full, naming the company and when the data left. */}
       <p class="font-body text-text-muted/80 text-ui-sm mt-1.5 leading-relaxed">
         Turning something off takes effect at once; the page may reload. Data already sent can't be
         recalled.

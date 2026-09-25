@@ -159,21 +159,31 @@ export default function DietaryPresets<K extends string = DietaryPreset>(
   const selected = createMemo(() => new Set<string>(props.value));
 
   /**
-   * The keys in the value this build has no pill for, once each, in the order
-   * they arrived — the order `toggle` hands them back in.
+   * The keys this build has no pill for, once each, in the order they first
+   * appeared in the value.
    *
-   * Derived from the value alone, so unticking one drops its pill with it. Only
-   * Cancel, closing the sheet without saving, or a reload onto a build that
-   * knows the key brings the choice back. Remembering unticked keys here would
-   * not survive anyway: the popover unmounts this component when it closes, and
-   * the guest sheet unmounts it when a member stops attending.
+   * Remembered for as long as this picker is mounted, so unticking one leaves
+   * its pill on screen, unticked: focus stays on the control the guest just
+   * used rather than falling to the page, and the guest can tick it back.
+   * Unmounting forgets them — the popover unmounts this when it closes, the
+   * guest sheet when a member stops attending — and then only Cancel, closing
+   * without saving, or a reload onto a build that knows the key brings an
+   * unticked one back.
    *
-   * An empty key has no words to show, so it gets no pill, matching
+   * Returns the previous array when nothing new arrived, so `<For>` keeps its
+   * rows, and builds nothing on the common answer of known keys only. An empty
+   * or blank key has no words to show, so it gets no pill, matching
    * `presetLabels`.
    */
-  const unknown = createMemo(() =>
-    [...new Set(props.value)].filter((key) => !isDietaryPreset(key) && presetLabel(key) !== ""),
-  );
+  const unknown = createMemo<readonly K[]>((seen) => {
+    let next: K[] | undefined;
+    for (const key of props.value) {
+      if (isDietaryPreset(key) || presetLabel(key) === "") continue;
+      if ((next ?? seen).includes(key)) continue;
+      (next ??= [...seen]).push(key);
+    }
+    return next ?? seen;
+  }, []);
 
   /**
    * `wrap` is the caller's, not a media query's.

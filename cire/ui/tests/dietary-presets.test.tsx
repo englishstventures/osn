@@ -2,7 +2,7 @@ import { DIETARY_PRESETS, type DietaryPreset } from "@cire/dietary";
 import "@testing-library/jest-dom/vitest";
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen } from "@solidjs/testing-library";
-import { createSignal } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import { afterEach, describe, expect, it } from "vitest";
 
 import DietaryPresets from "../src/dietary-presets";
@@ -183,11 +183,37 @@ describe("a key this build does not know", () => {
 
   it("lets the guest untick it, which drops it from the answer", () => {
     render(() => <OpenHarness initial={["vegan", "a_future_key"]} />);
-    fireEvent.click(screen.getByRole("checkbox", { name: "A future key" }));
+    const pill = screen.getByRole("checkbox", { name: "A future key" }) as HTMLInputElement;
+    fireEvent.click(pill);
     expect(valueOf()).toBe("vegan");
-    // Stateless by design: the pill is the key in the value, so an unticked key
-    // has nothing left to render. The popover and the guest sheet both unmount
-    // this component, so a remembered pill could not outlive them anyway.
+    // The pill stays, unticked — the same element, so a keyboard user's focus
+    // stays where they put it rather than falling to the page.
+    expect(screen.getByRole("checkbox", { name: "A future key" })).toBe(pill);
+    expect(pill.checked).toBe(false);
+  });
+
+  it("lets the guest tick it again while the picker is open", () => {
+    render(() => <OpenHarness initial={["vegan", "a_future_key"]} />);
+    const pill = screen.getByRole("checkbox", { name: "A future key" });
+    fireEvent.click(pill);
+    fireEvent.click(pill);
+    expect(valueOf()).toBe("vegan,a_future_key");
+    expect((pill as HTMLInputElement).checked).toBe(true);
+  });
+
+  it("forgets an unticked key once the picker unmounts", () => {
+    // The popover unmounts this component when it closes, and the guest sheet
+    // when a member stops attending. A remounted picker knows only the value.
+    const [value, setValue] = createSignal<readonly string[]>(["a_future_key"]);
+    const [open, setOpen] = createSignal(true);
+    render(() => (
+      <Show when={open()}>
+        <DietaryPresets value={value()} onChange={setValue} />
+      </Show>
+    ));
+    fireEvent.click(screen.getByRole("checkbox", { name: "A future key" }));
+    setOpen(false);
+    setOpen(true);
     expect(screen.queryByRole("checkbox", { name: "A future key" })).toBeNull();
   });
 

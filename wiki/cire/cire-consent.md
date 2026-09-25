@@ -260,9 +260,10 @@ The preferences dialog states this plainly rather than leaving it implicit — a
 silent reload the guest didn't expect is its own kind of surprising — and says
 the page "may" reload, because condition 2 means it does not always happen:
 "Turning something off takes effect at once; the page may reload." It also
-says "Data already sent can't be recalled.", which is what `/privacy` says:
-neither the unmount nor the reload takes back what a vendor received or
-stored. `ConsentBanner.test.tsx` pins both sentences.
+says "Data already sent can't be recalled.": neither the unmount nor the
+reload takes back what a vendor received or stored. That is the short form;
+`/privacy` states it in full, naming the company and when the data left.
+`ConsentBanner.test.tsx` pins both sentences.
 
 ### Two versions, two jobs
 

@@ -631,6 +631,7 @@ describe("RsvpView", () => {
     expect(screen.getByLabelText(/I confirm the guest consented/i)).toBeTruthy();
 
     fireEvent.click(pill);
+    expect(pill.checked).toBe(false);
     expect(screen.queryByLabelText(/I confirm the guest consented/i)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Save reply/i }));
 

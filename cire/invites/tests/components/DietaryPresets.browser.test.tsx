@@ -215,7 +215,7 @@ describe("a stored key this build does not know", () => {
   // Its pill trails every known one, so on a phone it starts past the right
   // edge of the track — the one pill most likely to be cut off or unreachable.
   // Only a real layout can say it is inside the track once the guest scrolls
-  // there, and that unticking it leaves the sheet where it was.
+  // there, that unticking it keeps focus on it, and that the sheet stays put.
   for (const [name, size] of [
     ["desktop", WIDE],
     ["phone", NARROW],
@@ -255,11 +255,15 @@ describe("a stored key this build does not know", () => {
       expect(pill.right).toBeLessThanOrEqual(bounds.right + 0.5);
       expect(box.offsetParent).toBe(label);
 
+      box.focus();
       label.click();
       await new Promise(requestAnimationFrame);
 
-      // Unticked, the key leaves the answer and its pill goes with it.
-      expect(within(fieldset).queryByRole("checkbox", { name: "A future key" })).toBeNull();
+      // Unticked, the key leaves the answer but its pill stays, so focus stays
+      // on it rather than falling to the page, and the guest can tick it back.
+      expect(box.isConnected).toBe(true);
+      expect(box.checked).toBe(false);
+      expect(document.activeElement).toBe(box);
       expect(
         (within(fieldset).getByRole("checkbox", { name: /vegan/i }) as HTMLInputElement).checked,
       ).toBe(true);

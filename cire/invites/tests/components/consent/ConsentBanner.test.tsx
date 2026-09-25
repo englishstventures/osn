@@ -157,7 +157,7 @@ describe("ConsentPreferences dialog", () => {
 
   // Withdrawal stops a vendor's embed and its code; it takes back nothing the
   // vendor already received or stored. The dialog is what the guest reads when
-  // they withdraw, so it has to say the same thing as the privacy notice.
+  // they withdraw, so it states that limit in short, and never claims more.
   it("says withdrawal stops a vendor without claiming to take back what it received", () => {
     const text = dialog()!.textContent ?? "";
     expect(text).toContain("Turning something off takes effect at once; the page may reload.");
