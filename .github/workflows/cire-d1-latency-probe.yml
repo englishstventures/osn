@@ -8,10 +8,9 @@
 # into wiki/shared/d1-read-replication.md. The method is in the script's header:
 # cire/api/scripts/d1-latency-probe.ts.
 #
-# Safe to run at any time it is not colliding with a dev deploy: it sends only
-# requests any browser can send, to a public, rate-limited GET on the dev tier,
-# and costs one D1 read per timed SELECT. The target comes from the
-# `[env.dev]` block of cire/api/wrangler.toml and nothing here can change it.
+# It sends only requests any browser can send, to a public, rate-limited GET on
+# the dev tier, and costs one D1 read per timed SELECT. The target comes from
+# the `[env.dev]` block of cire/api/wrangler.toml and nothing here can change it.
 name: Probe cire dev D1 first-query latency
 
 on:
@@ -20,7 +19,7 @@ on:
       samples:
         description: "Pairs to time, 25 to 100. Blank uses the script's default."
         required: false
-        type: number
+        type: string
 
 permissions:
   contents: read
@@ -30,14 +29,13 @@ jobs:
     name: Time the first D1 query on dev
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # The dev deploy and the nightly dev D1 rebuild share this group. Joining it
-    # means a probe waits for either to finish rather than timing a primary busy
-    # with migrations or a freshly deployed Worker's cold isolates. A deploy
-    # that starts mid-probe cancels the probe (its side sets
-    # `cancel-in-progress: true`), which leaves a red run rather than a skewed
-    # result.
+    # Its own group, never `deploy-dev-cire-api`: GitHub cancels the pending job
+    # in a group when another joins it, so a probe there could cancel a queued
+    # dev deploy, and with it that merge's production promotion. A dev deploy
+    # or the nightly rebuild (14:00 UTC) can therefore overlap a run; the report
+    # prints its window so an overlapping run can be spotted and repeated.
     concurrency:
-      group: deploy-dev-cire-api
+      group: cire-d1-latency-probe
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4

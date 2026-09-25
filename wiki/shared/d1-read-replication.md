@@ -246,10 +246,13 @@ to 100 to change the pair count.
   Europe. The report records the Cloudflare colo from each response's `cf-ray`,
   which is where the Worker and its D1 client ran, and the region the runner
   reports about itself.
-- **When.** The job shares the `deploy-dev-cire-api` concurrency group with the
-  dev deploy and the nightly dev D1 rebuild (`cire-dev-db-rebuild.yml`, 14:00
-  UTC). It waits for either to finish, and a deploy that starts mid-run cancels
-  it.
+- **When.** Not while a dev deploy or the nightly dev D1 rebuild
+  (`cire-dev-db-rebuild.yml`, 14:00 UTC) is running: migrations and freshly
+  deployed isolates both inflate the timings. The job has its own concurrency
+  group rather than the deploy's, because joining `deploy-dev-cire-api` would
+  let a probe cancel a queued dev deploy. So nothing stops an overlap; the
+  report prints the run's window, and a run that overlapped either job is
+  discarded and repeated.
 - **Pacing.** Requests are spaced from the dev `CLAIM_SESSION_RATE_LIMITER`
   budget in `cire/api/wrangler.toml`, at two thirds of it. Any answer but 401
   stops the run with nothing recorded.

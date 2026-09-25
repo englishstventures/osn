@@ -67,7 +67,7 @@ export interface ProbePair {
   readonly query: ProbeRequest;
 }
 
-type Arm = keyof ProbePair;
+export type Arm = keyof ProbePair;
 
 export interface Pair {
   readonly control: number;
@@ -309,23 +309,24 @@ async function runnerRegion(): Promise<string | null> {
   }
 }
 
-interface Timed {
+export interface Timed {
   readonly ms: number;
   readonly colo: string;
 }
 
-async function timeOne(arm: Arm, request: ProbeRequest): Promise<Timed> {
-  const started = performance.now();
-  const response = await fetch(request.url, { headers: request.headers, redirect: "manual" });
-  await response.arrayBuffer();
-  const elapsed = performance.now() - started;
-
+/**
+ * The colo that served a probe response, or an error naming what went wrong.
+ * Anything but a 401 means the Worker did not run the route the probe times,
+ * and a response with no colo cannot say where the Worker ran.
+ */
+export function checkProbeResponse(arm: Arm, response: Response): string {
   if (response.status !== 401) {
+    const mitigated = response.headers.get("cf-mitigated");
     const hint =
       response.status === 429
         ? "the limiter refused it: requests came faster than its budget, or another client shares this IP"
-        : response.headers.get("cf-mitigated")
-          ? `Cloudflare answered a ${response.headers.get("cf-mitigated")} instead of the Worker`
+        : mitigated
+          ? `Cloudflare answered a ${mitigated} instead of the Worker`
           : "dev may be mid-deploy or mid-rebuild; try again later";
     throw new Error(
       `${arm} request answered ${response.status}, expected 401 — ${hint}. Nothing was recorded.`,
@@ -337,7 +338,70 @@ async function timeOne(arm: Arm, request: ProbeRequest): Promise<Timed> {
       `${arm} response carried no cf-ray colo, so where the Worker ran is unknown. Nothing was recorded.`,
     );
   }
-  return { ms: elapsed, colo };
+  return colo;
+}
+
+async function timeOne(arm: Arm, request: ProbeRequest): Promise<Timed> {
+  const started = performance.now();
+  const response = await fetch(request.url, { headers: request.headers, redirect: "manual" });
+  await response.arrayBuffer();
+  const elapsed = performance.now() - started;
+  return { ms: elapsed, colo: checkProbeResponse(arm, response) };
+}
+
+export interface PairRun {
+  readonly pairs: readonly Pair[];
+  /** Cloudflare colo → how many measured requests it served. */
+  readonly colos: Readonly<Record<string, number>>;
+}
+
+/**
+ * Time `warmUp + samples` pairs one after another and keep the last `samples`.
+ * The arm that goes first alternates, so neither arm always follows a pause,
+ * and every request is followed by `sleep(spacing)` so the run stays inside
+ * the limiter's budget.
+ */
+export async function measurePairs({
+  warmUp,
+  samples,
+  time,
+  sleep,
+  onPair = () => {},
+}: {
+  readonly warmUp: number;
+  readonly samples: number;
+  readonly time: (arm: Arm) => Promise<Timed>;
+  readonly sleep: () => Promise<void>;
+  readonly onPair?: (done: number, total: number) => void;
+}): Promise<PairRun> {
+  const pairs: Pair[] = [];
+  const colos: Record<string, number> = {};
+  const total = warmUp + samples;
+
+  const measurePair = async (first: Arm, second: Arm) => {
+    const a = await time(first);
+    await sleep();
+    const b = await time(second);
+    await sleep();
+    const control = first === "control" ? a : b;
+    const query = first === "control" ? b : a;
+    return { pair: { control: control.ms, query: query.ms }, seen: [a.colo, b.colo] };
+  };
+
+  for (let index = 0; index < total; index += 1) {
+    const [first, second]: readonly [Arm, Arm] =
+      index % 2 === 0 ? ["control", "query"] : ["query", "control"];
+    // Pairs must run one after another: overlapping requests would time each
+    // other, and would spend the limiter's budget all at once.
+    // eslint-disable-next-line no-await-in-loop
+    const { pair, seen } = await measurePair(first, second);
+    if (index >= warmUp) {
+      pairs.push(pair);
+      for (const colo of seen) colos[colo] = (colos[colo] ?? 0) + 1;
+    }
+    onPair(index + 1, total);
+  }
+  return { pairs, colos };
 }
 
 function randomToken(): string {
@@ -352,38 +416,15 @@ async function main(): Promise<number> {
   const requests = probeRequests(target.origin, randomToken());
   const region = await runnerRegion();
 
-  const pairs: Pair[] = [];
-  const colos: Record<string, number> = {};
   const startedAt = new Date();
   const started = performance.now();
-  const total = WARM_UP_PAIRS + samples;
-
-  // One pair: both arms, one after the other, in the order given, each
-  // followed by the pause the limiter needs.
-  const measurePair = async (first: Arm, second: Arm) => {
-    const a = await timeOne(first, requests[first]);
-    await Bun.sleep(spacing);
-    const b = await timeOne(second, requests[second]);
-    await Bun.sleep(spacing);
-    const control = first === "control" ? a : b;
-    const query = first === "control" ? b : a;
-    return { pair: { control: control.ms, query: query.ms }, seen: [a.colo, b.colo] };
-  };
-
-  for (let index = 0; index < total; index += 1) {
-    // Alternate which arm goes first, so neither always follows a pause.
-    const [first, second]: readonly [Arm, Arm] =
-      index % 2 === 0 ? ["control", "query"] : ["query", "control"];
-    // Pairs must run one after another: overlapping requests would time each
-    // other, and would spend the limiter's budget all at once.
-    // eslint-disable-next-line no-await-in-loop
-    const { pair, seen } = await measurePair(first, second);
-    if (index >= WARM_UP_PAIRS) {
-      pairs.push(pair);
-      for (const colo of seen) colos[colo] = (colos[colo] ?? 0) + 1;
-    }
-    process.stderr.write(`pair ${index + 1}/${total}\r`);
-  }
+  const { pairs, colos } = await measurePairs({
+    warmUp: WARM_UP_PAIRS,
+    samples,
+    time: (arm) => timeOne(arm, requests[arm]),
+    sleep: () => Bun.sleep(spacing),
+    onPair: (done, total) => process.stderr.write(`pair ${done}/${total}\r`),
+  });
   process.stderr.write("\n");
 
   const { GITHUB_SERVER_URL, GITHUB_REPOSITORY, GITHUB_RUN_ID, GITHUB_STEP_SUMMARY } = process.env;
