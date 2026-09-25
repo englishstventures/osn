@@ -1869,6 +1869,78 @@ describe("POST /changes/revert — restores only the half the change saved", () 
     expect(db.select().from(guests).where(eq(guests.firstName, "Cy")).all()).toHaveLength(1);
   });
 
+  describe("who may revert", () => {
+    /** An applied two-sheet change, and a check that it is still applied. */
+    async function appliedChange(
+      app: ReturnType<typeof buildApp>["app"],
+      db: ReturnType<typeof buildApp>["db"],
+    ) {
+      const preview = await ownerPost(app, `${CHANGES_BASE}/preview`, {
+        eventsCsv: EVENTS_CSV,
+        guestsCsv: GUESTS_CSV,
+      });
+      const changeId = ((await preview.clone().json()) as { changeId: string }).changeId;
+      await applyChange(app, preview);
+      const stillApplied = () => {
+        const [row] = db
+          .select({ status: imports.status })
+          .from(imports)
+          .where(eq(imports.id, changeId))
+          .all();
+        expect(row!.status).toBe("applied");
+        expect(db.select().from(families).all()).toHaveLength(2);
+      };
+      return { changeId, stillApplied };
+    }
+
+    it("401s a request with no credential", async () => {
+      const { app, db } = buildApp();
+      const { changeId, stillApplied } = await appliedChange(app, db);
+      const res = await appRequest(app, `${CHANGES_BASE}/revert`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ changeId }),
+      });
+      expect(res.status).toBe(401);
+      stillApplied();
+    });
+
+    it("401s a cookie that names no session", async () => {
+      const { app, db } = buildApp();
+      const { changeId, stillApplied } = await appliedChange(app, db);
+      await seedOrganiserSession(db, "usr_dev_bootstrap_owner");
+      const res = await cookiePost(app, `${CHANGES_BASE}/revert`, "nosuchtoken", { changeId });
+      expect(res.status).toBe(401);
+      stillApplied();
+    });
+
+    it("403s a viewer co-host", async () => {
+      const { app, db } = buildApp();
+      const { changeId, stillApplied } = await appliedChange(app, db);
+      db.insert(weddingHosts)
+        .values({
+          id: "whost_revert_viewer",
+          weddingId: BOOTSTRAP_WEDDING_ID,
+          osnProfileId: "usr_revert_viewer",
+          addedByOsnProfileId: "usr_dev_bootstrap_owner",
+          role: "viewer",
+          createdAt: new Date(),
+        })
+        .run();
+      const res = await appRequest(app, `${CHANGES_BASE}/revert`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${await auth.sign("usr_revert_viewer")}`,
+        },
+        body: JSON.stringify({ changeId }),
+      });
+      expect(res.status).toBe(403);
+      expect(await jsonBody(res)).toEqual({ error: "read_only_role" });
+      stillApplied();
+    });
+  });
+
   it("answers 402 and changes nothing when a guests revert would pass a cap that shrank since", async () => {
     const { app, db } = buildApp();
     db.insert(weddingEntitlements)

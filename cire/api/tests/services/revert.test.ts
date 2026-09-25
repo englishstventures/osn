@@ -22,6 +22,7 @@ import { R2Service, createR2Stub, storeUpload } from "../../src/services/r2-impo
 import {
   revertImport,
   storedRevertScope,
+  translateAttendance,
   NoPriorImport,
   RevertParseError,
 } from "../../src/services/revert";
@@ -1037,5 +1038,178 @@ describe("revertImport — legacy path honours a stored scope", () => {
     );
     expect(error).toBeInstanceOf(NoPriorImport);
     expect(db.select().from(events).all()).toHaveLength(3);
+  });
+});
+
+describe("translateAttendance", () => {
+  const family = (eventNames: string[]): ParsedFamily => ({
+    id: "fam_a",
+    familyName: "Testfamily",
+    guests: [{ id: "gst_a", firstName: "Ada", lastName: "", nickname: null, eventNames }],
+  });
+  const namesOf = (families: readonly ParsedFamily[]) => families[0]!.guests[0]!.eventNames;
+
+  it("follows an event renamed since by its id", () => {
+    const { families: out, knownEventIds } = translateAttendance(
+      [family(["Wedding Ceremony"])],
+      [{ name: "Wedding Ceremony", id: "evt_1" }],
+      [{ id: "evt_1", name: "Ceremony" }],
+    );
+    expect(namesOf(out)).toEqual(["Ceremony"]);
+    expect([...knownEventIds]).toEqual(["evt_1"]);
+  });
+
+  it("falls back to the name when the id is gone (deleted and re-created since)", () => {
+    const { families: out, knownEventIds } = translateAttendance(
+      [family(["Reception"])],
+      [{ name: "Reception", id: "evt_old" }],
+      [{ id: "evt_new", name: " reception " }],
+    );
+    expect(namesOf(out)).toEqual([" reception "]);
+    expect([...knownEventIds]).toEqual(["evt_new"]);
+  });
+
+  it("matches by name when the snapshot carries no Event ID", () => {
+    const { families: out } = translateAttendance(
+      [family(["Mehndi"])],
+      [{ name: "Mehndi", id: undefined }],
+      [{ id: "evt_1", name: "Mehndi" }],
+    );
+    expect(namesOf(out)).toEqual(["Mehndi"]);
+  });
+
+  it("never lets a name fallback take a live event another snapshot event holds by id", () => {
+    // "Lunch" (evt_2) was deleted; "Dinner" (evt_1) has since been renamed to
+    // "Lunch". Lunch's invitations must not land on evt_1 beside Dinner's.
+    const { families: out, knownEventIds } = translateAttendance(
+      [family(["Dinner", "Lunch"])],
+      [
+        { name: "Dinner", id: "evt_1" },
+        { name: "Lunch", id: "evt_2" },
+      ],
+      [{ id: "evt_1", name: "Lunch" }],
+    );
+    expect(namesOf(out)).toEqual(["Lunch"]);
+    expect([...knownEventIds]).toEqual(["evt_1"]);
+  });
+
+  it("drops an invitation to an event that resolves to nothing, and leaves unknown live events out of knownEventIds", () => {
+    const { families: out, knownEventIds } = translateAttendance(
+      [family(["Mehndi", "Gone"])],
+      [
+        { name: "Mehndi", id: "evt_1" },
+        { name: "Gone", id: "evt_gone" },
+      ],
+      [
+        { id: "evt_1", name: "Mehndi" },
+        { id: "evt_added_since", name: "Brunch" },
+      ],
+    );
+    expect(namesOf(out)).toEqual(["Mehndi"]);
+    expect([...knownEventIds]).toEqual(["evt_1"]);
+  });
+});
+
+describe("revertImport — scoped edge cases", () => {
+  it("does not invite anyone to an event re-created by hand before an events revert", async () => {
+    const { db, layer } = scopedLayer();
+    await applyChange(layer, "c0", SEED, 1_000);
+    await applyChange(layer, "c1", { eventsCsv: EVENTS_V1 }, 2_000);
+    // The organiser adds a "Reception" again by hand, inviting nobody.
+    await applyChange(layer, "c2", { eventsCsv: EVENTS_V2 }, 3_000);
+    const reception = db.select().from(events).where(eq(events.name, "Reception")).all()[0]!;
+
+    await revert(layer, "c1");
+
+    // The diff matched the snapshot's reception to this one by name, so it is
+    // not re-created and keeps the (empty) invitation list it has.
+    expect(db.select().from(events).where(eq(events.name, "Reception")).all()[0]!.id).toBe(
+      reception.id,
+    );
+    expect(
+      db.select().from(guestEvents).where(eq(guestEvents.eventId, reception.id)).all(),
+    ).toHaveLength(0);
+  });
+
+  it("fails before writing anything when a guests revert meets an events snapshot with no Event Name column", async () => {
+    const { db, r2, layer } = scopedLayer();
+    await applyChange(layer, "c0", SEED, 1_000);
+    await applyChange(layer, "c1", { guestsCsv: GUESTS_V1 }, 2_000);
+    const [row] = db.select().from(imports).where(eq(imports.id, "c1")).all();
+    await r2.put(row!.beforeEventsR2Key!, "Name,Start\r\nMehndi,2026-09-18T16:00");
+
+    const error = await Effect.runPromise(
+      Effect.flip(revertImport("c1", BOOTSTRAP_WEDDING_ID)).pipe(Effect.provide(layer)),
+    );
+    expect(error).toBeInstanceOf(RevertParseError);
+    expect((error as RevertParseError).reason).toContain("no Event Name column");
+    expect(db.select().from(families).all()).toHaveLength(1);
+    expect(db.select().from(imports).where(eq(imports.id, "c1")).all()[0]!.status).toBe("applied");
+  });
+
+  it("fails before writing anything when a guests revert meets a guests snapshot it cannot read", async () => {
+    const { db, r2, layer } = scopedLayer();
+    await applyChange(layer, "c0", SEED, 1_000);
+    await applyChange(layer, "c1", { guestsCsv: GUESTS_V1 }, 2_000);
+    const [row] = db.select().from(imports).where(eq(imports.id, "c1")).all();
+    await r2.put(row!.beforeGuestsR2Key!, "Family Name,Guest First Name\r\nTestfamily,Ada");
+
+    const error = await Effect.runPromise(
+      Effect.flip(revertImport("c1", BOOTSTRAP_WEDDING_ID)).pipe(Effect.provide(layer)),
+    );
+    expect(error).toBeInstanceOf(RevertParseError);
+    expect((error as RevertParseError).reason).toBe("guests parse failed: MissingRequiredColumn");
+    expect(db.select().from(families).all()).toHaveLength(1);
+    expect(db.select().from(imports).where(eq(imports.id, "c1")).all()[0]!.status).toBe("applied");
+  });
+
+  it("an events revert still reads its events through the upload parser, and fails cleanly on a value it refuses", async () => {
+    const { db, layer } = scopedLayer();
+    await applyChange(layer, "c0", SEED, 1_000);
+    // A value the events editor can store but the parser refuses. The events
+    // half is what this revert restores, so it cannot skip the value; it has
+    // to fail without writing (englishstventures/osn#1220).
+    db.update(events).set({ timezone: "UTC+10" }).where(eq(events.name, "Mehndi")).run();
+    await applyChange(layer, "c1", { eventsCsv: EVENTS_V1 }, 2_000);
+
+    const error = await Effect.runPromise(
+      Effect.flip(revertImport("c1", BOOTSTRAP_WEDDING_ID)).pipe(Effect.provide(layer)),
+    );
+    expect(error).toBeInstanceOf(RevertParseError);
+    expect(db.select().from(events).all()).toHaveLength(2);
+    expect(db.select().from(imports).where(eq(imports.id, "c1")).all()[0]!.status).toBe("applied");
+  });
+
+  it("legacy path: a guests scope replays only the predecessor's guests sheet", async () => {
+    const { db, layer } = scopedLayer();
+    await applyVersion(layer, "imp-1", EVENTS_V1, GUESTS_V1, 1_000);
+    await applyVersion(layer, "imp-2", EVENTS_V2, GUESTS_V2, 2_000);
+    db.update(imports)
+      .set({ summary: JSON.stringify({ scope: "guests" }) })
+      .where(eq(imports.id, "imp-2"))
+      .run();
+
+    await revert(layer, "imp-2");
+
+    // The guest half is imp-1's again; the schedule is untouched.
+    expect(db.select().from(families).all()).toHaveLength(1);
+    expect(db.select().from(events).all()).toHaveLength(3);
+  });
+
+  it("legacy path: a guests scope with an events-only predecessor has nothing to restore", async () => {
+    const { db, layer } = scopedLayer();
+    await applyVersion(layer, "imp-1", EVENTS_V1, GUESTS_V1, 1_000);
+    await applyPartialVersion(layer, "imp-p", { eventsCsv: EVENTS_V1, uploadedAt: 2_000 });
+    await applyVersion(layer, "imp-3", EVENTS_V2, GUESTS_V2, 3_000);
+    db.update(imports)
+      .set({ summary: JSON.stringify({ scope: "guests" }) })
+      .where(eq(imports.id, "imp-3"))
+      .run();
+
+    const error = await Effect.runPromise(
+      Effect.flip(revertImport("imp-3", BOOTSTRAP_WEDDING_ID)).pipe(Effect.provide(layer)),
+    );
+    expect(error).toBeInstanceOf(NoPriorImport);
+    expect(db.select().from(families).all()).toHaveLength(2);
   });
 });
