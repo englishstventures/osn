@@ -196,10 +196,20 @@ export function reportingEndpointsHeader(): string {
 }
 
 /**
- * The full set of security headers attached to every SSR HTML response. The CSP
- * mirrors `public/_headers`; the other four headers re-assert the same intent
- * `public/_headers` documents, because that file does not apply to SSR Worker
- * responses (see the module doc above).
+ * The full set of security headers attached to every SSR HTML response. The CSP,
+ * `Reporting-Endpoints` and the four hardening headers mirror `public/_headers`,
+ * because that file does not apply to SSR Worker responses (see the module doc
+ * above).
+ *
+ * `X-Robots-Tag` is the exception: SSR-only, and deliberately absent from
+ * `public/_headers`. The SSR routes are the invite (`/<slug>`), the gift page
+ * (`/<slug>/registry`) and the bare-domain redirect; the first two carry a
+ * couple's names and photo and are meant for invited guests, so they stay out
+ * of search indexes. It is a header rather than a `robots.txt` disallow because
+ * a crawler that obeys a disallow never fetches the page to see a `noindex`,
+ * and a disallowed URL can still be indexed from links elsewhere. The
+ * prerendered `/privacy` and `/terms` never reach the middleware, so they stay
+ * indexable.
  *
  * The CSP ships in Report-Only mode until {@link CSP_ENFORCE} is flipped — see
  * its doc. The non-CSP headers are always enforced (they carry no breakage
@@ -215,6 +225,7 @@ export function securityHeaders() {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "X-Frame-Options": "DENY",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "X-Robots-Tag": "noindex, nofollow",
   } satisfies Record<string, string>;
 }
 
