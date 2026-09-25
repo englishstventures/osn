@@ -14,6 +14,7 @@ import { eq } from "drizzle-orm";
 
 import { createApp } from "../../src/app";
 import { createDb, seedDb } from "../../src/db/setup";
+import { CIRE_METRICS } from "../../src/metrics";
 import { createAssetsStub, MAX_IMAGE_BYTES } from "../../src/services/invite-assets";
 import type { LinkPreviewOptions } from "../../src/services/link-preview";
 import type {
@@ -23,6 +24,7 @@ import type {
 } from "../../src/services/registry";
 import { appRequest, jsonBody, recordStatements } from "../test-helpers";
 import type { RecordedStatement } from "../test-helpers";
+import { counterValue } from "../test-helpers/metrics-harness";
 import { seedOrganiserSession } from "../test-helpers/organiser-session";
 import { makeOsnTestAuth } from "../test-helpers/osn-token";
 import type { OsnTestAuth } from "../test-helpers/osn-token";
@@ -188,6 +190,7 @@ describe("registry ships locked", () => {
     ["PATCH", `${base}/items/reg_x`, { title: "x" }],
     ["DELETE", `${base}/items/reg_x`],
     ["POST", `${base}/gifts/claim/rcl_x/thanked`, { thanked: true }],
+    ["POST", `${base}/gifts/claim/rcl_x/note-hidden`, { hidden: true }],
     ["POST", `${base}/link-preview`, { url: "https://shop.example/pan" }],
     ["POST", `${base}/image`],
     ["POST", `${base}/image/from-url`, { url: "https://cdn.example/pan.jpg" }],
@@ -608,6 +611,93 @@ describe("registry routes (entitled)", () => {
     const app = buildApp({ grantRegistry: true });
     const res = await req(app, "POST", `${base}/gifts/claim/rcl_nope/thanked`, EDITOR, {
       thanked: true,
+    });
+    expect(res.status).toBe(404);
+    expect(((await res.json()) as { error: string }).error).toBe("registry_gift_not_found");
+  });
+});
+
+describe("POST /registry/gifts/:kind/:giftId/note-hidden", () => {
+  const NOTE = "Something the couple would rather not read";
+  const notePath = `${base}/gifts/contribution/rct_note/note-hidden`;
+
+  /** One received cash gift on the bootstrap wedding, carrying a note. */
+  function seedNote(db: ReturnType<typeof createDb>): void {
+    const family = db
+      .select({ id: families.id })
+      .from(families)
+      .where(eq(families.weddingId, BOOTSTRAP_WEDDING_ID))
+      .get();
+    expect(family).toBeDefined();
+    const at = new Date();
+    db.insert(registryContributions)
+      .values({
+        id: "rct_note",
+        weddingId: BOOTSTRAP_WEDDING_ID,
+        familyId: family!.id,
+        status: "succeeded",
+        amountMinor: 5_000,
+        currency: "AUD",
+        message: NOTE,
+        createdAt: at,
+        updatedAt: at,
+      })
+      .run();
+  }
+
+  const noteMetric = (action: "note_hidden" | "note_unhidden") =>
+    counterValue(CIRE_METRICS.registryGift, { action });
+
+  it("lets an editor hide a note from the log and the next page, and unhide it", async () => {
+    const app = buildApp({ grantRegistry: true, seed: seedNote });
+    const hiddenBefore = await noteMetric("note_hidden");
+    const unhiddenBefore = await noteMetric("note_unhidden");
+
+    const hide = await req(app, "POST", notePath, EDITOR, { hidden: true });
+    expect(hide.status).toBe(200);
+    expect(await hide.json()).toEqual({ ok: true, note: null, noteHidden: true });
+    expect(await noteMetric("note_hidden")).toBe(hiddenBefore + 1);
+
+    // Both reads a co-host's portal makes: the snapshot and a further page.
+    const snap = (await (await req(app, "GET", base, VIEWER)).json()) as RegistrySnapshot;
+    expect(snap.gifts).toEqual([expect.objectContaining({ note: null, noteHidden: true })]);
+    const page = await req(app, "GET", `${base}/gifts?offset=0`, VIEWER);
+    const pageText = await page.text();
+    expect(pageText).toContain('"noteHidden":true');
+    expect(pageText).not.toContain(NOTE);
+
+    const show = await req(app, "POST", notePath, OWNER, { hidden: false });
+    expect(show.status).toBe(200);
+    expect(await show.json()).toEqual({ ok: true, note: NOTE, noteHidden: false });
+    expect(await noteMetric("note_unhidden")).toBe(unhiddenBefore + 1);
+    const again = (await (await req(app, "GET", base, OWNER)).json()) as RegistrySnapshot;
+    expect(again.gifts).toEqual([expect.objectContaining({ note: NOTE, noteHidden: false })]);
+  });
+
+  it("gives a viewer 403 read_only_role and leaves the note shown", async () => {
+    const app = buildApp({ grantRegistry: true, seed: seedNote });
+    const res = await req(app, "POST", notePath, VIEWER, { hidden: true });
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as { error: string }).error).toBe("read_only_role");
+    const snap = (await (await req(app, "GET", base, VIEWER)).json()) as RegistrySnapshot;
+    expect(snap.gifts[0]).toMatchObject({ note: NOTE, noteHidden: false });
+  });
+
+  it("400s an unknown gift kind or a body without a boolean", async () => {
+    const app = buildApp({ grantRegistry: true, seed: seedNote });
+    const kind = await req(app, "POST", `${base}/gifts/wishes/rct_note/note-hidden`, EDITOR, {
+      hidden: true,
+    });
+    expect(kind.status).toBe(400);
+    for (const body of [{ hidden: "yes" }, {}, null]) {
+      expect((await req(app, "POST", notePath, EDITOR, body)).status).toBe(400);
+    }
+  });
+
+  it("404s a gift that is not this wedding's", async () => {
+    const app = buildApp({ grantRegistry: true, seed: seedNote });
+    const res = await req(app, "POST", `${base}/gifts/claim/rct_note/note-hidden`, EDITOR, {
+      hidden: true,
     });
     expect(res.status).toBe(404);
     expect(((await res.json()) as { error: string }).error).toBe("registry_gift_not_found");
