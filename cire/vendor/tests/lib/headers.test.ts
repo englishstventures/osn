@@ -5,26 +5,36 @@ import { describe, expect, it } from "vitest";
 
 import { PRODUCTION_API_ORIGIN, retargetHeaders } from "../../src/lib/tier-headers";
 
+/** Every value of `name` set in `contents`, one per header line. */
+function headerValues(contents: string, name: string): string[] {
+  return [...contents.matchAll(new RegExp(`^\\s+${name}:\\s*(.+)$`, "gm"))].map((m) =>
+    m[1]!.trim(),
+  );
+}
+
 describe("_headers", () => {
   const path = fileURLToPath(new URL("../../public/_headers", import.meta.url));
   const contents = readFileSync(path, "utf8");
   // Split on rule blocks so we can test the wildcard rule independently.
   const wildcardBlock = contents.split(/\n\/claim\*/)[0]!;
-  const csp = wildcardBlock.match(/Content-Security-Policy-Report-Only:\s*(.+)/)?.[1]?.trim() ?? "";
+  const enforced = headerValues(wildcardBlock, "Content-Security-Policy");
+  const csp = enforced[0] ?? "";
 
   it("/* block sets the platform security baseline headers", () => {
     expect(wildcardBlock).toMatch(/Referrer-Policy:\s*strict-origin-when-cross-origin/);
     expect(wildcardBlock).toMatch(/X-Content-Type-Options:\s*nosniff/);
-    expect(wildcardBlock).toMatch(/Content-Security-Policy:\s*frame-ancestors 'none'/);
     expect(wildcardBlock).toMatch(/Permissions-Policy:\s*camera=\(\)/);
   });
 
-  it("enforces only the directives that cannot break a working page", () => {
-    const enforced = wildcardBlock.match(/\n\s*Content-Security-Policy:\s*(.+)/)?.[1]?.trim();
-    expect(enforced).toBe("frame-ancestors 'none'; object-src 'none'; base-uri 'self'");
+  it("enforces one full policy and ships no report-only one", () => {
+    // One enforced header: a second `Content-Security-Policy` would be enforced
+    // as well, and the stricter of the two would win for every directive.
+    expect(enforced).toHaveLength(1);
+    expect(headerValues(contents, "Content-Security-Policy")).toHaveLength(1);
+    expect(headerValues(contents, "Content-Security-Policy-Report-Only")).toEqual([]);
   });
 
-  it("ships the full policy in report-only mode, pointed at the cire-api collector", () => {
+  it("reports every block to the cire-api collector", () => {
     expect(wildcardBlock).toMatch(
       /Reporting-Endpoints:\s*csp-endpoint="https:\/\/api\.cireweddings\.com\/api\/csp-report"/,
     );
@@ -57,6 +67,7 @@ describe("_headers", () => {
     // theme before first paint. An inline script cannot be an external hashed
     // file, so this source is load-bearing, not incidental.
     expect(csp).toContain("script-src 'self' 'unsafe-inline'");
+    expect(csp).not.toContain("'unsafe-eval'");
   });
 
   it("denies framing, embedding and workers", () => {
@@ -92,6 +103,10 @@ describe("_headers", () => {
       .split("\n")
       .filter((line) => !line.trimStart().startsWith("#"));
     expect(headerLines.filter((line) => line.includes("api.cireweddings.com"))).toEqual([]);
+    const dev = retargetHeaders(contents, "https://api.dev.cireweddings.com");
+    expect(headerValues(dev, "Content-Security-Policy")[0]).toContain(
+      "report-uri https://api.dev.cireweddings.com/api/csp-report;",
+    );
   });
 
   it("is wired into the build", () => {
