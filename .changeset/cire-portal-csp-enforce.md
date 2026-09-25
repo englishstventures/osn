@@ -16,3 +16,7 @@ shop link picker shows candidate images from each shop's own host. A second,
 report-only header keeps the tight `img-src` (without `https:`), so every image
 that loads only because of `https:` still files a report. The vendor portal
 enforces its policy unchanged and ships no report-only header.
+
+The organiser portal's events list paints dress-code swatches with
+`background-color` instead of the `background` shorthand, so a stored colour
+can no longer load an image.
