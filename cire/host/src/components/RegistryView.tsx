@@ -560,7 +560,12 @@ export default function RegistryView(props: RegistryViewProps) {
       if (res.status === 401) return redirectToLogin();
       if (!res.ok) throw new Error(`note-hidden ${res.status}`);
       const view = (await res.json()) as GiftNoteView;
-      patchNote({ note: view.note, noteHidden: view.noteHidden });
+      // A hide already patched the row; patch again only when the server says
+      // otherwise (the guest cleared the note since this page loaded), since
+      // each patch maps the whole log and rebuilds the row.
+      if (!hidden || view.note !== null || !view.noteHidden) {
+        patchNote({ note: view.note, noteHidden: view.noteHidden });
+      }
     } catch {
       haptic("reject");
       setError(hidden ? "Couldn't hide that note." : "Couldn't show that note again.");
