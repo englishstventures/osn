@@ -152,7 +152,7 @@ function withSheet(sheet: SheetKind) {
 /** Hard cap on imported sheet row count. Exported for observability: the state
  *  export emits a structured warning when its row count exceeds this limit so the
  *  "export exceeds what import re-accepts" case is visible before an organiser
- *  hits it (RT-P-I2). */
+ *  hits it. */
 export const MAX_ROWS = 5000;
 const MAX_CELL_LENGTH = 10_000;
 
@@ -485,7 +485,7 @@ export function parseEventsCsv(
       // `isKnownTimeZone` also rejects the fixed-offset spellings `Intl`
       // accepts ("+10:00", "UTC+10"), which never apply DST — the exact bug the
       // wall-clock model exists to end. It's the memoized twin of
-      // `rsvp-deadline.ts`'s `isValidTimeZone` (P-C1): this loop re-resolves
+      // `rsvp-deadline.ts`'s `isValidTimeZone`: this loop re-resolves
       // the SAME zone up to 3x per row (here, then twice more inside
       // `stampEventOffset` below), and an uncached `Intl.DateTimeFormat`
       // construction per lookup is real CPU across a large sheet.
@@ -645,11 +645,10 @@ export function parseGuestsCsv(
     // unmatched event column surfaces as `UnmatchedEventColumn`.
     const eventByNorm = new Map(events.map((e) => [normaliseName(e.name), e.name]));
 
-    // Full-fidelity export/snapshot columns (Guest ID / Family Code). E1 parsed
-    // these accepted-and-IGNORED; E2 HONOURS them (feeds the ID-aware diff) while
-    // preserving E1's collision contract EXACTLY.
+    // Full-fidelity export/snapshot columns (Guest ID / Family Code), honoured
+    // (they feed the ID-aware diff) under the collision contract below.
     //
-    // COLLISION CONTRACT (T-S1 — must not change): an event may legitimately be
+    // COLLISION CONTRACT (must not change): an event may legitimately be
     // named after one of these reserved labels, making its attendance column
     // ambiguous. Resolve deterministically, biased against silently dropping
     // invitations: when the label is ALSO a known event name, only the LAST
