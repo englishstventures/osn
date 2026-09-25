@@ -159,7 +159,9 @@ describe("EventTable dress-code swatches", () => {
 
     const dot = (name: string) =>
       screen.getByText(name).closest("span")!.querySelector("span") as HTMLElement;
-    expect(dot("Sage").style.backgroundColor).not.toBe("");
+    expect(dot("Sage").style.backgroundColor).toBe("#9caf88");
+    // Not a colour, so the declaration is dropped rather than kept in any form.
+    expect(dot("Beacon").style.backgroundColor).toBe("");
     for (const name of ["Sage", "Beacon"]) {
       expect(dot(name).style.backgroundImage).not.toContain("url(");
       expect(dot(name).getAttribute("style") ?? "").not.toContain("url(");

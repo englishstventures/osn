@@ -12,13 +12,16 @@ function headerValues(contents: string, name: string): string[] {
   );
 }
 
+/** Each directive of `policy`, in order, as its name followed by its sources. */
+function directives(policy: string): string[][] {
+  return policy.split(";").map((part) => part.trim().split(/\s+/));
+}
+
 /** The sources a policy lists for `directive`, or `undefined` if it has none. */
 function sources(policy: string, directive: string): string[] | undefined {
-  const entry = policy
-    .split(";")
-    .map((part) => part.trim().split(/\s+/))
-    .find(([name]) => name === directive);
-  return entry?.slice(1);
+  return directives(policy)
+    .find(([name]) => name === directive)
+    ?.slice(1);
 }
 
 /**
@@ -30,6 +33,8 @@ function sources(policy: string, directive: string): string[] | undefined {
 describe("_headers", () => {
   const path = fileURLToPath(new URL("../../public/_headers", import.meta.url));
   const contents = readFileSync(path, "utf8");
+  // The first rule, up to the blank line that ends it.
+  const wildcardBlock = contents.split("\n\n")[0]!;
   const enforced = headerValues(contents, "Content-Security-Policy");
   const reportOnly = headerValues(contents, "Content-Security-Policy-Report-Only");
   const csp = enforced[0] ?? "";
@@ -40,6 +45,31 @@ describe("_headers", () => {
     expect(contents).toMatch(/X-Content-Type-Options:\s*nosniff/);
     expect(contents).toMatch(/Referrer-Policy:\s*strict-origin-when-cross-origin/);
     expect(contents).toMatch(/Permissions-Policy:\s*camera=\(\)/);
+  });
+
+  it("enforces exactly this policy on every path", () => {
+    // Pinned whole: a source added beside `'none'` (which the browser then
+    // ignores), a new directive or a dropped one all loosen what the browser
+    // blocks, and only a full comparison fails on every such edit.
+    expect(wildcardBlock.split("\n")[0]).toBe("/*");
+    expect(headerValues(wildcardBlock, "Content-Security-Policy")).toEqual(enforced);
+    expect(directives(csp)).toEqual([
+      ["default-src", "'self'"],
+      ["script-src", "'self'", "'unsafe-inline'"],
+      ["style-src", "'self'", "'unsafe-inline'"],
+      ["style-src-attr", "'unsafe-inline'"],
+      ["font-src", "'self'"],
+      ["img-src", "'self'", "data:", "blob:", "https://api.cireweddings.com", "https:"],
+      ["connect-src", "'self'", "https://api.cireweddings.com"],
+      ["frame-src", "'none'"],
+      ["worker-src", "'none'"],
+      ["frame-ancestors", "'none'"],
+      ["object-src", "'none'"],
+      ["base-uri", "'self'"],
+      ["form-action", "'self'"],
+      ["report-uri", "https://api.cireweddings.com/api/csp-report"],
+      ["report-to", "csp-endpoint"],
+    ]);
   });
 
   it("enforces one full policy, reporting to the cire-api collector", () => {
@@ -90,6 +120,7 @@ describe("_headers", () => {
     // The enforced `img-src` is the tight list plus `https:`, so this header
     // files a report for exactly the images `https:` alone lets through.
     expect(reportOnly).toHaveLength(1);
+    expect(headerValues(wildcardBlock, "Content-Security-Policy-Report-Only")).toEqual(reportOnly);
     expect(sources(imageReport, "img-src")).toEqual(
       sources(csp, "img-src")!.filter((source) => source !== "https:"),
     );

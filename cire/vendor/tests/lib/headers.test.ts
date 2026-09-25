@@ -12,6 +12,11 @@ function headerValues(contents: string, name: string): string[] {
   );
 }
 
+/** Each directive of `policy`, in order, as its name followed by its sources. */
+function directives(policy: string): string[][] {
+  return policy.split(";").map((part) => part.trim().split(/\s+/));
+}
+
 describe("_headers", () => {
   const path = fileURLToPath(new URL("../../public/_headers", import.meta.url));
   const contents = readFileSync(path, "utf8");
@@ -24,6 +29,30 @@ describe("_headers", () => {
     expect(wildcardBlock).toMatch(/Referrer-Policy:\s*strict-origin-when-cross-origin/);
     expect(wildcardBlock).toMatch(/X-Content-Type-Options:\s*nosniff/);
     expect(wildcardBlock).toMatch(/Permissions-Policy:\s*camera=\(\)/);
+  });
+
+  it("enforces exactly this policy on every path", () => {
+    // Pinned whole: a source added beside `'none'` (which the browser then
+    // ignores), a new directive or a dropped one all loosen what the browser
+    // blocks, and only a full comparison fails on every such edit.
+    expect(wildcardBlock.split("\n")[0]).toBe("/*");
+    expect(directives(csp)).toEqual([
+      ["default-src", "'self'"],
+      ["script-src", "'self'", "'unsafe-inline'"],
+      ["style-src", "'self'", "'unsafe-inline'"],
+      ["style-src-attr", "'unsafe-inline'"],
+      ["font-src", "'self'"],
+      ["img-src", "'self'", "data:", "https://api.cireweddings.com"],
+      ["connect-src", "'self'", "https://api.cireweddings.com"],
+      ["frame-src", "'none'"],
+      ["worker-src", "'none'"],
+      ["frame-ancestors", "'none'"],
+      ["object-src", "'none'"],
+      ["base-uri", "'self'"],
+      ["form-action", "'self'"],
+      ["report-uri", "https://api.cireweddings.com/api/csp-report"],
+      ["report-to", "csp-endpoint"],
+    ]);
   });
 
   it("enforces one full policy and ships no report-only one", () => {
