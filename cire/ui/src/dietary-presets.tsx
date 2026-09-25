@@ -1,8 +1,8 @@
 import {
   DIETARY_PRESET_BAND,
-  DIETARY_PRESET_LABEL,
   DIETARY_PRESETS,
   isDietaryPreset,
+  presetLabel,
   type DietaryBand,
   type DietaryPreset,
 } from "@cire/dietary";
@@ -64,11 +64,12 @@ const BANDS = ["diet", "allergy", "other"] as const;
 
 /**
  * `K` is what the caller's selection may hold. A caller that has proven every
- * key against the vocabulary leaves it at `DietaryPreset`; the guest sheet
- * passes `string`, because a claim response may carry a key the server knows
- * and this build does not (the vocabulary grows server-first). Such a key gets
- * no pill and is handed back with every change, so an edit never shortens a
- * stored answer.
+ * key against the vocabulary leaves it at `DietaryPreset`; the guest sheet and
+ * the organiser's editor pass `string`, because a response may carry a key the
+ * server knows and this build does not (the vocabulary grows server-first).
+ * Such a key gets a checked pill labelled by `presetLabel`, after every known
+ * one, so whoever is answering can see it and untick it. It is handed back with
+ * every other change, so an edit never shortens a stored answer.
  */
 export interface DietaryPresetsProps<K extends string = DietaryPreset> {
   /** The current selection. Controlled — this component holds no state. */
@@ -86,7 +87,7 @@ export interface DietaryPresetsProps<K extends string = DietaryPreset> {
 
 function toggle<K extends string>(
   current: readonly K[],
-  key: DietaryPreset,
+  key: K | DietaryPreset,
   on: boolean,
 ): readonly (K | DietaryPreset)[] {
   const next = new Set<K | DietaryPreset>(current);
@@ -102,7 +103,7 @@ function toggle<K extends string>(
 }
 
 function PresetCheckbox(props: {
-  preset: DietaryPreset;
+  preset: string;
   checked: boolean;
   disabled?: boolean;
   onChange: (on: boolean) => void;
@@ -135,7 +136,7 @@ function PresetCheckbox(props: {
       <span aria-hidden="true" class="text-ui-accent text-ui-xs leading-none">
         {props.checked ? "✓" : "+"}
       </span>
-      {DIETARY_PRESET_LABEL[props.preset]}
+      {presetLabel(props.preset)}
     </label>
   );
 }
@@ -156,6 +157,23 @@ export default function DietaryPresets<K extends string = DietaryPreset>(
   props: DietaryPresetsProps<K>,
 ): JSX.Element {
   const selected = createMemo(() => new Set<string>(props.value));
+
+  /**
+   * The keys in the value this build has no pill for, once each, in the order
+   * they arrived — the order `toggle` hands them back in.
+   *
+   * Derived from the value alone, so unticking one drops its pill with it. Only
+   * Cancel, closing the sheet without saving, or a reload onto a build that
+   * knows the key brings the choice back. Remembering unticked keys here would
+   * not survive anyway: the popover unmounts this component when it closes, and
+   * the guest sheet unmounts it when a member stops attending.
+   *
+   * An empty key has no words to show, so it gets no pill, matching
+   * `presetLabels`.
+   */
+  const unknown = createMemo(() =>
+    [...new Set(props.value)].filter((key) => !isDietaryPreset(key) && presetLabel(key) !== ""),
+  );
 
   /**
    * `wrap` is the caller's, not a media query's.
@@ -213,6 +231,23 @@ export default function DietaryPresets<K extends string = DietaryPreset>(
             </div>
           )}
         </For>
+        {/* One trailing group, unheaded like `other`, so the pills render in
+            the order the value is handed back in: known keys canonically,
+            then these. */}
+        <Show when={unknown().length > 0}>
+          <div classList={{ "flex gap-2": true, "shrink-0": !props.wrap, "flex-wrap": props.wrap }}>
+            <For each={unknown()}>
+              {(key) => (
+                <PresetCheckbox
+                  preset={key}
+                  checked={selected().has(key)}
+                  disabled={props.disabled}
+                  onChange={(on) => props.onChange(toggle(props.value, key, on))}
+                />
+              )}
+            </For>
+          </div>
+        </Show>
       </div>
     </fieldset>
   );
