@@ -152,6 +152,10 @@ profile-id string with **no cross-DB FK**. Two consequences:
   migration 0062) is still in the row and still the guest's data: an access
   request returns it, and an erasure nulls it the same way. The hide only
   keeps it off the couple's gift log and CSV ([[cire-registry#Hiding a note]]).
+  An access answer includes `note_hidden_at`, which is a fact about the
+  guest's own note, and leaves out `note_hidden_by_osn_profile_id`, which
+  identifies a co-host (Art. 15(4)). An erasure that nulls the note leaves the
+  pair in place; with no text they say nothing about the guest.
   The `registry` entitlement is sold self-serve, so production can hold these
   rows. Tracked under C-M1 alongside the rest of the missing cire ARC bridge.
 
