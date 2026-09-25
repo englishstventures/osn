@@ -374,6 +374,26 @@ describe("RsvpView", () => {
     expect(screen.queryByText(/Showing \d+ of/i)).toBeNull();
   });
 
+  it("shows and finds a stored preset key this build does not know", async () => {
+    // The portal can be a build older than the API. A row whose only answer is
+    // such a key must not read "--", which tells the couple the guest has no
+    // requirement, and searching for it must find the row.
+    const withUnknown = structuredClone(VIEW);
+    const bo = withUnknown.events[0]!.guests.find((g) => g.guestId === "g2")!;
+    bo.dietaryPresets = ["lupin"];
+    authFetchMock.mockResolvedValueOnce(json(withUnknown));
+    render(() => <RsvpView weddingId="wed_a" />);
+    await waitFor(() => expect(screen.getByText("Bo Jones")).toBeTruthy());
+
+    const row = screen.getByText("Bo Jones").closest("tr")!;
+    expect(within(row).getByText("Lupin")).toBeTruthy();
+    expect(within(row).queryByText("--")).toBeNull();
+
+    fireEvent.input(searchBox(), { target: { value: "lupin" } });
+    expect(screen.getByText("Bo Jones")).toBeTruthy();
+    expect(screen.queryAllByText("Ada Sharma")).toHaveLength(0);
+  });
+
   it("applies the search and the chip together", async () => {
     authFetchMock.mockResolvedValueOnce(json(VIEW));
     render(() => <RsvpView weddingId="wed_a" />);
@@ -556,8 +576,9 @@ describe("RsvpView", () => {
 
   it("editor keeps a stored preset key this build does not know when another is ticked", async () => {
     // The vocabulary grows on the server first, and an open portal keeps the
-    // build it loaded. Ada's stored answer carries a key this build has no pill
-    // for; an organiser ticking another preset must not erase it from the row.
+    // build it loaded. Ada's stored answer carries a key missing from this
+    // build's vocabulary; an organiser ticking another preset must not erase it
+    // from the row.
     restoreViewport = mockViewport(false);
     const withUnknown = structuredClone(VIEW);
     const ada = withUnknown.events[0]!.guests.find((g) => g.guestId === ADA.guestId)!;
