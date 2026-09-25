@@ -749,8 +749,8 @@ describe("POST /registry/gifts/:kind/:giftId/note-hidden", () => {
   // bearer token, so the cookie path is the one that has to hold.
   it("hides for an organiser session cookie and records that session's profile", async () => {
     let token: Promise<string> = Promise.resolve("");
-    const { app, db } = appWithNote((db) => {
-      token = seedOrganiserSession(db, EDITOR);
+    const { app, db } = appWithNote((seeding) => {
+      token = seedOrganiserSession(seeding, EDITOR);
     });
     const res = await appRequest(app, notePath, {
       method: "POST",
@@ -826,7 +826,7 @@ describe("POST /registry/gifts/:kind/:giftId/note-hidden", () => {
   });
 
   it("404s another wedding's gift and leaves it shown", async () => {
-    const { app, db } = appWithNote((db) => seedNote(db, "rct_elsewhere", "wed_other"));
+    const { app, db } = appWithNote((seeding) => seedNote(seeding, "rct_elsewhere", "wed_other"));
     const before = await noteMetric("note_hidden");
     const res = await req(
       app,
