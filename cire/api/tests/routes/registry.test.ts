@@ -486,6 +486,16 @@ describe("registry routes (entitled)", () => {
       (JSON.parse(writeText) as { settings: RegistrySnapshot["settings"] }).settings
         .stripeConnected,
     ).toBe(true);
+
+    // The refusal carries the row too, in the same narrowed shape.
+    const refused = await req(app, "PUT", `${base}/settings`, EDITOR, {
+      headline: "Other",
+      expected: { headline: "Not what is stored" },
+    });
+    expect(refused.status).toBe(409);
+    const refusedText = await refused.text();
+    expect(refusedText).not.toContain("acct_live");
+    expect(refusedText).not.toContain("stripePayoutsEnabled");
   });
 
   it("400s an image key that names another wedding's upload", async () => {
