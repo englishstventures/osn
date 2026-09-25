@@ -63,7 +63,7 @@ test("the workflow names cire surfaces, and each is a cire package", () => {
     ...workflow.matchAll(/^\s+(cire_\w+): \$\{\{ steps\.filter\.outputs\.\1 \}\}/gm),
   ].map(([, output]) => output!);
   expect(declared.length).toBeGreaterThan(0);
-  expect([...surfaces].sort()).toEqual(declared.sort());
+  expect(surfaces.toSorted()).toEqual(declared.toSorted());
   for (const output of surfaces) {
     expect(existsSync(join(root, "cire", output.slice("cire_".length), "package.json"))).toBe(true);
   }

@@ -541,18 +541,9 @@ describe("RsvpView", () => {
     // build it loaded. Ada's stored answer carries a key this build has no pill
     // for; an organiser ticking another preset must not erase it from the row.
     restoreViewport = mockViewport(false);
-    const [ceremony, ...rest] = VIEW.events;
-    const withUnknown = {
-      events: [
-        {
-          ...ceremony!,
-          guests: ceremony!.guests.map((g) =>
-            g.guestId === ADA.guestId ? { ...g, dietaryPresets: ["gluten", "a_future_key"] } : g,
-          ),
-        },
-        ...rest,
-      ],
-    };
+    const withUnknown = structuredClone(VIEW);
+    const ada = withUnknown.events[0]!.guests.find((g) => g.guestId === ADA.guestId)!;
+    ada.dietaryPresets = ["gluten", "a_future_key"];
     authFetchMock
       .mockResolvedValueOnce(json(withUnknown))
       .mockResolvedValueOnce(
