@@ -133,9 +133,37 @@ describe("saveConsent — reload on granted → revoked", () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
+  // Only a gated vendor the registry knows can ask for a reload. An id the
+  // registry cannot resolve, or an `"always"` vendor the switch never blocked,
+  // does not.
+  it("does NOT reload for a vendor id the registry does not know", () => {
+    seedConsentForTest({ embeds: true });
+    hydrateConsent();
+    noteGatedContentLoaded("embeds", "not-in-the-registry");
+    setReloadPageForTest(reload);
+
+    saveConsent({ ...defaultGrants(), embeds: false });
+
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it("does NOT reload for an `always` vendor, even under a revoked category", () => {
+    seedConsentForTest({ embeds: true });
+    hydrateConsent();
+    noteGatedContentLoaded("embeds", "turnstile");
+    setReloadPageForTest(reload);
+
+    saveConsent({ ...defaultGrants(), embeds: false });
+
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  // The direction tests record the Pinterest board first, so the direction
+  // check is the only thing between the save and a reload.
   it("does NOT reload on revoked → granted", () => {
     seedConsentForTest({ embeds: false });
     hydrateConsent();
+    noteGatedContentLoaded("embeds", "pinterest");
     setReloadPageForTest(reload);
 
     saveConsent({ ...defaultGrants(), embeds: true });
@@ -146,6 +174,7 @@ describe("saveConsent — reload on granted → revoked", () => {
   it("does NOT reload on a no-op save", () => {
     seedConsentForTest({ embeds: true });
     hydrateConsent();
+    noteGatedContentLoaded("embeds", "pinterest");
     setReloadPageForTest(reload);
 
     saveConsent({ ...defaultGrants(), embeds: true });
@@ -156,6 +185,7 @@ describe("saveConsent — reload on granted → revoked", () => {
   it("does NOT reload on a first-time grant (off → on, nothing was ever running)", () => {
     resetConsentForTest();
     hydrateConsent();
+    noteGatedContentLoaded("analytics", "pinterest");
     setReloadPageForTest(reload);
 
     // Accept-all only turns `analytics` on for real (the other opt-out
@@ -212,6 +242,7 @@ describe("saveConsent — reload on granted → revoked", () => {
   it("round-trips through allGrants() without reloading (accept-all is never a revoke)", () => {
     seedConsentForTest({ embeds: false });
     hydrateConsent();
+    noteGatedContentLoaded("embeds", "pinterest");
     setReloadPageForTest(reload);
 
     saveConsent(allGrants());

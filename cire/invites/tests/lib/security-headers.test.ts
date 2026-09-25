@@ -193,10 +193,12 @@ describe("public/_headers", () => {
     readFileSync(join(import.meta.dirname, "../../public/_headers"), "utf8"),
   );
 
-  it("mirrors every SSR security header onto the static-asset responses, except X-Robots-Tag", () => {
+  it("sends exactly the SSR security headers on the static-asset responses, except X-Robots-Tag", () => {
     const all = rules.filter((rule) => rule.path === "/*");
-    const mirrored = Object.entries(securityHeaders()).filter(([name]) => name !== "X-Robots-Tag");
-    expect(all.map((rule) => [rule.name, rule.value])).toEqual(expect.arrayContaining(mirrored));
+    const mirrored = Object.fromEntries(
+      Object.entries(securityHeaders()).filter(([name]) => name !== "X-Robots-Tag"),
+    );
+    expect(Object.fromEntries(all.map((rule) => [rule.name, rule.value]))).toEqual(mirrored);
   });
 
   it("never sends X-Robots-Tag, so the legal pages stay indexable", () => {
