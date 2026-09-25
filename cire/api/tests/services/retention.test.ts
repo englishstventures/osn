@@ -22,6 +22,7 @@ import { createDb, seedDb } from "../../src/db/setup";
 import type { DeletableBucket } from "../../src/services/r2-cleanup";
 import {
   type GiftSummaryNotice,
+  MAX_WEDDINGS_PER_SWEEP,
   retentionService,
   RETENTION_AFTER_FINAL_EVENT_MS,
 } from "../../src/services/retention";
@@ -277,6 +278,45 @@ describe("retentionService.sweepExpiredGuestData", () => {
       }),
     ),
   );
+
+  it("takes the longest-overdue weddings first when the cohort is over the per-run cap", async () => {
+    // A fresh database: swept weddings keep their events, so any wedding an
+    // earlier test swept would still be in the cohort and crowd the cap.
+    const db = createDb(":memory:");
+    seedDb(db);
+    const now = new Date("2026-06-17T04:00:00.000Z");
+    const day = 24 * 60 * 60 * 1000;
+    const start = Date.parse("2023-01-01T00:00:00.000Z");
+
+    const guestsLeft = await Effect.runPromise(
+      Effect.gen(function* () {
+        // One more expired wedding than one run will take, each a day later
+        // than the last, and inserted newest-first so row order cannot stand
+        // in for the ORDER BY.
+        const seeded = [];
+        for (let i = MAX_WEDDINGS_PER_SWEEP; i >= 0; i--) {
+          const date = new Date(start + i * day).toISOString().slice(0, 10);
+          seeded.push(yield* makeWedding({ eventDates: [date] }));
+        }
+        const newest = seeded[0]!;
+        const oldest = seeded[seeded.length - 1]!;
+
+        const deleted = yield* retentionService.sweepExpiredGuestData(now);
+        expect(deleted).toBe(MAX_WEDDINGS_PER_SWEEP);
+
+        const left = (guestId: string) =>
+          dbQuery(() => db.select().from(guests).where(eq(guests.id, guestId)).all());
+        return {
+          newest: (yield* left(newest.guestId)).length,
+          oldest: (yield* left(oldest.guestId)).length,
+        };
+      }).pipe(Effect.provideService(DbService, db)),
+    );
+
+    // The one wedding the cap left behind is the most recent, not an
+    // arbitrary one; the next run takes it.
+    expect(guestsLeft).toEqual({ newest: 1, oldest: 0 });
+  });
 
   it(
     "removes the dietary free-text and consent records along with the rsvp row",
@@ -1032,7 +1072,9 @@ describe("the parting gift summary", () => {
       }).pipe(Effect.provideService(DbService, db)),
     );
 
-    const eventReads = statements.filter((s) => /\bfrom "events"/i.test(s.sql));
+    // Any statement naming the table counts, a join as much as a FROM. The
+    // sweep never writes to `events`, so every match is a read.
+    const eventReads = statements.filter((s) => s.sql.includes('"events"'));
     expect(eventReads).toHaveLength(1);
 
     const finalEventOn = new Map(seen.map((n) => [n.weddingId, n.finalEventOn]));
