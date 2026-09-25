@@ -621,20 +621,39 @@ describe("POST /registry/gifts/:kind/:giftId/note-hidden", () => {
   const NOTE = "Something the couple would rather not read";
   const notePath = `${base}/gifts/contribution/rct_note/note-hidden`;
 
-  /** One received cash gift on the bootstrap wedding, carrying a note. */
-  function seedNote(db: ReturnType<typeof createDb>): void {
-    const family = db
-      .select({ id: families.id })
-      .from(families)
-      .where(eq(families.weddingId, BOOTSTRAP_WEDDING_ID))
-      .get();
-    expect(family).toBeDefined();
+  type TestDb = ReturnType<typeof createDb>;
+
+  /** One received cash gift carrying a note, on the bootstrap wedding unless
+   *  another is named. */
+  function seedNote(db: TestDb, id = "rct_note", weddingId = BOOTSTRAP_WEDDING_ID): void {
     const at = new Date();
+    let familyId: string;
+    if (weddingId === BOOTSTRAP_WEDDING_ID) {
+      const family = db
+        .select({ id: families.id })
+        .from(families)
+        .where(eq(families.weddingId, weddingId))
+        .get();
+      expect(family).toBeDefined();
+      familyId = family!.id;
+    } else {
+      familyId = `fam_${id}`;
+      db.insert(families)
+        .values({
+          id: familyId,
+          weddingId,
+          publicId: "OTHER-NOTE-0001",
+          familyName: "Elsewhere",
+          createdAt: at,
+          updatedAt: at,
+        })
+        .run();
+    }
     db.insert(registryContributions)
       .values({
-        id: "rct_note",
-        weddingId: BOOTSTRAP_WEDDING_ID,
-        familyId: family!.id,
+        id,
+        weddingId,
+        familyId,
         status: "succeeded",
         amountMinor: 5_000,
         currency: "AUD",
@@ -645,11 +664,35 @@ describe("POST /registry/gifts/:kind/:giftId/note-hidden", () => {
       .run();
   }
 
+  /** The app, and the database behind it so a test can read the hide columns. */
+  function appWithNote(extra?: (db: TestDb) => void) {
+    let handle: TestDb | undefined;
+    const app = buildApp({
+      grantRegistry: true,
+      seed: (db) => {
+        handle = db;
+        seedNote(db);
+        extra?.(db);
+      },
+    });
+    return { app, db: handle! };
+  }
+
+  const hideColumns = (db: TestDb, id = "rct_note") =>
+    db
+      .select({
+        at: registryContributions.noteHiddenAt,
+        by: registryContributions.noteHiddenByOsnProfileId,
+      })
+      .from(registryContributions)
+      .where(eq(registryContributions.id, id))
+      .get();
+
   const noteMetric = (action: "note_hidden" | "note_unhidden") =>
     counterValue(CIRE_METRICS.registryGift, { action });
 
   it("lets an editor hide a note from the log and the next page, and unhide it", async () => {
-    const app = buildApp({ grantRegistry: true, seed: seedNote });
+    const { app, db } = appWithNote();
     const hiddenBefore = await noteMetric("note_hidden");
     const unhiddenBefore = await noteMetric("note_unhidden");
 
@@ -657,34 +700,97 @@ describe("POST /registry/gifts/:kind/:giftId/note-hidden", () => {
     expect(hide.status).toBe(200);
     expect(await jsonBody(hide)).toEqual({ ok: true, note: null, noteHidden: true });
     expect(await noteMetric("note_hidden")).toBe(hiddenBefore + 1);
+    // The caller's own profile is what the row records.
+    expect(hideColumns(db)?.by).toBe(EDITOR);
+    expect(hideColumns(db)?.at).toBeInstanceOf(Date);
 
     // Both reads a co-host's portal makes: the snapshot and a further page.
     const snap = (await (await req(app, "GET", base, VIEWER)).json()) as RegistrySnapshot;
     expect(snap.gifts).toEqual([expect.objectContaining({ note: null, noteHidden: true })]);
+    // The gift log carries the flag and nothing about who set it.
+    expect(Object.keys(snap.gifts[0]!).toSorted()).toEqual(
+      [
+        "amountMinor",
+        "createdAt",
+        "currency",
+        "displayName",
+        "familyId",
+        "familyName",
+        "fxRate",
+        "id",
+        "itemId",
+        "itemTitle",
+        "kind",
+        "note",
+        "noteHidden",
+        "primaryAmountMinor",
+        "primaryCurrency",
+        "quantity",
+        "status",
+        "thankedAt",
+      ].toSorted(),
+    );
     const page = await req(app, "GET", `${base}/gifts?offset=0`, VIEWER);
     const pageText = await page.text();
     expect(pageText).toContain('"noteHidden":true');
     expect(pageText).not.toContain(NOTE);
+    expect(pageText).not.toContain(EDITOR);
 
     const show = await req(app, "POST", notePath, OWNER, { hidden: false });
     expect(show.status).toBe(200);
     expect(await jsonBody(show)).toEqual({ ok: true, note: NOTE, noteHidden: false });
     expect(await noteMetric("note_unhidden")).toBe(unhiddenBefore + 1);
+    expect(hideColumns(db)).toEqual({ at: null, by: null });
     const again = (await (await req(app, "GET", base, OWNER)).json()) as RegistrySnapshot;
     expect(again.gifts).toEqual([expect.objectContaining({ note: NOTE, noteHidden: false })]);
   });
 
-  it("gives a viewer 403 read_only_role and leaves the note shown", async () => {
-    const app = buildApp({ grantRegistry: true, seed: seedNote });
-    const res = await req(app, "POST", notePath, VIEWER, { hidden: true });
-    expect(res.status).toBe(403);
-    expect(((await res.json()) as { error: string }).error).toBe("read_only_role");
-    const snap = (await (await req(app, "GET", base, VIEWER)).json()) as RegistrySnapshot;
+  // The portal reaches this route with the organiser session cookie, not a
+  // bearer token, so the cookie path is the one that has to hold.
+  it("hides for an organiser session cookie and records that session's profile", async () => {
+    let token: Promise<string> = Promise.resolve("");
+    const { app, db } = appWithNote((db) => {
+      token = seedOrganiserSession(db, EDITOR);
+    });
+    const res = await appRequest(app, notePath, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        cookie: `cire_org_session=${await token}`,
+      },
+      body: JSON.stringify({ hidden: true }),
+    });
+    expect(res.status).toBe(200);
+    expect(hideColumns(db)?.by).toBe(EDITOR);
+  });
+
+  it("refuses every caller who may not hide, and hides nothing for them", async () => {
+    const { app, db } = appWithNote();
+    const before = await noteMetric("note_hidden");
+    const post = (headers: Record<string, string>) =>
+      appRequest(app, notePath, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ hidden: true }),
+      });
+
+    expect((await post({})).status).toBe(401);
+    expect((await post({ cookie: "cire_org_session=not-a-live-session-token" })).status).toBe(401);
+    expect((await post({ authorization: "Bearer not-a-jwt" })).status).toBe(401);
+    expect((await req(app, "POST", notePath, STRANGER, { hidden: true })).status).toBe(403);
+    const viewer = await req(app, "POST", notePath, VIEWER, { hidden: true });
+    expect(viewer.status).toBe(403);
+    expect(((await viewer.json()) as { error: string }).error).toBe("read_only_role");
+
+    expect(hideColumns(db)).toEqual({ at: null, by: null });
+    expect(await noteMetric("note_hidden")).toBe(before);
+    const snap = (await (await req(app, "GET", base, OWNER)).json()) as RegistrySnapshot;
     expect(snap.gifts[0]).toMatchObject({ note: NOTE, noteHidden: false });
   });
 
-  it("400s an unknown gift kind or a body without a boolean", async () => {
-    const app = buildApp({ grantRegistry: true, seed: seedNote });
+  it("400s an unknown gift kind or a body without a boolean, and counts nothing", async () => {
+    const { app, db } = appWithNote();
+    const before = await noteMetric("note_hidden");
     const kind = await req(app, "POST", `${base}/gifts/wishes/rct_note/note-hidden`, EDITOR, {
       hidden: true,
     });
@@ -692,15 +798,33 @@ describe("POST /registry/gifts/:kind/:giftId/note-hidden", () => {
     for (const body of [{ hidden: "yes" }, {}, null]) {
       expect((await req(app, "POST", notePath, EDITOR, body)).status).toBe(400);
     }
+    expect(hideColumns(db)?.at).toBeNull();
+    expect(await noteMetric("note_hidden")).toBe(before);
   });
 
-  it("404s a gift that is not this wedding's", async () => {
-    const app = buildApp({ grantRegistry: true, seed: seedNote });
+  it("404s a gift of the wrong kind", async () => {
+    const { app } = appWithNote();
     const res = await req(app, "POST", `${base}/gifts/claim/rct_note/note-hidden`, EDITOR, {
       hidden: true,
     });
     expect(res.status).toBe(404);
     expect(((await res.json()) as { error: string }).error).toBe("registry_gift_not_found");
+  });
+
+  it("404s another wedding's gift and leaves it shown", async () => {
+    const { app, db } = appWithNote((db) => seedNote(db, "rct_elsewhere", "wed_other"));
+    const before = await noteMetric("note_hidden");
+    const res = await req(
+      app,
+      "POST",
+      `${base}/gifts/contribution/rct_elsewhere/note-hidden`,
+      EDITOR,
+      { hidden: true },
+    );
+    expect(res.status).toBe(404);
+    expect(((await res.json()) as { error: string }).error).toBe("registry_gift_not_found");
+    expect(hideColumns(db, "rct_elsewhere")).toEqual({ at: null, by: null });
+    expect(await noteMetric("note_hidden")).toBe(before);
   });
 });
 
