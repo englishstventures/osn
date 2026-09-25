@@ -110,13 +110,10 @@ function mount(canEdit = true) {
  * own suite uses, for the reason given there.
  */
 function stubRowGeometry(height = 40) {
-  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
-    this: Element,
-  ) {
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
     const index = rows().indexOf(this as HTMLLIElement);
     const offset = Number(
-      /translate3d\(0px, (-?[\d.]+)px/.exec((this as HTMLElement).style?.transform ?? "")?.[1] ??
-        0,
+      /translate3d\(0px, (-?[\d.]+)px/.exec((this as HTMLElement).style?.transform ?? "")?.[1] ?? 0,
     );
     const top = (index === -1 ? 0 : index * height) + offset;
     return {
@@ -195,14 +192,12 @@ describe("gift list — keyboard", () => {
   });
 
   it("withdraws the announcement when the save fails and the old order comes back", async () => {
-    authFetch
-      .mockResolvedValueOnce(new Response("fail", { status: 500 }))
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify(snapshot()), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        }),
-      );
+    authFetch.mockResolvedValueOnce(new Response("fail", { status: 500 })).mockResolvedValueOnce(
+      new Response(JSON.stringify(snapshot()), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
     mount();
     await screen.findByText("Kettle");
 
@@ -243,8 +238,14 @@ describe("gift list — keyboard", () => {
 describe("gift list — pointer drag", () => {
   function drag(handle: HTMLElement, toY: number) {
     fireEvent.pointerDown(handle, { pointerId: 1, clientX: 10, clientY: 10 });
-    fireEvent(document, new PointerEvent("pointermove", { pointerId: 1, clientX: 10, clientY: 20 }));
-    fireEvent(document, new PointerEvent("pointermove", { pointerId: 1, clientX: 10, clientY: toY }));
+    fireEvent(
+      document,
+      new PointerEvent("pointermove", { pointerId: 1, clientX: 10, clientY: 20 }),
+    );
+    fireEvent(
+      document,
+      new PointerEvent("pointermove", { pointerId: 1, clientX: 10, clientY: toY }),
+    );
     fireEvent(document, new PointerEvent("pointerup", { pointerId: 1, clientX: 10, clientY: toY }));
   }
 

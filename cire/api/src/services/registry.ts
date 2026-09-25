@@ -1237,10 +1237,11 @@ export const registryService = {
             createdAt: now,
             updatedAt: now,
           })
+          // `and()` of nothing is undefined, which drizzle writes as no WHERE.
           .onConflictDoUpdate({
             target: registrySettings.weddingId,
             set,
-            ...(unchanged.length > 0 ? { setWhere: and(...unchanged) } : {}),
+            setWhere: and(...unchanged),
           })
           .returning()
           .all(),

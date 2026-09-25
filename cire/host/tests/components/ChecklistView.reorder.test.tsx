@@ -49,7 +49,9 @@ function order(bucket: string): string[] {
 }
 
 function grip(title: string): HTMLButtonElement {
-  return screen.getByRole("button", { name: new RegExp(`^Reorder ${title},`) }) as HTMLButtonElement;
+  return screen.getByRole("button", {
+    name: new RegExp(`^Reorder ${title},`),
+  }) as HTMLButtonElement;
 }
 
 beforeEach(() => {
@@ -114,14 +116,12 @@ describe("checklist — reorder", () => {
   });
 
   it("withdraws the announcement when the save fails and the old order comes back", async () => {
-    authFetch
-      .mockResolvedValueOnce(new Response("fail", { status: 500 }))
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ tasks: TASKS }), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        }),
-      );
+    authFetch.mockResolvedValueOnce(new Response("fail", { status: 500 })).mockResolvedValueOnce(
+      new Response(JSON.stringify({ tasks: TASKS }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
     render(() => <ChecklistView weddingId="wed_1" canEdit={true} />);
     await screen.findByText("Order the cake");
 

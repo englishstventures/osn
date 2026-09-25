@@ -219,7 +219,10 @@ describe("what gets saved", () => {
   });
 
   it("counts typing a field back to what it was as no change", async () => {
-    setCachedRegistry("wed_1", snapshot({ items: [item()], settings: { headline: "Ours" } as never }));
+    setCachedRegistry(
+      "wed_1",
+      snapshot({ items: [item()], settings: { headline: "Ours" } as never }),
+    );
     authFetch.mockResolvedValue(json({ settings: snapshot().settings }));
     const { container } = renderPanel();
 
@@ -492,7 +495,9 @@ describe("what the panel says about the account", () => {
       }),
     );
     // The mount read finds nothing has changed, so the panel stays where it was.
-    authFetch.mockResolvedValue(json({ connected: true, chargesEnabled: false, payoutsEnabled: false }));
+    authFetch.mockResolvedValue(
+      json({ connected: true, chargesEnabled: false, payoutsEnabled: false }),
+    );
     renderPanel();
 
     expect((await screen.findByTestId("stripe-status")).textContent).toMatch(
@@ -618,7 +623,9 @@ describe("the one-shot live read", () => {
     );
     // Still not ready, so nothing about the wedding has changed between the two
     // mounts: only the spent token stops the second read.
-    authFetch.mockResolvedValue(json({ connected: true, chargesEnabled: false, payoutsEnabled: false }));
+    authFetch.mockResolvedValue(
+      json({ connected: true, chargesEnabled: false, payoutsEnabled: false }),
+    );
 
     renderPanel();
     await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(1));

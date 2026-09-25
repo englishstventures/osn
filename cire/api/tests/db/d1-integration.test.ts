@@ -21,8 +21,8 @@ import type { Db } from "../../src/db/index";
 import { DDL } from "../../src/db/setup";
 import type { ImportPlan } from "../../src/schemas/import";
 import { claimService } from "../../src/services/claim";
-import { registryService, SettingsChanged } from "../../src/services/registry";
 import { applyImport } from "../../src/services/import";
+import { registryService, SettingsChanged } from "../../src/services/registry";
 import { rsvpService } from "../../src/services/rsvp";
 import { tasksService } from "../../src/services/tasks";
 

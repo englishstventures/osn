@@ -131,14 +131,12 @@ describe("budget — reorder", () => {
   });
 
   it("withdraws the announcement when the save fails and the old order comes back", async () => {
-    authFetch
-      .mockResolvedValueOnce(new Response("fail", { status: 500 }))
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify(SNAPSHOT), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        }),
-      );
+    authFetch.mockResolvedValueOnce(new Response("fail", { status: 500 })).mockResolvedValueOnce(
+      new Response(JSON.stringify(SNAPSHOT), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
     render(() => <BudgetView weddingId="wed_1" canEdit={true} canManage={true} />);
     await screen.findByText("Late snacks");
 
