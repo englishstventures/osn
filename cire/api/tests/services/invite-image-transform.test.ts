@@ -280,6 +280,8 @@ describe("imageCacheControl", () => {
   it("gives a revocable image an hour and drops `immutable`", () => {
     expect(REVOCABLE_MAX_AGE_S).toBe(3600);
     expect(imageCacheControl("public", "revocable")).toBe("public, max-age=3600");
+    // Visibility still comes from the slot: a gated revocable image stays `private`.
+    expect(imageCacheControl("private", "revocable")).toBe("private, max-age=3600");
   });
 });
 
