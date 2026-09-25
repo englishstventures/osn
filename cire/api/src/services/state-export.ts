@@ -29,12 +29,17 @@ import { MAX_ROWS } from "./spreadsheet";
  *  - `"import"` (default) — exactly the organiser template columns. `Family ID`
  *    carries neutral sequential `fam-001` grouping keys (the parser ignores the
  *    column; claim codes are deliberately NOT included at this level).
- *  - `"full"` — appends the snapshot columns: `Event ID` (events sheet),
+ *  - `"full"` — appends the fidelity columns: `Event ID` (events sheet),
  *    `Guest ID` + `Family Code` (guests sheet), and `Family ID` carries the
- *    internal family id. The parser accepts-and-ignores these today (E2 starts
- *    honouring them). A full download contains live claim codes.
+ *    internal family id. The parser honours them, so a re-import matches rows by
+ *    id. A full download contains live claim codes.
+ *  - `"snapshot"` — what the checkpoint writes as a change's before-image, and
+ *    never a download: `"full"`, plus one household-only row (Family ID, Family
+ *    Name and Family Code set, every guest cell blank) for each household that
+ *    has no guests. Only the revert's reader (`parseGuestsCsv` with
+ *    `{ snapshot: true }`) accepts those rows; the upload parser refuses them.
  */
-export type ExportFidelity = "import" | "full";
+export type ExportFidelity = "import" | "full" | "snapshot";
 
 /**
  * Format a decoded palette back into the sheet's `Name:#rgb|Name:#rgb` cell.
@@ -74,8 +79,8 @@ export const stateExportService = {
           .all(),
       );
 
-      const header =
-        fidelity === "full" ? [...EVENT_SHEET_HEADERS, EVENT_ID_HEADER] : [...EVENT_SHEET_HEADERS];
+      const withIds = fidelity !== "import";
+      const header = withIds ? [...EVENT_SHEET_HEADERS, EVENT_ID_HEADER] : [...EVENT_SHEET_HEADERS];
       const data = rows.map((e) => {
         const cells = [
           e.name,
@@ -95,7 +100,7 @@ export const stateExportService = {
           safeHttpUrl(e.pinterestUrl) ?? "",
           safeHttpUrl(e.mapsUrl) ?? "",
         ];
-        if (fidelity === "full") cells.push(e.id);
+        if (withIds) cells.push(e.id);
         return cells;
       });
 
@@ -108,7 +113,9 @@ export const stateExportService = {
    * name, guests by their seeded `sortOrder` — the parser reassigns `sortOrder`
    * from row order, so this too is a fixpoint), with one attendance column per
    * event (in the events sheet's order) marked with the parser-truthy `x`.
-   * Host-preview families are excluded, as everywhere else.
+   * Host-preview families are excluded, as everywhere else. At `"snapshot"`
+   * fidelity a household with no guests gets a household-only row in its place
+   * in the order.
    */
   guestsCsv(
     weddingId: string,
@@ -117,10 +124,13 @@ export const stateExportService = {
     return Effect.gen(function* () {
       const db = yield* DbService;
 
-      // The three reads are independently wedding-scoped — collapse them to one
-      // D1 round-trip (matches the parallel shape in table-export.ts and
+      const withIds = fidelity !== "import";
+      const snapshot = fidelity === "snapshot";
+
+      // The reads are independently wedding-scoped — collapse them to one D1
+      // round-trip (matches the parallel shape in table-export.ts and
       // rsvp-export.ts).
-      const [eventRows, guestRows, linkRows] = yield* Effect.all(
+      const [eventRows, guestRows, linkRows, familyRows] = yield* Effect.all(
         [
           dbQuery(() =>
             db
@@ -158,43 +168,85 @@ export const stateExportService = {
               .where(and(eq(families.weddingId, weddingId), ne(families.kind, "host")))
               .all(),
           ),
+          // Every household, guest-less ones included — only a snapshot writes
+          // those, so only a snapshot pays for the read.
+          snapshot
+            ? dbQuery(() =>
+                db
+                  .select({
+                    familyId: families.id,
+                    familyName: families.familyName,
+                    publicId: families.publicId,
+                  })
+                  .from(families)
+                  .where(and(eq(families.weddingId, weddingId), ne(families.kind, "host")))
+                  .all(),
+              )
+            : Effect.succeed([]),
         ],
-        { concurrency: 3 },
+        { concurrency: 4 },
       );
       const invited = new Set(linkRows.map((l) => `${l.guestId}::${l.eventId}`));
 
       // Group rows into households, then order deterministically: families by
       // case-insensitive name, guests by seeded sortOrder (then id for ties).
-      const byFamily = new Map<string, typeof guestRows>();
-      for (const row of guestRows) {
-        const list = byFamily.get(row.familyId);
-        if (list) list.push(row);
-        else byFamily.set(row.familyId, [row]);
+      interface Household {
+        readonly familyId: string;
+        readonly familyName: string;
+        readonly publicId: string;
+        readonly guests: (typeof guestRows)[number][];
       }
-      const householdKey = (rows: typeof guestRows) => rows[0]!.familyName.trim().toLowerCase();
+      const byFamily = new Map<string, Household>();
+      for (const row of guestRows) {
+        const household = byFamily.get(row.familyId);
+        if (household) household.guests.push(row);
+        else {
+          byFamily.set(row.familyId, {
+            familyId: row.familyId,
+            familyName: row.familyName,
+            publicId: row.publicId,
+            guests: [row],
+          });
+        }
+      }
+      for (const f of familyRows) {
+        if (!byFamily.has(f.familyId)) byFamily.set(f.familyId, { ...f, guests: [] });
+      }
+      const householdKey = (h: Household) => h.familyName.trim().toLowerCase();
       const households = [...byFamily.values()].toSorted((a, b) => {
         const ka = householdKey(a);
         const kb = householdKey(b);
         return ka < kb ? -1 : ka > kb ? 1 : 0;
       });
-      for (const rows of households) {
-        rows.sort((a, b) => a.sortOrder - b.sortOrder || (a.guestId < b.guestId ? -1 : 1));
+      for (const h of households) {
+        h.guests.sort((a, b) => a.sortOrder - b.sortOrder || (a.guestId < b.guestId ? -1 : 1));
       }
 
       const header = [
         ...GUEST_SHEET_FIXED_HEADERS,
         GUEST_NICKNAME_HEADER,
         ...eventRows.map((e) => e.name),
-        ...(fidelity === "full" ? [FAMILY_CODE_HEADER, GUEST_ID_HEADER] : []),
+        ...(withIds ? [FAMILY_CODE_HEADER, GUEST_ID_HEADER] : []),
       ];
 
       const data: string[][] = [];
-      households.forEach((rows, familyIndex) => {
-        const familyKey =
-          fidelity === "full"
-            ? rows[0]!.familyId
-            : `fam-${String(familyIndex + 1).padStart(3, "0")}`;
-        for (const g of rows) {
+      households.forEach((h, familyIndex) => {
+        const familyKey = withIds ? h.familyId : `fam-${String(familyIndex + 1).padStart(3, "0")}`;
+        if (h.guests.length === 0) {
+          // Only a snapshot reads guest-less households, so only it has any.
+          data.push([
+            familyKey,
+            h.familyName,
+            "",
+            "",
+            "",
+            ...eventRows.map(() => ""),
+            h.publicId,
+            "",
+          ]);
+          return;
+        }
+        for (const g of h.guests) {
           const cells = [
             familyKey,
             g.familyName,
@@ -203,7 +255,7 @@ export const stateExportService = {
             g.nickname ?? "",
             ...eventRows.map((e) => (invited.has(`${g.guestId}::${e.id}`) ? "x" : "")),
           ];
-          if (fidelity === "full") cells.push(g.publicId, g.guestId);
+          if (withIds) cells.push(g.publicId, g.guestId);
           data.push(cells);
         }
       });
