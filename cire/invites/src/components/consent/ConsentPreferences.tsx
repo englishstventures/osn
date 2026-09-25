@@ -92,10 +92,10 @@ export function ConsentPreferences() {
             details sheet loaded no embed, and an embed that runs in its own
             frame (the map) stops with the frame. Neither the removal nor the
             reload takes back what the company already received or stored,
-            and the second sentence says so in the same terms as `/privacy`. */}
+            and the second sentence says the same thing `/privacy` does. */}
       <p class="font-body text-text-muted/80 text-ui-sm mt-1.5 leading-relaxed">
-        Switching something off stops it straight away, and the page may reload to do that. Anything
-        already sent to that company can't be recalled.
+        Turning something off takes effect at once; the page may reload. Data already sent can't be
+        recalled.
       </p>
 
       <div class="mt-5 flex flex-col gap-4">
