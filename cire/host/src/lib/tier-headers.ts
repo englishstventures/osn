@@ -35,6 +35,13 @@ export const PRODUCTION_API_ORIGIN = "https://api.cireweddings.com";
  */
 const productionOrigin = () => /https:\/\/api\.cireweddings\.com(?![\w.:-])/g;
 
+/**
+ * A DNS name as `new URL` leaves it: lowercased, internationalised labels in
+ * punycode. URL parsing lets `*`, `;`, `,` and quotes through in a host; any of
+ * them written into the policy would widen a source list or start a directive.
+ */
+const PLAIN_HOSTNAME = /^[a-z0-9-]+(\.[a-z0-9-]+)*$/;
+
 /** The origin of a cire-api URL, or a build error naming the bad value. */
 function originOf(apiUrl: string): string {
   let url: URL;
@@ -45,6 +52,11 @@ function originOf(apiUrl: string): string {
   }
   if (url.protocol !== "https:" && url.protocol !== "http:") {
     throw new Error(`tier-headers: the cire-api URL ${JSON.stringify(apiUrl)} is not http(s)`);
+  }
+  if (!PLAIN_HOSTNAME.test(url.hostname)) {
+    throw new Error(
+      `tier-headers: the cire-api URL ${JSON.stringify(apiUrl)} has a host that is not a plain DNS name`,
+    );
   }
   return url.origin;
 }

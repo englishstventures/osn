@@ -59,6 +59,24 @@ describe("retargetHeaders", () => {
     );
   });
 
+  it("refuses a host that would be more than one plain source in the policy", () => {
+    // WHATWG URL parsing lets `*`, `;`, `,` and quotes through in a host. Written
+    // into `connect-src`, `https://*` would allow every https host, and `;` would
+    // start a directive of its own.
+    for (const bad of ["https://*", "https://a;b", "https://a,b", "https://a'b", 'https://a"b']) {
+      expect(() => retargetHeaders(HEADERS, bad)).toThrow(/cire-api URL/);
+    }
+  });
+
+  it("accepts a plain host, a port, and an internationalised name as punycode", () => {
+    expect(retargetHeaders(HEADERS, "https://API.Example.test:8443/x")).toContain(
+      "connect-src 'self' https://api.example.test:8443;",
+    );
+    expect(retargetHeaders(HEADERS, "https://bücher.example")).toContain(
+      "connect-src 'self' https://xn--bcher-kva.example;",
+    );
+  });
+
   it("refuses an API URL it cannot turn into an origin", () => {
     for (const bad of ["", "not a url", "data:text/plain,hi", "ftp://api.example.test"]) {
       expect(() => retargetHeaders(HEADERS, bad)).toThrow(/cire-api URL/);
