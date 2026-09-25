@@ -702,6 +702,68 @@ describe("RegistryView — gifts received", () => {
     expect(await screen.findByText("Something rude")).toBeInTheDocument();
   });
 
+  it("keeps keyboard focus on the row's note control through a hide and an unhide", async () => {
+    setCachedRegistry(
+      "wed_1",
+      snapshot({
+        gifts: [
+          gift({ id: "clm_1", note: "First note" }),
+          gift({ id: "clm_2", familyName: "The Okafors", note: "Second note" }),
+        ],
+      }),
+    );
+    authFetch
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true, note: null, noteHidden: true }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true, note: "Second note", noteHidden: false }), {
+          status: 200,
+        }),
+      );
+    render(() => (
+      <RegistryView weddingId="wed_1" weddingSlug="wed-1" view="gifts" canEdit={true} />
+    ));
+    const hide = await screen.findByRole("button", { name: "Hide note from The Okafors" });
+    hide.focus();
+    fireEvent.click(hide);
+    // The row is rebuilt by the patch; focus follows to its new control
+    // rather than falling to the page.
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Unhide note from The Okafors" }),
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Unhide note from The Okafors" }));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Hide note from The Okafors" }),
+      ),
+    );
+  });
+
+  it("keeps keyboard focus on the thank-you toggle it just pressed", async () => {
+    setCachedRegistry(
+      "wed_1",
+      snapshot({
+        gifts: [gift({ id: "clm_1" }), gift({ id: "clm_2", familyName: "The Okafors" })],
+      }),
+    );
+    authFetch.mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    render(() => (
+      <RegistryView weddingId="wed_1" weddingSlug="wed-1" view="gifts" canEdit={true} />
+    ));
+    const toggle = await screen.findByRole("button", { name: "Mark thanked: The Okafors" });
+    toggle.focus();
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Mark thanked: The Okafors" }),
+      ),
+    );
+    expect(document.activeElement).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("sends the couple to sign in again when a hide answers 401", async () => {
     redirectToLoginMock.mockClear();
     setCachedRegistry(

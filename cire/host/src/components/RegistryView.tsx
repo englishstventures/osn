@@ -498,6 +498,21 @@ export default function RegistryView(props: RegistryViewProps) {
         : null,
     );
 
+  // ── Gift-log controls ─────────────────────────────────────────────────────
+  // `<For>` tracks rows by object, and every write below replaces the gift
+  // object, so the row the user acted on is rebuilt and the button they pressed
+  // is gone — focus would fall to the page. `refocus` puts it on the rebuilt
+  // row's control of the same kind: after a hide, that is Unhide, whose name
+  // also tells a screen-reader user what changed.
+  let giftList: HTMLUListElement | undefined;
+  const refocus = (gift: GiftLogEntry, control: "note" | "thanked") => {
+    const key = `${gift.kind}:${gift.id}`;
+    const buttons = giftList?.querySelectorAll<HTMLElement>(`[data-gift-control="${control}"]`);
+    for (const el of buttons ?? []) {
+      if (el.dataset.gift === key) return el.focus();
+    }
+  };
+
   const toggleThanked = async (gift: GiftLogEntry) => {
     const thanked = gift.thankedAt == null;
     const at = thanked ? Date.now() : null;
@@ -507,6 +522,7 @@ export default function RegistryView(props: RegistryViewProps) {
         g.kind === gift.kind && g.id === gift.id ? { ...g, thankedAt: at } : g,
       ),
     }));
+    refocus(gift, "thanked");
     haptic("commit");
     try {
       const res = await authFetch(
@@ -542,7 +558,10 @@ export default function RegistryView(props: RegistryViewProps) {
           g.kind === gift.kind && g.id === gift.id ? { ...g, ...view } : g,
         ),
       }));
-    if (hidden) patchNote({ note: null, noteHidden: true });
+    if (hidden) {
+      patchNote({ note: null, noteHidden: true });
+      refocus(gift, "note");
+    }
     haptic("commit");
     try {
       const res = await authFetch(
@@ -565,6 +584,7 @@ export default function RegistryView(props: RegistryViewProps) {
       // each patch maps the whole log and rebuilds the row.
       if (!hidden || view.note !== null || !view.noteHidden) {
         patchNote({ note: view.note, noteHidden: view.noteHidden });
+        refocus(gift, "note");
       }
     } catch {
       haptic("reject");
@@ -1036,7 +1056,7 @@ export default function RegistryView(props: RegistryViewProps) {
             </Show>
           }
         >
-          <ul class="flex flex-col gap-1">
+          <ul ref={(el) => (giftList = el)} class="flex flex-col gap-1">
             <For each={gifts()}>
               {(gift) => {
                 // One formatting pass per row: `formatMinorPair` was called
@@ -1087,6 +1107,8 @@ export default function RegistryView(props: RegistryViewProps) {
                           type="button"
                           aria-pressed={gift.thankedAt != null}
                           aria-label={`Mark thanked: ${giftFrom(gift)}`}
+                          data-gift={`${gift.kind}:${gift.id}`}
+                          data-gift-control="thanked"
                           onClick={() => toggleThanked(gift)}
                         >
                           {gift.thankedAt != null ? "Thanked" : "Mark thanked"}
@@ -1118,6 +1140,8 @@ export default function RegistryView(props: RegistryViewProps) {
                                 variant="link"
                                 type="button"
                                 aria-label={`Hide note from ${giftFrom(gift)}`}
+                                data-gift={`${gift.kind}:${gift.id}`}
+                                data-gift-control="note"
                                 onClick={() => void setNoteHidden(gift, true)}
                               >
                                 Hide note
@@ -1134,6 +1158,8 @@ export default function RegistryView(props: RegistryViewProps) {
                             variant="link"
                             type="button"
                             aria-label={`Unhide note from ${giftFrom(gift)}`}
+                            data-gift={`${gift.kind}:${gift.id}`}
+                            data-gift-control="note"
                             onClick={() => void setNoteHidden(gift, false)}
                           >
                             Unhide
