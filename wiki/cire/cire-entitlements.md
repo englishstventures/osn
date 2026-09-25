@@ -42,7 +42,7 @@ Six opaque capability flags. The table stores keys as plain strings. How the app
 | `ai` | AI-assisted content generation features |
 | `capacity_500` | Guest import ceiling raised to 500 |
 | `capacity_1000` | Guest import ceiling raised to 1000 |
-| `registry` | Gift registry module — the organiser routes and, transitively, the guest-facing registry section |
+| `registry` | Gift registry module — the organiser routes and, transitively, the guest gift page and the band on the invite |
 
 Boolean capability flags (`premium_templates`, `vendors`, `ai`, `registry`) are presence-only: the row either exists or it doesn't. Capacity flags work differently — see below.
 

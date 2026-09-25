@@ -28,10 +28,9 @@ const CLAIMED_HINT_MAX_AGE = 30 * 24 * 60 * 60;
  * surfaces need the same gate for the same reason the restore does. The band on
  * the invite skips its list read (`GET …/registry`) without it, and the gift
  * page skips its household read (`GET …/registry/mine`). Both reads are
- * credentialed, so on a first-time visitor each is a guaranteed 401 — and
- * unlike the restore they sit on pages anyone can open (the public invite, and
- * a gift-list link people share), so an ungated read would fire once per page
- * view.
+ * credentialed, so on a first-time visitor each is a guaranteed 401, and both
+ * surfaces are pages anyone can open (the public invite, and a gift-list link
+ * people share), so an ungated read would fire once per page view.
  */
 export function hasClaimedHint(): boolean {
   return document.cookie.split(";").some((c) => c.trim().startsWith(`${CLAIMED_HINT}=`));

@@ -37,17 +37,20 @@
  * **Passing layer 2 does not make a host trusted, so no other layer may be
  * loosened because a host passed it.** Every hop and every emitted candidate is
  * checked again; the time budget, the byte cap and the route's rate limit bound
- * every request whatever the address check decided; the route hands back only
- * what the scan parsed, never the upstream status, headers or body; and a
- * refusal carries no reason. `registry-image.ts` calls this guard rather than a
- * copy of it, and any new outbound fetch of a caller-supplied URL does the same.
+ * every request whatever the address check decided; the route hands back a
+ * title, a site name and candidate image URLs, never the upstream status,
+ * headers or body; and a refusal carries no reason. `registry-image.ts` calls
+ * this guard rather than a copy of it, and any new outbound fetch to a host the
+ * caller chooses does the same; a fetch whose hosts are a fixed allowlist, like
+ * `pinterest-resolve.ts`, keeps its allowlist.
  *
  * Parsing is a regex scan over the capped body string, deliberately: workerd has
  * `HTMLRewriter`, but these tests run under Bun where it does not exist, and a
  * parser that only runs in production is a parser nothing tests. The scan reads
- * `<meta>`, `<link>` and `<img>` tags only, never executes anything, and its
- * output is treated as untrusted text — so a hostile page can at worst make us
- * emit a URL, which layer 5 then re-checks. No new dependency.
+ * `<meta>`, `<link rel="image_src">`, `<img>` and `<title>` only, never
+ * executes anything, and its output is treated as untrusted text — so a hostile
+ * page can at worst make us emit a URL, which layer 5 then re-checks. No new
+ * dependency.
  */
 
 import { Data, Effect } from "effect";

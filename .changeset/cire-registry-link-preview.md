@@ -17,9 +17,9 @@ that makes it a server-side request forgery sink. Every other outbound call we
 make goes to a host we chose, so the existing precedent — `pinterest-resolve.ts`
 — defends itself with a host allowlist, which is exactly the tool that does not
 exist when the destination is any shop on the internet. `services/link-preview.ts`
-takes a different shape: `https:` only; a DNS-over-HTTPS pre-resolution whose
-every A and AAAA answer is range-checked against loopback, RFC 1918, CGNAT,
-link-local (the cloud metadata address in particular), `0.0.0.0/8` and multicast,
+takes a different shape: `https:` only; a named host resolved over
+DNS-over-HTTPS, with every A and AAAA answer range-checked against loopback,
+RFC 1918, CGNAT, link-local (the cloud metadata address in particular), `0.0.0.0/8` and multicast,
 with IPv4-mapped and NAT64 addresses **unwrapped and re-checked** so the v4 rules
 cannot be sidestepped by spelling them in v6; `redirect: "manual"` with the whole
 scheme-and-address check re-run on every hop's `Location`, because a benign first

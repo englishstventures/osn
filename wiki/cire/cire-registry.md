@@ -17,7 +17,7 @@ last-reviewed: 2026-09-25
 Phase 4 module. The couple curate a gift list; guest **households** claim from it so nobody buys the same thing twice; the couple work from a gift log afterwards to write thank-yous. Card contributions ride Stripe Connect — and everything below is still usable as an honour-system list with no Stripe account at all.
 
 > [!note]
-> **It is gated, not unreachable.** Every route in this page answers `402 payment_required` until the wedding holds the `registry` entitlement. On a deployment that holds a Stripe key a host can buy it themselves — see [[cire-upgrades]] — and an operator can comp it anywhere with `grant-entitlement.ts`. See [[cire-entitlements]] for the gate itself.
+> **It is gated, not unreachable.** Every organiser route in this page except `gifts.csv` answers `402 payment_required` until the wedding holds the `registry` entitlement, and the guest routes answer the same `404` an unpublished list gives. On a deployment that holds a Stripe key a host can buy it themselves — see [[cire-upgrades]] — and an operator can comp it anywhere with `grant-entitlement.ts`. See [[cire-entitlements]] for the gate itself.
 
 ---
 
@@ -127,7 +127,7 @@ Creating that endpoint in the Stripe dashboard — its scope, the nine events, t
 
 **The gates run before Stripe does.** `contributionContext` resolves the visible registry, checks the household belongs to THIS wedding, and requires `cash_gifts_enabled` AND `stripe_charges_enabled` AND an account id. A guest is turned away before their card is, or not at all. The cash-specific refusal is its own 409 `cash_gifts_unavailable`, because it is the one a guest looking at the panel can understand; everything else is the same 404 as always.
 
-**Its own limiter, at the claim route's rate** (20/min per IP). Every call is an outbound Stripe request — the "amplifier" shape the link-preview route is limited for — but the limit is per IP and a reception is one NAT: 5/min was reasoned as if it were per household, and it would have met the sixth guest of the evening with a 429 on their way to paying.
+**Its own limiter, at the claim route's rate** (20/min per IP). Every call is an outbound Stripe request — the "amplifier" shape the link-preview route is limited for — but the limit is per IP and a reception is one NAT: a 5/min limit reasons as if it were per household, and would meet the sixth guest of the evening with a 429 on their way to paying.
 
 **The row is written FIRST, as `pending`, before the guest is handed a payment page.** Stripe is told one opaque id and the money — no wedding, no household, no name, no note. Two things follow. A forged session settles nothing: the webhook settles the row an id names, and there is no row to conjure from an event, which matters because this endpoint also hears about sessions a connected account created for ITSELF, where every metadata field is whatever its owner typed. And no guest personal data crosses to a US processor for a reconciliation that never needed it.
 
@@ -310,7 +310,7 @@ Implemented in `cire/api/src/services/link-preview.ts`. All must pass, and the f
 
 ### Changing the guard
 
-**Passing layer 2 does not make a host trusted, so no other layer may be loosened because a host passed it.** Every redirect hop and every emitted candidate is checked again. The time budget, the body cap and the rate limit bound every request, whatever the address check decided. The route hands back only what it parsed — never the upstream status, headers or body — and a refusal carries no reason (see [Errors](#errors)). `registry-image.ts` calls this guard rather than a copy of it, and any new outbound fetch of a URL a caller supplied does the same.
+**Passing layer 2 does not make a host trusted, so no other layer may be loosened because a host passed it.** Every redirect hop and every emitted candidate is checked again. The time budget, the body cap and the rate limit bound every request, whatever the address check decided. The route hands back a title, a site name and candidate image URLs — never the upstream status, headers or body — and a refusal carries no reason (see [Errors](#errors)). `registry-image.ts` calls this guard rather than a copy of it, and any new outbound fetch to a host the caller chooses does the same; a fetch whose hosts are a fixed allowlist, like `pinterest-resolve.ts`, keeps its allowlist.
 
 ### Rate limit
 
@@ -406,7 +406,7 @@ Candidates are filtered to `https:` **again in the browser** before any of them 
 
 ### The settings tab (`@cire/host`)
 
-`RegistrySettingsView` is the registry module's third sub-tab, beside the gift list and the gifts received. It holds the four decisions the guest surface had been reading with nowhere to make them — publish, copy, shipping address (and its embargo date), money gifts — plus Stripe onboarding.
+`RegistrySettingsView` is the registry module's third sub-tab, beside the gift list and the gifts received. It holds the four decisions the guest surface reads — publish, copy, shipping address (and its embargo date), money gifts — plus Stripe onboarding.
 
 **One snapshot, shared with the list.** It reads the same cached `RegistrySnapshot`, so moving between sub-tabs costs no fetch, and a save patches the settings row in place rather than invalidating the whole thing.
 
@@ -441,7 +441,7 @@ Candidates are filtered to `https:` **again in the browser** before any of them 
 
 `src/pages/[slug]/registry.astro` is the route, and it makes **one** read: the invite, which is public, so the couple's copy, colours and hero photo are server-rendered and the page paints as theirs immediately. The LIST cannot be server-rendered at all — `cire_session` is host-scoped to the API origin, so the browser never sends it to the guest Worker and there is no household for the server to be. The island makes that read. Both design packs mount the _teaser_ from `Document.astro` as a `client:visible={{ rootMargin: "600px" }}` island between `<InvitePage>` and `<SiteFooter>`.
 
-**One shell, not one per design pack.** The packs differ in the invite's own structure; the gift list never has — it was one shared component in both, and its surface comes from the same derived palette, fonts and section tone every other section reads. If a pack ever forks the gift surfaces, the shell takes the pack as a prop rather than being duplicated.
+**One shell, not one per design pack.** The packs differ in the invite's own structure; the gift list does not — one component serves both, and its surface comes from the same derived palette, fonts and section tone every other section reads. If a pack ever forks the gift surfaces, the shell takes the pack as a prop rather than being duplicated.
 
 **The only 404 the route answers is an unknown wedding.** It cannot tell a missing list from a locked one without becoming an oracle for exactly what the API's single 404 code exists to hide: a page that 404s for "no registry" answers, to anyone holding a slug, a question the API refuses. A failed *invite* read still renders the page, with the built-in theme and copy — the list is what the page is for. Pinned by `cire/invites/tests/pages/[slug]/registry.test.ts`, a source-text guard in the shape of `tests/pages/index.test.ts`. Both live outside `src/pages` entirely, which is what keeps them out of Astro's router — a test file under `src/pages` is a live route and drags vitest into the SSR bundle.
 
@@ -487,7 +487,7 @@ The hint is wired with `aria-describedby`, conditional on there being a hint —
 
 **`external_url` is re-checked at the render site.** `giftRegistryExternalHref` re-parses the column and returns `null` for anything that is not `https:` (and for embedded credentials), so a non-https value renders no link at all rather than an `<a href>`; the link carries `target="_blank" rel="noopener noreferrer"`. Same reasoning as the boundary check under [External URLs](#external-urls) and the organiser-side re-filter: a render site that trusts its input because of what the server promised is one API change away from being wrong.
 
-**Reads.** Both reads are credentialed and `no-store`. The household read passes `credentials: "include"` — the guest cookie is host-scoped to the API origin, which is a different origin from the guest site, and a cross-origin fetch on the default `same-origin` mode drops it silently. It is also gated on the `cire_claimed` hint cookie (`hasClaimedHint`, exported from `claim-session.ts`): both surfaces are public and shareable, so an unconditional `…/registry/mine` would spend a guaranteed 401 **per page view** rather than per guest, against an account-wide Workers Free budget.
+**Reads.** Both reads are credentialed and `no-store`. The household read passes `credentials: "include"` — the guest cookie is host-scoped to the API origin, which is a different origin from the guest site, and a cross-origin fetch on the default `same-origin` mode drops it silently. Each surface gates one credentialed read on the `cire_claimed` hint cookie (`hasClaimedHint`, exported from `claim-session.ts`): the band skips its list read without it, and the page skips its household read. Both surfaces are public and shareable, so an ungated read would spend a guaranteed 401 **per page view** rather than per guest, against an account-wide Workers Free budget.
 
 **A failed re-read leaves what is on screen.** Only an answer replaces what is rendered: `ok` swaps the list, `401` locks it, `404` closes it, and a transport failure changes nothing. Blanking on a blip would blank the page under someone reading it.
 
@@ -501,9 +501,9 @@ The hint is wired with `aria-describedby`, conditional on there being a hint —
 
 **Status is a live region at the page root**, never an overlay: this section sits among animated ones and any ancestor `transform` traps `position: fixed`. The claim form is inline in the card for the same reason.
 
-**`kind: "cash_fund"` is not special-cased.** It renders like any other item. Contributions land with Stripe Connect; a contribute flow over a backend that cannot take a charge would be UI standing in for something that does not exist.
+**`kind: "cash_fund"` is not special-cased.** It renders like any other item. Money gifts go through the money-gift panel above the shelves, not through a card of their own — see [Giving money](#giving-money-built).
 
-**Not built here:** contributions, and any surface for a claim's `status` beyond `reserved`.
+**Not built here:** any surface for a claim's `status` beyond `reserved`.
 
 ---
 
