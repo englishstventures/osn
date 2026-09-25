@@ -19,4 +19,4 @@
 # conflict rather than silently agreeing on the same leading number while
 # disagreeing on what it was measured from.
 
-1045   # measured via scripts/guard-lint-warnings.sh (oxlint --format=json), fix/cire-rsvp-perf @ 2026-09-25 — -1, a real fix: the comment above the guest RSVP write in cire/api/src/routes/rsvp.ts carried a review tag, which house/no-tracker-ref-in-comment reports. The comment was already being rewritten on this branch because the write's payload moved into a named value, so it now states what the code guarantees without the tag. No rule was disabled and nothing was suppressed.
+1038   # measured via scripts/guard-lint-warnings.sh (oxlint --format=json), fix/cire-rsvp-perf @ 2026-09-25 — -1 after merging main at 1039: this branch removes one warning in the RSVP submit path. No rule was disabled and nothing was suppressed.
