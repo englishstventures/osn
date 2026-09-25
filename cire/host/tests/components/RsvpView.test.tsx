@@ -268,6 +268,24 @@ describe("RsvpView", () => {
     expect(screen.queryByRole("button", { name: /^Record reply for/i })).toBeNull();
   });
 
+  it("gives each replies table a fixed layout with one sized column per heading", async () => {
+    // The class contract only: `RsvpView.layout.browser.test.tsx` measures what
+    // it does. A table with a `<col>` short of its headings, or one more, sizes
+    // the odd column from nothing.
+    for (const canEdit of [true, false]) {
+      authFetchMock.mockResolvedValueOnce(json(VIEW));
+      render(() => <RsvpView weddingId="wed_a" canEdit={canEdit} />);
+      await waitFor(() => expect(screen.getByText("Bo Jones")).toBeTruthy());
+      const table = screen.getByText("Bo Jones").closest("table")!;
+      expect(table.parentElement!.className).toContain("[&>table]:table-fixed");
+      expect(table.querySelectorAll("colgroup > col")).toHaveLength(
+        table.querySelectorAll("thead th").length,
+      );
+      expect(table.querySelectorAll("thead th")).toHaveLength(canEdit ? 5 : 4);
+      cleanup();
+    }
+  });
+
   it("names each row's control after the guest it acts on", async () => {
     authFetchMock.mockResolvedValueOnce(json(VIEW));
     render(() => <RsvpView weddingId="wed_a" canEdit />);
@@ -534,6 +552,36 @@ describe("RsvpView", () => {
       dietaryPresets: ["gluten"],
       dietaryConsent: true,
     });
+  });
+
+  it("editor keeps a stored preset key this build does not know when another is ticked", async () => {
+    // The vocabulary grows on the server first, and an open portal keeps the
+    // build it loaded. Ada's stored answer carries a key this build has no pill
+    // for; an organiser ticking another preset must not erase it from the row.
+    restoreViewport = mockViewport(false);
+    const withUnknown = structuredClone(VIEW);
+    const ada = withUnknown.events[0]!.guests.find((g) => g.guestId === ADA.guestId)!;
+    ada.dietaryPresets = ["gluten", "a_future_key"];
+    authFetchMock
+      .mockResolvedValueOnce(json(withUnknown))
+      .mockResolvedValueOnce(
+        json({ rsvp: { status: "attending", consentSource: "organiser_attested" } }),
+      )
+      .mockResolvedValueOnce(json(withUnknown));
+    render(() => <RsvpView weddingId="wed_a" canEdit />);
+
+    await waitFor(() => expect(screen.getByText("Bo Jones")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Edit reply for Ada Sharma" }));
+    await screen.findByLabelText(/Status/i);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Dairy" }));
+    fireEvent.click(screen.getByRole("button", { name: /Save reply/i }));
+
+    await waitFor(() => expect(authFetchMock).toHaveBeenCalledTimes(3));
+    const body = JSON.parse(authFetchMock.mock.calls[1]![1]?.body as string) as {
+      dietaryPresets: readonly string[];
+    };
+    expect(body.dietaryPresets).toEqual(["gluten", "dairy", "a_future_key"]);
   });
 
   it("editor shows no attestation when the existing reply carries no dietary data", async () => {
