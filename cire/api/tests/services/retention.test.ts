@@ -18,6 +18,7 @@ import { eq } from "drizzle-orm";
 import { Effect } from "effect";
 
 import { DbService, dbQuery } from "../../src/db";
+import { createDb, seedDb } from "../../src/db/setup";
 import type { DeletableBucket } from "../../src/services/r2-cleanup";
 import {
   type GiftSummaryNotice,
@@ -25,7 +26,7 @@ import {
   RETENTION_AFTER_FINAL_EVENT_MS,
 } from "../../src/services/retention";
 import { TestDbLayer } from "../db/test-layer";
-import { effWith } from "../test-helpers";
+import { effWith, recordStatements } from "../test-helpers";
 
 const withDb = effWith(TestDbLayer);
 
@@ -978,4 +979,64 @@ describe("the parting gift summary", () => {
       }),
     ),
   );
+
+  it("reads the final events once, in the cohort query, and still dates each notice by its own wedding", async () => {
+    // Not `withDb`: counting statements needs the concrete bun:sqlite handle,
+    // which the service `Db` type does not expose.
+    const db = createDb(":memory:");
+    seedDb(db);
+    const now = new Date("2026-06-17T04:00:00.000Z");
+    const stamp = new Date("2025-05-11T00:00:00.000Z");
+    const seen: GiftSummaryNotice[] = [];
+
+    const { statements, closedId, openEndedId } = await Effect.runPromise(
+      Effect.gen(function* () {
+        const closed = yield* makeWedding({ eventDates: ["2025-03-01", "2025-05-10"] });
+        // The last event has no stated end, so its start is its effective end.
+        const openEnded = yield* makeWedding({
+          eventDates: ["2025-02-01", { date: "2025-04-20", openEnded: true }],
+        });
+        for (const { weddingId, familyId } of [closed, openEnded]) {
+          db.insert(registrySettings)
+            .values({ weddingId, published: true, createdAt: stamp, updatedAt: stamp })
+            .run();
+          db.insert(registryContributions)
+            .values({
+              id: `rct_${crypto.randomUUID()}`,
+              weddingId,
+              itemId: null,
+              familyId,
+              status: "succeeded",
+              amountMinor: 5_000,
+              currency: "AUD",
+              stripeCheckoutSessionId: `cs_${crypto.randomUUID()}`,
+              createdAt: stamp,
+              updatedAt: stamp,
+            })
+            .run();
+        }
+
+        // Installed after the seeding above, so only the sweep's statements
+        // are recorded; the notifier runs no query of its own.
+        const recorded = recordStatements(db);
+        yield* retentionService.sweepExpiredGuestData(now, {}, (notices) =>
+          Effect.sync(() => {
+            seen.push(...notices);
+          }),
+        );
+        return {
+          statements: recorded,
+          closedId: closed.weddingId,
+          openEndedId: openEnded.weddingId,
+        };
+      }).pipe(Effect.provideService(DbService, db)),
+    );
+
+    const eventReads = statements.filter((s) => /\bfrom "events"/i.test(s.sql));
+    expect(eventReads).toHaveLength(1);
+
+    const finalEventOn = new Map(seen.map((n) => [n.weddingId, n.finalEventOn]));
+    expect(finalEventOn.get(closedId)).toBe("2025-05-10");
+    expect(finalEventOn.get(openEndedId)).toBe("2025-04-20");
+  });
 });

@@ -871,7 +871,7 @@ describe("directoryService.browse + getLiveListingById", () => {
     expect(listing!.description).toBe("Beautiful garden venue for weddings");
     expect(listing!.locationText).toBe("Sydney");
     expect(typeof listing!.createdAt).toBe("number");
-    expect([...listing!.categories].sort()).toEqual(["catering", "venue"]);
+    expect(listing!.categories.toSorted()).toEqual(["catering", "venue"]);
   });
 
   it("keyword filter treats % literally (escapeLike fires)", async () => {
