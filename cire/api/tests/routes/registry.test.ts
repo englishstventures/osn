@@ -655,7 +655,7 @@ describe("POST /registry/gifts/:kind/:giftId/note-hidden", () => {
 
     const hide = await req(app, "POST", notePath, EDITOR, { hidden: true });
     expect(hide.status).toBe(200);
-    expect(await hide.json()).toEqual({ ok: true, note: null, noteHidden: true });
+    expect(await jsonBody(hide)).toEqual({ ok: true, note: null, noteHidden: true });
     expect(await noteMetric("note_hidden")).toBe(hiddenBefore + 1);
 
     // Both reads a co-host's portal makes: the snapshot and a further page.
@@ -668,7 +668,7 @@ describe("POST /registry/gifts/:kind/:giftId/note-hidden", () => {
 
     const show = await req(app, "POST", notePath, OWNER, { hidden: false });
     expect(show.status).toBe(200);
-    expect(await show.json()).toEqual({ ok: true, note: NOTE, noteHidden: false });
+    expect(await jsonBody(show)).toEqual({ ok: true, note: NOTE, noteHidden: false });
     expect(await noteMetric("note_unhidden")).toBe(unhiddenBefore + 1);
     const again = (await (await req(app, "GET", base, OWNER)).json()) as RegistrySnapshot;
     expect(again.gifts).toEqual([expect.objectContaining({ note: NOTE, noteHidden: false })]);

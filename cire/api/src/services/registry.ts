@@ -1091,25 +1091,29 @@ export const registryService = {
           thankedAt: Date | null;
           createdAt: Date;
         }>
-      ).map((r) => ({
-        kind: "claim" as const,
-        id: r.id,
-        itemId: r.itemId,
-        itemTitle: r.itemTitle,
-        familyId: r.familyId,
-        familyName: r.familyName,
-        displayName: r.displayName,
-        quantity: r.quantity,
-        status: r.status,
-        ...giftNoteView(r.note, r.noteHiddenAt),
-        amountMinor: null,
-        currency: null,
-        primaryAmountMinor: null,
-        primaryCurrency: null,
-        fxRate: null,
-        thankedAt: r.thankedAt ? r.thankedAt.getTime() : null,
-        createdAt: r.createdAt.getTime(),
-      }));
+      ).map((r) => {
+        const { note, noteHidden } = giftNoteView(r.note, r.noteHiddenAt);
+        return {
+          kind: "claim" as const,
+          id: r.id,
+          itemId: r.itemId,
+          itemTitle: r.itemTitle,
+          familyId: r.familyId,
+          familyName: r.familyName,
+          displayName: r.displayName,
+          quantity: r.quantity,
+          status: r.status,
+          note,
+          noteHidden,
+          amountMinor: null,
+          currency: null,
+          primaryAmountMinor: null,
+          primaryCurrency: null,
+          fxRate: null,
+          thankedAt: r.thankedAt ? r.thankedAt.getTime() : null,
+          createdAt: r.createdAt.getTime(),
+        };
+      });
 
       const contributions: GiftLogEntryDto[] = (
         contributionRows as Array<{
@@ -1130,25 +1134,29 @@ export const registryService = {
           thankedAt: Date | null;
           createdAt: Date;
         }>
-      ).map((r) => ({
-        kind: "contribution" as const,
-        id: r.id,
-        itemId: r.itemId,
-        itemTitle: r.itemTitle,
-        familyId: r.familyId,
-        familyName: r.familyName,
-        displayName: r.displayName,
-        quantity: null,
-        status: r.status,
-        ...giftNoteView(r.note, r.noteHiddenAt),
-        amountMinor: r.amountMinor,
-        currency: r.currency,
-        primaryAmountMinor: r.primaryAmountMinor,
-        primaryCurrency: r.primaryCurrency,
-        fxRate: r.fxRate,
-        thankedAt: r.thankedAt ? r.thankedAt.getTime() : null,
-        createdAt: r.createdAt.getTime(),
-      }));
+      ).map((r) => {
+        const { note, noteHidden } = giftNoteView(r.note, r.noteHiddenAt);
+        return {
+          kind: "contribution" as const,
+          id: r.id,
+          itemId: r.itemId,
+          itemTitle: r.itemTitle,
+          familyId: r.familyId,
+          familyName: r.familyName,
+          displayName: r.displayName,
+          quantity: null,
+          status: r.status,
+          note,
+          noteHidden,
+          amountMinor: r.amountMinor,
+          currency: r.currency,
+          primaryAmountMinor: r.primaryAmountMinor,
+          primaryCurrency: r.primaryCurrency,
+          fxRate: r.fxRate,
+          thankedAt: r.thankedAt ? r.thankedAt.getTime() : null,
+          createdAt: r.createdAt.getTime(),
+        };
+      });
 
       // `merged` is built here and returned to nobody else, so sorting it in
       // place is not the shared-array aliasing hazard oxlint's `no-array-sort`
