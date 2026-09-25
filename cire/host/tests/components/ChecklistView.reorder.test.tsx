@@ -48,6 +48,37 @@ function order(bucket: string): string[] {
   );
 }
 
+/** Stacked rects for one list's rows, plus each row's own drag offset — the
+ *  stub `@shared/sortable`'s suite uses. */
+function stubRowGeometry(testId: string, height = 40) {
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+    const rows = [...screen.getByTestId(testId).querySelectorAll(":scope > li")];
+    const index = rows.indexOf(this);
+    const offset = Number(
+      /translate3d\(0px, (-?[\d.]+)px/.exec((this as HTMLElement).style?.transform ?? "")?.[1] ?? 0,
+    );
+    const top = (index === -1 ? 0 : index * height) + offset;
+    return {
+      top,
+      bottom: top + height,
+      left: 0,
+      right: 100,
+      width: 100,
+      height,
+      x: 0,
+      y: top,
+      toJSON: () => ({}),
+    } as DOMRect;
+  });
+}
+
+function drag(handle: HTMLElement, toY: number) {
+  fireEvent.pointerDown(handle, { pointerId: 1, clientX: 10, clientY: 10 });
+  fireEvent(document, new PointerEvent("pointermove", { pointerId: 1, clientX: 10, clientY: 20 }));
+  fireEvent(document, new PointerEvent("pointermove", { pointerId: 1, clientX: 10, clientY: toY }));
+  fireEvent(document, new PointerEvent("pointerup", { pointerId: 1, clientX: 10, clientY: toY }));
+}
+
 function grip(title: string): HTMLButtonElement {
   return screen.getByRole("button", {
     name: new RegExp(`^Reorder ${title},`),
@@ -62,6 +93,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe("checklist — reorder", () => {
@@ -103,16 +135,48 @@ describe("checklist — reorder", () => {
     );
   });
 
-  it("keeps a ticked task's row as it was when a neighbour moves", async () => {
+  it("keeps the rows a move did not shift, in its own bucket and in others", async () => {
+    setCachedTasks("wed_1", [
+      ...TASKS.filter((t) => t.id !== "e"),
+      row({
+        id: "e",
+        title: "Order the cake",
+        timeframeBucket: "6m",
+        sortOrder: 2,
+        status: "done",
+      }),
+    ]);
     authFetch.mockResolvedValue(new Response("{}", { status: 200 }));
     render(() => <ChecklistView weddingId="wed_1" canEdit={true} />);
     await screen.findByText("Order the cake");
 
-    const untouched = screen.getByRole("checkbox", { name: "Book venue" });
+    const sameBucket = screen.getByRole("checkbox", { name: "Order the cake" });
+    const otherBucket = screen.getByRole("checkbox", { name: "Book venue" });
     fireEvent.keyDown(grip("Book the band"), { key: "ArrowUp" });
+    expect(order("6m")).toEqual(["Book the band", "Send save-the-dates", "Order the cake"]);
 
-    // A move in one bucket does not rebuild another bucket's rows.
-    expect(screen.getByRole("checkbox", { name: "Book venue" })).toBe(untouched);
+    // The same nodes, so a tick (or focus) on them survives a neighbour's move.
+    expect(screen.getByRole("checkbox", { name: "Order the cake" })).toBe(sameBucket);
+    expect(sameBucket).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Book venue" })).toBe(otherBucket);
+  });
+
+  it("drops a task onto another row of its bucket and saves only that bucket", async () => {
+    authFetch.mockResolvedValue(new Response("{}", { status: 200 }));
+    render(() => <ChecklistView weddingId="wed_1" canEdit={true} />);
+    await screen.findByText("Order the cake");
+    stubRowGeometry("tasks-6m");
+
+    drag(grip("Send save-the-dates"), 10 + 2 * 40);
+
+    await waitFor(() =>
+      expect(order("6m")).toEqual(["Book the band", "Order the cake", "Send save-the-dates"]),
+    );
+    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(authFetch.mock.calls[0]![1].body)).toEqual({
+      timeframeBucket: "6m",
+      orderedIds: ["d", "e", "c"],
+    });
   });
 
   it("withdraws the announcement when the save fails and the old order comes back", async () => {

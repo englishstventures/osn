@@ -60,6 +60,37 @@ function order(category: string): string[] {
   );
 }
 
+/** Stacked rects for one list's rows, plus each row's own drag offset — the
+ *  stub `@shared/sortable`'s suite uses. */
+function stubRowGeometry(testId: string, height = 40) {
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+    const rows = [...screen.getByTestId(testId).querySelectorAll(":scope > li")];
+    const index = rows.indexOf(this);
+    const offset = Number(
+      /translate3d\(0px, (-?[\d.]+)px/.exec((this as HTMLElement).style?.transform ?? "")?.[1] ?? 0,
+    );
+    const top = (index === -1 ? 0 : index * height) + offset;
+    return {
+      top,
+      bottom: top + height,
+      left: 0,
+      right: 100,
+      width: 100,
+      height,
+      x: 0,
+      y: top,
+      toJSON: () => ({}),
+    } as DOMRect;
+  });
+}
+
+function drag(handle: HTMLElement, toY: number) {
+  fireEvent.pointerDown(handle, { pointerId: 1, clientX: 10, clientY: 10 });
+  fireEvent(document, new PointerEvent("pointermove", { pointerId: 1, clientX: 10, clientY: 20 }));
+  fireEvent(document, new PointerEvent("pointermove", { pointerId: 1, clientX: 10, clientY: toY }));
+  fireEvent(document, new PointerEvent("pointerup", { pointerId: 1, clientX: 10, clientY: toY }));
+}
+
 function grip(name: string): HTMLButtonElement {
   return screen.getByRole("button", { name: new RegExp(`^Reorder ${name},`) }) as HTMLButtonElement;
 }
@@ -72,6 +103,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe("budget — reorder", () => {
@@ -145,6 +177,22 @@ describe("budget — reorder", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/Couldn't save the new order/);
     await waitFor(() => expect(order("catering")).toEqual(["Caterer", "Cake", "Late snacks"]));
     expect(section("Catering").getByRole("status")).toHaveTextContent("");
+  });
+
+  it("drops an item onto another row of its category and saves that category's order", async () => {
+    authFetch.mockResolvedValue(new Response("{}", { status: 200 }));
+    render(() => <BudgetView weddingId="wed_1" canEdit={true} canManage={true} />);
+    await screen.findByText("Late snacks");
+    stubRowGeometry("budget-catering");
+
+    drag(grip("Caterer"), 10 + 2 * 40);
+
+    await waitFor(() => expect(order("catering")).toEqual(["Cake", "Late snacks", "Caterer"]));
+    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(authFetch.mock.calls[0]![1].body)).toEqual({
+      category: "catering",
+      orderedIds: ["d", "e", "c"],
+    });
   });
 
   it("offers a viewer no reorder controls", async () => {

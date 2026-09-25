@@ -276,9 +276,9 @@ Current adopters, all in `@cire/host`:
 - **Budget** (`BudgetView`) — one list per category, via `budget/items/reorder`.
 
 The last three draw their grip and screen-reader move buttons through
-`cire/host/src/components/ReorderControls.tsx`, which keeps the grip identical to
-the one `EventsEditor.grip.browser.test.tsx` measures (`ReorderControls.test.tsx`
-pins that).
+`cire/host/src/components/ReorderControls.tsx`; `ReorderControls.browser.test.tsx`
+mounts it in a narrow flex row beside a greedy sibling and measures the 24 px
+floor.
 
 Two rules every consumer follows, both found converting those three:
 

@@ -218,6 +218,30 @@ describe("what gets saved", () => {
     expect(lastBody()).toEqual({ headline: "Gifts", expected: { headline: null } });
   });
 
+  it("compares the next save with the row the last one returned", async () => {
+    setCachedRegistry("wed_1", snapshot({ items: [item()] }));
+    authFetch.mockResolvedValueOnce(
+      json({ settings: { ...snapshot().settings, headline: "Gifts" } }),
+    );
+    const { container } = renderPanel();
+
+    await screen.findByTestId("registry-publish");
+    fireEvent.input(screen.getByLabelText(/Heading/i), { target: { value: "Gifts" } });
+    fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledTimes(1));
+
+    authFetch.mockResolvedValueOnce(
+      json({ settings: { ...snapshot().settings, headline: "Gifts", message: "No boxes" } }),
+    );
+    fireEvent.input(screen.getByLabelText(/A note above the list/i), {
+      target: { value: "No boxes" },
+    });
+    fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledTimes(2));
+    // The heading was saved already: it is not sent again with a stale guess.
+    expect(lastBody()).toEqual({ message: "No boxes", expected: { message: null } });
+  });
+
   it("counts typing a field back to what it was as no change", async () => {
     setCachedRegistry(
       "wed_1",

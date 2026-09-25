@@ -10,9 +10,8 @@ import type { Sortable, SortableItem } from "@shared/sortable";
  * only through buttons activated with Enter or Space. They are visually hidden
  * until focused, so a sighted keyboard user never lands on an invisible control.
  *
- * The grip's classes are the ones `EventsEditor.grip.browser.test.tsx` measures
- * against the 24px minimum target: `size="icon"` on a borderless button carries
- * the floor, so no size class belongs here.
+ * `size="icon"` on a borderless button carries the 24px minimum target, so no
+ * size class belongs on the grip; `ReorderControls.browser.test.tsx` measures it.
  */
 export default function ReorderControls(props: {
   /** The row's `createSortable`, for the pointer drag. */
