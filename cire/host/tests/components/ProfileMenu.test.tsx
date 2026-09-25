@@ -49,6 +49,23 @@ describe("ProfileMenu", () => {
     expect(img.src).toBe("https://cdn.test/alex.png");
   });
 
+  it("falls back to the initial when the avatar image fails to load", () => {
+    // A host the CSP's `img-src` does not allow is blocked, and a blocked image
+    // fires `error` like a dead link does — either way the circle shows the
+    // initial rather than nothing.
+    render(() => (
+      <ProfileMenu
+        session={{ ...SESSION, avatarUrl: "https://avatars.test/alex.png" }}
+        onSecurity={() => {}}
+        onSignOut={() => {}}
+      />
+    ));
+    const trigger = screen.getByRole("button", { name: /account menu/i });
+    fireEvent.error(trigger.querySelector("img")!);
+    expect(trigger.querySelector("img")).toBeNull();
+    expect(trigger.textContent).toBe("A");
+  });
+
   it("refuses a non-https avatar URL and falls back to the initial", () => {
     // The `picture` claim is unvalidated upstream — the sink enforces https.
     for (const avatarUrl of ["http://cdn.test/alex.png", "javascript:alert(1)", "not a url"]) {
