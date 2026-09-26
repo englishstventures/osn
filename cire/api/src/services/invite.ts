@@ -215,9 +215,14 @@ const EMPTY: InviteCustomisation = {
 /**
  * What the public `GET /api/invite/:slug` returns. The closing section's switch
  * is left out with the rest of the closing section, which rides the claim
- * payload instead (see `getForSlug`).
+ * payload instead (see `getForSlug`), and the organiser-only invite message is
+ * left out entirely: it is the line an organiser copies to send a household,
+ * and the guest site never reads it.
  */
-export type PublicInviteCustomisation = Omit<InviteCustomisation, "visibility"> & {
+export type PublicInviteCustomisation = Omit<
+  InviteCustomisation,
+  "visibility" | "inviteMessage"
+> & {
   visibility: Omit<InviteCustomisation["visibility"], "footer">;
 };
 
@@ -465,10 +470,10 @@ function visibilityOf(
  * reachable at its public image URL, which the organiser builder's own thumbnail
  * loads, and the hero and story copy were public before they were switched off.
  * The closing section and its switch are left out entirely: they ride the claim
- * payload.
+ * payload. So is the organiser-only invite message.
  */
 function publicView(full: InviteCustomisation): PublicInviteCustomisation {
-  const { visibility, ...rest } = full;
+  const { visibility, inviteMessage: _organiserOnly, ...rest } = full;
   return {
     ...rest,
     hero: visibility.hero ? full.hero : { ...full.hero, subtitle: null },

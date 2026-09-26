@@ -14,7 +14,6 @@
 
 import type { SectionState } from "@cire/theme";
 import Button from "@cire/ui/button";
-import { Checkbox } from "@shared/ui/ui/checkbox";
 import { Input } from "@shared/ui/ui/input";
 import { Select } from "@shared/ui/ui/select";
 import { Textarea } from "@shared/ui/ui/textarea";
@@ -231,8 +230,11 @@ export interface SectionVisibility {
   offNote?: string;
 }
 
+// The last sentence is deliberate: the invite stops showing the section, but a
+// photo already uploaded to it keeps serving at its own address, which the
+// builder's thumbnail uses too. Switching off must not read as making it private.
 const DEFAULT_OFF_NOTE =
-  "Switched off. Guests won't see this section; everything in it is kept for when you switch it back on.";
+  "Switched off. Guests won't see this section on the invite; everything in it is kept for when you switch it back on. Switching off hides the section — it does not make its photo private.";
 
 /**
  * The reason a switchable section is hidden, in words, under its badge: switched
@@ -305,12 +307,19 @@ export function SectionCard(props: {
             {(visibility) => (
               <span class="flex flex-wrap items-center gap-4">
                 <SegmentBadge state={visibility().state} />
-                <Checkbox
-                  data-visibility-switch
-                  label="Show on the invite"
-                  checked={visibility().visible}
-                  onChange={(next) => visibility().onChange(next)}
-                />
+                {/* A native checkbox, as elsewhere in the portal: the input
+                  itself takes keyboard focus and shows the dashboard's
+                  `:focus-visible` ring. */}
+                <label class="font-body text-text text-ui-sm flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    data-visibility-switch
+                    class="accent-gold h-4 w-4 shrink-0 cursor-pointer"
+                    checked={visibility().visible}
+                    onChange={(e) => visibility().onChange(e.currentTarget.checked)}
+                  />
+                  Show on the invite
+                </label>
               </span>
             )}
           </Show>

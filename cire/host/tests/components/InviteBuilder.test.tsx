@@ -2095,6 +2095,10 @@ describe("InviteBuilder section visibility switches (migration 0063)", () => {
     await renderWith(FILLED);
     for (const id of ["invite-hero", "invite-story", "invite-closing"]) {
       expect(switchIn(id).checked).toBe(true);
+      // A native checkbox: the input itself takes keyboard focus, so the
+      // dashboard's `:focus-visible` ring lands on something visible.
+      expect(switchIn(id).tagName).toBe("INPUT");
+      expect(switchIn(id).type).toBe("checkbox");
       expect(badgeIn(id).dataset.state).toBe("shown");
     }
   });
@@ -2107,6 +2111,9 @@ describe("InviteBuilder section visibility switches (migration 0063)", () => {
     expect(badge.textContent).toContain("Hidden — switched off");
     expect(switchIn("invite-story").checked).toBe(false);
     expect(reasonIn("invite-story")?.textContent).toMatch(/everything in it is kept/);
+    // Hiding the section does not stop its photo serving at its own address,
+    // so the line must not promise privacy.
+    expect(reasonIn("invite-story")?.textContent).toMatch(/does not make its photo private/);
     // The other two are untouched.
     expect(badgeIn("invite-hero").dataset.state).toBe("shown");
     expect(reasonIn("invite-hero")).toBeNull();

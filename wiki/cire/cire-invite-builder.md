@@ -267,7 +267,9 @@ props are serialised into the SSR HTML):
   and crop are null.
 
 This keeps the payload tidy; it is not access control. The story image keeps
-serving at its public URL, which the builder's own thumbnail loads.
+serving at its public URL, which the builder's own thumbnail loads, so the
+builder's switched-off line says that switching off hides the section but does
+not make its photo private.
 
 **Existing weddings.** Migration `0063_invite_section_visibility.sql` gave each
 existing row the switch its emptiness check gave at the time — content ⇒ on, no
@@ -689,7 +691,9 @@ CSV-import `R2Bucket` is text-only and is **not** widened in place). Routes:
 
 - **Public (no auth)** — under `/api/invite`:
   - `GET /api/invite/:slug` → text + image URL paths for the guest site, plus the
-    hero and story switches; a switched-off section's own words are left out.
+    hero and story switches; a switched-off section's own words are left out,
+    and so is the organiser-only `inviteMessage` (`publicView` in
+    `cire/api/src/services/invite.ts`).
   - `GET /api/invite/:slug/image/:slot` → image bytes from R2 (`Cache-Control:
     immutable`; the URL is cache-busted by `?v=<updatedAt>`).
   - Kept off the `osnAuth` gate (same sibling-instance split as `/api/rsvp`) so

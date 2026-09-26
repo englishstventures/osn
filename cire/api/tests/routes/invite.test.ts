@@ -2695,6 +2695,17 @@ describe("PUT /invite/visibility (organiser, migration 0063)", () => {
       return (await res.json()) as PublicInvite;
     }
 
+    // The line an organiser copies to send a household is organiser-only.
+    it("never sends the organiser-only invite message", async () => {
+      const { app } = buildApp();
+      await putText(app, { inviteMessage: "See you in Goa!" });
+      expect(((await organiserInvite(app)) as { inviteMessage?: string }).inviteMessage).toBe(
+        "See you in Goa!",
+      );
+      const body = (await publicInvite(app)) as Record<string, unknown>;
+      expect(Object.keys(body)).not.toContain("inviteMessage");
+    });
+
     it("sends the hero and story switches, and never the closing section's", async () => {
       const { app } = buildApp();
       await putVisibility(app, { footer: false });
