@@ -45,6 +45,7 @@ import {
   createResource,
   createSignal,
   For,
+  type JSX,
   onCleanup,
   onMount,
   Show,
@@ -106,6 +107,12 @@ interface InviteBuilderProps {
   weddingSlug: string;
   /** The wedding's entitlement keys — locks premium designs in the selector. */
   entitlements: string[];
+  /** The section to open on, when a link elsewhere in the dashboard asked for
+   *  one. Read once, as the builder mounts; the first section otherwise. */
+  initialSection?: InviteSectionId;
+  /** The line pointing at the other places that shape the invite message,
+   *  shown in the Message section. */
+  inviteMessageLinks?: JSX.Element;
 }
 
 /**
@@ -175,6 +182,8 @@ const NAV_SECTIONS = [
   { id: "invite-closing", label: "Closing" },
   { id: "invite-message", label: "Message" },
 ] as const;
+
+export type InviteSectionId = (typeof NAV_SECTIONS)[number]["id"];
 
 export default function InviteBuilder(props: InviteBuilderProps) {
   const { authFetch } = useAuth();
@@ -339,7 +348,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
   // old vertical stack of every card. Defaults to the first section, guest
   // scroll order.
   const [activeSection, setActiveSection] = createSignal<(typeof NAV_SECTIONS)[number]["id"]>(
-    NAV_SECTIONS[0].id,
+    props.initialSection ?? NAV_SECTIONS[0].id,
   );
 
   /**
@@ -1373,7 +1382,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                     id="invite-message"
                     legend="Invite message"
                     hidden={activeSection() !== "invite-message"}
-                    description="Not part of the invite page — this is the first line of the message you copy from the Guests tab to send a household. Leave it blank to use the default. The guest-site link and the household's labelled invitation code are added automatically on the two lines below it."
+                    description="Not part of the invite page — this is the first line of the message each household is sent. Leave it blank to use the default."
                   >
                     <TextAreaField
                       label="Invite message (optional)"
@@ -1384,6 +1393,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                       hint="The wedding link and the household's invitation code are appended automatically — don't include them here."
                       onInput={(v) => setDraft("inviteMessage", v)}
                     />
+                    {props.inviteMessageLinks}
                   </SectionCard>
                 </div>
 
