@@ -669,6 +669,17 @@ describe("ModuleShell", () => {
       expect(builder.getAttribute("data-section")).toBe("invite-message");
     });
 
+    it("sends a Households reader to the builder, open on its Message section", async () => {
+      const { onModule, onSub } = renderShell({ module: "guests", sub: "list" });
+
+      fireEvent.click(within(screen.getByTestId("guests")).getByRole("button", MESSAGE));
+
+      expect(onModule.mock.calls).toEqual([["invite", "design"]]);
+      expect(onSub).not.toHaveBeenCalled();
+      const builder = await screen.findByTestId("invite-design");
+      expect(builder.getAttribute("data-section")).toBe("invite-message");
+    });
+
     it("moves the owner from Households to Codes in one step, never through the builder", async () => {
       // Load the lazy builder first, so a stop at invite/design on the way would
       // mount it synchronously and show up in the count.
