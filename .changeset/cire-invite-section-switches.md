@@ -18,8 +18,8 @@ row's switches to what the emptiness check gave before it: content ⇒ on, no
 content ⇒ off. `PUT /api/organiser/weddings/:weddingId/invite/visibility` takes
 a partial `{ hero?, story?, footer? }` of booleans (owner and editors). The
 organiser read returns `visibility` for all three; the public read returns the
-hero and story switches and leaves out a switched-off story's content and a
-switched-off hero's subtitle; the claim response's `closing` gains `visible`
+hero and story switches and leaves out a switched-off story's content, a
+switched-off hero's subtitle and the organiser-only `inviteMessage`; the claim response's `closing` gains `visible`
 and carries no content when it is off. `@cire/theme` exports
 `VISIBILITY_SECTIONS`, `SectionState` and `sectionState`. The builder shows a
 "Show on the invite" switch, a three-state badge and a reason line on each of
