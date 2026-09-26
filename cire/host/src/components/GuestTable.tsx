@@ -104,6 +104,10 @@ export default function GuestTable(props: GuestTableProps) {
   // from the same invite-customisation endpoint the Invite builder writes; `null`
   // ⇒ buildInviteMessage falls back to its default prose.
   const [inviteMessage, setInviteMessage] = createSignal<string | null>(null);
+  // Whether that read has settled — answered, failed or thrown. Copy waits for
+  // it: on a remount the cached rows paint at once, and a copy before the read
+  // lands would send the default first line in place of the host's own.
+  const [messageSettled, setMessageSettled] = createSignal(false);
   // Skip the skeleton on a cache hit — a remount already has rows to paint.
   const [loading, setLoading] = createSignal(!hasCachedGuests(props.weddingId));
   const [error, setError] = createSignal<string | null>(null);
@@ -238,6 +242,7 @@ export default function GuestTable(props: GuestTableProps) {
       if (isAuthExpired(err)) return redirectToLogin();
       setError("Could not load guest list. Is the API running?");
     } finally {
+      setMessageSettled(true);
       setLoading(false);
     }
   });
@@ -516,6 +521,7 @@ export default function GuestTable(props: GuestTableProps) {
                                 variant="quiet"
                                 size="sm"
                                 type="button"
+                                disabled={!messageSettled()}
                                 onClick={() => void copyMessage(family)}
                               >
                                 Copy message

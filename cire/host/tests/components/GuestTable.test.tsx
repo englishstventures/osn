@@ -36,8 +36,8 @@ vi.mock("../../src/lib/download", () => ({
 }));
 
 import GuestTable from "../../src/components/GuestTable";
-import { __resetEventsCache } from "../../src/lib/events-store";
-import { __resetGuestsCache } from "../../src/lib/guests-store";
+import { __resetEventsCache, setCachedEvents } from "../../src/lib/events-store";
+import { __resetGuestsCache, setCachedGuests } from "../../src/lib/guests-store";
 import {
   authFetchMock,
   resetOrganiserMocks,
@@ -176,6 +176,81 @@ describe("GuestTable", () => {
         "https://guests.test/nadia-sam-abc123\n" +
         "Your invitation code: SHARMA-WIDGET-AB3K9-X7QPM",
     );
+  });
+
+  it("holds Copy until the custom message has loaded when the rows come from the cache", async () => {
+    withClipboard();
+    // A remount: the rows are already cached, so they paint at once while the
+    // invite read that carries the custom first line is still in flight.
+    setCachedGuests("wed_a", GUESTS);
+    setCachedEvents("wed_a", EVENTS);
+    let answerInvite: (res: Response) => void = () => {};
+    authFetchMock.mockImplementation((url: string) =>
+      url.endsWith("/invite")
+        ? new Promise<Response>((resolve) => {
+            answerInvite = resolve;
+          })
+        : Promise.resolve(json({ familyId: "fam_a", codeSharedAt: 1 })),
+    );
+
+    render(() => (
+      <GuestTable
+        weddingId="wed_a"
+        canManage
+        weddingName="Nadia & Sam"
+        weddingSlug="nadia-sam-abc123"
+      />
+    ));
+
+    const copy = () => screen.getAllByRole("button", { name: /Copy message/i })[0]!;
+    expect((copy() as HTMLButtonElement).disabled).toBe(true);
+
+    answerInvite(json({ inviteMessage: "Come celebrate with us in Goa!" }));
+    await waitFor(() => expect((copy() as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(copy());
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(writeText.mock.calls[0]![0].split("\n")[0]).toBe("Come celebrate with us in Goa!");
+  });
+
+  it("frees Copy with the default line when the custom message cannot be read", async () => {
+    withClipboard();
+    setCachedGuests("wed_a", GUESTS);
+    setCachedEvents("wed_a", EVENTS);
+    authFetchMock.mockImplementation((url: string) =>
+      Promise.resolve(url.endsWith("/invite") ? json({}, 500) : json({})),
+    );
+
+    render(() => (
+      <GuestTable
+        weddingId="wed_a"
+        canManage
+        weddingName="Nadia & Sam"
+        weddingSlug="nadia-sam-abc123"
+      />
+    ));
+
+    const copy = () => screen.getAllByRole("button", { name: /Copy message/i })[0]!;
+    await waitFor(() => expect((copy() as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(copy());
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(writeText.mock.calls[0]![0]).toContain("You're invited to Nadia & Sam!");
+  });
+
+  it("shows the invite-message links it is given under the introduction", async () => {
+    primeLoad();
+
+    render(() => (
+      <GuestTable
+        weddingId="wed_a"
+        canManage
+        weddingName="Nadia & Sam"
+        weddingSlug="nadia-sam-abc123"
+        inviteMessageLinks={<p data-testid="invite-message-links" />}
+      />
+    ));
+
+    expect(screen.getAllByTestId("invite-message-links")).toHaveLength(1);
   });
 
   it("downloads the RSVP CSV when the export button is clicked", async () => {
