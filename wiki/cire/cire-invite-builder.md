@@ -8,7 +8,7 @@ related:
   - "[[closing-band-width-bound-over-height-clip]]"
   - "[[cire-development]]"
   - "[[drag-and-drop]]"
-last-reviewed: 2026-09-26
+last-reviewed: 2026-09-27
 ---
 # Invite Builder
 
@@ -1150,45 +1150,50 @@ scroll position an organiser had to scroll back up to see. Now `activeSection`
 (a signal in `InviteBuilder.tsx`) tracks which ONE section is showing; the nav
 pills set it instead of scrolling.
 
-**A hidden section's label is struck through; the nav has no dots.** The
-strike means "guests will not see this section", for either reason — switched
-on but empty, or switched off. The reason is in words: each tab's `sr-only`
-clause ("(hidden — empty)" or "(hidden — switched off)"), the menu trigger's
-accessible name, and the section's own badge and reason line. A tab with no
-clause is one whose section is on the invite. The colours come from
-`sectionTabTone` in `fields.tsx`, and the strike is `HIDDEN_LABEL`, added to the
-label on top of either look:
+**A hidden section's label is faded and marked with an eye-off icon; the nav
+has no dots.** Together they mean "guests will not see this section", for
+either reason — switched on but empty, or switched off. The reason is in words:
+each tab's `sr-only` clause ("(hidden — empty)" or "(hidden — switched off)"),
+the menu trigger's accessible name, and the section's own badge and reason line.
+A tab with no clause is one whose section is on the invite. The colours come
+from `sectionTabTone` and `FADED_LABEL` in `fields.tsx`; the icon is
+`HiddenSectionIcon`, lucide's `eye-off` at `size-3.5`, drawn in the label's ink
+and `aria-hidden`:
 
 | | Shown, or no switch | Hidden |
 |---|---|---|
-| Selected | `bg-gold/12` wash, `text-gold-ink` | the same, struck through |
-| Not selected | `text-text-muted` | the same, struck through |
+| Selected | `bg-gold/12` wash, `text-gold-ink` | wash, `text-gold-ink/80`, icon |
+| Not selected | `text-text-muted` | `text-text-faint`, icon |
 
-The wash and the gold ink say "selected"; the strike says "hidden", so a hidden
-tab never reads as merely not selected. The selected ink is `gold-ink`, not
-`gold`: gold is metal with no contrast contract, 2.2:1 on the wash in the light
-theme.
+The wash and the gold hue say "selected"; the fade and the icon say "hidden", so
+a hidden tab never reads as merely not selected. The selected ink is `gold-ink`,
+not `gold`: gold is metal with no contrast contract, 2.2:1 on the wash in the
+light theme, where a faded gold would read stronger than a shown one.
 
-**A strike, not a fade, because a fade cannot be both readable and seen.** The
-label is the text of a working control, so WCAG 1.4.3 holds it to 4.5:1. The
-idle tab's `text-muted` paints only 5.6–6.0:1, so an ink that keeps 4.5:1 can
-sit at most 1.25–1.32 times under it, and the selected tab's `gold-ink` has no
-room at all in the light theme (4.68:1). The ramp's `text-faint` would be
-visible, at 3.3–3.4:1, which is under the floor. A strike is a cue that is not
-colour (WCAG 1.4.1) and costs the ink nothing, so a hidden label is exactly as
-readable as a shown one. `InviteBuilder.tabs.browser.test.tsx` pins this in
-real Chromium, in both themes: every hidden label is painted struck through and
-clears 4.5:1, on the tab row, the menu's panel, the gold wash and the trigger.
+**The fade sits under 4.5:1 by the owner's choice.** WCAG 1.4.3 asks 4.5:1 of
+text this small, and no fade can meet it and still be seen: the idle
+`text-muted` paints only 5.6–6.0:1, so an ink that keeps 4.5:1 is at most
+1.25–1.32 times dimmer, and the selected tab's `gold-ink` (4.68:1 in the light
+theme) has no room at all. The owner chose the fade with an icon over a
+strike-through in full ink: the icon is the cue that is not colour (WCAG 1.4.1),
+and the accessible name carries the state, so the faded ink is not the only
+thing that says a section is hidden. The floor that choice rests on is 3:1 —
+what the icon, drawn in the same ink, needs as a graphic (WCAG 1.4.11).
+`InviteBuilder.tabs.browser.test.tsx` pins it in real Chromium, in both themes,
+on the tab row, the menu's panel, the gold wash and the trigger, and checks the
+icon paints at a real size.
 
 | Painted, dark / light | Ratio |
 |---|---|
-| Hidden tab, not selected (tab row) | 5.96 / 5.62 |
-| Hidden tab, not selected (menu panel) | 5.95 / 5.58 |
-| Hidden tab, selected (on the wash) | 9.74 / 4.68 |
-| Hidden tab, selected (wash over the menu panel) | 9.72 / 4.65 |
-| Hidden menu-trigger label | 16.10 / 11.16 |
+| Faded tab, not selected (tab row) | 3.39 / 3.28 |
+| Faded tab, not selected (menu panel) | 3.40 / 3.29 |
+| Faded tab, selected (on the wash) | 6.70 / 3.26 |
+| Faded tab, selected (wash over the menu panel) | 6.70 / 3.27 |
+| Faded menu-trigger label | 3.43 / 3.36 |
+| Idle tab | 5.96 / 5.62 |
+| Selected tab, shown | 9.74 / 4.68 |
 
-*Measured 2026-09-26 — `bun run --cwd cire/host test:browser`, the floors in `InviteBuilder.tabs.browser.test.tsx` raised to 99 so each assertion prints its ratio*
+*Measured 2026-09-27 — `bun run --cwd cire/host test:browser`, the floors in `InviteBuilder.tabs.browser.test.tsx` raised to 99 so each assertion prints its ratio*
 
 **The ARIA tabs contract is complete, not just the roles.** The first cut
 declared `role="tablist"`/`role="tab"`/`aria-selected` on the nav but left the
