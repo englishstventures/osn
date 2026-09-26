@@ -19,6 +19,7 @@ import { Effect } from "effect";
 import { createApp } from "../../src/app";
 import { DbService } from "../../src/db";
 import { createDb, seedDb } from "../../src/db/setup";
+import { setExecutionCtx } from "../../src/lib/execution-ctx";
 import { hostCodeService } from "../../src/services/host-code";
 import { eff } from "../test-helpers";
 import { seedOrganiserSession } from "../test-helpers/organiser-session";
@@ -846,6 +847,47 @@ describe("account-link state on POST /api/claim and GET /api/claim/session", () 
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("no-store");
     expect(res.headers.get("vary")).toBe("Origin, Cookie");
+  });
+
+  it("keeps a slow flag refresh alive past the response that stopped waiting for it", async () => {
+    // The payload stops waiting for the flag after its cap, but the refresh it
+    // started is shared with every later request in the isolate. On Workers a
+    // finished request's outstanding I/O is cancelled unless it was handed to
+    // `waitUntil`, which would leave that shared refresh unsettled for good.
+    let release!: (on: boolean) => void;
+    const slowFlag = new Promise<boolean>((resolve) => (release = resolve));
+    const linkDb = createDb(":memory:");
+    seedDb(linkDb);
+    const linkApp = createApp(linkDb, {
+      claimLimiter: createRateLimiter({ maxRequests: 10_000, windowMs: 60_000 }),
+      resolveOsnAccountId: async () => ({ ok: true, accountId: "acc_secret" }),
+      flags: {
+        forRequest: async () => {
+          const on = await slowFlag;
+          return { isOn: () => on, getValue: () => false };
+        },
+      },
+    });
+    const request = new Request("http://localhost/api/claim", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "cf-connecting-ip": IP,
+        Origin: "http://localhost:4321",
+      },
+      body: JSON.stringify({ publicId: "TESTTWO-OAK-BB22" }),
+    });
+    const kept: Promise<unknown>[] = [];
+    setExecutionCtx(request, { waitUntil: (promise) => kept.push(promise) });
+
+    const res = await linkApp.fetch(request);
+    const body = (await res.json()) as ClaimOk;
+    // The response did not wait for the flag.
+    expect(body.accountLink).toEqual({ enabled: false });
+    // The flag check was handed to the request's context, and settles later.
+    expect(kept).toHaveLength(1);
+    release(true);
+    expect(await kept[0]).toBe(true);
   });
 
   it("reports linking off on both responses while the flag is off", async () => {

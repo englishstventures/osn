@@ -12,6 +12,7 @@ import {
   parseOrganiserSessionToken,
   parseSessionToken,
 } from "../lib/cookie";
+import { getWaitUntil } from "../lib/execution-ctx";
 import { sessionAuth } from "../middleware/auth";
 import { rateLimitMiddleware } from "../middleware/rate-limit";
 import { turnstileGate } from "../middleware/turnstile";
@@ -29,10 +30,22 @@ const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60;
  * liveness the payload reports. Both cookies ride the one credentialed
  * request the page already makes, so the guest site learns everything its
  * account-link box needs without a request of its own.
+ *
+ * The flag check is handed to the request's `waitUntil`. The payload stops
+ * waiting for it after `ACCOUNT_LINK_FLAG_WAIT`, but a GrowthBook refresh it
+ * started is shared with every later request in the isolate, and Workers
+ * cancels a finished request's outstanding I/O unless `waitUntil` holds it.
+ * Held, the refresh settles (the provider bounds it at 5 s) and serves the
+ * requests after it. The check never rejects, so holding it cannot fail.
  */
 function accountLinkGate(linking: AccountLinking, request: Request): AccountLinkGate {
+  const waitUntil = getWaitUntil(request);
   return {
-    enabledFor: (familyId) => isAccountLinkingOn(linking, familyId),
+    enabledFor: (familyId) => {
+      const answer = isAccountLinkingOn(linking, familyId);
+      waitUntil?.(answer);
+      return answer;
+    },
     osnSessionToken: parseOrganiserSessionToken(request.headers.get("cookie")),
   };
 }

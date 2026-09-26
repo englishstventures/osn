@@ -138,9 +138,10 @@ const LINKING_OFF: AccountLinkState = { enabled: false };
  * provider refreshes its payload from GrowthBook (at most once per cache
  * window per isolate, bounded at 5 s by the provider itself). Past this the
  * household is told linking is off for this one response, so a slow flag
- * service can never hold an invite back. The refresh carries on and serves
- * the next request. Chosen, not measured: well above a healthy CDN fetch,
- * well below what a guest would notice as a stalled invite.
+ * service can never hold an invite back. The refresh carries on — the route
+ * hands the check to the request's `waitUntil` — and serves the requests after
+ * it. Chosen, not measured: well above a healthy CDN fetch, well below what a
+ * guest would notice as a stalled invite.
  */
 export const ACCOUNT_LINK_FLAG_WAIT = "250 millis";
 
