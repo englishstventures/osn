@@ -1,7 +1,8 @@
 /**
  * Invite builder — lets the signed-in organiser customise the guest invite. It
  * is structured as one card per guest-page section, **in the order a guest
- * scrolls them** (Hero → Our Story → Code Entry & Welcome → Events → Closing),
+ * scrolls them** (Hero → Our Story → Code Entry & Welcome → Events → FAQ →
+ * Closing),
  * and each card owns EVERYTHING about its section: image, copy, colours, and a
  * live preview. Global typography sits first (it applies to every section),
  * the copyable invite message last (it is not part of the guest page). One
@@ -22,7 +23,7 @@
  *
  * Two persistence models coexist deliberately: text/theme and the section
  * visibility switches wait for Save;
- * images, crops and the design selection apply immediately (marked with an
+ * images, crops, the design selection and the FAQ entries apply immediately (marked with an
  * "applies immediately" badge, and image removal asks first). A draft→publish
  * model that would unify them needs API support — tracked in the cire wiki.
  */
@@ -47,6 +48,7 @@ import {
   createResource,
   createSignal,
   For,
+  type JSX,
   onCleanup,
   onMount,
   Show,
@@ -56,17 +58,22 @@ import { createStore } from "solid-js/store";
 import { apiUrl, isAuthExpired, redirectToLogin } from "../../lib/api";
 import { haptic } from "../../lib/haptics";
 import type { ImageCrop } from "../../lib/image-crop";
-import { footerState, heroState, storyState } from "../../lib/invite-emptiness";
+import { faqState, footerState, heroState, storyState } from "../../lib/invite-emptiness";
 import { CIRE_WEB_URL } from "../../lib/osn";
 import { registerUnsavedGuard } from "../../lib/unsaved-guard";
 import PaletteField, { resolvedSeeds } from "../PaletteField";
 import { designLayout } from "./design-layout";
 import DesignPicker from "./DesignPicker";
+import FaqEditor from "./FaqEditor";
 import {
   ChoiceField,
   Disclosure,
+  FADED_LABEL,
+  HiddenSectionIcon,
+  isHiddenState,
   SECTION_STATE_LABELS,
   SectionCard,
+  sectionTabTone,
   SliderField,
   TextAreaField,
   TextField,
@@ -81,6 +88,7 @@ import {
   DEFAULTS,
   draftFromCustomisation,
   emptyDraft,
+  type FaqEntry,
   FONT_OPTIONS,
   FONT_STYLE_OPTIONS,
   FONT_WEIGHT_OPTIONS,
@@ -89,6 +97,7 @@ import {
   HERO_BLUR_DEFAULT,
   HERO_BLUR_MAX,
   HERO_BLUR_MIN,
+  faqSampleBody,
   type ImageSlot,
   type InviteCustomisation,
   sampleCopy,
@@ -110,6 +119,12 @@ interface InviteBuilderProps {
   weddingSlug: string;
   /** The wedding's entitlement keys — locks premium designs in the selector. */
   entitlements: string[];
+  /** The section to open on, when a link elsewhere in the dashboard asked for
+   *  one. Read once, as the builder mounts; the first section otherwise. */
+  initialSection?: InviteSectionId;
+  /** The line pointing at the other places that shape the invite message,
+   *  shown in the Message section. */
+  inviteMessageLinks?: JSX.Element;
 }
 
 /**
@@ -176,23 +191,42 @@ const NAV_SECTIONS = [
   { id: "invite-story", label: "Our Story" },
   { id: "invite-welcome", label: "Welcome" },
   { id: "invite-events", label: "Events" },
+  { id: "invite-faq", label: "FAQ" },
   { id: "invite-closing", label: "Closing" },
   { id: "invite-message", label: "Message" },
 ] as const;
+
+export type InviteSectionId = (typeof NAV_SECTIONS)[number]["id"];
 
 export default function InviteBuilder(props: InviteBuilderProps) {
   const { authFetch } = useAuth();
 
   const base = () => `/api/organiser/weddings/${props.weddingId}/invite`;
 
+  // The FAQ entries. They arrive once, on the first load (`?include=faqs`), and
+  // from then on `FaqEditor` keeps them current: the write routes' responses
+  // that replace `data` below never carry them. Set before the resource
+  // resolves, so the FAQ card never renders ahead of its list. `undefined`
+  // after the first load means an API older than the FAQ.
+  const [faqs, setFaqs] = createSignal<FaqEntry[] | undefined>(undefined);
+  let faqsLoaded = false;
+  // An FAQ form with typing in it, or an FAQ order not yet saved. Guarded like a
+  // dirty draft, but kept out of the save bar, which cannot save either.
+  const [faqPending, setFaqPending] = createSignal(false);
+
   const [data, { mutate, refetch }] = createResource<InviteCustomisation>(async () => {
-    const res = await authFetch(apiUrl(base()));
+    const res = await authFetch(apiUrl(faqsLoaded ? base() : `${base()}?include=faqs`));
     if (res.status === 401) {
       redirectToLogin();
       throw new Error("unauthorised");
     }
     if (!res.ok) throw new Error(`Could not load invite (${res.status}).`);
-    return (await res.json()) as InviteCustomisation;
+    const body = (await res.json()) as InviteCustomisation;
+    if (!faqsLoaded) {
+      faqsLoaded = true;
+      setFaqs(body.faqs);
+    }
+    return body;
   });
 
   // The whole editable state as one draft store (see model.ts), seeded once
@@ -251,14 +285,14 @@ export default function InviteBuilder(props: InviteBuilderProps) {
   // A dirty draft is guarded twice: the dashboard's SPA navigation asks before
   // switching away (unsaved-guard), and the browser asks on tab close/reload.
   onMount(() => {
-    const unregister = registerUnsavedGuard(isDirty);
+    const unregister = registerUnsavedGuard(() => isDirty() || faqPending());
     onCleanup(unregister);
   });
   // The beforeunload listener exists ONLY while dirty — a persistently
   // registered one makes the page ineligible for the back/forward cache in
   // Firefox/Safari even with a clean form (P-I3).
   createEffect(() => {
-    if (!isDirty()) return;
+    if (!isDirty() && !faqPending()) return;
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = "";
@@ -348,17 +382,17 @@ export default function InviteBuilder(props: InviteBuilderProps) {
   // old vertical stack of every card. Defaults to the first section, guest
   // scroll order.
   const [activeSection, setActiveSection] = createSignal<(typeof NAV_SECTIONS)[number]["id"]>(
-    NAV_SECTIONS[0].id,
+    props.initialSection ?? NAV_SECTIONS[0].id,
   );
 
   /**
    * Whether the narrow-container section menu is open (see {@link SECTION_MENU_ID}).
    *
-   * Below `@3xl/builder` the eight tabs cannot sit on one line, and the row used
+   * Below `@3xl/builder` the tabs cannot sit on one line, and the row used
    * to be a horizontally scrolling strip: Closing and Message lived off the right
    * edge with nothing to say so, on the surface where an organiser is least
    * likely to go looking. The tabs are now collapsed behind a trigger naming the
-   * current section, and open as a two-column grid that shows all eight at once —
+   * current section, and open as a two-column grid that shows every tab at once —
    * the same move `ModuleSidebar` made for the module strip. From
    * `@3xl/builder` up the trigger is `display: none` and the same tablist is the
    * static row it has always been, so this signal is inert there.
@@ -425,6 +459,25 @@ export default function InviteBuilder(props: InviteBuilderProps) {
     return ids[(fromIndex + delta + ids.length) % ids.length];
   }
 
+  /**
+   * The section one row down (`dir` 1) or up (-1) in the open menu's grid,
+   * wrapping within its COLUMN: down from the last row goes to the top of the
+   * same column, up from the first row to the lowest cell of that column. A
+   * plain modulo step would cross columns whenever the tab count is odd, since
+   * the last row is then a single cell.
+   */
+  function stepSectionRow(fromId: string, dir: 1 | -1): string | undefined {
+    const ids = NAV_SECTIONS.map((s): string => s.id);
+    const from = Math.max(0, ids.indexOf(fromId));
+    const next = from + dir * SECTION_MENU_COLUMNS;
+    if (next >= 0 && next < ids.length) return ids[next];
+    const column = from % SECTION_MENU_COLUMNS;
+    if (dir === 1) return ids[column];
+    const lowest =
+      column + Math.floor((ids.length - 1 - column) / SECTION_MENU_COLUMNS) * SECTION_MENU_COLUMNS;
+    return ids[lowest];
+  }
+
   /** Move focus to a tab and activate its section — the APG "automatic
    *  activation" model, same as the design radiogroup's arrow-key behaviour. */
   function focusSection(id: (typeof NAV_SECTIONS)[number]["id"]) {
@@ -466,11 +519,11 @@ export default function InviteBuilder(props: InviteBuilderProps) {
         break;
       case "ArrowDown":
         if (!sectionMenuOpen()) return;
-        nextId = stepSection(currentId, SECTION_MENU_COLUMNS);
+        nextId = stepSectionRow(currentId, 1);
         break;
       case "ArrowUp":
         if (!sectionMenuOpen()) return;
-        nextId = stepSection(currentId, -SECTION_MENU_COLUMNS);
+        nextId = stepSectionRow(currentId, -1);
         break;
       case "Home":
         nextId = NAV_SECTIONS[0]!.id;
@@ -524,6 +577,10 @@ export default function InviteBuilder(props: InviteBuilderProps) {
       imageUrl: data()?.footer?.imageUrl,
     });
 
+  // The FAQ has content once it has an entry. The entries apply at once, so the
+  // badge reads the live list; the switch is the draft's, like the others.
+  const faqSectionState = () => faqState(draft.visibility.faq, faqs());
+
   /** Section state per nav item, mirroring the section badges. `undefined` for
    *  the sections that cannot be hidden. */
   const navState = (id: string): SectionState | undefined => {
@@ -532,6 +589,8 @@ export default function InviteBuilder(props: InviteBuilderProps) {
         return heroSectionState();
       case "invite-story":
         return storySectionState();
+      case "invite-faq":
+        return faqSectionState();
       case "invite-closing":
         return footerSectionState();
       default:
@@ -539,12 +598,12 @@ export default function InviteBuilder(props: InviteBuilderProps) {
     }
   };
 
-  /** The ACTIVE section's state, for the collapsed menu trigger's dot.
-   *  Memoised because the trigger reads it three times (the `Show` plus two
-   *  `classList` entries) and `navState` funnels into the draft-reading state
-   *  functions — one subscription per keystroke instead of three. Declared
-   *  here, not beside `activeIndex`/`activeLabel`: `createMemo` runs its
-   *  computation eagerly, so it has to sit below `navState`. */
+  /** The ACTIVE section's state, for the collapsed menu trigger's faded label
+   *  and its accessible name. Memoised because the trigger reads it twice and
+   *  `navState` funnels into the draft-reading state functions — one
+   *  subscription per keystroke instead of two. Declared here, not beside
+   *  `activeIndex`/`activeLabel`: `createMemo` runs its computation eagerly, so
+   *  it has to sit below `navState`. */
   const activeState = createMemo(() => navState(activeSection()));
 
   /** The active section's state as a clause for the trigger's accessible name —
@@ -827,6 +886,10 @@ export default function InviteBuilder(props: InviteBuilderProps) {
     eyebrow: draft.detailsEyebrow,
     heading: draft.detailsHeading,
   });
+  const faqPreviewProps = (): PreviewPaneProps["faq"] => ({
+    state: faqSectionState(),
+    questions: (faqs() ?? []).map((e) => e.question),
+  });
   const closingPreviewProps = (d: () => InviteCustomisation): PreviewPaneProps["closing"] => ({
     state: footerSectionState(),
     message: draft.footerMessage,
@@ -869,14 +932,16 @@ export default function InviteBuilder(props: InviteBuilderProps) {
           const storySlot = createMemo(() => storyPreviewProps());
           const welcomeSlot = createMemo(() => welcomePreviewProps());
           const eventsSlot = createMemo(() => eventsPreviewProps());
+          const faqSlot = createMemo(() => faqPreviewProps());
           const closingSlot = createMemo(() => closingPreviewProps(d));
 
           return (
             <form onSubmit={(e) => void saveInvite(e)} class="flex flex-col gap-6">
-              {/* ── Section tabs — sticky, one section shown at a time, dots mirror
-                the section state badges — plus, below `@4xl/builder` (where there's
-                no room for the sticky side preview), a button that opens the
-                composed preview in a modal instead. ── */}
+              {/* ── Section tabs — sticky, one section shown at a time, a hidden
+                section's label faded with an eye-off icon (`sectionTabTone`) — plus,
+                below `@4xl/builder` (where there's no room for the sticky side
+                preview), a button that opens the composed preview in a modal
+                instead. ── */}
               <div class="border-border bg-bg/90 sticky top-0 z-20 -mx-6 flex items-center gap-2 border-b px-6 py-2 backdrop-blur">
                 {/* No `relative` here on purpose: the open menu positions
                   against the STICKY BAR (already a positioned element, so it is
@@ -905,21 +970,23 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                 >
                   {/* Narrow containers only: the current section as a menu
                     trigger. It names where the organiser IS (label, position,
-                    Shown/Hidden dot) so the menu only has to be opened to move,
-                    never to orient — the thing the scrolling strip could not do
-                    for the sections parked off its right edge. */}
+                    and the label faded, with an eye-off icon, while it is hidden) so the menu
+                    only has to be opened to move, never to orient — the thing
+                    the scrolling strip could not do for the sections parked off
+                    its right edge. */}
                   <Button
                     variant="tile"
                     type="button"
                     ref={(el) => (sectionMenuTrigger = el)}
                     aria-expanded={sectionMenuOpen()}
                     aria-controls={SECTION_MENU_ID}
-                    // The dot is `aria-hidden`, and an `aria-label` overrides
-                    // subtree content — so an `sr-only` span inside the button
-                    // (what the tabs themselves use) would be dropped. The state
-                    // has to be folded into the label, or the collapsed trigger
-                    // tells a sighted organiser three things and a screen-reader
-                    // one only two. Wording matches `SegmentBadge`.
+                    // The icon is `aria-hidden`, a fade says nothing to a
+                    // screen reader, and an `aria-label` overrides subtree
+                    // content — so an `sr-only` span inside the button (what
+                    // the tabs themselves use) would be dropped. The state has
+                    // to be folded into the label, or the collapsed trigger
+                    // tells a sighted organiser three things and a
+                    // screen-reader one only two. Wording matches `SegmentBadge`.
                     aria-label={`Invite section: ${activeLabel()}, ${activeIndex() + 1} of ${NAV_SECTIONS.length}${stateSuffix()}. Choose a section`}
                     onClick={() => setSectionMenuOpen(!sectionMenuOpen())}
                     onKeyDown={(e) => {
@@ -929,17 +996,12 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                     }}
                     class="flex min-h-11 w-full items-center justify-between @3xl/builder:hidden"
                   >
-                    <span class="flex min-w-0 items-center gap-2">
-                      <Show when={activeState() !== undefined}>
-                        <span
-                          aria-hidden
-                          class="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-                          classList={{
-                            "bg-gold": activeState() === "shown",
-                            "bg-text-muted/50":
-                              activeState() !== undefined && activeState() !== "shown",
-                          }}
-                        />
+                    <span
+                      class="flex min-w-0 items-center gap-2"
+                      classList={{ [FADED_LABEL]: isHiddenState(activeState()) }}
+                    >
+                      <Show when={isHiddenState(activeState())}>
+                        <HiddenSectionIcon />
                       </Show>
                       <span class="min-w-0 truncate">{activeLabel()}</span>
                     </span>
@@ -958,12 +1020,12 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                   </Button>
 
                   {/* ONE tablist, two presentations. Narrow + open: a two-column
-                    grid dropped under the trigger — all eight sections on screen
+                    grid dropped under the trigger — every section on screen
                     at once, no horizontal scroll, and absolutely positioned so
                     opening it never shoves the form down. Narrow + closed:
                     `display: none` (the panels' `aria-labelledby` still resolves
                     against it — the accname spec follows hidden references).
-                    From `@3xl/builder`, where the eight fit on one line: the
+                    From `@3xl/builder`, where the row has room to wrap: the
                     static row, always laid out, menu state irrelevant. */}
                   <div
                     id={SECTION_MENU_ID}
@@ -988,24 +1050,16 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                             onKeyDown={(e) => onSectionTabKeyDown(e, item.id)}
                             // `min-h-11` is a 44px touch target in the menu; the
                             // wide row keeps the compact pill it has always been.
-                            class={`font-body text-ui-xs tracking-ui-wider flex min-h-11 w-full shrink-0 items-center gap-1.5 rounded-sm px-3 py-2 text-left uppercase transition-colors @3xl/builder:min-h-0 @3xl/builder:w-auto @3xl/builder:px-2.5 @3xl/builder:py-1 ${
-                              active()
-                                ? "bg-gold/12 text-gold"
-                                : "text-text-muted hover:text-text hover:bg-surface/60"
-                            }`}
+                            class={`font-body text-ui-xs tracking-ui-wider flex min-h-11 w-full shrink-0 items-center gap-1.5 rounded-sm px-3 py-2 text-left uppercase transition-colors @3xl/builder:min-h-0 @3xl/builder:w-auto @3xl/builder:px-2.5 @3xl/builder:py-1 ${sectionTabTone(
+                              active(),
+                              isHiddenState(state()),
+                            )}`}
                           >
-                            <Show when={state() !== undefined}>
-                              <span
-                                aria-hidden
-                                class="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-                                classList={{
-                                  "bg-gold": state() === "shown",
-                                  "bg-text-muted/50": state() !== undefined && state() !== "shown",
-                                }}
-                              />
+                            <Show when={isHiddenState(state())}>
+                              <HiddenSectionIcon />
                             </Show>
                             <span class="min-w-0 truncate">{item.label}</span>
-                            <Show when={state() !== undefined && state() !== "shown"}>
+                            <Show when={isHiddenState(state())}>
                               <span class="sr-only">
                                 ({SECTION_STATE_LABELS[state()!].toLowerCase()})
                               </span>
@@ -1358,6 +1412,42 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                     </Show>
                   </SectionCard>
 
+                  {/* ── FAQ ────────────────────────────────────────────── */}
+                  <SectionCard
+                    id="invite-faq"
+                    legend="FAQ"
+                    visibility={{
+                      state: faqSectionState(),
+                      visible: draft.visibility.faq,
+                      onChange: (v) => setDraft("visibility", "faq", v),
+                      emptyHint: "a question and its answer",
+                      offNote:
+                        "Switched off. Guests won't see your questions; they are all kept for when you switch it back on.",
+                    }}
+                    hidden={activeSection() !== "invite-faq"}
+                    description="Answer what guests ask anyway — parking, the dress code, children, timing. The questions sit under your events once a guest enters their code, each answer opening from its question. Every household sees every question, unlike the events, which each household sees only when invited — so don't mention an event only some guests are invited to. Questions save as soon as you add, change, reorder or delete them; the switch saves with the rest of the invite."
+                  >
+                    <FaqEditor
+                      weddingId={props.weddingId}
+                      entries={faqs()}
+                      onEntriesChange={setFaqs}
+                      onPendingChange={setFaqPending}
+                    />
+                    {/* No colour picker of its own — the FAQ sits on the events
+                      section's surface, as part of the same block. */}
+                    <Show when={showInlinePreviews() && activeSection() === "invite-faq"}>
+                      <SectionPreview
+                        label="FAQ"
+                        tokens={previewTokens()}
+                        surface={toneSurface("details")}
+                        design={currentDesign()}
+                        eyebrow={DEFAULTS.faqEyebrow}
+                        heading={DEFAULTS.faqHeading}
+                        body={faqSampleBody((faqs() ?? []).map((e) => e.question))}
+                      />
+                    </Show>
+                  </SectionCard>
+
                   {/* ── Closing section ────────────────────────────────── */}
                   <SectionCard
                     id="invite-closing"
@@ -1420,7 +1510,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                     id="invite-message"
                     legend="Invite message"
                     hidden={activeSection() !== "invite-message"}
-                    description="Not part of the invite page — this is the first line of the message you copy from the Guests tab to send a household. Leave it blank to use the default. The guest-site link and the household's labelled invitation code are added automatically on the two lines below it."
+                    description="Not part of the invite page — this is the first line of the message each household is sent. Leave it blank to use the default."
                   >
                     <TextAreaField
                       label="Invite message (optional)"
@@ -1431,6 +1521,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                       hint="The wedding link and the household's invitation code are appended automatically — don't include them here."
                       onInput={(v) => setDraft("inviteMessage", v)}
                     />
+                    {props.inviteMessageLinks}
                   </SectionCard>
                 </div>
 
@@ -1449,6 +1540,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                         story={storySlot()}
                         welcome={welcomeSlot()}
                         events={eventsSlot()}
+                        faq={faqSlot()}
                         closing={closingSlot()}
                       />
                     </div>
@@ -1469,6 +1561,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                 story={storySlot()}
                 welcome={welcomeSlot()}
                 events={eventsSlot()}
+                faq={faqSlot()}
                 closing={closingSlot()}
               />
 
