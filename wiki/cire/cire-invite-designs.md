@@ -70,8 +70,12 @@ RSVP-by line, and the household's controls in this order:
 3. **Sign-out** — "Not {name}? Sign out". The panel itself revokes
    `cire_session` (`POST /api/claim/signout`, see [[cire-auth]]), drops the
    restore hint, resets its form and clears the inline styles the unlock
-   animation left on it. The pack's `onSignOut` resets only the pack's own
-   state.
+   animation left on it. Outside host preview it also ends the OSN sign-in
+   the account link uses (`POST /api/auth/signout`, through an on-demand
+   import of `@shared/rp-auth`): the household cookie does not cover it, and
+   on a shared device the next household would otherwise find it signed in.
+   In preview that session is the organiser's portal sign-in, so it stays.
+   The pack's `onSignOut` resets only the pack's own state.
 
 The panel also records the restore hint (`noteClaimed`) when a code is
 claimed. The pack keeps the claim result, the reveal choreography

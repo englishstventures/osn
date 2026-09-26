@@ -296,6 +296,7 @@ An invitee may **optionally** attach their seat to a real OSN/Pulse account so t
 2. Signed out, it offers "Sign in with musubi" — `signIn(window.location.href)`, the same top-level redirect the organiser portal uses. The guest cookie survives the round trip, so the guest comes back to the claimed invite with the panel signed in.
 3. Signed in, the guest picks **which household member they are** and the panel POSTs `{ guestId }` through `authFetch`. **409 is treated as success**, not an error: the seat is linked either way, and surfacing "already linked" as a failure would be a lie. 403 → "That isn't one of your household's guests." A thrown `AuthExpiredError` flips the panel back to the sign-in button.
 4. Unlink is optimistic and idempotent — the indicator flips at once, and a `404` from `DELETE /api/account/link/:guestId` counts as done.
+5. Household sign-out ends this sign-in too. The panel's "Not {name}? Sign out" control sends `POST /api/auth/signout` beside `POST /api/claim/signout`, so a shared device does not hand one guest's OSN sign-in to the next household to claim. Host preview is the exception: there the same session is the organiser's portal sign-in.
 
 ## CSRF origin guard (C5 / S-L3)
 
