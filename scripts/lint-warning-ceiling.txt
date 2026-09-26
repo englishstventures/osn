@@ -19,4 +19,4 @@
 # conflict rather than silently agreeing on the same leading number while
 # disagreeing on what it was measured from.
 
-1003   # measured via scripts/guard-lint-warnings.sh (oxlint --format=json), feat/cire-invite-login-panel @ 2026-09-26 — gala's copy of the claim panel and its finding-tag comments removed in favour of the shared LoginSection. No rule was disabled.
+1001   # measured via scripts/guard-lint-warnings.sh (oxlint --format=json), fix/cire-cors-patch @ 2026-09-26 — two tracker references dropped from the settings-body comment in cire/api/src/schemas/settings.ts. No rule was disabled.

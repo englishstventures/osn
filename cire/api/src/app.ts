@@ -651,8 +651,11 @@ export function createApp(db: Db, options: AppOptions = {}) {
           // `*` — so the browser will include credentials. Any mismatch gets no
           // `Access-Control-Allow-Origin` header.
           origin: corsOrigins,
-          // DELETE: account-link unlink + invite image reset. PUT: invite text save.
-          methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+          // Every method a route answers, and no other. The portals call this
+          // API cross-origin with credentials, so each non-GET call is
+          // preflighted and the browser refuses a method this list leaves out.
+          // `tests/app.test.ts` fails when a mounted route's method is missing.
+          methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
           allowedHeaders: ["Content-Type", "Authorization"],
           credentials: true,
         }),
