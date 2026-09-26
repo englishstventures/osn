@@ -41,10 +41,15 @@ const FILLED: Content = {
   footer_message: "No boxed gifts please",
 };
 
-// Each wedding's content, and what 0063's backfill makes of it.
+// Each wedding's content, and what 0063's backfill makes of it. The three
+// `wed_no_*` rows each have exactly one section blank, so each term of 0065's
+// WHERE is the only one that selects some row.
 const FIXTURES: Record<string, Content> = {
   wed_blank: {},
   wed_mixed: { hero_image_key: "assets/w/hero-1" },
+  wed_no_hero: { story_body: FILLED.story_body, footer_message: FILLED.footer_message },
+  wed_no_story: { hero_title: FILLED.hero_title, footer_message: FILLED.footer_message },
+  wed_no_closing: { hero_title: FILLED.hero_title, story_body: FILLED.story_body },
   wed_hidden: FILLED,
   wed_on: FILLED,
 };
@@ -119,6 +124,9 @@ describe("migration 0065", () => {
       story_visible: 0,
       footer_visible: 0,
     });
+    expect(switchesOf(db, "wed_no_hero")).toEqual({ ...ALL_ON, hero_visible: 0 });
+    expect(switchesOf(db, "wed_no_story")).toEqual({ ...ALL_ON, story_visible: 0 });
+    expect(switchesOf(db, "wed_no_closing")).toEqual({ ...ALL_ON, footer_visible: 0 });
     expect(switchesOf(db, "wed_hidden")).toEqual({
       hero_visible: 0,
       story_visible: 0,
@@ -149,6 +157,9 @@ describe("migration 0065", () => {
       { wedding_id: "wed_blank", faq_visible: 1 },
       { wedding_id: "wed_hidden", faq_visible: 1 },
       { wedding_id: "wed_mixed", faq_visible: 0 },
+      { wedding_id: "wed_no_closing", faq_visible: 1 },
+      { wedding_id: "wed_no_hero", faq_visible: 1 },
+      { wedding_id: "wed_no_story", faq_visible: 1 },
       { wedding_id: "wed_on", faq_visible: 0 },
     ]);
     db.close();
@@ -166,8 +177,8 @@ describe("migration 0065", () => {
     const db = beforeMigration();
     const changesBefore = totalChanges(db);
     apply(db, MIG_0065);
-    // wed_blank, wed_mixed and wed_hidden; wed_on is already all on.
-    expect(totalChanges(db) - changesBefore).toBe(3);
+    // Every fixture but wed_on, which is already all on.
+    expect(totalChanges(db) - changesBefore).toBe(Object.keys(FIXTURES).length - 1);
     db.close();
   });
 });
