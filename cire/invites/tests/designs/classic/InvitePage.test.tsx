@@ -625,6 +625,32 @@ describe("InvitePage", () => {
     });
   });
 
+  it("puts the Pulse account link in the claim panel, not the events section", async () => {
+    vi.stubGlobal(
+      "fetch",
+      noSession(
+        vi.fn().mockResolvedValue(
+          new Response(JSON.stringify(claim), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+        ),
+      ),
+    );
+
+    const { getByText, getByPlaceholderText, findByTestId } = render(() => (
+      <InvitePage apiUrl="https://api.test" />
+    ));
+
+    fireEvent.input(getByPlaceholderText(/PATEL-JOY/), { target: { value: "SHARMA-JOY-RK97" } });
+    fireEvent.click(getByText("Open Invitation"));
+
+    const link = await findByTestId("pulse-account-link-stub", {}, { timeout: 2000 });
+    // The household's controls live together in the panel the guest lands on.
+    expect(link.closest("section")).toBe(getByText("Enter Your Code").closest("section"));
+    expect(getByText("Your Events").closest("section")!.contains(link)).toBe(false);
+  });
+
   it("'Sign out' returns to the code form and clears the claimed invite", async () => {
     vi.stubGlobal(
       "fetch",
@@ -1009,6 +1035,40 @@ describe("InvitePage", () => {
   });
 
   // Whitespace-only is not content — same rule as every other invite segment.
+  // The page's own gate on the switch, beside the API leaving the content out:
+  // a switched-off closing section renders nothing even if content arrives.
+  it("omits a switched-off closing section that has a note", async () => {
+    vi.stubGlobal(
+      "fetch",
+      noSession(
+        vi.fn().mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              ...claim,
+              preview: true,
+              closing: {
+                visible: false,
+                message: "No boxed gifts please",
+                imageUrl: null,
+                imageCrop: null,
+              },
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          ),
+        ),
+      ),
+    );
+    window.history.replaceState(null, "", "/?code=HOST-ABCDEF0123456789ABCDEF01");
+
+    const { container, getByText, queryByText } = render(() => (
+      <InvitePage apiUrl="https://api.test" />
+    ));
+
+    await waitFor(() => expect(getByText(/Preview mode/i)).toBeTruthy(), { timeout: 2000 });
+    expect(container.querySelector("[data-invite-closing]")).toBeNull();
+    expect(queryByText("No boxed gifts please")).toBeNull();
+  });
+
   it("omits the closing section for a whitespace-only note", async () => {
     vi.stubGlobal(
       "fetch",
