@@ -1,8 +1,8 @@
 import Button from "@cire/ui/button";
-import { For, lazy, Show, Suspense } from "solid-js";
+import { createEffect, For, lazy, onMount, Show, Suspense } from "solid-js";
 
 import { createClaimCode } from "./claim-code";
-import { noteClaimed, signOut } from "./claim-session";
+import { hasClaimedHint, noteClaimed, signOut } from "./claim-session";
 import { filterThemeVars } from "./invite-theme";
 import type { RsvpDeadlineState } from "./rsvp-deadline";
 import { RsvpDeadlineNotice } from "./RsvpDeadlineNotice";
@@ -10,17 +10,35 @@ import { TurnstileWidget, turnstileEnabled, type TurnstileControls } from "./Tur
 import type { ClaimResult } from "./types";
 
 // Account linking, split out of the invite's first download. Most households
-// never link an account, and nothing here renders before a claim, so both
-// chunks load only when a claimed, non-preview household is on screen — never
-// for a visitor who does not claim. Module scope, so every render shares one
-// promise and therefore one chunk. `.then` adapters because `lazy` wants a
-// default export and both are named.
+// never link an account, and nothing here renders before a claim, so a visitor
+// who never submits a code never downloads these chunks. Module scope, so every
+// render shares one promise and therefore one chunk. `.then` adapters because
+// `lazy` wants a default export and both are named.
 const PulseAccountLink = lazy(() =>
   import("./PulseAccountLink").then((m) => ({ default: m.PulseAccountLink })),
 );
-const AuthProvider = lazy(() =>
-  import("@shared/rp-auth/solid").then((m) => ({ default: m.AuthProvider })),
-);
+const AuthProvider = lazy(() => {
+  // Start the account link beside its provider rather than after it: the
+  // provider only asks for its children once it has rendered, which would put
+  // the two downloads one after the other. Only the link — `lazy` records this
+  // loader's promise after it returns, so preloading the provider from here
+  // would call this loader again.
+  void PulseAccountLink.preload().catch(() => {});
+  return import("@shared/rp-auth/solid").then((m) => ({ default: m.AuthProvider }));
+});
+
+/**
+ * Start downloading the account link and its auth client, without rendering
+ * either. Called as a claim or a session restore begins, so the chunks arrive
+ * while that request is in flight: the account link sits above the events, and
+ * the later it appears, the further it pushes events already on screen.
+ * Idempotent — `lazy` keeps one promise per chunk. A failed download is left
+ * for the render to meet, inside its own Suspense boundary.
+ */
+function warmAccountLink(): void {
+  void PulseAccountLink.preload().catch(() => {});
+  void AuthProvider.preload().catch(() => {});
+}
 
 /**
  * How the claim and welcome panel sits on the page. The two values are the
@@ -175,6 +193,19 @@ export function LoginSection(props: LoginSectionProps) {
       // handler, so its result is set before other islands hear of the claim.
       noteClaimed();
     },
+  });
+
+  // Warm the account link the moment a claim is under way — a typed code or
+  // the `?code=` deep link — so it is ready when the result lands. A host
+  // preview arrives this way too and never shows the link; that costs the
+  // organiser one small download, which is cheaper than waiting to know.
+  createEffect(() => {
+    if (claim.loading()) warmAccountLink();
+  });
+  // A returning household: the restore hint says the page's session restore
+  // is about to open the invite without a code, so warm it beside that request.
+  onMount(() => {
+    if (hasClaimedHint()) warmAccountLink();
   });
 
   // Falls back to `result` so the section still swaps for a caller that passes

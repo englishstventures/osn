@@ -1,4 +1,4 @@
-import { cleanup, render, waitFor } from "@solidjs/testing-library";
+import { cleanup, fireEvent, render, waitFor } from "@solidjs/testing-library";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ClaimResult } from "../../src/components/types";
@@ -14,7 +14,9 @@ import type { ClaimResult } from "../../src/components/types";
  *
  * The cases run in order in one module registry, and the counts only ever
  * rise, so each case proves its own step: nothing on import, nothing for an
- * unclaimed visitor, nothing for a host preview, then both on a real claim.
+ * unclaimed visitor, nothing for a host preview, then both as soon as a code is
+ * submitted — while the claim is still in flight, so the account link does not
+ * appear late and push the events down.
  */
 const loads = vi.hoisted(() => ({ pulse: 0, auth: 0, authCore: 0 }));
 
@@ -77,7 +79,23 @@ describe("LoginSection keeps account linking out of the first download", () => {
     expect(loads).toEqual({ pulse: 0, auth: 0, authCore: 0 });
   });
 
-  it("loads it once a household has claimed", async () => {
+  it("starts loading it as soon as a code is submitted, before the claim answers", async () => {
+    // The claim request never answers here, so anything loaded was loaded by
+    // the submit itself.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => {})),
+    );
+    const { LoginSection } = await import("../../src/components/LoginSection");
+    const { getByLabelText, getByText } = render(() => (
+      <LoginSection apiUrl="http://x" result={null} onClaimed={() => {}} />
+    ));
+    fireEvent.input(getByLabelText("Invitation code"), { target: { value: "OKAFOR-LILY-AB12CD" } });
+    fireEvent.click(getByText("Open Invitation"));
+    await waitFor(() => expect(loads).toEqual({ pulse: 1, auth: 1, authCore: 0 }));
+  });
+
+  it("renders it once a household has claimed", async () => {
     vi.stubGlobal("fetch", vi.fn());
     const { LoginSection } = await import("../../src/components/LoginSection");
     const { findByTestId } = render(() => (
