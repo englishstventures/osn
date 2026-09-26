@@ -65,7 +65,7 @@ import DesignPicker from "./DesignPicker";
 import {
   ChoiceField,
   Disclosure,
-  FADED_LABEL,
+  HIDDEN_LABEL,
   isHiddenState,
   SECTION_STATE_LABELS,
   SectionCard,
@@ -542,7 +542,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
     }
   };
 
-  /** The ACTIVE section's state, for the collapsed menu trigger's faded label
+  /** The ACTIVE section's state, for the collapsed menu trigger's struck label
    *  and its accessible name. Memoised because the trigger reads it twice and
    *  `navState` funnels into the draft-reading state functions — one
    *  subscription per keystroke instead of two. Declared here, not beside
@@ -877,7 +877,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
           return (
             <form onSubmit={(e) => void saveInvite(e)} class="flex flex-col gap-6">
               {/* ── Section tabs — sticky, one section shown at a time, a hidden
-                section's label faded (`sectionTabTone`) — plus, below `@4xl/builder`
+                section's label struck through (`HIDDEN_LABEL`) — plus, below `@4xl/builder`
                 (where there's no room for the sticky side preview), a button that
                 opens the composed preview in a modal instead. ── */}
               <div class="border-border bg-bg/90 sticky top-0 z-20 -mx-6 flex items-center gap-2 border-b px-6 py-2 backdrop-blur">
@@ -908,7 +908,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                 >
                   {/* Narrow containers only: the current section as a menu
                     trigger. It names where the organiser IS (label, position,
-                    and the label faded while the section is hidden) so the menu
+                    and the label struck through while it is hidden) so the menu
                     only has to be opened to move, never to orient — the thing
                     the scrolling strip could not do for the sections parked off
                     its right edge. */}
@@ -918,7 +918,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                     ref={(el) => (sectionMenuTrigger = el)}
                     aria-expanded={sectionMenuOpen()}
                     aria-controls={SECTION_MENU_ID}
-                    // The fade says nothing to a screen reader, and an
+                    // The strike says nothing to a screen reader, and an
                     // `aria-label` overrides subtree content — so an `sr-only`
                     // span inside the button (what the tabs themselves use)
                     // would be dropped. The state has to be folded into the
@@ -936,7 +936,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                   >
                     <span
                       class="min-w-0 truncate"
-                      classList={{ [FADED_LABEL]: isHiddenState(activeState()) }}
+                      classList={{ [HIDDEN_LABEL]: isHiddenState(activeState()) }}
                     >
                       {activeLabel()}
                     </span>
@@ -985,12 +985,14 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                             onKeyDown={(e) => onSectionTabKeyDown(e, item.id)}
                             // `min-h-11` is a 44px touch target in the menu; the
                             // wide row keeps the compact pill it has always been.
-                            class={`font-body text-ui-xs tracking-ui-wider flex min-h-11 w-full shrink-0 items-center rounded-sm px-3 py-2 text-left uppercase transition-colors @3xl/builder:min-h-0 @3xl/builder:w-auto @3xl/builder:px-2.5 @3xl/builder:py-1 ${sectionTabTone(
-                              active(),
-                              isHiddenState(state()),
-                            )}`}
+                            class={`font-body text-ui-xs tracking-ui-wider flex min-h-11 w-full shrink-0 items-center rounded-sm px-3 py-2 text-left uppercase transition-colors @3xl/builder:min-h-0 @3xl/builder:w-auto @3xl/builder:px-2.5 @3xl/builder:py-1 ${sectionTabTone(active())}`}
                           >
-                            <span class="min-w-0 truncate">{item.label}</span>
+                            <span
+                              class="min-w-0 truncate"
+                              classList={{ [HIDDEN_LABEL]: isHiddenState(state()) }}
+                            >
+                              {item.label}
+                            </span>
                             <Show when={isHiddenState(state())}>
                               <span class="sr-only">
                                 ({SECTION_STATE_LABELS[state()!].toLowerCase()})

@@ -1650,8 +1650,8 @@ describe("InviteBuilder section menu (narrow containers)", () => {
     expect(trigger().textContent).toContain("Design");
     expect(trigger().textContent).toContain("1/8");
 
-    // The Shown/Hidden state rides the accessible NAME, not only the faded
-    // label: a fade says nothing to a screen reader, and an `aria-label`
+    // The Shown/Hidden state rides the accessible NAME, not only the struck
+    // label: a strike says nothing to a screen reader, and an `aria-label`
     // overrides subtree content, so an `sr-only` span in the button would be
     // dropped. Without this clause the collapsed trigger conveys three things
     // visually and two to a screen reader — and "you can read it instead of
@@ -1671,62 +1671,66 @@ describe("InviteBuilder section menu (narrow containers)", () => {
     );
   });
 
-  it("fades the trigger's label while the active section is hidden, live", async () => {
+  it("strikes the trigger's label through while the active section is hidden, live", async () => {
     await renderBuilder();
     const label = () => within(trigger()).getByText(/^(Design|Hero)$/);
+    const struck = () => label().classList.contains("line-through");
 
-    // No dot anywhere on the trigger: the label's own ink carries the state.
+    // No dot anywhere on the trigger: the label itself carries the state.
     expect(trigger().querySelector(".rounded-full")).toBeNull();
 
-    // Design has no Shown/Hidden state at all — nothing to fade.
-    expect(label().classList.contains("text-text-faint")).toBe(false);
+    // Design has no Shown/Hidden state at all — nothing to strike.
+    expect(struck()).toBe(false);
 
     // Hero starts empty on `EMPTY_CUSTOMISATION`, so the guest invite hides it.
     await openSection(/^Hero/);
-    expect(label().classList.contains("text-text-faint")).toBe(true);
+    expect(struck()).toBe(true);
     expect(trigger().querySelector(".rounded-full")).toBeNull();
 
-    // The fade lifts the instant an edit gives the section content — it's the
-    // whole reason the trigger can be read instead of opened.
+    // The strike lifts the instant an edit gives the section content — it's
+    // the whole reason the trigger can be read instead of opened.
     fireEvent.input(screen.getByLabelText("Couple title"), { target: { value: "Anita & Ben" } });
-    await waitFor(() => expect(label().classList.contains("text-text-faint")).toBe(false));
+    await waitFor(() => expect(struck()).toBe(false));
   });
 
-  it("fades a hidden section's tab in a look of its own, apart from 'not selected'", async () => {
+  it("strikes a hidden section's tab label through, apart from 'not selected'", async () => {
     await renderBuilder();
     const tab = (name: string | RegExp) => screen.getByRole("tab", { name });
+    // The label is the tab's first child; the `sr-only` clause follows it.
+    const label = (name: string | RegExp) => tab(name).firstElementChild as HTMLElement;
+    const struck = (name: string | RegExp) => label(name).classList.contains("line-through");
     const has = (el: HTMLElement, cls: string) => el.classList.contains(cls);
 
-    // No dot in any tab — the label's ink is the whole signal.
+    // No dot in any tab — the label is the whole signal.
     expect(tablist().querySelector(".rounded-full")).toBeNull();
 
-    // Not selected, and hidden: faded, and NOT the plain unselected ink, so
-    // "hidden" never reads as "not selected".
+    // Not selected, and hidden: struck through, in the plain unselected ink —
+    // the strike, not a dimmer ink, is what sets "hidden" apart from "not
+    // selected", so the label keeps the ink that makes it readable.
     for (const name of [/^Hero/, /^Our Story/, /^Closing/]) {
-      expect(has(tab(name), "text-text-faint")).toBe(true);
-      expect(has(tab(name), "text-text-muted")).toBe(false);
+      expect(struck(name)).toBe(true);
+      expect(has(tab(name), "text-text-muted")).toBe(true);
     }
-    // Not selected, and no state to hide: the plain unselected ink.
+    // Not selected, and no state to hide: the plain unselected look.
+    expect(struck("Welcome")).toBe(false);
     expect(has(tab("Welcome"), "text-text-muted")).toBe(true);
-    expect(has(tab("Welcome"), "text-text-faint")).toBe(false);
 
     // Selected, no state: the gold wash and the readable gold ink.
     expect(has(tab("Design"), "bg-gold/12")).toBe(true);
     expect(has(tab("Design"), "text-gold-ink")).toBe(true);
-    expect(has(tab("Design"), "text-gold-ink/80")).toBe(false);
+    expect(struck("Design")).toBe(false);
 
-    // Selected, and hidden: the wash and the gold hue stay (that is what says
-    // "selected"), and the ink fades.
+    // Selected, and hidden: the wash and the gold ink stay (that is what says
+    // "selected"), and the label is struck through.
     await openSection(/^Hero/);
     expect(has(tab(/^Hero/), "bg-gold/12")).toBe(true);
-    expect(has(tab(/^Hero/), "text-gold-ink/80")).toBe(true);
-    expect(has(tab(/^Hero/), "text-gold-ink")).toBe(false);
+    expect(has(tab(/^Hero/), "text-gold-ink")).toBe(true);
+    expect(struck(/^Hero/)).toBe(true);
 
-    // Giving Hero content lifts the fade, and its name loses the hidden clause:
-    // a tab with no clause is one whose section is on the invite.
+    // Giving Hero content lifts the strike, and its name loses the hidden
+    // clause: a tab with no clause is one whose section is on the invite.
     fireEvent.input(screen.getByLabelText("Couple title"), { target: { value: "Anita & Ben" } });
-    await waitFor(() => expect(has(tab("Hero"), "text-gold-ink")).toBe(true));
-    expect(has(tab("Hero"), "text-gold-ink/80")).toBe(false);
+    await waitFor(() => expect(struck("Hero")).toBe(false));
   });
 
   it("collapses the tablist behind the trigger and toggles it", async () => {
@@ -2309,28 +2313,33 @@ describe("InviteBuilder section visibility switches (migration 0063)", () => {
     screen.getByRole("tab", { name: "Hero" });
 
     await openSection(/^Closing/);
-    expect(
-      screen.getByRole("button", { name: /Choose a section/ }).getAttribute("aria-label"),
-    ).toBe("Invite section: Closing, 7 of 8, hidden — switched off. Choose a section");
+    const trigger = screen.getByRole("button", { name: /Choose a section/ });
+    expect(trigger.getAttribute("aria-label")).toBe(
+      "Invite section: Closing, 7 of 8, hidden — switched off. Choose a section",
+    );
+    // Switched off marks the label the same way switched on but empty does, on
+    // the trigger and on the selected tab alike.
+    expect(within(trigger).getByText("Closing").classList.contains("line-through")).toBe(true);
+    const closingTab = screen.getByRole("tab", { name: /^Closing/ });
+    expect(closingTab.getAttribute("aria-selected")).toBe("true");
+    expect(closingTab.firstElementChild!.classList.contains("line-through")).toBe(true);
   });
 
-  it("fades a switched-off tab that has content, and lifts the fade when switched back on", async () => {
+  it("strikes a switched-off tab that has content, and lifts the strike when switched back on", async () => {
     await renderWith({ ...FILLED, visibility: { hero: true, story: false, footer: true } });
+    const struck = (tab: HTMLElement) => tab.firstElementChild!.classList.contains("line-through");
     const storyTab = () => screen.getByRole("tab", { name: /^Our Story/ });
 
-    // Switched off with content in it: faded, the same as switched on but
-    // empty — both mean "guests will not see this section", and the name says
-    // which reason.
-    expect(storyTab().classList.contains("text-text-faint")).toBe(true);
+    // Switched off with content in it: struck through, the same as switched on
+    // but empty — both mean "guests will not see this section", and the name
+    // says which reason.
+    expect(struck(storyTab())).toBe(true);
     expect(storyTab().getAttribute("aria-selected")).toBe("false");
-    // Switched on with content: the plain unselected ink.
-    const heroTab = screen.getByRole("tab", { name: "Hero" });
-    expect(heroTab.classList.contains("text-text-muted")).toBe(true);
-    expect(heroTab.classList.contains("text-text-faint")).toBe(false);
+    // Switched on with content: not struck.
+    expect(struck(screen.getByRole("tab", { name: "Hero" }))).toBe(false);
 
     fireEvent.click(switchIn("invite-story"));
-    await waitFor(() => expect(storyTab().classList.contains("text-text-faint")).toBe(false));
-    expect(storyTab().classList.contains("text-text-muted")).toBe(true);
+    await waitFor(() => expect(struck(storyTab())).toBe(false));
     screen.getByRole("tab", { name: "Our Story" });
   });
 });

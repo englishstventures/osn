@@ -188,40 +188,33 @@ export function isHiddenState(state: SectionState | undefined): boolean {
 }
 
 /**
- * The ink of a hidden section's label in the section nav. One fade for both
- * reasons a section is hidden; the reason is in words (the tab's `sr-only`
- * clause, the menu trigger's `aria-label`, the section's badge).
+ * How the section nav marks a hidden section's label: struck through, in the
+ * same ink its shown counterpart has. One mark for both reasons a section is
+ * hidden; the reason is in words (the tab's `sr-only` clause, the menu
+ * trigger's `aria-label`, the section's badge).
  *
- * `text-faint`, not `opacity` on `text-muted`: both ink tokens are already
- * translucent, so an opacity multiplies the two and lands below every token on
- * the ramp. `text-faint` paints 3.3–3.4:1 on the nav's grounds — over the 3:1
- * floor, under the 4.5:1 WCAG 1.4.3 asks of text this small. That is a
- * deliberate trade, and there is no cheaper one: the idle tab's `text-muted`
- * sits at 5.6–6.0:1, so an ink that holds 4.5:1 is at most 1.2 times dimmer
- * than it, which does not read as a different state. The painted ratios are
- * pinned by `InviteBuilder.tabs.browser.test.tsx`.
+ * A strike, not a fade. The label is the text of a working control, so WCAG
+ * 1.4.3 holds it to 4.5:1, and the idle tab's `text-muted` paints only
+ * 5.6–6.0:1: an ink that keeps 4.5:1 can sit at most 1.25–1.32 times under it,
+ * and the selected tab's `gold-ink` (4.68:1 on its wash in the light theme)
+ * has no room at all. No fade is both readable and visible as a state. A strike
+ * is a cue that is not colour (WCAG 1.4.1) and costs the ink nothing. The
+ * painted ratios are pinned by `InviteBuilder.tabs.browser.test.tsx`.
  */
-export const FADED_LABEL = "text-text-faint";
+export const HIDDEN_LABEL = "line-through";
 
 /**
- * A section tab's colours. The gold wash and the gold hue say "selected"; the
- * fade says "hidden", so hidden never reads as merely not selected:
+ * A section tab's colours. The gold wash and the gold ink say "selected"; a
+ * hidden section's label adds {@link HIDDEN_LABEL} on top of either, so hidden
+ * never reads as merely not selected.
  *
- *  - selected, shown:      wash + `gold-ink`
- *  - selected, hidden:     wash + `gold-ink` at 80% — the hue stays, the ink fades
- *  - not selected, shown:  `text-muted`, brightening on hover
- *  - not selected, hidden: {@link FADED_LABEL}, brightening to `text-muted` on
- *    hover, so it still answers the pointer but never looks shown
- *
- * `gold-ink`, not `gold`: gold is metal and carries no contrast contract (2.2:1
- * on this wash in the light theme), so a faded gold would read stronger than a
- * shown one there. Whole class strings, because Tailwind finds a utility by
- * scanning source text and a built-up class name emits no CSS.
+ * `gold-ink`, not `gold`: gold is metal and carries no contrast contract — 2.2:1
+ * on this wash in the light theme. Whole class strings, because Tailwind finds
+ * a utility by scanning source text and a built-up class name emits no CSS.
  */
-export function sectionTabTone(selected: boolean, hidden: boolean): string {
-  if (selected) return hidden ? "bg-gold/12 text-gold-ink/80" : "bg-gold/12 text-gold-ink";
-  return hidden
-    ? "text-text-faint hover:text-text-muted hover:bg-surface/60"
+export function sectionTabTone(selected: boolean): string {
+  return selected
+    ? "bg-gold/12 text-gold-ink"
     : "text-text-muted hover:text-text hover:bg-surface/60";
 }
 
