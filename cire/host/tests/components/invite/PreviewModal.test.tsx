@@ -90,6 +90,38 @@ describe("PreviewModal", () => {
     ]);
   });
 
+  it("shows the FAQ header and its first questions once it has entries", () => {
+    render(() => (
+      <PreviewModal
+        {...previewProps}
+        faq={{ state: "shown", questions: ["Is there parking?", "Are children invited?"] }}
+        open={true}
+        onClose={vi.fn()}
+      />
+    ));
+    const figure = screen.getByRole("figure", { name: "Invite preview" });
+    expect(figure.textContent).toContain("Good to Know");
+    expect(figure.textContent).toContain("Questions & Answers");
+    expect(figure.textContent).toContain("Is there parking? · Are children invited?");
+    expect(document.querySelector("[data-hidden-strip]")?.textContent).not.toMatch(/^FAQ/);
+  });
+
+  it("labels a switched-off FAQ's placeholder", () => {
+    render(() => (
+      <PreviewModal
+        {...previewProps}
+        faq={{ state: "off", questions: ["Is there parking?"] }}
+        open={true}
+        onClose={vi.fn()}
+      />
+    ));
+    const strips = [...document.querySelectorAll("[data-hidden-strip]")].map(
+      (el) => el.textContent,
+    );
+    expect(strips).toContain("FAQ — switched off");
+    expect(screen.queryByText(/Is there parking/)).toBeNull();
+  });
+
   it("Close button calls onClose", () => {
     const onClose = vi.fn();
     render(() => <PreviewModal {...previewProps} open={true} onClose={onClose} />);

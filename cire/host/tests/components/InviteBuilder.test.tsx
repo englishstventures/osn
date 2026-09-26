@@ -2385,6 +2385,46 @@ describe("InviteBuilder FAQ section (migration 0064)", () => {
     expect(within(panel()).getByText("Are children invited?")).toBeInTheDocument();
   });
 
+  it("keeps its entries when an image upload reloads the customisation", async () => {
+    authFetchMock.mockResolvedValueOnce(json({ ...EMPTY_CUSTOMISATION, faqs: FAQS })); // first load
+    authFetchMock.mockResolvedValueOnce(json({ ok: true })); // upload
+    authFetchMock.mockResolvedValueOnce(json(EMPTY_CUSTOMISATION)); // reload, no entries
+    const { container } = render(() => (
+      <InviteBuilder weddingId="wed_1" weddingSlug="anita-ben" entitlements={[]} />
+    ));
+    await waitFor(() => expect(badge()).toBeTruthy());
+
+    const input = container.querySelector('#invite-hero input[type="file"]') as HTMLInputElement;
+    Object.defineProperty(input, "files", {
+      value: [new File(["x"], "hero.jpg", { type: "image/jpeg" })],
+    });
+    fireEvent.change(input);
+
+    await waitFor(() => expect(authFetchMock).toHaveBeenCalledTimes(3));
+    // The reload asks for the customisation alone.
+    expect(String(authFetchMock.mock.calls[2]![0])).toBe(
+      "https://api.test/api/organiser/weddings/wed_1/invite",
+    );
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
+    expect(within(panel()).getByText("Is there parking?")).toBeInTheDocument();
+    expect(badge().dataset.state).toBe("shown");
+  });
+
+  it("guards a tab close while a question is half-typed, and stops once it is cancelled", async () => {
+    const add = vi.spyOn(window, "addEventListener");
+    const remove = vi.spyOn(window, "removeEventListener");
+    const count = (spy: typeof add) => spy.mock.calls.filter((c) => c[0] === "beforeunload").length;
+    await renderWith({ ...EMPTY_CUSTOMISATION, faqs: [] });
+    expect(count(add)).toBe(0);
+
+    fireEvent.click(within(panel()).getByText("Add a question"));
+    fireEvent.input(within(panel()).getByLabelText("Question"), { target: { value: "Parking?" } });
+    await waitFor(() => expect(count(add)).toBe(1));
+
+    fireEvent.click(within(panel()).getByText("Cancel"));
+    await waitFor(() => expect(count(remove)).toBe(1));
+  });
+
   it("says the FAQ is not available yet on a payload from an older API", async () => {
     await renderWith(EMPTY_CUSTOMISATION);
     expect(within(panel()).getByText(/Questions can't be edited yet/)).toBeInTheDocument();

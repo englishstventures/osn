@@ -7,8 +7,10 @@ import { asc, eq } from "drizzle-orm";
 
 import { createApp } from "../../src/app";
 import { createDb, seedDb } from "../../src/db/setup";
+import { CIRE_METRICS } from "../../src/metrics";
 import { FAQ_LIMITS } from "../../src/schemas/invite-faq";
 import { appRequest, jsonBody } from "../test-helpers";
+import { counterValue } from "../test-helpers/metrics-harness";
 import { seedOrganiserSession } from "../test-helpers/organiser-session";
 import { makeOsnTestAuth } from "../test-helpers/osn-token";
 import type { OsnTestAuth } from "../test-helpers/osn-token";
@@ -164,6 +166,24 @@ describe("invite FAQ routes (migration 0064)", () => {
       expect((await organiserFaqs(app))!.map((e) => e.id)).toEqual([a.id]);
     });
 
+    it("401s a dead session cookie or a malformed bearer, and stores nothing", async () => {
+      const { app } = buildApp();
+      const credentials: Record<string, string>[] = [
+        { cookie: "cire_org_session=not-a-live-session-token" },
+        { authorization: "Bearer not-a-jwt" },
+      ];
+      for (const headers of credentials) {
+        const res = await appRequest(app, faqBase, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ question: "Parking?", answer: "Yes." }),
+        });
+        expect(res.status).toBe(401);
+        expect(await jsonBody(res)).toEqual({ error: "unauthorised" });
+      }
+      expect(await organiserFaqs(app)).toEqual([]);
+    });
+
     // The builder reaches these routes with the organiser session cookie, not a
     // bearer token, so the cookie path is the one that has to hold.
     it("saves for an organiser session cookie", async () => {
@@ -195,6 +215,21 @@ describe("invite FAQ routes (migration 0064)", () => {
     it("reads an empty list for a wedding with no entries", async () => {
       const { app } = buildApp();
       expect(await organiserFaqs(app)).toEqual([]);
+    });
+
+    it("refuses the entries to a stranger, a helper and a caller with no token", async () => {
+      const { app } = buildApp();
+      // One entry, so an empty list cannot pass by chance.
+      await create(app, "Parking?");
+      for (const [profileId, status] of [
+        [STRANGER, 403],
+        [HELPER, 403],
+        [undefined, 401],
+      ] as const) {
+        const res = await req(app, "GET", `${inviteBase}?include=faqs`, profileId);
+        expect(res.status).toBe(status);
+        expect(Object.keys((await res.json()) as object)).not.toContain("faqs");
+      }
     });
 
     it("lets a viewer read the entries", async () => {
@@ -275,6 +310,44 @@ describe("invite FAQ routes (migration 0064)", () => {
         const res = await req(app, "PUT", `${faqBase}/order`, OWNER, body);
         expect(res.status).toBe(400);
       }
+    });
+  });
+
+  describe("reorder bounds", () => {
+    it("accepts a full list of exactly the cap", async () => {
+      const { app } = buildApp();
+      const ids = Array.from({ length: FAQ_LIMITS.maxEntries }, (_, i) => `faq_${i}`);
+      const res = await req(app, "PUT", `${faqBase}/order`, OWNER, { orderedIds: ids });
+      expect(res.status).toBe(200);
+    });
+
+    it("accepts an empty list and changes nothing", async () => {
+      const { app } = buildApp();
+      const a = await create(app, "A");
+      const b = await create(app, "B");
+      const res = await req(app, "PUT", `${faqBase}/order`, OWNER, { orderedIds: [] });
+      expect(res.status).toBe(200);
+      expect((await organiserFaqs(app))!.map((e) => e.id)).toEqual([a.id, b.id]);
+    });
+
+    it("gives a repeated id its last position, and leaves ids it omits where they were", async () => {
+      const { app, db } = buildApp();
+      const a = await create(app, "A");
+      const b = await create(app, "B");
+      const c = await create(app, "C");
+      // `a` twice: each position is written in turn, so the last one stands.
+      // `c` omitted: it keeps its stored position.
+      await req(app, "PUT", `${faqBase}/order`, OWNER, { orderedIds: [a.id, b.id, a.id] });
+      const rows = db
+        .select({ id: weddingFaqs.id, sortOrder: weddingFaqs.sortOrder })
+        .from(weddingFaqs)
+        .orderBy(asc(weddingFaqs.id))
+        .all();
+      expect(Object.fromEntries(rows.map((r) => [r.id, r.sortOrder]))).toEqual({
+        [a.id]: 2,
+        [b.id]: 1,
+        [c.id]: 2,
+      });
     });
   });
 
@@ -390,6 +463,59 @@ describe("invite FAQ routes (migration 0064)", () => {
       expect(first.status).not.toBe(429);
       const second = await req(app, "POST", faqBase, OWNER, { question: "Q2", answer: "A" });
       expect(second.status).toBe(429);
+    });
+  });
+
+  // `cire.invite.faq.write` is how a refused write shows on a dashboard; each
+  // outcome is counted once, under its own labels.
+  describe("the write counter", () => {
+    const written = (action: string, result: string) =>
+      counterValue(CIRE_METRICS.inviteFaqWrite, { action, result });
+
+    async function expectCounted(
+      action: string,
+      result: string,
+      write: () => Promise<Response>,
+    ): Promise<void> {
+      const before = await written(action, result);
+      await write();
+      expect(await written(action, result)).toBe(before + 1);
+    }
+
+    it("counts each write by action and outcome", async () => {
+      const { app } = buildApp();
+      await expectCounted("create", "ok", () =>
+        req(app, "POST", faqBase, OWNER, { question: "Parking?", answer: "Yes." }),
+      );
+      const [entry] = (await organiserFaqs(app))!;
+      await expectCounted("update", "ok", () =>
+        req(app, "PUT", `${faqBase}/${entry!.id}`, OWNER, { question: "Q", answer: "A" }),
+      );
+      await expectCounted("reorder", "ok", () =>
+        req(app, "PUT", `${faqBase}/order`, OWNER, { orderedIds: [entry!.id] }),
+      );
+      await expectCounted("update", "not_found", () =>
+        req(app, "PUT", `${faqBase}/faq_missing`, OWNER, { question: "Q", answer: "A" }),
+      );
+      await expectCounted("remove", "not_found", () =>
+        req(app, "DELETE", `${faqBase}/faq_missing`, OWNER),
+      );
+      await expectCounted("remove", "ok", () =>
+        req(app, "DELETE", `${faqBase}/${entry!.id}`, OWNER),
+      );
+    });
+
+    it("counts a create refused at the cap as limit_reached, not ok", async () => {
+      const { app } = buildApp();
+      for (let i = 0; i < FAQ_LIMITS.maxEntries; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await create(app, `Question ${i}`);
+      }
+      const okBefore = await written("create", "ok");
+      await expectCounted("create", "limit_reached", () =>
+        req(app, "POST", faqBase, OWNER, { question: "One more", answer: "No." }),
+      );
+      expect(await written("create", "ok")).toBe(okBefore);
     });
   });
 });

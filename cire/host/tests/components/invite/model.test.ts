@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   draftFromCustomisation,
   emptyDraft,
+  faqSampleBody,
   type InviteCustomisation,
   visibilityPayload,
 } from "../../../src/components/invite/model";
@@ -64,5 +65,23 @@ describe("visibilityPayload", () => {
     expect(
       visibilityPayload(draftFromCustomisation({ ...BASE, visibility: { story: false } })),
     ).toEqual({ hero: true, story: false, faq: true, footer: true });
+  });
+});
+
+describe("faqSampleBody", () => {
+  it("shows a placeholder while there are no questions", () => {
+    expect(faqSampleBody([])).toBe("Your questions and answers appear here.");
+  });
+
+  it("shows the first three questions, in order", () => {
+    expect(faqSampleBody(["Parking?", "Children?", "Arrive?", "Gifts?"])).toBe(
+      "Parking? · Children? · Arrive?",
+    );
+  });
+
+  it("cuts a long line to the preview's length", () => {
+    const body = faqSampleBody(["x".repeat(200)]);
+    expect(body).toHaveLength(91);
+    expect(body.endsWith("…")).toBe(true);
   });
 });

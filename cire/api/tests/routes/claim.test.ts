@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "bun:test";
+import { describe, it, expect, afterEach, beforeAll } from "bun:test";
 
 import {
   BOOTSTRAP_WEDDING_ID,
@@ -373,10 +373,12 @@ describe("POST /api/claim FAQ (migration 0064)", () => {
     return ((await res.json()) as ClaimOk).faq;
   };
 
-  const cleanup = () => {
+  // The suite shares one database, so a failed assertion must not leave entries
+  // or a switched-off FAQ behind for the next test.
+  afterEach(() => {
     db.delete(weddingFaqs).where(eq(weddingFaqs.weddingId, BOOTSTRAP_WEDDING_ID)).run();
     setFaqSwitch(true);
-  };
+  });
 
   it("carries the entries in the organiser's order", async () => {
     seedFaq("faq_route_b", "Parking?", 1);
@@ -388,14 +390,12 @@ describe("POST /api/claim FAQ (migration 0064)", () => {
         { id: "faq_route_b", question: "Parking?", answer: "Parking? — yes." },
       ],
     });
-    cleanup();
   });
 
   it("sends the switch and no entries while the FAQ is switched off", async () => {
     seedFaq("faq_route_off", "Parking?", 0);
     setFaqSwitch(false);
     expect(await claimFaq()).toEqual({ visible: false, entries: [] });
-    cleanup();
   });
 
   it("reports an empty FAQ as switched on with no entries", async () => {
@@ -409,7 +409,6 @@ describe("POST /api/claim FAQ (migration 0064)", () => {
     const text = await res.text();
     expect(text).not.toContain("A question only guests with a code see");
     expect(Object.keys(JSON.parse(text) as object)).not.toContain("faq");
-    cleanup();
   });
 });
 

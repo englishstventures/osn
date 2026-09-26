@@ -986,6 +986,41 @@ describe("cire/api over real D1 (Miniflare)", () => {
   );
 
   it(
+    "holds the FAQ cap when two adds race for the last place over async D1",
+    async () => {
+      for (let i = 0; i < FAQ_LIMITS.maxEntries - 1; i++) {
+        await run(
+          inviteFaqService.create(BOOTSTRAP_WEDDING_ID, { question: `Q${i}`, answer: "A" }),
+        );
+      }
+      // Both in flight at once: a read-then-insert would let both counts see
+      // 29 before either wrote. The count lives inside the INSERT, so one wins.
+      const [first, second] = await Effect.runPromise(
+        Effect.all(
+          [
+            Effect.exit(
+              inviteFaqService.create(BOOTSTRAP_WEDDING_ID, { question: "Last A", answer: "A" }),
+            ),
+            Effect.exit(
+              inviteFaqService.create(BOOTSTRAP_WEDDING_ID, { question: "Last B", answer: "B" }),
+            ),
+          ],
+          { concurrency: "unbounded" },
+        ).pipe(Effect.provideService(DbService, db)),
+      );
+      const failures = [first, second].filter(Exit.isFailure);
+      expect(failures).toHaveLength(1);
+      expect(Option.getOrUndefined(Cause.findErrorOption(failures[0]!.cause))).toBeInstanceOf(
+        FaqLimitReached,
+      );
+      expect(await run(inviteFaqService.list(BOOTSTRAP_WEDDING_ID))).toHaveLength(
+        FAQ_LIMITS.maxEntries,
+      );
+    },
+    MF_TIMEOUT_MS,
+  );
+
+  it(
     "builds the schema from the migration chain, 0064 included, on D1's own SQLite",
     async () => {
       // Its own instance: the suite's shared database is built from the test
@@ -1001,8 +1036,8 @@ describe("cire/api over real D1 (Miniflare)", () => {
         const chainD1 = (await chainMf.getD1Database("DB")) as unknown as D1Database;
         const files = readdirSync(MIGRATIONS_DIR)
           .filter((f) => f.endsWith(".sql"))
-          .sort();
-        expect(files.at(-1)).toBe("0064_invite_faq.sql");
+          .toSorted();
+        expect(files).toContain("0064_invite_faq.sql");
         for (const file of files) {
           for (const stmt of migrationStatements(file)) await chainD1.prepare(stmt).run();
         }

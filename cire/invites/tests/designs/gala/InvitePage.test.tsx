@@ -941,12 +941,36 @@ describe("gala InvitePage", () => {
       expect(column.querySelector("hr")).toBeTruthy();
     });
 
-    it("paints the events section's surface", async () => {
-      const { container } = await claimWith({ faq: FAQ });
-      await waitFor(() => expect(faqSection(container)).toBeTruthy());
-      expect(faqSection(container)!.style.getPropertyValue("background-color")).toBe(
-        "var(--invite-section-bg)",
+    it("paints the events section's surface — the details tone, not another section's", async () => {
+      vi.stubGlobal(
+        "fetch",
+        noSession(
+          vi.fn().mockResolvedValue(
+            new Response(JSON.stringify({ ...claim, preview: true, faq: FAQ }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          ),
+        ),
       );
+      window.history.replaceState(null, "", "/?code=HOST-ABCDEF0123456789ABCDEF01");
+      const { container, getByText } = render(() => (
+        <InvitePage
+          apiUrl="https://api.test"
+          // Only the details tone is set, so a FAQ bound to any other section's
+          // tone would paint the page ground instead.
+          theme={{ headingFont: null, bodyFont: null, tones: { details: "card" } }}
+        />
+      ));
+      await waitFor(() => expect(faqSection(container)).toBeTruthy(), { timeout: 2000 });
+
+      const faq = faqSection(container)!;
+      const events = getByText("Your Events").closest("section") as HTMLElement;
+      expect(faq.style.getPropertyValue("--invite-section-bg")).toBe("var(--color-surface)");
+      expect(faq.style.getPropertyValue("--invite-section-bg")).toBe(
+        events.style.getPropertyValue("--invite-section-bg"),
+      );
+      expect(faq.style.getPropertyValue("background-color")).toBe("var(--invite-section-bg)");
     });
 
     it("renders organiser text as text, never as markup", async () => {

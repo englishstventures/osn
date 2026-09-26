@@ -240,6 +240,54 @@ describe("FaqEditor", () => {
     await waitFor(() => expect(redirectSpy).toHaveBeenCalled());
   });
 
+  it("says a question no longer exists when the API cannot find it", async () => {
+    authFetchMock.mockResolvedValueOnce(json({ error: "faq_not_found" }, 404));
+    renderEditor([PARKING]);
+    fireEvent.click(screen.getByRole("button", { name: "Edit “Is there parking?”" }));
+    fireEvent.input(screen.getByLabelText("Answer"), { target: { value: "No." } });
+    fireEvent.click(screen.getByText("Save question"));
+
+    const alert = await waitFor(() => screen.getByRole("alert"));
+    expect(alert.textContent).toContain("no longer exists");
+    expect(reported).toEqual([]);
+  });
+
+  it("keeps a question the API refused to delete", async () => {
+    authFetchMock.mockResolvedValueOnce(json({ error: "Internal error" }, 500));
+    renderEditor([PARKING]);
+    fireEvent.click(screen.getByRole("button", { name: "Delete “Is there parking?”" }));
+
+    const alert = await waitFor(() => screen.getByRole("alert"));
+    expect(alert.textContent).toContain("Couldn't delete that question.");
+    expect(reported).toEqual([]);
+    expect(shownOrder()).toEqual(["Is there parking?"]);
+  });
+
+  it("says so when a save cannot reach the API, and keeps the typing", async () => {
+    authFetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    renderEditor([]);
+    fireEvent.click(screen.getByText("Add a question"));
+    fireEvent.input(screen.getByLabelText("Question"), { target: { value: "Parking?" } });
+    fireEvent.input(screen.getByLabelText("Answer"), { target: { value: "Yes." } });
+    fireEvent.click(screen.getByText("Add question"));
+
+    const alert = await waitFor(() => screen.getByRole("alert"));
+    expect(alert.textContent).toContain("Couldn't save that question.");
+    expect((screen.getByLabelText("Question") as HTMLInputElement).value).toBe("Parking?");
+  });
+
+  it("sends an organiser whose session expired mid-save to sign in", async () => {
+    authFetchMock.mockRejectedValueOnce(new Error("AuthExpiredError"));
+    renderEditor([]);
+    fireEvent.click(screen.getByText("Add a question"));
+    fireEvent.input(screen.getByLabelText("Question"), { target: { value: "Parking?" } });
+    fireEvent.input(screen.getByLabelText("Answer"), { target: { value: "Yes." } });
+    fireEvent.click(screen.getByText("Add question"));
+
+    await waitFor(() => expect(redirectSpy).toHaveBeenCalled());
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("reports pending while the form has typing in it", () => {
     renderEditor([PARKING]);
     fireEvent.click(screen.getByText("Add a question"));
@@ -303,6 +351,64 @@ describe("FaqEditor", () => {
       // The live region no longer asserts a move that was undone.
       expect(screen.getByRole("status").textContent).toBe("");
       await waitFor(() => expect(pending.at(-1)).toBe(false));
+    });
+
+    it("sends a signed-out organiser to sign in when the order save is refused", async () => {
+      authFetchMock.mockResolvedValue(json({ error: "unauthorised" }, 401));
+      renderEditor([PARKING, CHILDREN]);
+      fireEvent.keyDown(grip("Is there parking\\?"), { key: "ArrowDown" });
+      await waitFor(() => expect(redirectSpy).toHaveBeenCalled(), {
+        timeout: ORDER_SAVE_DELAY_MS + 1000,
+      });
+    });
+
+    it("holds a move made while a save is in flight, then sends the final order", async () => {
+      let release!: (res: Response) => void;
+      authFetchMock.mockImplementationOnce(
+        () => new Promise<Response>((resolve) => (release = resolve)),
+      );
+      authFetchMock.mockResolvedValue(json({ ok: true }));
+      renderEditor([PARKING, CHILDREN, TIMING]);
+
+      fireEvent.keyDown(grip("Is there parking\\?"), { key: "ArrowDown" });
+      await waitFor(() => expect(calls("PUT", `${BASE}/order`)).toHaveLength(1), {
+        timeout: ORDER_SAVE_DELAY_MS + 1000,
+      });
+
+      // A second move while the first save is still out: still one request.
+      fireEvent.keyDown(grip("Is there parking\\?"), { key: "ArrowDown" });
+      await new Promise((r) => setTimeout(r, ORDER_SAVE_DELAY_MS + 100));
+      expect(calls("PUT", `${BASE}/order`)).toHaveLength(1);
+
+      // The first returns; the held move goes out with the order as it now stands.
+      release(json({ ok: true }));
+      await waitFor(() => expect(calls("PUT", `${BASE}/order`)).toHaveLength(2));
+      expect(bodyOf(calls("PUT", `${BASE}/order`)[1]!)).toEqual({
+        orderedIds: ["faq_b", "faq_c", "faq_a"],
+      });
+      await waitFor(() => expect(pending.at(-1)).toBe(false));
+    });
+
+    it("rolls back to the last order the server accepted, not the first", async () => {
+      authFetchMock.mockResolvedValueOnce(json({ ok: true }));
+      authFetchMock.mockResolvedValueOnce(json({ error: "Internal error" }, 500));
+      renderEditor([PARKING, CHILDREN, TIMING]);
+
+      fireEvent.keyDown(grip("Is there parking\\?"), { key: "ArrowDown" });
+      await waitFor(() => expect(calls("PUT", `${BASE}/order`)).toHaveLength(1), {
+        timeout: ORDER_SAVE_DELAY_MS + 1000,
+      });
+      await waitFor(() => expect(pending.at(-1)).toBe(false));
+      const accepted = shownOrder();
+
+      fireEvent.keyDown(grip("When should we arrive\\?"), { key: "ArrowUp" });
+      await waitFor(() => screen.getByRole("alert"), { timeout: ORDER_SAVE_DELAY_MS + 1000 });
+      expect(shownOrder()).toEqual(accepted);
+      expect(accepted).toEqual([
+        "Are children invited?",
+        "Is there parking?",
+        "When should we arrive?",
+      ]);
     });
 
     it("saves a pending order when the editor goes away inside the pause", () => {
