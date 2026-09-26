@@ -1235,6 +1235,35 @@ describe("InvitePage", () => {
       expect(faqSection(container)!.querySelector("img, script")).toBeNull();
     });
 
+    // An RSVP save replaces the claim result with a spread that keeps `faq` at
+    // the same reference; the list must keep its rows, so an answer the guest
+    // has open stays open.
+    it("keeps an open answer open across an RSVP save", async () => {
+      const { container, getAllByRole } = await claimWith({ faq: FAQ });
+      await waitFor(() => expect(faqSection(container)).toBeTruthy());
+      const details = faqSection(container)!.querySelector("details")!;
+      details.open = true;
+
+      await waitFor(() => expect(getAllByRole("button", { name: /Respond/i })[0]).toBeTruthy());
+      fireEvent.click(getAllByRole("button", { name: /Respond/i })[0]!);
+      await waitFor(() => expect(capturedProps.value).not.toBeNull());
+      (capturedProps.value!.onSubmitted as (r: RsvpSummary[]) => void)([
+        {
+          guestId: "guest-1",
+          eventId: "event-1",
+          status: "attending",
+          dietary: "",
+          dietaryPresets: [],
+          dietaryConsentCurrent: false,
+        },
+      ]);
+
+      await waitFor(() => expect(capturedProps.value!.existingRsvps).toBeTruthy());
+      const after = faqSection(container)!.querySelector("details")!;
+      expect(after).toBe(details);
+      expect(after.open).toBe(true);
+    });
+
     it("omits a switched-off FAQ even if entries arrive", async () => {
       const { container, queryByText } = await claimWith({ faq: { ...FAQ, visible: false } });
       expect(faqSection(container)).toBeNull();
@@ -1258,9 +1287,9 @@ describe("InvitePage", () => {
         faq: {
           visible: true,
           entries: [
-            { id: "faq_ok", question: "Is there parking?", answer: "Yes." },
-            { id: "faq_blank", question: "Anything else?", answer: "   " },
-            { id: 7, question: "Numbered?", answer: "No." },
+            { question: "Is there parking?", answer: "Yes." },
+            { question: "Anything else?", answer: "   " },
+            { question: 7, answer: "No." },
             "not an entry",
           ],
         },

@@ -196,6 +196,29 @@ describe("inviteFaqService", () => {
     expect(theirRow!.sortOrder).toBe(0);
   });
 
+  it("writes only the rows whose position changes", async () => {
+    const db = db0();
+    const a = await add(db, "A");
+    const b = await add(db, "B");
+    const c = await add(db, "C");
+    const changes = () => db.all<{ n: number }>(sql`SELECT total_changes() AS n`)[0]!.n;
+
+    // Swap the last two: `a` keeps position 0 and is not rewritten.
+    let before = changes();
+    await ok(db, inviteFaqService.reorder(BOOTSTRAP_WEDDING_ID, [a.id, c.id, b.id]));
+    expect(changes() - before).toBe(2);
+
+    // The same order again writes nothing.
+    before = changes();
+    await ok(db, inviteFaqService.reorder(BOOTSTRAP_WEDDING_ID, [a.id, c.id, b.id]));
+    expect(changes() - before).toBe(0);
+    expect((await ok(db, inviteFaqService.list(BOOTSTRAP_WEDDING_ID))).map((e) => e.id)).toEqual([
+      a.id,
+      c.id,
+      b.id,
+    ]);
+  });
+
   it("breaks a sort_order tie by id, so the order is stable", async () => {
     const db = db0();
     const now = new Date();
@@ -231,14 +254,18 @@ describe("inviteFaqService", () => {
     it("returns the ordered list while the switch is on, and with no customisation row", async () => {
       const db = db0();
       db.delete(weddingInviteCustomisations).run();
-      const a = await add(db, "A");
-      const b = await add(db, "B");
-      expect(await ok(db, inviteFaqService.listForGuests(BOOTSTRAP_WEDDING_ID))).toEqual([a, b]);
+      await add(db, "A", "a");
+      await add(db, "B", "b");
+      const both = [
+        { question: "A", answer: "a" },
+        { question: "B", answer: "b" },
+      ];
+      expect(await ok(db, inviteFaqService.listForGuests(BOOTSTRAP_WEDDING_ID))).toEqual(both);
 
       db.insert(weddingInviteCustomisations)
         .values({ weddingId: BOOTSTRAP_WEDDING_ID, faqVisible: true, updatedAt: new Date() })
         .run();
-      expect(await ok(db, inviteFaqService.listForGuests(BOOTSTRAP_WEDDING_ID))).toEqual([a, b]);
+      expect(await ok(db, inviteFaqService.listForGuests(BOOTSTRAP_WEDDING_ID))).toEqual(both);
     });
 
     it("returns nothing while the switch is off, and the entries are kept", async () => {
@@ -255,11 +282,13 @@ describe("inviteFaqService", () => {
     it("does not read another wedding's switch", async () => {
       const db = db0();
       db.delete(weddingInviteCustomisations).run();
-      const a = await add(db, "A");
+      await add(db, "A", "a");
       db.insert(weddingInviteCustomisations)
         .values({ weddingId: OTHER, faqVisible: false, updatedAt: new Date() })
         .run();
-      expect(await ok(db, inviteFaqService.listForGuests(BOOTSTRAP_WEDDING_ID))).toEqual([a]);
+      expect(await ok(db, inviteFaqService.listForGuests(BOOTSTRAP_WEDDING_ID))).toEqual([
+        { question: "A", answer: "a" },
+      ]);
     });
   });
 });

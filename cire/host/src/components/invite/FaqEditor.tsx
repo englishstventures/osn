@@ -111,6 +111,9 @@ export default function FaqEditor(props: FaqEditorProps) {
   });
 
   // ── Order saving ───────────────────────────────────────────────────────────
+  const sameOrder = (a: readonly string[], b: readonly string[] | null) =>
+    b !== null && a.length === b.length && a.every((id, i) => id === b[i]);
+
   /** The order the server last acknowledged — what a failed save rolls back
    *  to. Taken from the first list the builder hands over. */
   let savedOrder: string[] | null = null;
@@ -150,8 +153,13 @@ export default function FaqEditor(props: FaqEditorProps) {
       orderStale = true;
       return;
     }
-    orderInFlight = true;
     const orderedIds = entries().map((e) => e.id);
+    // Moved and moved back inside the pause: the server already has this order.
+    if (sameOrder(orderedIds, savedOrder)) {
+      setOrderPending(false);
+      return;
+    }
+    orderInFlight = true;
     try {
       const res = await sendOrder(orderedIds);
       if (res.status === 401) return redirectToLogin();
@@ -186,7 +194,8 @@ export default function FaqEditor(props: FaqEditorProps) {
   onCleanup(() => {
     if (orderTimer === undefined) return;
     clearTimeout(orderTimer);
-    void sendOrder(entries().map((e) => e.id)).catch(() => {});
+    const orderedIds = entries().map((e) => e.id);
+    if (!sameOrder(orderedIds, savedOrder)) void sendOrder(orderedIds).catch(() => {});
   });
 
   function move(from: number, to: number) {

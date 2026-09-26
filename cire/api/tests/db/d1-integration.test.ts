@@ -943,8 +943,8 @@ describe("cire/api over real D1 (Miniflare)", () => {
       expect(on.faq).toEqual({
         visible: true,
         entries: [
-          { id: b.id, question: "Are children invited?", answer: "To the ceremony." },
-          { id: a.id, question: "Parking?", answer: "Yes." },
+          { question: "Are children invited?", answer: "To the ceremony." },
+          { question: "Parking?", answer: "Yes." },
         ],
       });
 
@@ -1075,7 +1075,7 @@ describe("cire/api over real D1 (Miniflare)", () => {
             .listForGuests("wed_chain")
             .pipe(Effect.provideService(DbService, chainDb)),
         );
-        expect(forGuests).toEqual([created]);
+        expect(forGuests).toEqual([{ question: created.question, answer: created.answer }]);
       } finally {
         await chainMf.dispose();
       }

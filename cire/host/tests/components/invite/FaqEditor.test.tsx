@@ -378,6 +378,18 @@ describe("FaqEditor", () => {
       await waitFor(() => expect(pending.at(-1)).toBe(false));
     });
 
+    it("sends nothing when a row is moved and moved back inside the pause", async () => {
+      authFetchMock.mockResolvedValue(json({ ok: true }));
+      renderEditor([PARKING, CHILDREN]);
+      fireEvent.keyDown(grip("Is there parking\\?"), { key: "ArrowDown" });
+      fireEvent.keyDown(grip("Is there parking\\?"), { key: "ArrowUp" });
+      expect(pending.at(-1)).toBe(true);
+      await waitFor(() => expect(pending.at(-1)).toBe(false), {
+        timeout: ORDER_SAVE_DELAY_MS + 1000,
+      });
+      expect(calls("PUT", `${BASE}/order`)).toHaveLength(0);
+    });
+
     it("keeps focus on the moved grip and announces the move", () => {
       authFetchMock.mockResolvedValue(json({ ok: true }));
       renderEditor([PARKING, CHILDREN]);

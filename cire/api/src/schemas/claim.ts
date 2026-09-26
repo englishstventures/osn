@@ -118,9 +118,7 @@ export const ClaimResponse = Schema.Struct({
   // are kept, but a guest page that will not show them does not receive them.
   faq: Schema.Struct({
     visible: Schema.Boolean,
-    entries: Schema.Array(
-      Schema.Struct({ id: Schema.String, question: Schema.String, answer: Schema.String }),
-    ),
+    entries: Schema.Array(Schema.Struct({ question: Schema.String, answer: Schema.String })),
   }),
 });
 export type ClaimResponse = Schema.Schema.Type<typeof ClaimResponse>;

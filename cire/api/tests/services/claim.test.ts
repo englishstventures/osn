@@ -538,7 +538,7 @@ describe("claimService.restore", () => {
           ),
         );
         const claimed = yield* claimService.lookup("TESTONE-IVY-AA11");
-        expect(claimed.faq.entries.map((e) => e.id)).toEqual(["faq_service_parity"]);
+        expect(claimed.faq.entries).toEqual([{ question: "Is there parking?", answer: "Yes." }]);
         const restored = yield* claimService.restore(yield* familyIdFor(db, "TESTONE-IVY-AA11"));
         // Whole-object, not field-by-field: `buildClaimResponse` exists precisely
         // so the two entry points cannot serve different views of one household,

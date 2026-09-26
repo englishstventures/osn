@@ -13,7 +13,7 @@
  * HTML. Logs carry the wedding id only, never the text.
  */
 import { weddingFaqs, weddingInviteCustomisations } from "@cire/db";
-import { and, asc, eq, notExists, sql } from "drizzle-orm";
+import { and, asc, eq, ne, notExists, sql } from "drizzle-orm";
 import { Data, Effect } from "effect";
 
 import { commitGroupedBatches, DbService, dbQuery } from "../db";
@@ -26,15 +26,24 @@ export class FaqNotInWedding extends Data.TaggedError("FaqNotInWedding") {}
 /** The wedding already holds `FAQ_LIMITS.maxEntries` entries. */
 export class FaqLimitReached extends Data.TaggedError("FaqLimitReached") {}
 
-/** One FAQ entry as the organiser builder and the claim response carry it. */
+/** One FAQ entry as the organiser builder carries it. */
 export interface FaqEntry {
   id: string;
   question: string;
   answer: string;
 }
 
+/** One FAQ entry as a household receives it: the text alone. The id is what
+ *  the builder edits by, and the guest page has no use for it. */
+export type GuestFaqEntry = Omit<FaqEntry, "id">;
+
 const ENTRY_FIELDS = {
   id: weddingFaqs.id,
+  question: weddingFaqs.question,
+  answer: weddingFaqs.answer,
+};
+
+const GUEST_ENTRY_FIELDS = {
   question: weddingFaqs.question,
   answer: weddingFaqs.answer,
 };
@@ -72,12 +81,12 @@ export const inviteFaqService = {
    * so a switched-off FAQ reads no entry rows at all. A wedding with no
    * customisation row reads as switched on, the column default.
    */
-  listForGuests(weddingId: string): Effect.Effect<FaqEntry[], never, DbService> {
+  listForGuests(weddingId: string): Effect.Effect<GuestFaqEntry[], never, DbService> {
     return Effect.gen(function* () {
       const db = yield* DbService;
       return yield* dbQuery(() =>
         db
-          .select(ENTRY_FIELDS)
+          .select(GUEST_ENTRY_FIELDS)
           .from(weddingFaqs)
           .where(
             and(
@@ -198,7 +207,10 @@ export const inviteFaqService = {
 
   /**
    * Store a new order: each id gets its index as `sort_order`. Scoped to the
-   * wedding, so a foreign id is a no-op UPDATE rather than a write.
+   * wedding, so a foreign id is a no-op UPDATE rather than a write, and only a
+   * row whose position changes is written — `sort_order` is in the list index,
+   * so an unchanged row rewritten would cost an index write too, and a move of
+   * one place would otherwise rewrite the whole list.
    * `commitGroupedBatches`, not a transaction: D1's only atomic primitive is
    * `batch()`, and each UPDATE is independent, so a re-sent order converges.
    */
@@ -212,7 +224,13 @@ export const inviteFaqService = {
             db
               .update(weddingFaqs)
               .set({ sortOrder: index })
-              .where(and(eq(weddingFaqs.id, id), eq(weddingFaqs.weddingId, weddingId))),
+              .where(
+                and(
+                  eq(weddingFaqs.id, id),
+                  eq(weddingFaqs.weddingId, weddingId),
+                  ne(weddingFaqs.sortOrder, index),
+                ),
+              ),
           ]),
         ),
       );

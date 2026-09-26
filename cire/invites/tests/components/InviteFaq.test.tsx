@@ -1,7 +1,8 @@
 import { cleanup, render } from "@solidjs/testing-library";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { FaqList, faqEntries } from "../../src/components/InviteFaq";
+import { faqEntries } from "../../src/components/faq-entries";
+import { FaqList } from "../../src/components/InviteFaq";
 
 afterEach(() => {
   cleanup();
@@ -12,11 +13,11 @@ describe("faqEntries", () => {
     expect(
       faqEntries([
         { id: "a", question: "Parking?", answer: "Yes.", sortOrder: 0, extra: "<b>" },
-        { id: "b", question: "Children?", answer: "Ceremony." },
+        { question: "Children?", answer: "Ceremony." },
       ]),
     ).toEqual([
-      { id: "a", question: "Parking?", answer: "Yes." },
-      { id: "b", question: "Children?", answer: "Ceremony." },
+      { question: "Parking?", answer: "Yes." },
+      { question: "Children?", answer: "Ceremony." },
     ]);
   });
 
@@ -25,14 +26,14 @@ describe("faqEntries", () => {
       faqEntries([
         null,
         "entry",
-        { question: "No id?", answer: "Yes." },
-        { id: 1, question: "Number id?", answer: "Yes." },
-        { id: "q", question: 5, answer: "Yes." },
-        { id: "a", question: "Blank answer?", answer: " \n" },
-        { id: "b", question: "   ", answer: "Blank question." },
-        { id: "ok", question: "Parking?", answer: "Yes." },
+        { question: "No answer?" },
+        { question: 5, answer: "Yes." },
+        { question: "Answer a number?", answer: 7 },
+        { question: "Blank answer?", answer: " \n" },
+        { question: "   ", answer: "Blank question." },
+        { question: "Parking?", answer: "Yes." },
       ]),
-    ).toEqual([{ id: "ok", question: "Parking?", answer: "Yes." }]);
+    ).toEqual([{ question: "Parking?", answer: "Yes." }]);
   });
 
   it("reads anything that is not an array as no entries", () => {
@@ -42,8 +43,8 @@ describe("faqEntries", () => {
 
 describe("FaqList", () => {
   const entries = [
-    { id: "a", question: "Is there parking?", answer: "Yes." },
-    { id: "b", question: "Are children invited?", answer: "To the ceremony." },
+    { question: "Is there parking?", answer: "Yes." },
+    { question: "Are children invited?", answer: "To the ceremony." },
   ];
 
   it("renders each entry as a closed native disclosure", () => {

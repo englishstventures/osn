@@ -39,7 +39,7 @@ interface ClaimOk {
   rsvps: unknown[];
   rsvpDeadline: unknown;
   closing: { message: string | null };
-  faq: { visible: boolean; entries: { id: string; question: string; answer: string }[] };
+  faq: { visible: boolean; entries: { question: string; answer: string }[] };
 }
 
 const db = createDb(":memory:");
@@ -385,9 +385,10 @@ describe("POST /api/claim FAQ (migration 0064)", () => {
     seedFaq("faq_route_a", "Children?", 0);
     expect(await claimFaq()).toEqual({
       visible: true,
+      // The text alone: the id is what the builder edits by, not the guest page.
       entries: [
-        { id: "faq_route_a", question: "Children?", answer: "Children? — yes." },
-        { id: "faq_route_b", question: "Parking?", answer: "Parking? — yes." },
+        { question: "Children?", answer: "Children? — yes." },
+        { question: "Parking?", answer: "Parking? — yes." },
       ],
     });
   });

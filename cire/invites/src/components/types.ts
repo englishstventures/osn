@@ -99,9 +99,9 @@ export interface RsvpDeadline {
   closed: boolean;
 }
 
-/** One entry of the invite's FAQ section. Mirrors `FaqEntry` in cire/api. */
+/** One entry of the invite's FAQ section. Mirrors `GuestFaqEntry` in cire/api:
+ *  the text alone, since the page keys nothing on an id. */
 export interface FaqEntry {
-  id: string;
   question: string;
   answer: string;
 }

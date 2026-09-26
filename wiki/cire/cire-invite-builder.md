@@ -236,14 +236,22 @@ reorder body is bounded by the same number, so a full list always fits.
 answer as text nodes (Solid escapes them); nothing parses markup or makes links.
 The answer keeps its line breaks (`whitespace-pre-line`). The guest page keeps
 only well-formed entries (`faqEntries` in
-`cire/invites/src/components/InviteFaq.tsx`), because the claim guard does not
+`cire/invites/src/components/faq-entries.ts`), because the claim guard does not
 check the FAQ — a malformed entry is dropped rather than signing the household
-out.
+out. The claim carries each entry's question and answer only; the id is the
+builder's, and the guest page keys nothing on it.
 
 **Each pack draws its own section around one shared list.** `FaqList` is the
 disclosure list; `classic` centres its header on the events column, `gala` puts
 it on its leading-edge column and closes it with the same hairline rule as its
-events header.
+events header. Each pack's section (`designs/<pack>/FaqSection.tsx`) is loaded
+with `lazy()`, like the event cards, and is not warmed at idle: an invite with
+no FAQ never downloads it, and one with a FAQ asks for it only once the claim
+says there is something to show. The entry guard and the state check stay in
+the first-load chunk, since they decide whether to ask. The page memoises the
+claim's `faq` on its own before mapping it, so an RSVP save — which replaces
+the claim result but keeps `faq` at the same reference — leaves the list's rows
+in place and an open answer open.
 
 ## Conditional segments and visibility switches
 
@@ -789,7 +797,10 @@ CSV-import `R2Bucket` is text-only and is **not** widened in place). Routes:
     body). Another wedding's id, or an unknown one, is a 404 `faq_not_found`.
   - `PUT /invite/faqs/order` → `{ orderedIds }`, the new order (at most 30 ids);
     each id gets its index as `sort_order`, scoped to the wedding, so a foreign id
-    is a no-op.
+    is a no-op, and only a row whose position changes is written (`sort_order`
+    is in the list index, so a rewrite of an unchanged row costs an index write
+    too). The builder sends nothing when the order it holds is the one last
+    saved.
   - `DELETE /invite/faqs/:faqId` → delete an entry.
   - The FAQ routes live in `cire/api/src/routes/invite-faq.ts` and share the
     invite builder's per-IP write limiter. They use PUT rather than PATCH: the

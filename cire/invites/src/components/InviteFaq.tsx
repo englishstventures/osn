@@ -1,8 +1,12 @@
 /**
- * The FAQ section's pieces both design packs share: its fixed header copy, the
- * guard every entry passes before it renders, and the list of questions. Each
- * pack draws its own section around the list — the header, the alignment and
- * the rule come from the pack, as they do for the events above it.
+ * The FAQ section's pieces both design packs share: its fixed header copy and
+ * the list of questions. Each pack draws its own section around the list — the
+ * header, the alignment and the rule come from the pack, as they do for the
+ * events above it. The guard every entry passes first is `faq-entries.ts`.
+ *
+ * Only the packs' lazily loaded `FaqSection` modules import this, so none of it
+ * is in the page's first-load chunk: it renders only after a household claims,
+ * and only on an invite that has a FAQ.
  *
  * The questions and answers are organiser-written free text. They render as
  * text nodes only (Solid escapes them); nothing here parses markup or links.
@@ -10,7 +14,6 @@
 
 import { For } from "solid-js";
 
-import { hasText } from "./invite-emptiness";
 import type { FaqEntry } from "./types";
 
 /** The section's eyebrow and heading. Fixed copy, not an organiser field; the
@@ -20,27 +23,6 @@ export const FAQ_HEADING = "Questions & Answers";
 
 /** The heading's id, for the section's `aria-labelledby`. One FAQ per page. */
 export const FAQ_HEADING_ID = "invite-faq-heading";
-
-/**
- * The entries of a claim response's `faq`, keeping only those with a string id
- * and a question and an answer that are not blank. Copied field by field, so
- * nothing else in the payload rides into the page. A malformed entry is dropped
- * rather than failing the claim: the guard on the claim response does not check
- * the FAQ, so a newer or broken API cannot sign a household out through it.
- */
-export function faqEntries(value: unknown): FaqEntry[] {
-  if (!Array.isArray(value)) return [];
-  const out: FaqEntry[] = [];
-  for (const item of value as unknown[]) {
-    if (typeof item !== "object" || item === null) continue;
-    if (!("id" in item) || typeof item.id !== "string") continue;
-    if (!("question" in item) || typeof item.question !== "string") continue;
-    if (!("answer" in item) || typeof item.answer !== "string") continue;
-    if (!hasText(item.question) || !hasText(item.answer)) continue;
-    out.push({ id: item.id, question: item.question, answer: item.answer });
-  }
-  return out;
-}
 
 /**
  * The questions, each a native disclosure: the question is the `<summary>`,
