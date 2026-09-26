@@ -137,8 +137,9 @@ export default function FaqEditor(props: FaqEditorProps) {
    *  the server has not ordered yet (none, in practice) keep their place at the end. */
   const rollBackOrder = () => {
     const rank = new Map((savedOrder ?? []).map((id, i) => [id, i]));
-    const restored = [...entries()].sort(
-      (a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity),
+    const last = rank.size;
+    const restored = entries().toSorted(
+      (a, b) => (rank.get(a.id) ?? last) - (rank.get(b.id) ?? last),
     );
     props.onEntriesChange(restored);
   };
