@@ -650,21 +650,21 @@ describe.each([
       return el!;
     });
     const [first, second] = [...section.querySelectorAll("details")];
-    const answer = first!.querySelector("p")!;
+    const firstAnswer = first!.querySelector("p")!;
 
     // Closed: the answer is not rendered. (Chromium keeps a closed disclosure's
     // content laid out but skips painting it, so its box is no guide.)
     expect(first!.open).toBe(false);
-    expect(answer.checkVisibility()).toBe(false);
+    expect(firstAnswer.checkVisibility()).toBe(false);
 
     first!.querySelector("summary")!.click();
     expect(first!.open).toBe(true);
     expect(second!.open).toBe(false);
-    expect(answer.checkVisibility()).toBe(true);
+    expect(firstAnswer.checkVisibility()).toBe(true);
     expect(second!.querySelector("p")!.checkVisibility()).toBe(false);
     // Open: two lines, since the organiser's line break is kept.
-    const lineHeight = Number.parseFloat(getComputedStyle(answer).lineHeight);
-    expect(answer.getBoundingClientRect().height).toBeGreaterThanOrEqual(lineHeight * 2 - 1);
+    const lineHeight = Number.parseFloat(getComputedStyle(firstAnswer).lineHeight);
+    expect(firstAnswer.getBoundingClientRect().height).toBeGreaterThanOrEqual(lineHeight * 2 - 1);
 
     // The "+" turns into a "×" as its disclosure opens (Tailwind's `rotate-*`
     // sets the `rotate` property, not `transform`); the closed one stays a "+".
