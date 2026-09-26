@@ -60,11 +60,13 @@ Before a claim the panel shows the code entry. After it, the greeting, the
 RSVP-by line, and the household's controls in this order:
 
 1. **Pulse account linking** — `PulseAccountLink` inside its own
-   `AuthProvider`, both `lazy()`. They load only when a claimed, non-preview
-   household is on screen; nothing warms them at idle, so a visitor who never
-   claims never downloads them. `tests/components/LoginSection.lazy.test.tsx`
-   fails if either import turns static. Hidden in host preview, and it renders
-   nothing while linking is off (`cire.account-linking`, [[feature-flags]]).
+   `AuthProvider`, both `lazy()`. Their chunks start downloading when a claim
+   begins (a typed code or the `?code=` deep link) or, when the restore hint is
+   present, at mount beside the session restore — never for a visitor who does
+   not submit a code. `tests/components/LoginSection.lazy.test.tsx` fails if an
+   import turns static, and it and `LoginSection.warm.test.tsx` pin when the
+   download starts. Hidden in host preview, and it renders nothing while
+   linking is off (`cire.account-linking`, [[feature-flags]]).
 2. **Plus-one prompt** — the slot is reserved;
    `englishstventures/osn#1084` fills it.
 3. **Sign-out** — "Not {name}? Sign out". The panel itself revokes
@@ -83,7 +85,10 @@ claimed. The pack keeps the claim result, the reveal choreography
 section.
 
 When account linking is on, the Pulse box appears once its probe answers, and
-it sits above the events, so it can push them down after the reveal.
+it sits above the events. On the code-entry path the probe usually finishes
+during the form's fade; on a session restore the box can still push the events
+down one request after they appear, until the claim and session responses carry
+the link state themselves.
 
 ## Adding a design
 

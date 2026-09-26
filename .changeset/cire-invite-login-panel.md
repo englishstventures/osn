@@ -10,9 +10,11 @@ holds the household's controls.
 - `@cire/invites`: `LoginSection` takes a `layout` (`band` for classic, `panel`
   for gala) and draws the panel for both packs; gala no longer keeps its own
   copy. The Pulse account link moves from the bottom of the events section into
-  the welcome panel, above "Not {name}? Sign out", and stays lazy: it loads only
-  once a claimed, non-preview household is on screen, with no idle warm-up. The
-  panel now sends the sign-out revoke and records the restore hint itself.
+  the welcome panel, above "Not {name}? Sign out", and stays lazy: its chunks
+  start downloading when a claim or session restore begins, never at idle for
+  every visitor. The panel now sends the sign-out revoke (and, outside host
+  preview, ends the account link's OSN sign-in) and records the restore hint
+  itself.
   Classic's claim headings follow the organiser's heading typography, as gala's
   already did.
 - `@cire/theme`: the typography fallback guard also scans
