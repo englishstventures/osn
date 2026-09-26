@@ -1,7 +1,13 @@
 // @vitest-environment happy-dom
-import { describe, expect, it } from "vitest";
+import { cleanup, render } from "@solidjs/testing-library";
+import { afterEach, describe, expect, it } from "vitest";
 
-import { HIDDEN_LABEL, isHiddenState, sectionTabTone } from "../../../src/components/invite/fields";
+import {
+  FADED_LABEL,
+  HiddenSectionIcon,
+  isHiddenState,
+  sectionTabTone,
+} from "../../../src/components/invite/fields";
 
 describe("isHiddenState", () => {
   it.each([
@@ -16,33 +22,46 @@ describe("isHiddenState", () => {
 
 describe("sectionTabTone", () => {
   const tokens = (classes: string) => classes.split(/\s+/);
+  const looks = [
+    sectionTabTone(true, false),
+    sectionTabTone(true, true),
+    sectionTabTone(false, false),
+    sectionTabTone(false, true),
+  ];
 
-  it("gives the selected and unselected tabs different looks", () => {
-    expect(sectionTabTone(true)).not.toBe(sectionTabTone(false));
+  it("gives each of the four states its own look", () => {
+    expect(new Set(looks).size).toBe(4);
   });
 
-  it("puts the selection wash on the selected tab only", () => {
-    expect(tokens(sectionTabTone(true))).toContain("bg-gold/12");
-    expect(tokens(sectionTabTone(false))).not.toContain("bg-gold/12");
+  it("puts the selection wash on the selected tabs only", () => {
+    expect(tokens(sectionTabTone(true, false))).toContain("bg-gold/12");
+    expect(tokens(sectionTabTone(true, true))).toContain("bg-gold/12");
+    expect(tokens(sectionTabTone(false, false))).not.toContain("bg-gold/12");
+    expect(tokens(sectionTabTone(false, true))).not.toContain("bg-gold/12");
   });
 
-  it("paints the selected tab in the readable gold, not the metal", () => {
+  it("paints a selected tab in the readable gold, not the metal", () => {
     // `gold` carries no contrast contract; `gold-ink` is the gold for text.
-    expect(tokens(sectionTabTone(true))).toContain("text-gold-ink");
-    expect(tokens(sectionTabTone(true))).not.toContain("text-gold");
+    for (const hidden of [false, true]) {
+      expect(tokens(sectionTabTone(true, hidden))).not.toContain("text-gold");
+    }
   });
 
-  it("leaves the hidden mark out of the tone, so it can sit on either look", () => {
-    // The strike is added to the label alongside the tone, never folded into
-    // it: a hidden tab keeps the ink that makes its label readable.
-    for (const selected of [true, false]) {
-      expect(tokens(sectionTabTone(selected))).not.toContain(HIDDEN_LABEL);
-    }
+  it("fades a hidden, unselected tab to the faded ink rather than the idle one", () => {
+    expect(tokens(sectionTabTone(false, true))).toContain(FADED_LABEL);
+    expect(tokens(sectionTabTone(false, true))).not.toContain("text-text-muted");
+    expect(tokens(sectionTabTone(false, false))).not.toContain(FADED_LABEL);
   });
 });
 
-describe("HIDDEN_LABEL", () => {
-  it("is a text decoration, not an ink — the label keeps its contrast", () => {
-    expect(HIDDEN_LABEL).toBe("line-through");
+describe("HiddenSectionIcon", () => {
+  afterEach(cleanup);
+
+  it("draws an icon that assistive tech skips, in the label's own ink", () => {
+    const { container } = render(() => <HiddenSectionIcon />);
+    const svg = container.querySelector("svg")!;
+    expect(svg.getAttribute("aria-hidden")).toBe("true");
+    expect(svg.hasAttribute("data-hidden-icon")).toBe(true);
+    expect(svg.getAttribute("stroke")).toBe("currentColor");
   });
 });

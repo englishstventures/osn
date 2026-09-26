@@ -8,15 +8,15 @@ import "../../src/styles/global.css";
 /**
  * The section nav's hidden labels, as painted.
  *
- * A hidden section's label is struck through and keeps the ink its shown
- * counterpart has, so it stays as readable as any other tab: 4.5:1, what WCAG
- * 1.4.3 asks of text this small (see `HIDDEN_LABEL` in
- * `src/components/invite/fields.tsx` for why a fade could not do both). The
- * fast tier proves the classes are on the label. It cannot prove the strike
- * class emits any CSS or wins the cascade, or that the ink still clears 4.5:1
- * once the portal's translucent inks are composited over the sticky bar, the
- * menu panel, the gold wash and the page. Those need a stylesheet and a
- * compositor.
+ * A hidden section's label is faded and marked with an eye-off icon. The fade
+ * sits under the 4.5:1 WCAG 1.4.3 asks of text this small — the owner's choice,
+ * with the icon as the cue that is not colour and the accessible name carrying
+ * the state (see `FADED_LABEL` in `src/components/invite/fields.tsx`). What
+ * this pins is the floor that choice rests on: every faded label, and so the
+ * icon drawn in its ink, clears 3:1 (the WCAG 1.4.11 floor for a graphic), and
+ * the icon actually paints. The fast tier proves the classes and the icon are
+ * there; only a stylesheet and a compositor can say what they paint over the
+ * sticky bar, the menu panel, the gold wash and the page.
  *
  * It mounts the real builder, so what is measured is what the nav renders, on
  * the ancestors it really has.
@@ -97,10 +97,6 @@ function paintedInk(element: Element): string {
 
 const ratioOn = (element: Element) => contrastRatio(paintedInk(element), paintedBackdrop(element))!;
 
-/** Whether the element is painted with a strike through it. */
-const struck = (element: Element) =>
-  getComputedStyle(element).textDecorationLine.split(" ").includes("line-through");
-
 /**
  * Transitions off, for this file only. It measures colours, not motion, and a
  * transition makes a reading depend on timing: every element carries one under
@@ -137,14 +133,28 @@ async function mountAt(width: number) {
 }
 
 const tab = (name: string | RegExp) => screen.getByRole("tab", { name });
-/** A tab's visible label — its first child; the `sr-only` clause follows it. */
-const labelOf = (name: string | RegExp) => tab(name).firstElementChild!;
+/** A tab's visible label: the text span, whichever of its children it is. */
+const labelOf = (name: string | RegExp, text: RegExp) => within(tab(name)).getByText(text);
+const iconIn = (element: Element) => element.querySelector("[data-hidden-icon]");
 const fmt = (n: number) => `${n.toFixed(2)}:1`;
 
-/** Asserts a label clears 4.5:1 as painted, naming it and the ratio on failure. */
-function expectReadable(label: Element, what: string) {
-  const ratio = ratioOn(label);
-  expect(ratio, `${what} measured ${fmt(ratio)}`).toBeGreaterThanOrEqual(WCAG_TEXT_MIN);
+/** The floor a faded label, and the icon drawn in its ink, must still clear. */
+const FADED_MIN = 3;
+
+/** Asserts a painted ratio clears `min`, naming it and the ratio on failure. */
+function expectContrast(element: Element, min: number, what: string) {
+  const ratio = ratioOn(element);
+  expect(ratio, `${what} measured ${fmt(ratio)}`).toBeGreaterThanOrEqual(min);
+}
+
+/** Asserts the eye-off icon is inside `element`, drawn at a real size, and as
+ *  legible as a graphic needs to be. */
+function expectIcon(element: Element, what: string) {
+  const icon = iconIn(element);
+  expect(icon, `${what}: eye-off icon`).not.toBeNull();
+  const box = icon!.getBoundingClientRect();
+  expect(box.width, `${what}: icon width`).toBeGreaterThan(8);
+  expectContrast(icon!, FADED_MIN, `${what} icon`);
 }
 
 afterEach(async () => {
@@ -157,60 +167,59 @@ afterEach(async () => {
 
 describe("InviteBuilder section nav — hidden labels, as painted", () => {
   for (const scheme of ["dark", "light"] as const) {
-    it(`strikes the tab row's hidden labels and keeps them readable, ${scheme}`, async () => {
+    it(`fades the tab row's hidden labels to no less than 3:1, with the icon, ${scheme}`, async () => {
       await commands.emulateMedia({ colorScheme: scheme });
       // Wide enough for the static tab row (`@3xl/builder`, 48rem).
       await mountAt(1200);
 
-      // Selected and shown, not selected and shown: plain, and readable.
-      expect(struck(labelOf("Design"))).toBe(false);
-      expectReadable(labelOf("Design"), "selected tab");
-      expect(struck(labelOf("Welcome"))).toBe(false);
-      expectReadable(labelOf("Welcome"), "idle tab");
+      // Selected and shown, not selected and shown: readable, no icon.
+      expectContrast(labelOf("Design", /^Design$/), WCAG_TEXT_MIN, "selected tab");
+      expect(iconIn(tab("Design"))).toBeNull();
+      expectContrast(labelOf("Welcome", /^Welcome$/), WCAG_TEXT_MIN, "idle tab");
 
-      // Not selected and hidden: struck, and as readable as the idle tab.
-      expect(struck(labelOf(/^Hero/))).toBe(true);
-      expectReadable(labelOf(/^Hero/), "hidden tab");
+      // Not selected and hidden: faded, over the floor, and marked.
+      expectContrast(labelOf(/^Hero/, /^Hero$/), FADED_MIN, "hidden tab");
+      expectIcon(tab(/^Hero/), "hidden tab");
 
-      // Selected and hidden: struck, and readable on the gold wash.
+      // Selected and hidden: on the gold wash.
       tab(/^Hero/).click();
       await settle();
       expect(tab(/^Hero/).getAttribute("aria-selected")).toBe("true");
-      expect(struck(labelOf(/^Hero/))).toBe(true);
-      expectReadable(labelOf(/^Hero/), "selected hidden tab");
+      expectContrast(labelOf(/^Hero/, /^Hero$/), FADED_MIN, "selected hidden tab");
+      expectIcon(tab(/^Hero/), "selected hidden tab");
     });
 
-    it(`strikes the menu's hidden labels and keeps them readable, ${scheme}`, async () => {
+    it(`fades the menu's hidden labels to no less than 3:1, with the icon, ${scheme}`, async () => {
       await commands.emulateMedia({ colorScheme: scheme });
       // Narrow: the tabs collapse behind the trigger and open on their own
       // opaque panel, a different ground from the wide row's.
       await mountAt(480);
       const trigger = screen.getByRole("button", { name: /Choose a section/ });
       const triggerLabel = () => within(trigger).getByText(/^(Design|Hero)$/);
-      expect(struck(triggerLabel())).toBe(false);
-      expectReadable(triggerLabel(), "trigger label");
+      expectContrast(triggerLabel(), WCAG_TEXT_MIN, "trigger label");
+      expect(iconIn(trigger)).toBeNull();
 
       // The collapsed tablist is `display: none`, out of the accessibility
       // tree, so open the menu first, as an organiser would.
       trigger.click();
       await settle();
-      expect(struck(labelOf(/^Our Story/))).toBe(true);
-      expectReadable(labelOf(/^Our Story/), "hidden tab in the menu");
-      expectReadable(labelOf("Welcome"), "idle tab in the menu");
+      expectContrast(labelOf(/^Our Story/, /^Our Story$/), FADED_MIN, "hidden tab in the menu");
+      expectIcon(tab(/^Our Story/), "hidden tab in the menu");
+      expectContrast(labelOf("Welcome", /^Welcome$/), WCAG_TEXT_MIN, "idle tab in the menu");
 
       tab(/^Hero/).click();
       await settle();
       expect(triggerLabel().textContent).toBe("Hero");
-      expect(struck(triggerLabel())).toBe(true);
-      expectReadable(triggerLabel(), "hidden trigger label");
+      expectContrast(triggerLabel(), FADED_MIN, "hidden trigger label");
+      expectIcon(trigger, "hidden trigger label");
 
       // Reopen: the selected, hidden tab on the wash over the menu panel.
       if (trigger.getAttribute("aria-expanded") !== "true") {
         trigger.click();
         await settle();
       }
-      expect(struck(labelOf(/^Hero/))).toBe(true);
-      expectReadable(labelOf(/^Hero/), "selected hidden tab in the menu");
+      expectContrast(labelOf(/^Hero/, /^Hero$/), FADED_MIN, "selected hidden tab in the menu");
+      expectIcon(tab(/^Hero/), "selected hidden tab in the menu");
     });
   }
 });
