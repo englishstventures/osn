@@ -8,7 +8,7 @@ related:
   - "[[osn-and-musubi]]"
   - "[[monorepo-structure]]"
   - "[[compliance/index]]"
-last-reviewed: 2026-09-23
+last-reviewed: 2026-09-27
 ---
 
 # OSN Wiki
