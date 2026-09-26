@@ -7,6 +7,7 @@ import {
   directoryVendors,
   events,
   families,
+  guestAccountLinks,
   guestEvents,
   guests,
   registryClaims,
@@ -23,16 +24,22 @@ import { asc, eq } from "drizzle-orm";
 import { Cause, Effect, Exit, Option } from "effect";
 import { Miniflare } from "miniflare";
 
-import { createSessionRoutedClient, runInD1Session } from "../../src/db/d1-session";
+import {
+  createSessionRoutedClient,
+  D1_SESSION_CONSTRAINT,
+  runInD1Session,
+  withD1Session,
+} from "../../src/db/d1-session";
 import { createD1Db, DbService } from "../../src/db/index";
 import type { Db } from "../../src/db/index";
 import { DDL } from "../../src/db/setup";
 import type { ImportPlan } from "../../src/schemas/import";
-import { claimService } from "../../src/services/claim";
+import { type AccountLinkGate, claimService } from "../../src/services/claim";
 import { createDirectoryService } from "../../src/services/directory";
 import { giftExportService } from "../../src/services/gift-export";
 import { applyImport } from "../../src/services/import";
 import { inviteService } from "../../src/services/invite";
+import { organiserSessionService } from "../../src/services/organiser-session";
 import { registryService, SettingsChanged } from "../../src/services/registry";
 import { type GiftSummaryNotice, retentionService } from "../../src/services/retention";
 import { rsvpService } from "../../src/services/rsvp";
@@ -225,6 +232,73 @@ describe("cire/api over real D1 (Miniflare)", () => {
       expect(res.familyId).toBe(FAMILY_ID);
       expect(res.members).toHaveLength(2);
       expect(res.events.map((e) => e.name).toSorted()).toEqual(["Ceremony", "Reception"]);
+    },
+    MF_TIMEOUT_MS,
+  );
+
+  it(
+    "claim.lookup reads the account-link state over D1, every query inside the session",
+    async () => {
+      const now = new Date();
+      await db.insert(guestAccountLinks).values({
+        id: "gal_d1",
+        guestId: GUEST_2,
+        familyId: FAMILY_ID,
+        weddingId: BOOTSTRAP_WEDDING_ID,
+        osnAccountId: "acc_d1",
+        osnProfileId: "usr_d1",
+        linkedAt: now,
+        updatedAt: now,
+      });
+      const { token } = await run(
+        organiserSessionService.create({
+          osnProfileId: "usr_d1",
+          osnSub: "pw_usr_d1",
+          email: null,
+          handle: null,
+          displayName: null,
+          avatarUrl: null,
+        }),
+      );
+
+      // Record where every query goes: the session, or the raw binding the
+      // routed client falls back to when a query escapes the request's context.
+      const onBinding: string[] = [];
+      const inSession: string[] = [];
+      const fallback: Pick<D1Database, "prepare" | "batch"> = {
+        prepare: (query) => {
+          onBinding.push(query);
+          return d1.prepare(query);
+        },
+        batch: (statements) => d1.batch(statements),
+      };
+      const raw = d1.withSession(D1_SESSION_CONSTRAINT);
+      const session: Pick<D1Database, "prepare" | "batch"> = {
+        prepare: (query) => {
+          inSession.push(query);
+          return raw.prepare(query);
+        },
+        batch: (statements) => raw.batch(statements),
+      };
+      const routed = createD1Db(createSessionRoutedClient(fallback, "fetch"));
+
+      // The flag answers after a timer, as a payload refresh from the CDN would,
+      // so the link reads start from a resumed fiber rather than in step.
+      const gate: AccountLinkGate = {
+        enabledFor: () => new Promise((resolve) => setTimeout(() => resolve(true), 20)),
+        osnSessionToken: token,
+      };
+      const res = await withD1Session(session, () =>
+        Effect.runPromise(
+          claimService.lookup(PUBLIC_ID, gate).pipe(Effect.provideService(DbService, routed)),
+        ),
+      );
+
+      expect(res.accountLink).toEqual({ enabled: true, signedIn: true, linkedGuestIds: [GUEST_2] });
+      expect(res.members).toHaveLength(2);
+      expect(inSession.some((q) => q.includes("guest_account_links"))).toBe(true);
+      expect(inSession.some((q) => q.includes("organiser_sessions"))).toBe(true);
+      expect(onBinding).toEqual([]);
     },
     MF_TIMEOUT_MS,
   );
