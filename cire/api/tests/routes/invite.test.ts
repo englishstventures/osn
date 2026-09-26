@@ -24,6 +24,7 @@ import type {
   OutputFormat,
 } from "../../src/services/invite-image-transform";
 import { appRequest, jsonBody } from "../test-helpers";
+import { seedOrganiserSession } from "../test-helpers/organiser-session";
 import { makeOsnTestAuth } from "../test-helpers/osn-token";
 import type { OsnTestAuth } from "../test-helpers/osn-token";
 
@@ -2540,6 +2541,47 @@ describe("PUT /invite/visibility (organiser, migration 0063)", () => {
     expect((await organiserInvite(app)).visibility.story).toBe(true);
   });
 
+  // The builder reaches this route with the organiser session cookie, not a
+  // bearer token, so the cookie path is the one that has to hold.
+  it("saves for an organiser session cookie", async () => {
+    const { app, db } = buildApp();
+    const token = await seedOrganiserSession(db, BOOTSTRAP_OWNER);
+    const res = await appRequest(app, `${orgBase}/visibility`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", cookie: `cire_org_session=${token}` },
+      body: JSON.stringify({ story: false }),
+    });
+    expect(res.status).toBe(200);
+    expect((await organiserInvite(app)).visibility.story).toBe(false);
+  });
+
+  it("401s a dead session cookie or a malformed bearer, and changes nothing", async () => {
+    const { app } = buildApp();
+    const credentials: Record<string, string>[] = [
+      { cookie: "cire_org_session=not-a-live-session-token" },
+      { authorization: "Bearer not-a-jwt" },
+    ];
+    for (const headers of credentials) {
+      const res = await appRequest(app, `${orgBase}/visibility`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ story: false }),
+      });
+      expect(res.status).toBe(401);
+    }
+    expect((await organiserInvite(app)).visibility.story).toBe(true);
+  });
+
+  it("answers a failed write with a plain 500", async () => {
+    const { app, db } = buildApp();
+    // A D1 error reaches the handler as a defect; dropping the table is the
+    // cheapest way to raise one here.
+    db.$client.exec("DROP TABLE wedding_invite_customisations");
+    const res = await putVisibility(app, { story: false });
+    expect(res.status).toBe(500);
+    expect(await jsonBody(res)).toEqual({ error: "Internal error" });
+  });
+
   it("lets an editor co-host switch a section", async () => {
     const { app, db } = buildApp();
     const editor = "usr_visibility_editor";
@@ -2682,6 +2724,19 @@ describe("PUT /invite/visibility (organiser, migration 0063)", () => {
         imageUrl: null,
         imageCrop: null,
       });
+    });
+
+    it("sends a switched-on hero's subtitle, and restores it when switched back on", async () => {
+      const { app } = buildApp();
+      await putText(app, { heroTitle: "Anita & Ben", heroSubtitle: "Save the date" });
+      const on = await publicInvite(app);
+      expect(on.visibility.hero).toBe(true);
+      expect(on.hero.subtitle).toBe("Save the date");
+
+      await putVisibility(app, { hero: false });
+      expect((await publicInvite(app)).hero.subtitle).toBeNull();
+      await putVisibility(app, { hero: true });
+      expect((await publicInvite(app)).hero.subtitle).toBe("Save the date");
     });
 
     it("sends a switched-on story's content as before", async () => {

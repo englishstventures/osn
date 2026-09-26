@@ -90,8 +90,22 @@ function migrated(rows: Row[]): Database {
   return db;
 }
 
-// Every character JavaScript's String.prototype.trim removes, as one string.
-const JS_WHITESPACE = "\t\n\u000b\f\r                  　﻿";
+// Every character JavaScript's String.prototype.trim removes, derived from
+// JavaScript itself so the set is complete by construction: the migration's five
+// trim lists have to match it, and a list missing a character goes red below.
+const JS_WHITESPACE = Array.from({ length: 0x10000 }, (_, code) => code)
+  .filter((code) => (code < 0xd800 || code > 0xdfff) && String.fromCharCode(code).trim() === "")
+  .map((code) => String.fromCharCode(code))
+  .join("");
+
+/** The five text columns the backfill trims, with the switch each one feeds. */
+const TEXT_COLUMNS = [
+  ["hero_title", "hero_visible"],
+  ["hero_subtitle", "hero_visible"],
+  ["story_heading", "story_visible"],
+  ["story_body", "story_visible"],
+  ["footer_message", "footer_visible"],
+] as const;
 
 describe("migration 0063", () => {
   it("switches off every section of a row with no content at all", () => {
@@ -140,24 +154,23 @@ describe("migration 0063", () => {
     db.close();
   });
 
-  it("does not count whitespace as content — the full set JavaScript's trim removes", () => {
-    const db = migrated([
-      {
-        wedding_id: "wed_ws",
-        hero_title: JS_WHITESPACE,
-        hero_subtitle: "   ",
-        story_heading: "\n\t",
-        story_body: " 　",
-        footer_message: "﻿  ",
-      },
-    ]);
-    expect(JS_WHITESPACE.trim()).toBe("");
-    expect(switchesOf(db, "wed_ws")).toEqual({
-      hero_visible: 0,
-      story_visible: 0,
-      footer_visible: 0,
-    });
-    db.close();
+  it("does not count whitespace as content, for any character JavaScript trims, in any column", () => {
+    expect(JS_WHITESPACE.length).toBe(25);
+    for (const [column, visibleColumn] of TEXT_COLUMNS) {
+      // The whole set at once, and each character on its own: a trim list
+      // missing one would keep a lone copy of it as text.
+      const rows: Row[] = [
+        { wedding_id: "wed_all", [column]: JS_WHITESPACE },
+        ...[...JS_WHITESPACE].map((ch, i) => ({ wedding_id: `wed_${i}`, [column]: ch + ch })),
+      ];
+      const db = migrated(rows);
+      for (const row of rows) {
+        expect(switchesOf(db, row.wedding_id)[visibleColumn], `${column} ${row.wedding_id}`).toBe(
+          0,
+        );
+      }
+      db.close();
+    }
   });
 
   it("counts text padded with whitespace as content", () => {

@@ -2180,6 +2180,79 @@ describe("InviteBuilder section visibility switches (migration 0063)", () => {
     expect(badgeIn("invite-hero").dataset.state).toBe("empty");
   });
 
+  it("switches Our Story back on when that section is reset", async () => {
+    await renderWith({ ...FILLED, visibility: { hero: true, story: false, footer: true } });
+    await openSection(/^Our Story/);
+    fireEvent.click(within(panel("invite-story")).getByRole("button", { name: "Reset section" }));
+    await waitFor(() => expect(switchIn("invite-story").checked).toBe(true));
+    expect(badgeIn("invite-story").dataset.state).toBe("empty");
+    // The hero kept its own switch.
+    expect(switchIn("invite-hero").checked).toBe(true);
+  });
+
+  // The composed preview is fed from the builder's own state, so it has to
+  // follow the switch through that wiring, not just when handed a state.
+  it("hides a switched-off section in the composed preview, and brings it back", async () => {
+    await renderWith(FILLED);
+    const pane = () => screen.getAllByLabelText("Invite preview")[0]!;
+    await waitFor(() => expect(pane().textContent).toContain("How It Began"));
+
+    fireEvent.click(switchIn("invite-story"));
+    await waitFor(() =>
+      expect(pane().querySelector('[data-hidden-strip="off"]')?.textContent).toBe(
+        "Our Story — switched off",
+      ),
+    );
+    expect(pane().textContent).not.toContain("How It Began");
+
+    fireEvent.click(switchIn("invite-story"));
+    await waitFor(() => expect(pane().querySelector('[data-hidden-strip="off"]')).toBeNull());
+    expect(pane().textContent).toContain("How It Began");
+  });
+
+  it("shows a failed switch save and keeps the change unsaved", async () => {
+    await renderWith(FILLED);
+    authFetchMock.mockResolvedValueOnce(json({ error: "Missing or invalid fields" }, 400));
+
+    fireEvent.click(switchIn("invite-story"));
+    const save = screen.getByText("Save invite") as HTMLButtonElement;
+    await waitFor(() => expect(save.disabled).toBe(false));
+    fireEvent.click(save);
+
+    await waitFor(() => expect(screen.getByText("Missing or invalid fields")).toBeTruthy());
+    expect(toastSuccess).not.toHaveBeenCalledWith("Invite saved");
+    expect(save.disabled).toBe(false);
+    screen.getByText("Unsaved changes");
+  });
+
+  it("after a saved copy change and a failed switch save, resends only the switches", async () => {
+    await renderWith(FILLED);
+    authFetchMock.mockResolvedValueOnce(json(FILLED)); // text save
+    authFetchMock.mockResolvedValueOnce(json({ error: "Internal error" }, 500)); // visibility save
+
+    fireEvent.input(screen.getByLabelText("Couple title"), { target: { value: "Anita & Ben" } });
+    fireEvent.click(switchIn("invite-story"));
+    const save = screen.getByText("Save invite") as HTMLButtonElement;
+    await waitFor(() => expect(save.disabled).toBe(false));
+    fireEvent.click(save);
+
+    await waitFor(() => expect(screen.getByText("Internal error")).toBeTruthy());
+    // Text first, then visibility — the documented order.
+    expect(String(authFetchMock.mock.calls[1][0])).toMatch(/\/invite\/text$/);
+    expect(String(authFetchMock.mock.calls[2][0])).toMatch(/\/invite\/visibility$/);
+    screen.getByText("Unsaved changes");
+
+    // The text half is saved; a retry sends the switches alone.
+    authFetchMock.mockResolvedValueOnce(
+      json({ ...FILLED, visibility: { hero: true, story: false, footer: true } }),
+    );
+    fireEvent.click(save);
+    await waitFor(() => expect(authFetchMock).toHaveBeenCalledTimes(4));
+    expect(String(authFetchMock.mock.calls[3][0])).toMatch(/\/invite\/visibility$/);
+    expect(lastSentBody("/visibility")).toEqual({ hero: true, story: false, footer: true });
+    await waitFor(() => expect(save.disabled).toBe(true));
+  });
+
   it("names the switched-off state on the tab and on the collapsed trigger", async () => {
     await renderWith({ ...FILLED, visibility: { hero: true, story: true, footer: false } });
     // The tab's accessible name carries the state through its sr-only clause.
