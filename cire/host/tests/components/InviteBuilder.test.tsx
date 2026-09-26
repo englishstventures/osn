@@ -2064,3 +2064,131 @@ describe("InviteBuilder preview layer", () => {
     expect(inlinePreviewCount()).toBe(1);
   });
 });
+
+describe("InviteBuilder section visibility switches (migration 0063)", () => {
+  afterEach(() => {
+    cleanup();
+    resetOrganiserMocks();
+    vi.restoreAllMocks();
+  });
+
+  const FILLED = {
+    ...EMPTY_CUSTOMISATION,
+    hero: { title: "Vera & Ravi", subtitle: null, imageUrl: null },
+    story: { eyebrow: null, heading: "How It Began", body: null, imageUrl: null },
+    footer: { message: "No boxed gifts please" },
+  };
+
+  const panel = (id: string) => document.getElementById(id)!;
+  const badgeIn = (id: string) => panel(id).querySelector("[data-segment-badge]") as HTMLElement;
+  const reasonIn = (id: string) => panel(id).querySelector("[data-visibility-reason]");
+  const switchIn = (id: string) =>
+    within(panel(id)).getByLabelText("Show on the invite") as HTMLInputElement;
+
+  async function renderWith(customisation: unknown) {
+    authFetchMock.mockResolvedValueOnce(json(customisation));
+    render(() => <InviteBuilder weddingId="wed_1" weddingSlug="anita-ben" entitlements={[]} />);
+    await waitFor(() => expect(badgeIn("invite-hero")).toBeTruthy());
+  }
+
+  it("seeds every switch on for a payload that predates the switches", async () => {
+    await renderWith(FILLED);
+    for (const id of ["invite-hero", "invite-story", "invite-closing"]) {
+      expect(switchIn(id).checked).toBe(true);
+      expect(badgeIn(id).dataset.state).toBe("shown");
+    }
+  });
+
+  it("marks a switched-off section with content 'Hidden — switched off' and says the content is kept", async () => {
+    await renderWith({ ...FILLED, visibility: { hero: true, story: false, footer: true } });
+    const badge = badgeIn("invite-story");
+    expect(badge.dataset.state).toBe("off");
+    expect(badge.dataset.shown).toBe("false");
+    expect(badge.textContent).toContain("Hidden — switched off");
+    expect(switchIn("invite-story").checked).toBe(false);
+    expect(reasonIn("invite-story")?.textContent).toMatch(/everything in it is kept/);
+    // The other two are untouched.
+    expect(badgeIn("invite-hero").dataset.state).toBe("shown");
+    expect(reasonIn("invite-hero")).toBeNull();
+  });
+
+  // Switched on but empty renders nothing on the guest invite, so the builder
+  // has to say why the section is hidden and what would show it.
+  it("explains a section switched on but empty, naming what to add", async () => {
+    await renderWith(EMPTY_CUSTOMISATION);
+    expect(badgeIn("invite-hero").dataset.state).toBe("empty");
+    expect(switchIn("invite-hero").checked).toBe(true);
+    expect(reasonIn("invite-hero")?.textContent).toBe(
+      "Switched on, but guests won't see it until it has content: add a title, a subtitle or an image.",
+    );
+    expect(reasonIn("invite-closing")?.textContent).toMatch(/a closing image or a closing note/);
+  });
+
+  it("tells the organiser a switched-off hero still names the page and heads the gift list", async () => {
+    await renderWith({ ...FILLED, visibility: { hero: false, story: true, footer: true } });
+    expect(reasonIn("invite-hero")?.textContent).toMatch(/browser tab/);
+    expect(reasonIn("invite-hero")?.textContent).toMatch(/gift list/);
+  });
+
+  it("flips the badge live when the switch is toggled, without saving", async () => {
+    await renderWith(FILLED);
+    fireEvent.click(switchIn("invite-hero"));
+    await waitFor(() => expect(badgeIn("invite-hero").dataset.state).toBe("off"));
+    fireEvent.click(switchIn("invite-hero"));
+    await waitFor(() => expect(badgeIn("invite-hero").dataset.state).toBe("shown"));
+    expect(authFetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("saves a switch change with PUT /visibility alone, then reads clean", async () => {
+    await renderWith(FILLED);
+    authFetchMock.mockResolvedValueOnce(
+      json({ ...FILLED, visibility: { hero: true, story: false, footer: true } }),
+    );
+
+    fireEvent.click(switchIn("invite-story"));
+    const save = screen.getByText("Save invite") as HTMLButtonElement;
+    await waitFor(() => expect(save.disabled).toBe(false));
+    screen.getByText("Unsaved changes");
+    fireEvent.click(save);
+
+    await waitFor(() => expect(authFetchMock).toHaveBeenCalledTimes(2));
+    expect(String(authFetchMock.mock.calls[1][0])).toMatch(/\/invite\/visibility$/);
+    expect(authFetchMock.mock.calls[1][1].method).toBe("PUT");
+    expect(sentBody("/visibility")).toEqual({ hero: true, story: false, footer: true });
+    // Copy and theme were untouched, so neither was sent.
+    expect(sentBody("/text")).toBeNull();
+    expect(sentBody("/theme")).toBeNull();
+    await waitFor(() => expect(save.disabled).toBe(true));
+    screen.getByText("All changes saved");
+  });
+
+  it("does not count switching off and back on as a change", async () => {
+    await renderWith(FILLED);
+    const save = screen.getByText("Save invite") as HTMLButtonElement;
+    fireEvent.click(switchIn("invite-closing"));
+    await waitFor(() => expect(save.disabled).toBe(false));
+    fireEvent.click(switchIn("invite-closing"));
+    await waitFor(() => expect(save.disabled).toBe(true));
+  });
+
+  it("switches the section back on when the section is reset", async () => {
+    await renderWith({ ...FILLED, visibility: { hero: false, story: true, footer: true } });
+    await openSection(/^Hero/);
+    fireEvent.click(within(panel("invite-hero")).getByRole("button", { name: "Reset section" }));
+    await waitFor(() => expect(switchIn("invite-hero").checked).toBe(true));
+    // The reset also cleared the title, so the hero is now on but empty.
+    expect(badgeIn("invite-hero").dataset.state).toBe("empty");
+  });
+
+  it("names the switched-off state on the tab and on the collapsed trigger", async () => {
+    await renderWith({ ...FILLED, visibility: { hero: true, story: true, footer: false } });
+    // The tab's accessible name carries the state through its sr-only clause.
+    screen.getByRole("tab", { name: "Closing (hidden — switched off)" });
+    screen.getByRole("tab", { name: "Hero" });
+
+    await openSection(/^Closing/);
+    expect(
+      screen.getByRole("button", { name: /Choose a section/ }).getAttribute("aria-label"),
+    ).toBe("Invite section: Closing, 7 of 8, hidden — switched off. Choose a section");
+  });
+});
