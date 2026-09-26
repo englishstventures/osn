@@ -1,7 +1,8 @@
 import { cleanup, fireEvent, render, waitFor } from "@solidjs/testing-library";
-import { createSignal } from "solid-js";
+import { createSignal, type JSX } from "solid-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { CLAIM_SESSION_EVENT } from "../../src/components/claim-session";
 import { LoginSection, type LoginSectionLayout } from "../../src/components/LoginSection";
 import type { RsvpDeadlineState } from "../../src/components/rsvp-deadline";
 import type { ClaimResult, FamilyMember, RsvpDeadline } from "../../src/components/types";
@@ -12,17 +13,43 @@ import type { ClaimResult, FamilyMember, RsvpDeadline } from "../../src/componen
 // PulseAccountLink.test.tsx; what this file asserts is where the panel puts
 // them and when.
 vi.mock("../../src/components/PulseAccountLink", () => ({
-  PulseAccountLink: (props: { members: FamilyMember[]; class?: string }) => (
+  PulseAccountLink: (props: { apiUrl: string; members: FamilyMember[]; class?: string }) => (
     <div
       data-testid="pulse-account-link-stub"
       class={props.class}
+      data-api-url={props.apiUrl}
       data-members={props.members.map((m) => m.guestId).join(",")}
     />
   ),
 }));
 
 vi.mock("@shared/rp-auth/solid", () => ({
-  AuthProvider: (props: { children: unknown }) => props.children,
+  AuthProvider: (props: { config: { apiBase: string }; children: JSX.Element }) => (
+    <div data-testid="auth-provider-stub" data-api-base={props.config.apiBase}>
+      {props.children}
+    </div>
+  ),
+}));
+
+// Turnstile off by default, which is what the real widget reports with no
+// sitekey configured. A test that needs the challenge turns it on and drives
+// the token by hand.
+const turnstile = vi.hoisted(() => ({
+  enabled: false,
+  reset: vi.fn(),
+  onToken: undefined as ((token: string | null) => void) | undefined,
+}));
+
+vi.mock("../../src/components/TurnstileWidget", () => ({
+  turnstileEnabled: () => turnstile.enabled,
+  TurnstileWidget: (props: {
+    onToken: (token: string | null) => void;
+    controls?: (handle: { reset: () => void }) => void;
+  }) => {
+    turnstile.onToken = props.onToken;
+    props.controls?.({ reset: turnstile.reset });
+    return null;
+  },
 }));
 
 /** Answers every request with an empty 204 unless a test installs its own. */
@@ -31,6 +58,9 @@ let fetchMock: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
   vi.stubGlobal("fetch", fetchMock);
+  turnstile.enabled = false;
+  turnstile.reset.mockClear();
+  turnstile.onToken = undefined;
 });
 
 afterEach(() => {
@@ -297,6 +327,35 @@ describe("LoginSection sign-out control", () => {
 
     expect(document.activeElement).toBe(getByLabelText("Invitation code"));
   });
+
+  it("asks Turnstile for a fresh challenge, so a second code can be claimed", () => {
+    // Turnstile tokens are single use and the claim that just succeeded spent
+    // this one. Without a new challenge the submit stays disabled for good, and
+    // a guest on a shared device cannot open another household's invite
+    // without reloading the page.
+    turnstile.enabled = true;
+    const [claimed, setClaimed] = createSignal<ClaimResult | null>(result([member("Chidi")]));
+    const { getByText, getByLabelText } = render(() => (
+      <LoginSection
+        apiUrl="https://api.test"
+        result={claimed()}
+        onClaimed={noop}
+        onSignOut={() => setClaimed(null)}
+      />
+    ));
+    turnstile.onToken?.("spent-token");
+
+    fireEvent.click(getByText(/Sign out/));
+
+    expect(turnstile.reset).toHaveBeenCalledTimes(1);
+    fireEvent.input(getByLabelText("Invitation code"), { target: { value: "PATEL-JOY-RK97" } });
+    const submit = getByText("Open Invitation") as HTMLButtonElement;
+    // The spent token is gone with the old claim…
+    expect(submit.disabled).toBe(true);
+    // …and the fresh challenge is what lets the guest submit again.
+    turnstile.onToken?.("fresh-token");
+    expect(submit.disabled).toBe(false);
+  });
 });
 
 describe("LoginSection claim", () => {
@@ -312,6 +371,12 @@ describe("LoginSection claim", () => {
       }),
     );
     const onClaimed = vi.fn();
+    // Other islands (the gift-list band) re-read the session when this fires.
+    // It must come after the page's handler, so the page has its result
+    // before anything else hears of the claim.
+    const claimedBeforeAnnounce: number[] = [];
+    const listener = () => claimedBeforeAnnounce.push(onClaimed.mock.calls.length);
+    window.addEventListener(CLAIM_SESSION_EVENT, listener);
     const { getByLabelText, getByText } = render(() => (
       <LoginSection apiUrl="https://api.test" result={null} onClaimed={onClaimed} />
     ));
@@ -322,8 +387,10 @@ describe("LoginSection claim", () => {
     fireEvent.click(getByText("Open Invitation"));
 
     await waitFor(() => expect(onClaimed).toHaveBeenCalledTimes(1));
+    window.removeEventListener(CLAIM_SESSION_EVENT, listener);
     expect(onClaimed.mock.calls[0]![0]).toEqual(claimed);
     expect(document.cookie).toContain("cire_claimed=1");
+    expect(claimedBeforeAnnounce).toEqual([1]);
   });
 
   it("writes no hint when the claim fails", async () => {
@@ -481,6 +548,20 @@ describe("LoginSection household controls", () => {
       expect(classes.filter((c) => (absent as readonly string[]).includes(c))).toEqual([]);
     },
   );
+
+  it("points the account link and its auth client at the invite's API", async () => {
+    // The account link hides itself on any failure, so a wrong or missing
+    // origin here would make it vanish for every household with nothing to
+    // report it.
+    const { findByTestId, getByTestId } = render(() => (
+      <LoginSection apiUrl="https://api.test" result={result([member("Chidi")])} onClaimed={noop} />
+    ));
+    const link = await findByTestId("pulse-account-link-stub");
+    expect(link.dataset.apiUrl).toBe("https://api.test");
+    const auth = getByTestId("auth-provider-stub");
+    expect(auth.dataset.apiBase).toBe("https://api.test");
+    expect(auth.contains(link)).toBe(true);
+  });
 
   it("offers no account link before a claim", async () => {
     const { queryByTestId } = render(() => (
