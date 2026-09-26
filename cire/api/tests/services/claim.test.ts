@@ -6,6 +6,7 @@ import {
   guestAccountLinks,
   guests,
   rsvps,
+  weddingFaqs,
   weddings,
 } from "@cire/db";
 import { events as eventsData } from "@cire/db/seed";
@@ -529,7 +530,25 @@ describe("claimService.restore", () => {
     withDb(
       Effect.gen(function* () {
         const db = yield* DbService;
+        // An FAQ entry, so the FAQ half of the compare is not `[] === []`.
+        yield* Effect.promise(() =>
+          Promise.resolve(
+            db
+              .insert(weddingFaqs)
+              .values({
+                id: "faq_service_parity",
+                weddingId: BOOTSTRAP_WEDDING_ID,
+                question: "Is there parking?",
+                answer: "Yes.",
+                sortOrder: 0,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .run(),
+          ),
+        );
         const claimed = yield* claimService.lookup("TESTONE-IVY-AA11");
+        expect(claimed.faq.entries).toEqual([{ question: "Is there parking?", answer: "Yes." }]);
         const restored = yield* claimService.restore(yield* familyIdFor(db, "TESTONE-IVY-AA11"));
         // Whole-object, not field-by-field: `buildClaimResponse` exists precisely
         // so the two entry points cannot serve different views of one household,

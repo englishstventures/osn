@@ -25,6 +25,7 @@ import { decodeCrop, type ImageCrop } from "../schemas/invite";
 import { DIETARY_CONSENT_VERSION } from "../schemas/rsvp";
 import { accountLinkService } from "./account-link";
 import { eventImagePath, versionFromKey } from "./event-image";
+import { inviteFaqService } from "./invite-faq";
 
 export class InvalidCredentials extends Data.TaggedError("InvalidCredentials") {}
 
@@ -215,12 +216,12 @@ function buildInvite(
   return Effect.gen(function* () {
     const db = yield* DbService;
 
-    // Three genuinely INDEPENDENT reads, each keyed only off the already-resolved
-    // `family` row, so they're pipelined together with `Effect.all` (P-W2): on D1
-    // their three round-trips overlap (~1 fewer serial RTT on the hot path), and
-    // on bun:sqlite (tests/local) they resolve in-process so concurrency is a
-    // harmless no-op. The events read can't join this group — it depends on the
-    // event ids derived from `guestRows` below — so it stays sequential after.
+    // INDEPENDENT reads, each keyed only off the already-resolved `family` row,
+    // so they're pipelined together with `Effect.all`: on D1 their
+    // round-trips overlap (fewer serial RTTs on the hot path), and on bun:sqlite
+    // (tests/local) they resolve in-process so concurrency is a harmless no-op.
+    // The events read can't join this group — it depends on the event ids
+    // derived from `guestRows` below — so it stays sequential after.
     //  (a) the wedding row — its slug scopes the first-party event-image paths,
     //      and its RSVP-deadline columns tell the guest site whether (and when)
     //      the invite locks. A family always belongs to a wedding (FK), so the
@@ -231,11 +232,14 @@ function buildInvite(
     //      avoid the cartesian explosion of duplicating every event row — incl.
     //      its JSON palette blob — once per invited guest.
     //  (c) this family's RSVPs.
+    //  (d) the FAQ entries, which read nothing when the FAQ is switched off —
+    //      the switch is checked inside that one statement.
     const {
       wedding: [wedding],
       closingRow: [closing],
       guestRows,
       rsvpRows,
+      faqEntries,
     } = yield* Effect.all(
       {
         wedding: dbQuery(() =>
@@ -252,7 +256,8 @@ function buildInvite(
         // The CLOSING SECTION (the couple's sign-off) rides the claim payload,
         // NOT the public `GET /api/invite/:slug` — it is addressed to the
         // invited household, so it is delivered only to a session that proved
-        // household membership, exactly like the events list beside it.
+        // household membership, exactly like the events list beside it. The
+        // same row carries the FAQ's switch.
         closingRow: dbQuery(() =>
           db
             .select({
@@ -260,6 +265,7 @@ function buildInvite(
               imageKey: weddingInviteCustomisations.footerImageKey,
               imageCrop: weddingInviteCustomisations.footerImageCrop,
               visible: weddingInviteCustomisations.footerVisible,
+              faqVisible: weddingInviteCustomisations.faqVisible,
               updatedAt: weddingInviteCustomisations.updatedAt,
               imagesUpdatedAt: weddingInviteCustomisations.imagesUpdatedAt,
             })
@@ -298,6 +304,7 @@ function buildInvite(
             .where(eq(guests.familyId, family.id))
             .all(),
         ),
+        faqEntries: inviteFaqService.listForGuests(family.weddingId),
       },
       { concurrency: "unbounded" },
     );
@@ -413,6 +420,12 @@ function buildInvite(
         // Only surface a rectangle when there is an image to crop; `decodeCrop`
         // drops a malformed/legacy value so a bad rect never reaches a style.
         imageCrop: closingContent?.imageKey ? decodeCrop(closingContent.imageCrop) : null,
+      },
+      // The FAQ's switch (migration 0064); no row reads as on, the column
+      // default. `listForGuests` already returns no entries when it is off.
+      faq: {
+        visible: closing?.faqVisible ?? true,
+        entries: faqEntries,
       },
     };
   });
