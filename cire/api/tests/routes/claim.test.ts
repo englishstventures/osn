@@ -829,6 +829,25 @@ describe("account-link state on POST /api/claim and GET /api/claim/session", () 
     return guest!.id;
   }
 
+  it("keeps the claim response out of every cache, as the restore does", async () => {
+    // Both carry the same payload, and it now depends on a second cookie.
+    const { linkApp } = buildApp({ flag: true });
+    const res = await linkApp.fetch(
+      new Request("http://localhost/api/claim", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "cf-connecting-ip": IP,
+          Origin: "http://localhost:4321",
+        },
+        body: JSON.stringify({ publicId: "TESTTWO-OAK-BB22" }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(res.headers.get("vary")).toBe("Origin, Cookie");
+  });
+
   it("reports linking off on both responses while the flag is off", async () => {
     const { linkApp } = buildApp({ flag: false });
     const { body, household } = await claim(linkApp, "TESTTWO-OAK-BB22");

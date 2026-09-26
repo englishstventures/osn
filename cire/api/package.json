@@ -13,10 +13,6 @@
     "test:d1": "bun test tests/db/d1-integration.test.ts",
     "check": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json"
   },
-  "portless": {
-    "name": "api.cire",
-    "script": "dev:app"
-  },
   "dependencies": {
     "@cire/db": "workspace:*",
     "@cire/dietary": "workspace:*",
@@ -45,5 +41,9 @@
     "miniflare": "^4.20260730.0",
     "typescript": "^6.0.3",
     "wrangler": "^4.127.1"
+  },
+  "portless": {
+    "name": "api.cire",
+    "script": "dev:app"
   }
 }

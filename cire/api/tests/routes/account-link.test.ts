@@ -1,13 +1,17 @@
 import { describe, it, expect, beforeAll } from "bun:test";
 
-import { guestAccountLinks, guests } from "@cire/db";
+import { BOOTSTRAP_WEDDING_ID, families, guestAccountLinks, guests } from "@cire/db";
 import { createStaticFlags } from "@shared/feature-flags";
 import { createRateLimiter } from "@shared/rate-limit";
+import { eq } from "drizzle-orm";
+import { Effect } from "effect";
 
 import { createApp } from "../../src/app";
+import { DbService } from "../../src/db";
 import { createDb, seedDb } from "../../src/db/setup";
 import type { TestDb } from "../../src/db/setup";
 import { parseSessionToken } from "../../src/lib/cookie";
+import { hostCodeService } from "../../src/services/host-code";
 import type { OsnAccountResolver } from "../../src/services/osn-bridge";
 import { jsonBody } from "../test-helpers";
 import { makeOsnTestAuth } from "../test-helpers/osn-token";
@@ -253,6 +257,35 @@ describe("POST /api/account/link", () => {
     const bearer = await auth.sign("usr_alice");
     const res = await postLink(app, { cookie, bearer, guestId: guestIdByName(db, "Bo") });
     expect(res.status).toBe(503);
+  });
+});
+
+describe("POST /api/account/link — host preview", () => {
+  it("never links the organiser's preview seat", async () => {
+    // A host code opens the organiser's preview as a synthetic household with
+    // one seat. That seat is not a guest, so it can never be linked, even by a
+    // request crafted around the hidden box.
+    const { db, app } = buildApp();
+    const { publicId } = await Effect.runPromise(
+      hostCodeService
+        .ensureForWedding(BOOTSTRAP_WEDDING_ID, "cire-wedding")
+        .pipe(Effect.provideService(DbService, db)),
+    );
+    const cookie = await claimCookie(app, publicId);
+    const [hostSeat] = db
+      .select({ id: guests.id })
+      .from(guests)
+      .innerJoin(families, eq(guests.familyId, families.id))
+      .where(eq(families.publicId, publicId))
+      .all();
+
+    const res = await postLink(app, {
+      cookie,
+      bearer: await auth.sign("usr_owner"),
+      guestId: hostSeat!.id,
+    });
+    expect(res.status).toBe(403);
+    expect(db.select().from(guestAccountLinks).all()).toHaveLength(0);
   });
 });
 

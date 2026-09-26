@@ -97,14 +97,23 @@ export const accountLinkService = {
     return Effect.gen(function* () {
       const db = yield* DbService;
 
-      // Guest must exist AND belong to the session's family. The join yields the
-      // wedding id for the tenant-scope column in one query.
+      // Guest must exist AND belong to the session's family, and that family
+      // must be a guest household: the organiser's host-preview family is not a
+      // guest seat, so it is never linkable, even by a request crafted around
+      // the box the preview never shows. The join yields the wedding id for the
+      // tenant-scope column in the same query.
       const [scope] = yield* dbQuery(() =>
         db
           .select({ weddingId: families.weddingId })
           .from(guests)
           .innerJoin(families, eq(guests.familyId, families.id))
-          .where(and(eq(guests.id, input.guestId), eq(guests.familyId, input.familyId)))
+          .where(
+            and(
+              eq(guests.id, input.guestId),
+              eq(guests.familyId, input.familyId),
+              eq(families.kind, "guest"),
+            ),
+          )
           .all(),
       );
       if (!scope) {

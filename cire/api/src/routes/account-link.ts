@@ -79,8 +79,9 @@ export const createAccountLinkRoutes = (db: Db, limiter: RateLimiterBackend) =>
  * The one deliberate dual-credential route: the guest session cookie (derives
  * `familyId`) proves the household; the OSN access token (derives
  * `osnProfileId`) proves the OSN identity. Both `sessionAuth` and `osnAuth`
- * gate this instance, so the OSN gate applies to POST only — GET/DELETE live in
- * the sibling instance above. The profile is resolved to its account id S2S
+ * gate this instance, so the OSN gate applies to POST only — DELETE lives in
+ * the sibling instance above. A seat in the organiser's host-preview family is
+ * never linkable (403, like a seat from another household). The profile is resolved to its account id S2S
  * over ARC so account-level linking lets any of the user's OSN profiles later
  * see the invitation in Pulse; the account id is never returned to the client.
  */

@@ -58,6 +58,12 @@ export const createClaimRoutes = (
   new Elysia({ prefix: "/api/claim" }).use(rateLimitMiddleware(limiter)).post(
     "/",
     async ({ request, set }) => {
+      // The same payload the restore serves, under the same cache rules: it is
+      // the household's invite, and its `accountLink.signedIn` depends on a
+      // second cookie. Set first, so every outcome carries it.
+      set.headers["cache-control"] = "no-store";
+      set.headers.vary = "Origin, Cookie";
+
       const raw: unknown = await request.json().catch(() => null);
 
       // Turnstile bot gate (key-optional; no-op when unconfigured). Runs after
