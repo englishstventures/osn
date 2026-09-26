@@ -124,7 +124,11 @@ export default function InviteMessageLinks(props: InviteMessageLinksProps) {
         aria-label={spokenPath(target)}
         onClick={() => props.onNavigate(target)}
       >
-        <PlacePath place={target} />
+        {/* One flex item, so the button's gap does not open between the path's
+            words and the underline runs unbroken. */}
+        <span>
+          <PlacePath place={target} />
+        </span>
       </Button>
     </Show>
   );
