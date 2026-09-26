@@ -13,7 +13,6 @@ import {
   HEADING_SIZE_CHOICES,
   type PalettePresetKey,
   type SectionTone,
-  VISIBILITY_SECTIONS,
   type VisibilitySection,
 } from "@cire/theme";
 
@@ -230,11 +229,6 @@ export interface InviteDraft {
 /** One switch per switchable section; `true` shows the section when it has content. */
 export type SectionSwitches = Record<VisibilitySection, boolean>;
 
-/** Every section switched on: a new wedding's section shows once it has content. */
-function allVisible() {
-  return { hero: true, story: true, footer: true } satisfies SectionSwitches;
-}
-
 export function emptyDraft(): InviteDraft {
   return {
     heroTitle: "",
@@ -259,7 +253,8 @@ export function emptyDraft(): InviteDraft {
     heroBlur: HERO_BLUR_DEFAULT,
     titleBackdropOpacity: 0,
     titleBackdropBlur: 0,
-    visibility: allVisible(),
+    // Every section switched on: a new wedding's section shows once it has content.
+    visibility: visibilityFrom(undefined),
   };
 }
 
@@ -307,10 +302,12 @@ export function draftFromCustomisation(d: InviteCustomisation): InviteDraft {
 }
 
 /** The stored switches, a missing one reading as on. */
-function visibilityFrom(stored: InviteCustomisation["visibility"]): SectionSwitches {
-  const out = allVisible();
-  for (const section of VISIBILITY_SECTIONS) out[section] = stored?.[section] ?? true;
-  return out;
+function visibilityFrom(stored: InviteCustomisation["visibility"]): InviteDraft["visibility"] {
+  return {
+    hero: stored?.hero ?? true,
+    story: stored?.story ?? true,
+    footer: stored?.footer ?? true,
+  };
 }
 
 /** The `/invite/text` request body from the draft. */
@@ -359,6 +356,6 @@ export function themePayload(draft: InviteDraft) {
  * The `/invite/visibility` request body from the draft. The API takes a partial
  * body, but the builder always sends every section it knows, like the other two.
  */
-export function visibilityPayload(draft: InviteDraft): SectionSwitches {
+export function visibilityPayload(draft: InviteDraft): InviteDraft["visibility"] {
   return visibilityFrom(draft.visibility);
 }
