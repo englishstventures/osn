@@ -132,7 +132,7 @@ function buildClaimResponse(family: FamilyRow): Effect.Effect<ClaimResponse, nev
     const db = yield* DbService;
 
     // INDEPENDENT reads, each keyed only off the already-resolved `family` row,
-    // so they're pipelined together with `Effect.all` (P-W2): on D1 their
+    // so they're pipelined together with `Effect.all`: on D1 their
     // round-trips overlap (fewer serial RTTs on the hot path), and on bun:sqlite
     // (tests/local) they resolve in-process so concurrency is a harmless no-op.
     // The events read can't join this group — it depends on the event ids
