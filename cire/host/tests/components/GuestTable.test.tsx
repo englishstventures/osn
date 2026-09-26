@@ -36,8 +36,8 @@ vi.mock("../../src/lib/download", () => ({
 }));
 
 import GuestTable from "../../src/components/GuestTable";
-import { __resetEventsCache, setCachedEvents } from "../../src/lib/events-store";
-import { __resetGuestsCache, setCachedGuests } from "../../src/lib/guests-store";
+import { __resetEventsCache } from "../../src/lib/events-store";
+import { __resetGuestsCache } from "../../src/lib/guests-store";
 import {
   authFetchMock,
   resetOrganiserMocks,
@@ -100,6 +100,22 @@ describe("GuestTable", () => {
     __resetGuestsCache();
     __resetEventsCache();
   });
+
+  /** Mount once and unmount, leaving the guest and event caches warm the way
+   *  a switch away from Households and back does. */
+  async function mountAndLeave() {
+    primeLoad();
+    const { unmount } = render(() => (
+      <GuestTable
+        weddingId="wed_a"
+        canManage
+        weddingName="Nadia & Sam"
+        weddingSlug="nadia-sam-abc123"
+      />
+    ));
+    await waitFor(() => expect(screen.getByText("Sharma")).toBeTruthy());
+    unmount();
+  }
 
   function withClipboard() {
     writeText.mockResolvedValue(undefined);
@@ -182,8 +198,7 @@ describe("GuestTable", () => {
     withClipboard();
     // A remount: the rows are already cached, so they paint at once while the
     // invite read that carries the custom first line is still in flight.
-    setCachedGuests("wed_a", GUESTS);
-    setCachedEvents("wed_a", EVENTS);
+    await mountAndLeave();
     let answerInvite: (res: Response) => void = () => {};
     authFetchMock.mockImplementation((url: string) =>
       url.endsWith("/invite")
@@ -215,8 +230,7 @@ describe("GuestTable", () => {
 
   it("frees Copy with the default line when the custom message cannot be read", async () => {
     withClipboard();
-    setCachedGuests("wed_a", GUESTS);
-    setCachedEvents("wed_a", EVENTS);
+    await mountAndLeave();
     authFetchMock.mockImplementation((url: string) =>
       Promise.resolve(url.endsWith("/invite") ? json({}, 500) : json({})),
     );
