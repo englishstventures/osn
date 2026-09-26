@@ -56,8 +56,8 @@ describe("CORS", () => {
 // The portals call this API cross-origin with credentials and a JSON body, so
 // every non-GET they send is preflighted, and the browser refuses any method
 // the preflight's `Access-Control-Allow-Methods` leaves out. The origins are
-// the committed `WEB_ORIGIN` allowlists of both deployed tiers, split the way
-// the Worker splits them.
+// the committed `WEB_ORIGIN` allowlists of both deployed tiers, split here with
+// a copy of the split, trim and filter in `src/index.ts`.
 const committedToml = await Bun.file(new URL("../wrangler.toml", import.meta.url)).text();
 const deployedTiers = Bun.TOML.parse(committedToml) as {
   env: Record<"dev" | "production", { vars: { WEB_ORIGIN: string } }>;
@@ -146,23 +146,13 @@ describe("CORS preflight for the deployed portal origins", () => {
     expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
   });
 
-  it("allows exactly the methods the routes use, never a wildcard", async () => {
+  // Both directions come from what the app mounts (the CORS plugin's own
+  // OPTIONS routes included), so the list can neither miss a method a route
+  // answers nor carry one no route answers, and `*` matches nothing.
+  it("allows exactly the methods mounted routes answer, never a wildcard", async () => {
     const res = await preflight(CHECKLIST_REORDER, portalOrigins[0]);
-    expect(allowedMethods(res).toSorted()).toEqual([
-      "DELETE",
-      "GET",
-      "OPTIONS",
-      "PATCH",
-      "POST",
-      "PUT",
-    ]);
-  });
-
-  it("allows every method a mounted route answers", async () => {
-    const res = await preflight(CHECKLIST_REORDER, portalOrigins[0]);
-    const allowed = new Set(allowedMethods(res));
     const mounted = new Set(deployedApp.routes.map((route) => route.method));
-    expect([...mounted].filter((method) => !allowed.has(method))).toEqual([]);
+    expect(allowedMethods(res).toSorted()).toEqual([...mounted].toSorted());
   });
 });
 

@@ -654,7 +654,7 @@ export function createApp(db: Db, options: AppOptions = {}) {
           // Every method a route answers, and no other. The portals call this
           // API cross-origin with credentials, so each non-GET call is
           // preflighted and the browser refuses a method this list leaves out.
-          // `tests/app.test.ts` fails when a mounted route's method is missing.
+          // `tests/app.test.ts` fails unless it matches the mounted routes.
           methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
           allowedHeaders: ["Content-Type", "Authorization"],
           credentials: true,
