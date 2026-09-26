@@ -217,12 +217,25 @@ export function LoginSection(props: LoginSectionProps) {
   let turnstile: TurnstileControls | undefined;
 
   function handleSignOut() {
+    const household = props.result;
     // Revoke `cire_session` server-side and drop the local restore hint. The
     // cookie is HttpOnly and host-scoped to the API origin, so only this
     // request can end it. Fire-and-forget: a guest on a borrowed phone tapping
     // this must see the invite go now, not after a network timeout, and the
     // request carries its own cookie, so nothing below depends on its result.
     void signOut(props.apiUrl);
+    // End the OSN sign-in the account link uses as well: `cire_session` does
+    // not cover it, and a shared device would otherwise hand it to the next
+    // household, which could then bind one of its seats to this guest's
+    // account. Not in host preview, where there is no account link and the
+    // same session is the organiser's sign-in to the host portal. Imported on
+    // demand, like the account link, so the invite's first download stays
+    // free of the auth client; fire-and-forget for the reason above.
+    if (household && !household.preview) {
+      void import("@shared/rp-auth")
+        .then((auth) => auth.signOut({ apiBase: props.apiUrl }))
+        .catch(() => {});
+    }
     // Return the form to a submittable state: blank field (it would otherwise
     // reappear pre-filled with the code that just succeeded), no stale error,
     // no stuck `loading`, no spent Turnstile token.

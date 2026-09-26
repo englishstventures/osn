@@ -285,6 +285,55 @@ describe("LoginSection sign-out control", () => {
     expect(document.cookie).not.toContain("cire_claimed=1");
   });
 
+  it("ends the account-linking sign-in too, so the next household starts signed out", async () => {
+    // The Pulse link beside this control signs in to cire-api's OSN session,
+    // which the household cookie does not cover. Left in place on a shared
+    // device, the next household to claim would find it still signed in and
+    // could bind one of its seats to the previous guest's account.
+    const { getByText } = render(() => (
+      <LoginSection
+        apiUrl="https://api.test"
+        result={result([member("Chidi")])}
+        onClaimed={noop}
+        onSignOut={noop}
+      />
+    ));
+
+    fireEvent.click(getByText(/Sign out/));
+
+    await waitFor(() => {
+      const call = fetchMock.mock.calls.find(
+        ([url]) => url === "https://api.test/api/auth/signout",
+      );
+      expect(call, "the OSN sign-in was left in place").toBeTruthy();
+      expect((call![1] as RequestInit).method).toBe("POST");
+      expect((call![1] as RequestInit).credentials).toBe("include");
+    });
+  });
+
+  it("leaves an organiser previewing their own invite signed in to the portal", async () => {
+    // Host preview never shows the account link, and the same OSN session is
+    // the organiser's sign-in to the host portal.
+    const { getByText } = render(() => (
+      <LoginSection
+        apiUrl="https://api.test"
+        result={{ ...result([member("Chidi")]), preview: true }}
+        onClaimed={noop}
+        onSignOut={noop}
+      />
+    ));
+
+    fireEvent.click(getByText(/Sign out/));
+
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([url]) => url === "https://api.test/api/claim/signout"),
+      ).toBe(true),
+    );
+    await settle();
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/api/auth/"))).toBe(false);
+  });
+
   it("clears what the unlock animation left on the form, so it comes back painted", () => {
     // The packs' unlock sequence fades the form out and leaves its end state
     // inline (`opacity: 0` plus a `translateY`). Solid's binding on the element
