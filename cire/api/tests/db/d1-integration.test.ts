@@ -304,6 +304,49 @@ describe("cire/api over real D1 (Miniflare)", () => {
   );
 
   it(
+    "claim.lookup never holds the events read for the account-linking flag",
+    async () => {
+      const inSession: string[] = [];
+      const raw = d1.withSession(D1_SESSION_CONSTRAINT);
+      const session: Pick<D1Database, "prepare" | "batch"> = {
+        prepare: (query) => {
+          inSession.push(query);
+          return raw.prepare(query);
+        },
+        batch: (statements) => raw.batch(statements),
+      };
+      const routed = createD1Db(createSessionRoutedClient(d1, "fetch"));
+      const eventsRead = () => inSession.some((q) => q.includes('from "events"'));
+
+      // The flag answers only once the invite's events read has gone out. If
+      // the account-link branch sat ahead of that read, the flag would never
+      // answer in time and the payload would report linking off.
+      const gate: AccountLinkGate = {
+        enabledFor: () =>
+          new Promise((resolve) => {
+            let polls = 0;
+            const poll = () => {
+              if (eventsRead()) return resolve(true);
+              if (++polls > 200) return resolve(false);
+              setTimeout(poll, 5);
+            };
+            poll();
+          }),
+        osnSessionToken: null,
+      };
+      const res = await withD1Session(session, () =>
+        Effect.runPromise(
+          claimService.lookup(PUBLIC_ID, gate).pipe(Effect.provideService(DbService, routed)),
+        ),
+      );
+
+      expect(eventsRead()).toBe(true);
+      expect(res.accountLink).toEqual({ enabled: true, signedIn: false, linkedGuestIds: [] });
+    },
+    MF_TIMEOUT_MS,
+  );
+
+  it(
     "claim.lookup fails for an unknown code",
     async () => {
       await expect(run(claimService.lookup("NOPE-0000"))).rejects.toThrow();

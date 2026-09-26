@@ -16,12 +16,7 @@ import type { Db } from "../../src/db";
 import { DbService } from "../../src/db";
 import { createDb, seedDb } from "../../src/db/setup";
 import { DIETARY_CONSENT_VERSION } from "../../src/schemas/rsvp";
-import {
-  ACCOUNT_LINK_FLAG_WAIT,
-  type AccountLinkGate,
-  claimService,
-  InvalidCredentials,
-} from "../../src/services/claim";
+import { type AccountLinkGate, claimService, InvalidCredentials } from "../../src/services/claim";
 import { hostCodeService } from "../../src/services/host-code";
 import { TestDbLayer } from "../db/test-layer";
 import { effWith } from "../test-helpers";
@@ -785,17 +780,16 @@ describe("claim payload account-link state", () => {
     withDb(
       Effect.gen(function* () {
         const { gate: g } = gate(() => new Promise<boolean>(() => {}));
+        const { familyId } = yield* claimService.lookup("TESTONE-IVY-AA11");
         const started = Date.now();
-        const result = yield* claimService.restore(
-          (yield* claimService.lookup("TESTONE-IVY-AA11")).familyId,
-          g,
-        );
+        const result = yield* claimService.restore(familyId, g);
         const waited = Date.now() - started;
         expect(result.accountLink).toEqual({ enabled: false });
         expect(result.events.length).toBeGreaterThan(0);
-        // Bounded by the flag wait, with room for a slow test machine.
-        expect(ACCOUNT_LINK_FLAG_WAIT).toBe("250 millis");
-        expect(waited).toBeLessThan(2_000);
+        // It waited for the flag (`ACCOUNT_LINK_FLAG_WAIT`, 250 ms) and no
+        // longer, with room either side for a slow test machine's timers.
+        expect(waited).toBeGreaterThanOrEqual(200);
+        expect(waited).toBeLessThan(1_000);
       }),
     ),
   );

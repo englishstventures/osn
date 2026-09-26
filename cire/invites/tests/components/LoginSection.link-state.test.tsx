@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { cleanup, render } from "@solidjs/testing-library";
+import { cleanup, fireEvent, render, waitFor } from "@solidjs/testing-library";
+import { createSignal } from "solid-js";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { LoginSection } from "../../src/components/LoginSection";
@@ -64,4 +65,32 @@ it("draws the sign-in control, not the picker, when the payload says signed out"
   await view.findByRole("button", { name: "Sign in with musubi" }, { timeout: 3000 });
   expect(view.queryByText("Which guest are you?")).toBeNull();
   expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it("keeps a new link when a later copy of the same payload arrives", async () => {
+  // Linking answers 201; nothing else is asked.
+  const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) =>
+    Promise.resolve(
+      init?.method === "POST"
+        ? Response.json({ linked: true, guestId: "g-chidi" }, { status: 201 })
+        : new Promise<Response>(() => {}),
+    ),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  const [result, setResult] = createSignal<ClaimResult>(household);
+
+  const view = render(() => (
+    <LoginSection apiUrl="https://api.test" result={result()} onClaimed={() => {}} />
+  ));
+  await view.findByText("Which guest are you?", {}, { timeout: 3000 });
+  fireEvent.click(view.getByLabelText(/Chidi Okafor/));
+  fireEvent.click(view.getByRole("button", { name: "Link my account" }));
+  await waitFor(() => expect(view.getAllByText("✓ Linked")).toHaveLength(2));
+
+  // An RSVP save hands the page a new result spread from the old one, still
+  // carrying the link state from before Chidi linked.
+  setResult({ ...result(), rsvps: [] });
+
+  expect(view.getAllByText("✓ Linked")).toHaveLength(2);
+  expect((view.getByLabelText(/Chidi Okafor/) as HTMLInputElement).disabled).toBe(true);
 });
