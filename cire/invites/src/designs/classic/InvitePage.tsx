@@ -15,6 +15,7 @@ import {
 import { awaitEventCards } from "../../components/await-event-cards";
 import { createSessionRestore } from "../../components/claim-session";
 import { createRsvpDeadlineState } from "../../components/createRsvpDeadlineState";
+import { faqState } from "../../components/invite-emptiness";
 import {
   createInviteRetry,
   type DetailsCopy,
@@ -27,6 +28,13 @@ import {
   sectionVars,
 } from "../../components/invite-theme";
 import { InviteClosing } from "../../components/InviteClosing";
+import {
+  FAQ_EYEBROW,
+  FAQ_HEADING,
+  FAQ_HEADING_ID,
+  FaqList,
+  faqEntries,
+} from "../../components/InviteFaq";
 import { LoginSection } from "../../components/LoginSection";
 import { prefetchOnIdle } from "../../components/prefetch-idle";
 import { formatDeadlineDay, RSVP_NOTICE_ID } from "../../components/rsvp-deadline";
@@ -419,6 +427,43 @@ export default function InvitePage(props: InvitePageProps) {
             </div>
           </section>
         )}
+      </Show>
+
+      {/* The FAQ, under the events and on their surface — the same block to a
+          guest, in the same centred column. Its entries arrive in the claim
+          response, like the events, and only there. Not `opacity-0`, for the
+          reason the closing section below gives: it sits under every event card,
+          off-screen while the reveal plays. */}
+      <Show when={claimResult()}>
+        {(data) => {
+          const entries = createMemo(() => faqEntries(data().faq?.entries));
+          return (
+            <Show when={faqState(data().faq?.visible, entries()) === "shown"}>
+              <section
+                data-invite-faq
+                aria-labelledby={FAQ_HEADING_ID}
+                class="border-border border-b px-6 py-16 md:px-8 md:py-20"
+                style={{
+                  ...filterThemeVars(detailsVars()),
+                  "background-color": "var(--invite-section-bg)",
+                }}
+              >
+                <div class="max-w-column-lg md:max-w-column-xl mx-auto text-center">
+                  <p class="font-body text-gold-ink text-ui-xs tracking-ui-widest mb-3 uppercase">
+                    {FAQ_EYEBROW}
+                  </p>
+                  <h2
+                    id={FAQ_HEADING_ID}
+                    class="font-display text-text leading-ui-none mb-8 text-[calc(clamp(2rem,5vw,3rem)*var(--invite-heading-scale,1))] [font-weight:var(--invite-heading-weight,300)] [font-style:var(--invite-heading-style,normal)]"
+                  >
+                    {FAQ_HEADING}
+                  </h2>
+                  <FaqList entries={entries()} class="border-border border-y" />
+                </div>
+              </section>
+            </Show>
+          );
+        }}
       </Show>
 
       {/* The couple's sign-off — their motif and closing note, the invite's last

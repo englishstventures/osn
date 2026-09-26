@@ -853,6 +853,156 @@ describe("gala InvitePage", () => {
   // Gala renders its own events section, so the deadline wiring is a SEPARATE
   // set of call sites from classic's — the same behaviour has to be pinned on
   // both or one design silently keeps accepting late replies.
+  describe("FAQ section", () => {
+    const FAQ = {
+      visible: true,
+      entries: [
+        {
+          id: "faq_a",
+          question: "Is there parking?",
+          answer: "Yes — sixty spaces.\nThe overflow lot is next door.",
+        },
+        { id: "faq_b", question: "Are children invited?", answer: "To the ceremony." },
+      ],
+    };
+
+    /** Claim through the host deep link with `extra` on the claim response, and
+     *  wait for it to land so "absent" is never just "not rendered yet". */
+    async function claimWith(extra: Record<string, unknown>) {
+      vi.stubGlobal(
+        "fetch",
+        noSession(
+          vi.fn().mockResolvedValue(
+            new Response(JSON.stringify({ ...claim, preview: true, ...extra }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          ),
+        ),
+      );
+      window.history.replaceState(null, "", "/?code=HOST-ABCDEF0123456789ABCDEF01");
+      const view = render(() => <InvitePage apiUrl="https://api.test" />);
+      await waitFor(() => expect(view.getByText(/Preview mode/i)).toBeTruthy(), { timeout: 2000 });
+      return view;
+    }
+
+    const faqSection = (container: HTMLElement) =>
+      container.querySelector("[data-invite-faq]") as HTMLElement | null;
+
+    it("is absent before the guest claims their code", () => {
+      const { container, queryByText } = render(() => <InvitePage apiUrl="https://api.test" />);
+      expect(faqSection(container)).toBeNull();
+      expect(queryByText("Questions & Answers")).toBeNull();
+    });
+
+    it("renders the questions in order under the events, each a disclosure", async () => {
+      const { container, getByRole } = await claimWith({ faq: FAQ });
+
+      const section = await waitFor(() => {
+        const el = faqSection(container);
+        expect(el).toBeTruthy();
+        return el!;
+      });
+      // An <h2>, the events heading's sibling, naming the section.
+      const heading = getByRole("heading", { level: 2, name: "Questions & Answers" });
+      expect(section.getAttribute("aria-labelledby")).toBe(heading.id);
+      expect(section.contains(heading)).toBe(true);
+
+      const items = [...section.querySelectorAll("details")];
+      expect(
+        items.map((d) => d.querySelector("summary")?.textContent?.replace("+", "").trim()),
+      ).toEqual(["Is there parking?", "Are children invited?"]);
+      // Closed until the guest opens one; the answer keeps its line breaks.
+      expect(items.every((d) => !d.open)).toBe(true);
+      const answer = items[0]!.querySelector("p")!;
+      expect(answer.textContent).toBe("Yes — sixty spaces.\nThe overflow lot is next door.");
+      expect(answer.className).toContain("whitespace-pre-line");
+    });
+
+    it("sits after the events and before the closing section", async () => {
+      const { container } = await claimWith({
+        faq: FAQ,
+        closing: { message: "No boxed gifts please", imageUrl: null, imageCrop: null },
+      });
+      await waitFor(() => expect(faqSection(container)).toBeTruthy());
+      const events = container.querySelector("[data-event-card]")!;
+      const faq = faqSection(container)!;
+      const closing = container.querySelector("[data-invite-closing]")!;
+      expect(events.compareDocumentPosition(faq) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(faq.compareDocumentPosition(closing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it("closes its header with the pack's hairline rule, on the events' column", async () => {
+      const { container } = await claimWith({ faq: FAQ });
+      await waitFor(() => expect(faqSection(container)).toBeTruthy());
+      const column = faqSection(container)!.querySelector("h2")!.parentElement!;
+      expect(column.className).toContain("max-w-column-2xl");
+      expect(column.className).toContain("text-left");
+      expect(column.querySelector("hr")).toBeTruthy();
+    });
+
+    it("paints the events section's surface", async () => {
+      const { container } = await claimWith({ faq: FAQ });
+      await waitFor(() => expect(faqSection(container)).toBeTruthy());
+      expect(faqSection(container)!.style.getPropertyValue("background-color")).toBe(
+        "var(--invite-section-bg)",
+      );
+    });
+
+    it("renders organiser text as text, never as markup", async () => {
+      const { container, getByText } = await claimWith({
+        faq: {
+          visible: true,
+          entries: [
+            {
+              id: "faq_x",
+              question: "<img src=x onerror=alert(1)>",
+              answer: "<script>alert(1)</script>",
+            },
+          ],
+        },
+      });
+      await waitFor(() => expect(faqSection(container)).toBeTruthy());
+      expect(getByText("<img src=x onerror=alert(1)>")).toBeTruthy();
+      expect(getByText("<script>alert(1)</script>")).toBeTruthy();
+      expect(faqSection(container)!.querySelector("img, script")).toBeNull();
+    });
+
+    it("omits a switched-off FAQ even if entries arrive", async () => {
+      const { container, queryByText } = await claimWith({ faq: { ...FAQ, visible: false } });
+      expect(faqSection(container)).toBeNull();
+      expect(queryByText("Is there parking?")).toBeNull();
+    });
+
+    it("omits a FAQ switched on with no entries", async () => {
+      const { container } = await claimWith({ faq: { visible: true, entries: [] } });
+      expect(faqSection(container)).toBeNull();
+    });
+
+    it("omits the FAQ for a claim from an API older than it", async () => {
+      const { container } = await claimWith({});
+      expect(faqSection(container)).toBeNull();
+      // The rest of the invite is untouched.
+      expect(container.querySelector("[data-event-card]")).toBeTruthy();
+    });
+
+    it("drops a malformed entry and keeps the rest", async () => {
+      const { container } = await claimWith({
+        faq: {
+          visible: true,
+          entries: [
+            { id: "faq_ok", question: "Is there parking?", answer: "Yes." },
+            { id: "faq_blank", question: "Anything else?", answer: "   " },
+            { id: 7, question: "Numbered?", answer: "No." },
+            "not an entry",
+          ],
+        },
+      });
+      await waitFor(() => expect(faqSection(container)).toBeTruthy());
+      expect(faqSection(container)!.querySelectorAll("details")).toHaveLength(1);
+    });
+  });
+
   describe("RSVP deadline", () => {
     async function claimWithDeadline(rsvpDeadline: ClaimResult["rsvpDeadline"]) {
       vi.stubGlobal(
