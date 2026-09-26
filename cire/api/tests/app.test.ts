@@ -146,6 +146,21 @@ describe("CORS preflight for the deployed portal origins", () => {
     expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
   });
 
+  // The match is exact membership, the rule the origin guard applies: no
+  // scheme stripping and no lookup that an object's inherited keys satisfy.
+  it.each([
+    `x://${portalOrigins[0]}`,
+    "constructor",
+    "__proto__",
+    "toString",
+    portalOrigins[0].replace("https://", "http://"),
+    `${portalOrigins[0]}/`,
+    portalOrigins[0].toUpperCase(),
+  ])("gives a near-miss Origin %s no Access-Control-Allow-Origin", async (origin) => {
+    const res = await preflight(CHECKLIST_REORDER, origin);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
+  });
+
   // Both directions come from what the app mounts (the CORS plugin's own
   // OPTIONS routes included), so the list can neither miss a method a route
   // answers nor carry one no route answers, and `*` matches nothing.
