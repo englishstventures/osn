@@ -20,9 +20,14 @@ import { isModule, isSubOf, type Module } from "../../src/lib/dashboard-route";
 // prop means deleting the pass-down fails typecheck while quietly passing `[]`
 // does not. Rendering it here is what makes the wrong value visible.
 vi.mock("../../src/components/Overview", () => ({
-  default: (p: { weddingId: string; entitlements: readonly string[] }) => (
+  default: (p: {
+    weddingId: string;
+    entitlements: readonly string[];
+    onNavigate: (module: "guests", sub?: string) => void;
+  }) => (
     <div data-testid="overview" data-entitlements={p.entitlements.join(",")}>
       {p.weddingId}
+      <button onClick={() => p.onNavigate("guests", "rsvps")}>overview-to-rsvps</button>
     </div>
   ),
 }));
@@ -219,6 +224,14 @@ describe("ModuleShell", () => {
     fireEvent.click(within(rail()).getByRole("button", { name: /Events/ }));
     expect(onModule).toHaveBeenCalledWith("events");
     expect(screen.getByTestId("events")).toBeTruthy();
+  });
+
+  it("moves an Overview card's target module and sub in one step", () => {
+    const { onModule, onSub } = renderShell({});
+    fireEvent.click(screen.getByRole("button", { name: "overview-to-rsvps" }));
+    expect(onModule.mock.calls).toEqual([["guests", "rsvps"]]);
+    expect(onSub).not.toHaveBeenCalled();
+    expect(screen.getByTestId("rsvps")).toBeTruthy();
   });
 
   it("shows the Events sub-tabs (List + Edit) and switches to the events editor", async () => {

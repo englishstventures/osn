@@ -504,10 +504,7 @@ export default function ModuleShell(props: ModuleShellProps) {
                 <Overview
                   weddingId={props.weddingId}
                   entitlements={props.entitlements}
-                  onNavigate={(target, sub) => {
-                    props.onModule(target);
-                    if (sub) props.onSub(sub);
-                  }}
+                  onNavigate={props.onModule}
                 />
               </Show>
 
