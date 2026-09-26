@@ -836,8 +836,8 @@ export const inviteService = {
    * keeps its stored switch (a first write gives it the column default, on).
    * The content of a switched-off section is never touched, so switching it
    * back on restores it as it was. Bumps `updatedAt` only — NEVER
-   * `imagesUpdatedAt`: a switch changes no stored image bytes, so the guest
-   * image caches stay warm (WT-P-I1).
+   * `imagesUpdatedAt`: a switch changes no stored image bytes, and bumping the
+   * image version would make every guest re-fetch images that have not changed.
    */
   setVisibility(
     weddingId: string,
