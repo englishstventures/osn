@@ -29,28 +29,29 @@ const BASE: InviteCustomisation = {
 
 describe("visibility in the builder draft", () => {
   it("starts every switch on in an empty draft", () => {
-    expect(emptyDraft().visibility).toEqual({ hero: true, story: true, footer: true });
+    expect(emptyDraft().visibility).toEqual({ hero: true, story: true, faq: true, footer: true });
   });
 
   it("reads a payload without visibility as every switch on", () => {
     expect(draftFromCustomisation(BASE).visibility).toEqual({
       hero: true,
       story: true,
+      faq: true,
       footer: true,
     });
   });
 
   it("reads a key the payload leaves out as on", () => {
     const draft = draftFromCustomisation({ ...BASE, visibility: { hero: false } });
-    expect(draft.visibility).toEqual({ hero: false, story: true, footer: true });
+    expect(draft.visibility).toEqual({ hero: false, story: true, faq: true, footer: true });
   });
 
   it("keeps every switch the payload sets", () => {
     const draft = draftFromCustomisation({
       ...BASE,
-      visibility: { hero: false, story: false, footer: false },
+      visibility: { hero: false, story: false, faq: false, footer: false },
     });
-    expect(draft.visibility).toEqual({ hero: false, story: false, footer: false });
+    expect(draft.visibility).toEqual({ hero: false, story: false, faq: false, footer: false });
   });
 });
 
@@ -58,10 +59,10 @@ describe("visibilityPayload", () => {
   it("always sends every section, in a stable order", () => {
     for (const visibility of [undefined, { story: false }, { footer: false, hero: false }]) {
       const body = visibilityPayload(draftFromCustomisation({ ...BASE, visibility }));
-      expect(Object.keys(body)).toEqual(["hero", "story", "footer"]);
+      expect(Object.keys(body)).toEqual(["hero", "story", "faq", "footer"]);
     }
     expect(
       visibilityPayload(draftFromCustomisation({ ...BASE, visibility: { story: false } })),
-    ).toEqual({ hero: true, story: false, footer: true });
+    ).toEqual({ hero: true, story: false, faq: true, footer: true });
   });
 });

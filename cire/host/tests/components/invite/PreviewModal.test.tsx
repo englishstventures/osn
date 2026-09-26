@@ -33,6 +33,7 @@ const previewProps: PreviewPaneProps = {
   story: { state: "empty", eyebrow: "", heading: "", body: "" },
   welcome: { message: "" },
   events: { eyebrow: "", heading: "" },
+  faq: { state: "empty", questions: [] },
   closing: { state: "empty", message: "", imageUrl: null, imageCrop: null },
 };
 
@@ -84,6 +85,7 @@ describe("PreviewModal", () => {
     const strips = [...document.querySelectorAll("[data-hidden-strip]")] as HTMLElement[];
     expect(strips.map((el) => [el.dataset.hiddenStrip, el.textContent])).toEqual([
       ["off", "Our Story — switched off"],
+      ["empty", "FAQ — hidden until it has content"],
       ["empty", "Closing — hidden until it has content"],
     ]);
   });
