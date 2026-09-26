@@ -1422,7 +1422,7 @@ export default function InviteBuilder(props: InviteBuilderProps) {
                         "Switched off. Guests won't see your questions; they are all kept for when you switch it back on.",
                     }}
                     hidden={activeSection() !== "invite-faq"}
-                    description="Answer what guests ask anyway — parking, the dress code, children, timing. The questions sit under your events once a guest enters their code, each answer opening from its question. Questions save as soon as you add, change, reorder or delete them; the switch saves with the rest of the invite."
+                    description="Answer what guests ask anyway — parking, the dress code, children, timing. The questions sit under your events once a guest enters their code, each answer opening from its question. Every household sees every question, unlike the events, which each household sees only when invited — so don't mention an event only some guests are invited to. Questions save as soon as you add, change, reorder or delete them; the switch saves with the rest of the invite."
                   >
                     <FaqEditor
                       weddingId={props.weddingId}

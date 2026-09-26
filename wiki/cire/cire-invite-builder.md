@@ -220,7 +220,7 @@ and the section's `faq_visible` switch together.
 |---|---|
 | Content | Ordered entries, each a question and an answer (`wedding_faqs`) |
 | Limits | 30 entries per wedding; question ≤ 200 characters, answer ≤ 1000; both required and not blank; stored trimmed. `FAQ_LIMITS` in `cire/api/src/schemas/invite-faq.ts`, mirrored as `FAQ_CAPS` in the builder's `model.ts` |
-| Delivered | In the claim response (`faq: { visible, entries }`), never the public invite read — it is written for the invited household, like the events |
+| Delivered | In the claim response (`faq: { visible, entries }`), never the public invite read — it is written for invited households. Unlike the events, it is not filtered per household: every household that enters its code sees every entry, and the builder's card says so, so an organiser does not mention an event only some guests are invited to |
 | Header | Fixed copy in both packs: eyebrow "Good to Know", heading "Questions & Answers" (an `<h2>`, sibling of the events heading). Not an organiser field |
 | Surface | The events section's tone — the two read as one block |
 | Guest markup | One native `<details>` per entry: the question is the `<summary>`, the answer opens under it. Keyboard-operable with no script. The question is not a heading, since a heading inside a `<summary>` loses its role in several screen readers |

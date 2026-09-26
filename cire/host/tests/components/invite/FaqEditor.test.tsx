@@ -288,6 +288,57 @@ describe("FaqEditor", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  describe("focus", () => {
+    it("moves to the question when a form opens, and back to Add on cancel", () => {
+      renderEditor([PARKING]);
+      fireEvent.click(screen.getByText("Add a question"));
+      expect(document.activeElement).toBe(screen.getByLabelText("Question"));
+      fireEvent.click(screen.getByText("Cancel"));
+      expect(document.activeElement).toBe(screen.getByText("Add a question"));
+    });
+
+    it("returns to the row's Edit after an edit is cancelled or saved", async () => {
+      authFetchMock.mockResolvedValueOnce(json({ faq: { ...PARKING, answer: "No." } }));
+      renderEditor([PARKING, CHILDREN]);
+      const edit = () => screen.getByRole("button", { name: "Edit “Is there parking?”" });
+
+      fireEvent.click(edit());
+      expect(document.activeElement).toBe(screen.getByLabelText("Question"));
+      fireEvent.click(screen.getByText("Cancel"));
+      expect(document.activeElement).toBe(edit());
+
+      fireEvent.click(edit());
+      fireEvent.input(screen.getByLabelText("Answer"), { target: { value: "No." } });
+      fireEvent.click(screen.getByText("Save question"));
+      await waitFor(() => expect(document.activeElement).toBe(edit()));
+    });
+
+    it("stays on Add after adding, ready for the next question", async () => {
+      authFetchMock.mockResolvedValueOnce(json({ faq: TIMING }));
+      renderEditor([]);
+      fireEvent.click(screen.getByText("Add a question"));
+      fireEvent.input(screen.getByLabelText("Question"), { target: { value: "When?" } });
+      fireEvent.input(screen.getByLabelText("Answer"), { target: { value: "At three." } });
+      fireEvent.click(screen.getByText("Add question"));
+      await waitFor(() => expect(document.activeElement).toBe(screen.getByText("Add a question")));
+    });
+
+    it("moves to the next row's Edit after a delete, or Add when none is left", async () => {
+      authFetchMock.mockResolvedValue(json({ ok: true }));
+      renderEditor([PARKING, CHILDREN]);
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete “Is there parking?”" }));
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          screen.getByRole("button", { name: "Edit “Are children invited?”" }),
+        ),
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete “Are children invited?”" }));
+      await waitFor(() => expect(document.activeElement).toBe(screen.getByText("Add a question")));
+    });
+  });
+
   it("reports pending while the form has typing in it", () => {
     renderEditor([PARKING]);
     fireEvent.click(screen.getByText("Add a question"));

@@ -200,6 +200,27 @@ export default function FaqEditor(props: FaqEditorProps) {
     scheduleOrderSave();
   }
 
+  // ── Focus ──────────────────────────────────────────────────────────────────
+  // Opening, closing and deleting each remove the control that had focus (the
+  // row swaps to its form, the form back to its row, the row goes), so focus
+  // is put somewhere on purpose every time — the form's question when it
+  // opens, and afterwards the control a keyboard user would reach for next.
+  let root: HTMLDivElement | undefined;
+
+  /** Focus the first match under the editor. Runs after the render the caller's
+   *  state change caused, which Solid has already applied. */
+  const focusIn = (selector: string) => root?.querySelector<HTMLElement>(selector)?.focus();
+
+  /** The row's Edit button, or "Add a question" when that row is gone or the
+   *  editor has no row to offer. */
+  const focusAfterRow = (id: string | null) => {
+    const edit = id
+      ? root?.querySelector<HTMLElement>(`[data-faq-edit="${CSS.escape(id)}"]`)
+      : null;
+    if (edit) edit.focus();
+    else focusIn("[data-faq-add]");
+  };
+
   // ── Add, edit, delete ──────────────────────────────────────────────────────
   function openForm(next: Editing) {
     setError(null);
@@ -207,12 +228,21 @@ export default function FaqEditor(props: FaqEditorProps) {
     setQuestion(entry?.question ?? "");
     setAnswer(entry?.answer ?? "");
     setEditing(next);
+    focusIn("[data-faq-form] input");
   }
 
   function closeForm() {
     setEditing(null);
     setQuestion("");
     setAnswer("");
+  }
+
+  /** Cancel: back to the Edit button of the row that was being edited, or to
+   *  "Add a question". */
+  function cancelForm() {
+    const id = editingId();
+    closeForm();
+    focusAfterRow(id);
   }
 
   const canSubmit = () => !busy() && question().trim().length > 0 && answer().trim().length > 0;
@@ -222,6 +252,8 @@ export default function FaqEditor(props: FaqEditorProps) {
     if (!target || !canSubmit()) return;
     setBusy(true);
     setError(null);
+    // Where focus goes once the controls are enabled again, if the save lands.
+    let focusRow: string | null | undefined;
     const body = JSON.stringify({ question: question(), answer: answer() });
     try {
       const res =
@@ -247,9 +279,12 @@ export default function FaqEditor(props: FaqEditorProps) {
         props.onEntriesChange([...entries(), faq]);
         savedOrder = [...(savedOrder ?? []), faq.id];
         toast.success("Question added");
+        // Ready for the next question; at the cap there is no Add, so the new row.
+        focusRow = atCap() ? faq.id : null;
       } else {
         props.onEntriesChange(entries().map((e) => (e.id === faq.id ? faq : e)));
         toast.success("Question saved");
+        focusRow = faq.id;
       }
       haptic("commit");
       closeForm();
@@ -259,6 +294,7 @@ export default function FaqEditor(props: FaqEditorProps) {
       setError("Couldn't save that question.");
     } finally {
       setBusy(false);
+      if (focusRow !== undefined) focusAfterRow(focusRow);
     }
   }
 
@@ -274,6 +310,11 @@ export default function FaqEditor(props: FaqEditorProps) {
     }
     setBusy(true);
     setError(null);
+    // The row after the deleted one, or the one before it at the end of the list.
+    const list = entries();
+    const at = list.findIndex((e) => e.id === entry.id);
+    const neighbour = (list[at + 1] ?? list[at - 1])?.id ?? null;
+    let deleted = false;
     try {
       const res = await authFetch(apiUrl(`${base()}/${encodeURIComponent(entry.id)}`), {
         method: "DELETE",
@@ -289,12 +330,14 @@ export default function FaqEditor(props: FaqEditorProps) {
       if (editingId() === entry.id) closeForm();
       haptic("commit");
       toast.success("Question deleted");
+      deleted = true;
     } catch (err) {
       if (isAuthExpired(err)) return redirectToLogin();
       haptic("reject");
       setError("Couldn't delete that question.");
     } finally {
       setBusy(false);
+      if (deleted) focusAfterRow(neighbour);
     }
   }
 
@@ -336,7 +379,7 @@ export default function FaqEditor(props: FaqEditorProps) {
         >
           {busy() ? "Saving…" : editing()?.kind === "new" ? "Add question" : "Save question"}
         </Button>
-        <Button variant="subtle" size="sm" type="button" disabled={busy()} onClick={closeForm}>
+        <Button variant="subtle" size="sm" type="button" disabled={busy()} onClick={cancelForm}>
           Cancel
         </Button>
       </div>
@@ -353,7 +396,7 @@ export default function FaqEditor(props: FaqEditorProps) {
         </Notice>
       }
     >
-      <div class="flex flex-col gap-3" data-faq-editor>
+      <div ref={root} class="flex flex-col gap-3" data-faq-editor>
         <div class="flex flex-wrap items-center justify-between gap-3">
           <span class="font-body text-text-muted text-ui-sm">
             {count() === 0 ? "No questions yet." : `${count()} of ${FAQ_CAPS.maxEntries} questions`}
@@ -411,6 +454,7 @@ export default function FaqEditor(props: FaqEditorProps) {
                                   type="button"
                                   disabled={busy()}
                                   aria-label={`Edit “${entry.question}”`}
+                                  data-faq-edit={entry.id}
                                   onClick={() => openForm({ kind: "edit", id: entry.id })}
                                 >
                                   Edit
@@ -459,6 +503,7 @@ export default function FaqEditor(props: FaqEditorProps) {
                 type="button"
                 class="self-start"
                 disabled={busy() || editing() !== null}
+                data-faq-add
                 onClick={() => openForm({ kind: "new" })}
               >
                 Add a question
